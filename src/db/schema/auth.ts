@@ -1,7 +1,8 @@
-import { pgTable, uuid, text, boolean, timestamp, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, boolean, timestamp, pgEnum, integer } from 'drizzle-orm/pg-core'
 import { schools } from './schools'
 
 export const adminSubRoleEnum = pgEnum('admin_sub_role', ['admin', 'treasurer', 'manager'])
+export const teacherTypeEnum = pgEnum('teacher_type', ['volunteer', 'paid'])
 
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -21,6 +22,7 @@ export const schoolMembers = pgTable('school_members', {
   // Rôles cumulables stockés en tableau JSON
   portalRoles: text('portal_roles').array().notNull().default(['admin']),
   adminSubRole: adminSubRoleEnum('admin_sub_role'),
+  teacherType: teacherTypeEnum('teacher_type'),   // null si pas enseignant
   isPending: boolean('is_pending').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   createdBy: uuid('created_by'),

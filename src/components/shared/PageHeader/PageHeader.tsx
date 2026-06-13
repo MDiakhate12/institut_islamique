@@ -1,0 +1,32 @@
+import { cn } from '@/lib/utils'
+
+interface PageHeaderProps {
+  title: string
+  subtitle?: string
+  count?: number
+  actions?: React.ReactNode
+  className?: string
+}
+
+export function PageHeader({ title, subtitle, count, actions, className }: PageHeaderProps) {
+  return (
+    <div className={cn('flex items-start justify-between gap-4 mb-6', className)}>
+      <div>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+          {count !== undefined && (
+            <span className="text-sm text-muted-foreground font-normal mt-0.5">
+              {count} {count === 1 ? 'élément' : 'éléments'}
+            </span>
+          )}
+        </div>
+        {subtitle && (
+          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+        )}
+      </div>
+      {actions && (
+        <div className="flex items-center gap-2 shrink-0">{actions}</div>
+      )}
+    </div>
+  )
+}
