@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import { schools, profiles, schoolMembers } from './schema'
+import { DEFAULT_SETTINGS } from './schema/schools'
 import { eq } from 'drizzle-orm'
 
 const supabaseAdmin = createClient(
@@ -63,6 +64,7 @@ async function seed() {
         name: SCHOOL_NAME,
         slug: SCHOOL_SLUG,
         settings: {
+          ...DEFAULT_SETTINGS,
           schoolDays: ['sunday', 'saturday'],
           academicYear: '2025-2026',
           currentTrimester: 1,

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Plus, ArrowRight, ChevronRight } from 'lucide-react'
+import { Plus, ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const SUBJECTS = [
@@ -40,7 +40,7 @@ const TEMPLATE_SECTIONS: Record<string, string> = {
 interface Props {
   catalogClass?: CatalogClassWithNext
   allClasses?: CatalogClassWithNext[]
-  trigger?: React.ReactNode
+  trigger?: React.ReactElement
   onSuccess?: () => void
 }
 
@@ -57,23 +57,29 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
   const form = useForm<CreateCatalogClassInput>({
     resolver: zodResolver(createCatalogClassSchema),
     defaultValues: {
-      subjectCode: catalogClass?.subjectCode ?? '',
-      levelNumber: catalogClass?.levelNumber ?? '',
-      name: catalogClass?.name ?? '',
-      nextClassId: catalogClass?.nextClassId ?? null,
-      curriculum: catalogClass?.curriculum ?? '',
+      subjectCode:     catalogClass?.subjectCode     ?? '',
+      levelNumber:     catalogClass?.levelNumber     ?? '',
+      name:            catalogClass?.name            ?? '',
+      previousClassId: catalogClass?.previousClassId ?? null,
+      nextClassId:     catalogClass?.nextClassId     ?? null,
+      curriculum:      catalogClass?.curriculum      ?? '',
     },
   })
 
-  const watchedSubject = form.watch('subjectCode')
-  const watchedLevel = form.watch('levelNumber')
-  const watchedNextId = form.watch('nextClassId')
-  const watchedName = form.watch('name')
+  const watchedSubject  = form.watch('subjectCode')
+  const watchedLevel    = form.watch('levelNumber')
+  const watchedPrevId   = form.watch('previousClassId')
+  const watchedNextId   = form.watch('nextClassId')
+  const watchedName     = form.watch('name')
   const watchedCurriculum = form.watch('curriculum')
 
-  const nextClassOptions = allClasses.filter(c =>
+  // Classes in the same subject (excluding self) for prev/next selectors
+  const sameSubjectOptions = allClasses.filter(c =>
     c.subjectCode === watchedSubject && c.id !== catalogClass?.id
   )
+  const prevClassForPreview = watchedPrevId
+    ? allClasses.find(c => c.id === watchedPrevId)
+    : null
   const nextClassForPreview = watchedNextId
     ? allClasses.find(c => c.id === watchedNextId)
     : null
@@ -119,14 +125,14 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        {trigger ?? (
+      <DialogTrigger
+        render={trigger ?? (
           <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
             <Plus className="h-4 w-4" />
             Créer une nouvelle classe
           </Button>
         )}
-      </DialogTrigger>
+      />
 
       {/* ── Dialog très large ── */}
       <DialogContent className="w-[95vw] max-w-5xl max-h-[95vh] overflow-y-auto p-0 [&>button]:top-4 [&>button]:right-4 [&>button]:text-white [&>button]:hover:text-white/80">
@@ -207,62 +213,120 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
 
           <div className="border-t border-border" />
 
-          {/* ── Section 2 : Classe suivante ── */}
-          <div className="space-y-4">
-            <div>
-              <p className="font-semibold text-sm">
-                Classe suivante
-                <span className="ml-2 text-xs font-normal text-muted-foreground">(optionnel)</span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Vers quelle classe les élèves devraient-ils passer après avoir terminé celle-ci ?
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          {/* ── Sections 2 & 3 : Progressions ── */}
+          <div className="grid grid-cols-2 gap-6">
+
+            {/* ── Classe précédente ── */}
+            <div className="space-y-4">
               <div>
-                <label className="text-xs text-muted-foreground mb-1.5 block">Type de matière</label>
-                <select
-                  disabled
-                  value={watchedSubject}
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm text-muted-foreground bg-muted/20"
-                >
-                  <option value="">Aucun</option>
-                  {SUBJECTS.map(s => <option key={s.code} value={s.code}>{SUBJECT_LABELS[s.code] ?? s.code}</option>)}
-                </select>
+                <p className="font-semibold text-sm">
+                  Classe précédente
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">(optionnel)</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  De quelle classe viennent les élèves avant d'entrer dans celle-ci ?
+                </p>
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1.5 block">Niveau / Numéro</label>
-                <select
-                  value={watchedNextId ?? ''}
-                  onChange={e => form.setValue('nextClassId', e.target.value || null)}
-                  disabled={!watchedSubject}
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 disabled:opacity-50 disabled:bg-muted/20"
-                >
-                  <option value="">
-                    {watchedSubject ? 'Aucune' : "Sélectionner le type d'abord"}
-                  </option>
-                  {nextClassOptions.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.levelNumber} — {c.name}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Type de matière</label>
+                  <select
+                    disabled
+                    value={watchedSubject}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm text-muted-foreground bg-muted/20"
+                  >
+                    <option value="">Aucun</option>
+                    {SUBJECTS.map(s => <option key={s.code} value={s.code}>{SUBJECT_LABELS[s.code] ?? s.code}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Niveau / Numéro</label>
+                  <select
+                    value={watchedPrevId ?? ''}
+                    onChange={e => form.setValue('previousClassId', e.target.value || null)}
+                    disabled={!watchedSubject}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 disabled:opacity-50 disabled:bg-muted/20"
+                  >
+                    <option value="">
+                      {watchedSubject ? 'Aucune' : "Sélectionner le type d'abord"}
                     </option>
-                  ))}
-                </select>
+                    {sameSubjectOptions.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.levelNumber} — {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+              {prevClassForPreview && (
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>
+                    Les élèves viennent de <strong>{prevClassForPreview.code}</strong>
+                    {' — '}{prevClassForPreview.name}
+                  </span>
+                </div>
+              )}
             </div>
-            {nextClassForPreview && (
-              <div className="flex items-center gap-1.5 text-sm text-[#c2440f]">
-                <ArrowRight className="h-4 w-4" />
-                <span>
-                  Les élèves passeront à <strong>{nextClassForPreview.code}</strong>
-                  {' — '}{nextClassForPreview.name}
-                </span>
+
+            {/* ── Classe suivante ── */}
+            <div className="space-y-4">
+              <div>
+                <p className="font-semibold text-sm">
+                  Classe suivante
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">(optionnel)</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Vers quelle classe les élèves passent-ils après avoir terminé celle-ci ?
+                </p>
               </div>
-            )}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Type de matière</label>
+                  <select
+                    disabled
+                    value={watchedSubject}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm text-muted-foreground bg-muted/20"
+                  >
+                    <option value="">Aucun</option>
+                    {SUBJECTS.map(s => <option key={s.code} value={s.code}>{SUBJECT_LABELS[s.code] ?? s.code}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Niveau / Numéro</label>
+                  <select
+                    value={watchedNextId ?? ''}
+                    onChange={e => form.setValue('nextClassId', e.target.value || null)}
+                    disabled={!watchedSubject}
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 disabled:opacity-50 disabled:bg-muted/20"
+                  >
+                    <option value="">
+                      {watchedSubject ? 'Aucune' : "Sélectionner le type d'abord"}
+                    </option>
+                    {sameSubjectOptions.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.levelNumber} — {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {nextClassForPreview && (
+                <div className="flex items-center gap-1.5 text-sm text-[#c2440f]">
+                  <ArrowRight className="h-4 w-4" />
+                  <span>
+                    Les élèves passent à <strong>{nextClassForPreview.code}</strong>
+                    {' — '}{nextClassForPreview.name}
+                  </span>
+                </div>
+              )}
+            </div>
+
           </div>
 
           <div className="border-t border-border" />
 
-          {/* ── Section 3 : Programme ── */}
+          {/* ── Section 4 : Programme ── */}
           <div className="space-y-4">
             <div>
               <p className="font-semibold text-sm">

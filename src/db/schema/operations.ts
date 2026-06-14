@@ -6,7 +6,10 @@ import { students, classes } from './academic'
 import { schoolMembers } from './auth'
 
 export const substitutionStatusEnum = pgEnum('substitution_status', ['open', 'active', 'completed'])
-export const eventTypeEnum = pgEnum('academic_event_type', ['holiday', 'exam', 'event', 'other'])
+export const eventTypeEnum = pgEnum('academic_event_type', [
+  'exam', 'meeting', 'fun_event', 'holiday', 'open_house',
+  'ceremony', 'beginning', 'closed', 'lecture', 'event', 'other',
+])
 export const registrationStatusEnum = pgEnum('registration_status', ['pending', 'approved', 'rejected'])
 
 export const substitutions = pgTable('substitutions', {
@@ -42,7 +45,11 @@ export const academicEvents = pgTable('academic_events', {
   type: eventTypeEnum('type').notNull().default('event'),
   startDate: date('start_date').notNull(),
   endDate: date('end_date'),
+  startTime: text('start_time'),    // "09:00"
+  endTime: text('end_time'),        // "10:00"
   isAllDay: boolean('is_all_day').notNull().default(true),
+  location: text('location'),
+  isHidden: boolean('is_hidden').notNull().default(false),
   createdBy: uuid('created_by').references(() => schoolMembers.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })

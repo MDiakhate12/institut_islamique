@@ -3,10 +3,13 @@ import { classCatalog } from '@/db/schema'
 
 export type CatalogClass = InferSelectModel<typeof classCatalog>
 
-// Type enrichi avec le nom de la classe suivante (join)
+// Type enrichi avec le nom de la classe suivante ET précédente (dérivées du graphe nextClassId)
 export type CatalogClassWithNext = CatalogClass & {
-  nextClassName: string | null
-  nextClassCode: string | null
+  nextClassName:     string | null
+  nextClassCode:     string | null
+  previousClassId:   string | null
+  previousClassName: string | null
+  previousClassCode: string | null
 }
 
 // Type for a scheduled class with all joined details
