@@ -1,39 +1,59 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useTransition, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 import { createStudentSchema, type CreateStudentInput } from '@/modules/students/students.schema'
-import { createStudentAction, updateStudentAction } from '@/modules/students/students.actions'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { createStudentAction, updateStudentAction, deleteStudentAction } from '@/modules/students/students.actions'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+} from '@/components/ui/dialog'
+import { Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { Student } from '@/modules/students/students.types'
+import { studentsKeys } from '@/modules/students/students.hooks'
 
 interface StudentFormProps {
-  student?: Student   // si présent → mode édition
+  student?: Student
+  trigger?: React.ReactNode
   onSuccess?: () => void
 }
 
-export function StudentForm({ student, onSuccess }: StudentFormProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormProps) {
+  const [open, setOpen] = useState(false)
   const isEditing = !!student
+  const queryClient = useQueryClient()
+
+  // ── Form state ici (survit à la fermeture du dialog) ──────────────────────
+  const [isPending, startTransition] = useTransition()
+  const [isDeleting, startDelete]    = useTransition()
+  const [paidT1, setPaidT1] = useState(false)
+  const [paidT2, setPaidT2] = useState(false)
+  const [paidT3, setPaidT3] = useState(false)
 
   const form = useForm<CreateStudentInput>({
     resolver: zodResolver(createStudentSchema),
     defaultValues: {
-      firstName: student?.firstName ?? '',
-      lastName: student?.lastName ?? '',
-      gender: student?.gender ?? 'male',
-      birthDate: student?.birthDate ?? '',
-      notes: student?.notes ?? '',
+      firstName:      student?.firstName     ?? '',
+      lastName:       student?.lastName      ?? '',
+      gender:         student?.gender        ?? 'male',
+      isActive:       student?.isActive      ?? true,
+      birthDate:      student?.birthDate     ?? '',
+      parentPhone:    student?.parentPhone   ?? '',
+      parentName1:    student?.parentName1   ?? '',
+      parentName2:    student?.parentName2   ?? '',
+      parentEmail1:   student?.parentEmail1  ?? '',
+      parentEmail2:   student?.parentEmail2  ?? '',
+      emergencyPhone: student?.emergencyPhone ?? '',
+      notes:          student?.notes         ?? '',
     },
   })
+
+  const isActive = form.watch('isActive')
 
   function onSubmit(data: CreateStudentInput) {
     startTransition(async () => {
@@ -41,124 +61,228 @@ export function StudentForm({ student, onSuccess }: StudentFormProps) {
         ? await updateStudentAction(student.id, data)
         : await createStudentAction(data)
 
-      if (!result.success) {
-        toast.error(result.error)
-        return
-      }
-
+      if (!result.success) { toast.error(result.error); return }
+      queryClient.invalidateQueries({ queryKey: studentsKeys.lists() })
       toast.success(isEditing ? 'Élève modifié avec succès' : 'Élève créé avec succès')
+      form.reset()
+      setOpen(false)
       onSuccess?.()
-      if (!isEditing) router.push('/admin-portal/students')
+    })
+  }
+
+  function handleDelete() {
+    if (!student) return
+    startDelete(async () => {
+      const result = await deleteStudentAction(student.id)
+      if (!result.success) { toast.error(result.error); return }
+      queryClient.invalidateQueries({ queryKey: studentsKeys.lists() })
+      toast.success('Élève supprimé')
+      form.reset()
+      setOpen(false)
+      onSuccess?.()
     })
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Prénom *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Prénom de l'élève" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nom *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nom de l'élève" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="gender"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Genre *</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="male">Masculin</SelectItem>
-                    <SelectItem value="female">Féminin</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="birthDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Date de naissance</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Notes sur l'élève (optionnel)"
-                  rows={3}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger>
+        {trigger ?? (
+          <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+            <Plus className="h-4 w-4" />
+            Créer un nouvel élève
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold">
+            {isEditing ? "Modifier l'élève" : 'Ajouter un nouvel élève'}
+          </DialogTitle>
+          {isEditing && (
+            <p className="text-sm text-muted-foreground">
+              Mettre à jour les informations de l&apos;élève
+            </p>
           )}
-        />
+        </DialogHeader>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
-            Annuler
-          </Button>
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-28"
-          >
-            {isPending
-              ? isEditing ? 'Modification...' : 'Création...'
-              : isEditing ? 'Enregistrer' : "Créer l'élève"
-            }
-          </Button>
-        </div>
-      </form>
-    </Form>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+
+          {/* Prénom / Nom */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Prénom *</label>
+              <Input placeholder="Prénom" {...form.register('firstName')} />
+              {form.formState.errors.firstName && (
+                <p className="text-xs text-destructive mt-1">{form.formState.errors.firstName.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Nom de famille *</label>
+              <Input placeholder="Nom" {...form.register('lastName')} />
+              {form.formState.errors.lastName && (
+                <p className="text-xs text-destructive mt-1">{form.formState.errors.lastName.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Téléphone parent / Genre ou ID élève */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Téléphone du parent</label>
+              <Input placeholder="0X XX XX XX XX" {...form.register('parentPhone')} />
+            </div>
+            {isEditing && student.studentCustomId ? (
+              <div>
+                <label className="text-sm font-medium mb-1 block text-muted-foreground">ID Élève</label>
+                <Input value={student.studentCustomId} readOnly className="bg-muted/30 text-muted-foreground" />
+              </div>
+            ) : (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Genre *</label>
+                <select
+                  {...form.register('gender')}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+                >
+                  <option value="">Sélectionner le genre</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Genre (edit) + Date de naissance */}
+          {isEditing ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Genre</label>
+                <select
+                  {...form.register('gender')}
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Date de naissance</label>
+                <Input type="date" {...form.register('birthDate')} />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="text-sm font-medium mb-1 block">Date de naissance</label>
+              <Input type="date" {...form.register('birthDate')} />
+            </div>
+          )}
+
+          {/* Parents */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Parent 1 (Père)</label>
+              <Input placeholder="Nom du père" {...form.register('parentName1')} />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Parent 2 (Mère)</label>
+              <Input placeholder="Nom de la mère" {...form.register('parentName2')} />
+            </div>
+          </div>
+
+          {/* Statut actif */}
+          <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 border border-border">
+            <span className="text-sm text-muted-foreground">L&apos;élève est actuellement inscrit et actif</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-emerald-600">Inscrit</span>
+              <button
+                type="button"
+                onClick={() => form.setValue('isActive', !isActive)}
+                className={cn(
+                  'relative w-10 h-5 rounded-full transition-colors duration-200',
+                  isActive ? 'bg-emerald-500' : 'bg-gray-300'
+                )}
+              >
+                <span className={cn(
+                  'absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
+                  isActive ? 'translate-x-5' : 'translate-x-0'
+                )} />
+              </button>
+            </div>
+          </div>
+
+          {/* Paiements */}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Paiements</label>
+            <div className="flex gap-2">
+              {([1, 2, 3] as const).map(t => {
+                const val    = t === 1 ? paidT1 : t === 2 ? paidT2 : paidT3
+                const setVal = t === 1 ? setPaidT1 : t === 2 ? setPaidT2 : setPaidT3
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setVal(!val)}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors',
+                      val
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+                        : 'bg-white border-border text-muted-foreground'
+                    )}
+                  >
+                    {val && <span>✓</span>}
+                    Trimestre {t}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Emails */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Email 1</label>
+              <Input placeholder="Email principal" type="email" {...form.register('parentEmail1')} />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Email 2</label>
+              <Input placeholder="Email secondaire" type="email" {...form.register('parentEmail2')} />
+            </div>
+          </div>
+
+          {/* Numéro d'urgence */}
+          <div>
+            <label className="text-sm font-medium mb-1 block">Numéro d&apos;urgence</label>
+            <Input placeholder="Numéro d'urgence" {...form.register('emergencyPhone')} />
+          </div>
+
+          {/* Boutons */}
+          <div className={cn('flex items-center gap-2 pt-2', isEditing ? 'justify-between' : 'justify-end')}>
+            {isEditing && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={isDeleting}
+                onClick={handleDelete}
+              >
+                {isDeleting ? 'Suppression...' : "Supprimer l'élève"}
+              </Button>
+            )}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)}>
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isPending}
+                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-36"
+              >
+                {isPending ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }

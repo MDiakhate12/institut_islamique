@@ -1,23 +1,43 @@
 import { db } from '@/db'
 import { students, classEnrollments, classes } from '@/db/schema'
-import { eq, and, isNull, ilike, or, desc } from 'drizzle-orm'
+import { eq, and, isNull, desc } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
 import type { Student, StudentListItem } from './students.types'
 
+function generateCustomId(): string {
+  return `${Math.floor(Math.random() * 900_000_000 + 100_000_000)}-1`
+}
+
 export const studentsService = {
-  // READ — liste avec classe active
+  // READ — liste complète avec classe active + paiements
   async getBySchool(schoolId: string): Promise<StudentListItem[]> {
     const rows = await db
       .select({
-        id: students.id,
-        firstName: students.firstName,
-        lastName: students.lastName,
-        gender: students.gender,
-        birthDate: students.birthDate,
-        isActive: students.isActive,
-        createdAt: students.createdAt,
+        id:              students.id,
+        firstName:       students.firstName,
+        lastName:        students.lastName,
+        gender:          students.gender,
+        birthDate:       students.birthDate,
+        isActive:        students.isActive,
+        createdAt:       students.createdAt,
+        parentPhone:     students.parentPhone,
+        parentName1:     students.parentName1,
+        parentName2:     students.parentName2,
+        parentEmail1:    students.parentEmail1,
+        parentEmail2:    students.parentEmail2,
+        emergencyPhone:  students.emergencyPhone,
+        studentCustomId: students.studentCustomId,
+        notes:           students.notes,
+        // Classe active
         activeClassName: classes.name,
-        activeClassId: classes.id,
+        activeClassId:   classes.id,
+        academicYear:    classes.academicYear,
+        enrollmentId:    classEnrollments.id,
+        enrolledAt:      classEnrollments.enrolledAt,
+        // Paiements
+        paidT1: classEnrollments.paidT1,
+        paidT2: classEnrollments.paidT2,
+        paidT3: classEnrollments.paidT3,
       })
       .from(students)
       .leftJoin(
@@ -34,48 +54,57 @@ export const studentsService = {
     return rows
   },
 
-  // READ — un seul élève
   async getById(schoolId: string, studentId: string): Promise<Student | null> {
     const [student] = await db
       .select()
       .from(students)
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
       .limit(1)
-
     return student ?? null
   },
 
-  // CREATE
   async create(schoolId: string, data: CreateStudentInput): Promise<Student> {
     const [student] = await db
       .insert(students)
       .values({
         ...data,
         schoolId,
-        birthDate: data.birthDate ?? null,
-        notes: data.notes ?? null,
+        birthDate:    data.birthDate    || null,
+        parentPhone:  data.parentPhone  || null,
+        parentName1:  data.parentName1  || null,
+        parentName2:  data.parentName2  || null,
+        parentEmail1: data.parentEmail1 || null,
+        parentEmail2: data.parentEmail2 || null,
+        emergencyPhone: data.emergencyPhone || null,
+        studentCustomId: generateCustomId(),
+        notes:        data.notes        || null,
       })
       .returning()
-
     return student
   },
 
-  // UPDATE
-  async update(
-    schoolId: string,
-    studentId: string,
-    data: UpdateStudentInput
-  ): Promise<Student> {
+  async update(schoolId: string, studentId: string, data: UpdateStudentInput): Promise<Student> {
     const [updated] = await db
       .update(students)
       .set({ ...data, updatedAt: new Date() })
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
       .returning()
-
     return updated
   },
 
-  // SOFT DELETE — on désactive plutôt que supprimer
+  // Mise à jour du statut de paiement d'une inscription
+  async updateEnrollmentPayments(
+    enrollmentId: string,
+    paidT1: boolean,
+    paidT2: boolean,
+    paidT3: boolean,
+  ): Promise<void> {
+    await db
+      .update(classEnrollments)
+      .set({ paidT1, paidT2, paidT3 })
+      .where(eq(classEnrollments.id, enrollmentId))
+  },
+
   async deactivate(schoolId: string, studentId: string): Promise<void> {
     await db
       .update(students)
@@ -83,13 +112,9 @@ export const studentsService = {
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
   },
 
-  // COUNT
-  async countBySchool(schoolId: string): Promise<number> {
-    const result = await db
-      .select({ id: students.id })
-      .from(students)
-      .where(and(eq(students.schoolId, schoolId), eq(students.isActive, true)))
-
-    return result.length
+  async delete(schoolId: string, studentId: string): Promise<void> {
+    await db
+      .delete(students)
+      .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
   },
 }

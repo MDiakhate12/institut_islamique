@@ -1,260 +1,406 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useStudents, useDeactivateStudent } from '@/modules/students/students.hooks'
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
-import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Users, Plus, Download, MoreHorizontal, Pencil, UserX, Search } from 'lucide-react'
+import { Users, Plus, Download, MoreHorizontal, Pencil, UserX, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
+import { StudentFormDialog } from './StudentForm'
 import type { StudentListItem } from '@/modules/students/students.types'
 
 type GenderFilter = 'all' | 'male' | 'female'
 type ActiveFilter = 'all' | 'active' | 'inactive'
+type SortKey = 'name' | 'birthDate' | null
+
+function calcAge(birthDate: string | null | undefined): string {
+  if (!birthDate) return '—'
+  const birth = new Date(birthDate)
+  const now = new Date()
+  const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+  return `${Math.floor(totalMonths / 12)}a ${totalMonths % 12}m`
+}
 
 export function StudentsClient() {
-  const router = useRouter()
   const { data: students, isLoading } = useStudents()
   const { mutate: deactivate } = useDeactivateStudent()
 
-  const [search, setSearch] = useState('')
+  const [search, setSearch]             = useState('')
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all')
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all')
+  const [sortKey, setSortKey]           = useState<SortKey>(null)
+  const [sortAsc, setSortAsc]           = useState(true)
 
   const filtered = useMemo(() => {
     if (!students) return []
-    return students.filter(s => {
+    let list = students.filter(s => {
       if (genderFilter !== 'all' && s.gender !== genderFilter) return false
-      if (activeFilter === 'active' && !s.isActive) return false
-      if (activeFilter === 'inactive' && s.isActive) return false
+      if (activeFilter === 'active'   && !s.isActive) return false
+      if (activeFilter === 'inactive' && s.isActive)  return false
       if (search) {
         const q = search.toLowerCase()
         return (
           s.firstName.toLowerCase().includes(q) ||
-          s.lastName.toLowerCase().includes(q)
+          s.lastName.toLowerCase().includes(q) ||
+          (s.parentPhone ?? '').includes(q) ||
+          (s.studentCustomId ?? '').toLowerCase().includes(q)
         )
       }
       return true
     })
-  }, [students, search, genderFilter, activeFilter])
+    if (sortKey === 'name') {
+      list = [...list].sort((a, b) =>
+        (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName) * (sortAsc ? 1 : -1)
+      )
+    } else if (sortKey === 'birthDate') {
+      list = [...list].sort((a, b) =>
+        ((a.birthDate ?? '') < (b.birthDate ?? '') ? -1 : 1) * (sortAsc ? 1 : -1)
+      )
+    }
+    return list
+  }, [students, search, genderFilter, activeFilter, sortKey, sortAsc])
 
-  function handleDeactivate(student: StudentListItem) {
-    deactivate(student.id, {
-      onSuccess: (result) => {
-        if (!result.success) toast.error(result.error)
-      },
-    })
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortAsc(p => !p)
+    else { setSortKey(key); setSortAsc(true) }
   }
 
+  function handleDeactivate(id: string) {
+    deactivate(id, { onSuccess: r => { if (!r.success) toast.error(r.error) } })
+  }
+
+  const total = students?.length ?? 0
+
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Élèves"
-        count={students?.length}
-        actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-green-600 text-green-700 hover:bg-green-50"
-              onClick={() => students && exportStudentsToExcel(students)}
-            >
-              <Download className="h-4 w-4 mr-1.5" />
-              Télécharger en Excel
-            </Button>
-            <Button
-              size="sm"
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
-              onClick={() => router.push('/admin-portal/students/new')}
-            >
-              <Plus className="h-4 w-4 mr-1.5" />
-              Créer un nouvel élève
-            </Button>
-          </>
-        }
-      />
+    <div className="p-6 space-y-4">
 
-      {/* Filtres */}
-      <div className="flex items-center gap-3 flex-wrap">
-        {/* Recherche */}
-        <div className="relative flex-1 min-w-48 max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un élève..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-8 h-8 text-sm"
+      {/* ── En-tête ── */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Élèves</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Gérer les inscriptions et les profils des élèves</p>
+          {!isLoading && <p className="text-xs text-muted-foreground mt-1">{total} élève{total !== 1 ? 's' : ''}</p>}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline" size="sm"
+            className="border-green-600 text-green-700 hover:bg-green-50 gap-1.5"
+            onClick={() => students && exportStudentsToExcel(students)}
+          >
+            <Download className="h-4 w-4" />
+            Télécharger en Excel
+          </Button>
+          <StudentFormDialog
+            trigger={
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#c2440f] hover:bg-[#a33a0d] text-white rounded-md transition-colors">
+                <Plus className="h-4 w-4" />
+                Créer un nouvel élève
+              </button>
+            }
           />
-        </div>
-
-        {/* Chips genre */}
-        <div className="flex gap-1.5">
-          {(['all', 'male', 'female'] as GenderFilter[]).map(g => (
-            <button
-              key={g}
-              onClick={() => setGenderFilter(g)}
-              className={cn(
-                'h-7 px-3 rounded-full text-xs font-medium transition-colors border',
-                genderFilter === g
-                  ? g === 'male' ? 'bg-blue-500 text-white border-blue-500'
-                    : g === 'female' ? 'bg-pink-500 text-white border-pink-500'
-                    : 'bg-foreground text-background border-foreground'
-                  : 'bg-white text-muted-foreground border-border hover:border-foreground/30'
-              )}
-            >
-              {g === 'all' ? 'Tous' : g === 'male' ? 'Garçons' : 'Filles'}
-            </button>
-          ))}
-        </div>
-
-        {/* Chips actif */}
-        <div className="flex gap-1.5">
-          {(['all', 'active', 'inactive'] as ActiveFilter[]).map(a => (
-            <button
-              key={a}
-              onClick={() => setActiveFilter(a)}
-              className={cn(
-                'h-7 px-3 rounded-full text-xs font-medium transition-colors border',
-                activeFilter === a
-                  ? a === 'active' ? 'bg-green-500 text-white border-green-500'
-                    : a === 'inactive' ? 'bg-red-400 text-white border-red-400'
-                    : 'bg-foreground text-background border-foreground'
-                  : 'bg-white text-muted-foreground border-border hover:border-foreground/30'
-              )}
-            >
-              {a === 'all' ? 'Tous' : a === 'active' ? 'Inscrits' : 'Inactifs'}
-            </button>
-          ))}
         </div>
       </div>
 
-      {/* Tableau */}
-      {isLoading ? (
-        <StudentsSkeleton />
-      ) : filtered.length === 0 ? (
+      {/* ── Recherche ── */}
+      <div className="relative">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input
+          type="text"
+          placeholder="Rechercher des élèves, numéros de téléphone, identifiants, IDs de classe..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 focus:border-[#c2440f]/50"
+        />
+      </div>
+
+      {/* ── Dropdowns + chips ── */}
+      <div className="flex items-center flex-wrap gap-3">
+        <select className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer">
+          <option>Toutes les années</option>
+          <option>2025-2026</option><option>2024-2025</option>
+        </select>
+        {[1, 2, 3].map(t => (
+          <select key={t} className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer">
+            <option>Trimestre {t} : Tous les statuts</option>
+            <option>Trimestre {t} : Payé</option>
+            <option>Trimestre {t} : Non payé</option>
+          </select>
+        ))}
+        {/* Chips genre */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">Genre :</span>
+          <button onClick={() => setGenderFilter(genderFilter === 'male' ? 'all' : 'male')} title="Garçons"
+            className={cn('h-5 w-5 rounded-full border-2 transition-all', genderFilter === 'male' ? 'bg-blue-500 border-blue-500' : 'border-blue-400 bg-white')} />
+          <button onClick={() => setGenderFilter(genderFilter === 'female' ? 'all' : 'female')} title="Filles"
+            className={cn('h-5 w-5 rounded-full border-2 transition-all', genderFilter === 'female' ? 'bg-pink-400 border-pink-400' : 'border-pink-400 bg-white')} />
+        </div>
+        {/* Chips inscrit */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">Inscrit :</span>
+          <button onClick={() => setActiveFilter(activeFilter === 'active' ? 'all' : 'active')} title="Inscrits"
+            className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'active' ? 'bg-green-500 border-green-500' : 'border-green-400 bg-white')} />
+          <button onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')} title="Non inscrits"
+            className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'inactive' ? 'bg-red-400 border-red-400' : 'border-red-400 bg-white')} />
+        </div>
+        <select className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer">
+          <option>Age</option>
+        </select>
+      </div>
+
+      {/* ── Tableau ── */}
+      {isLoading ? <StudentsSkeleton /> : filtered.length === 0 ? (
         <EmptyState
           icon={Users}
           title={search ? 'Aucun élève trouvé' : 'Aucun élève pour le moment'}
-          description={search ? 'Essayez un autre terme de recherche.' : 'Commencez par créer votre premier élève.'}
-          action={
-            !search ? (
-              <Button
-                size="sm"
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
-                onClick={() => router.push('/admin-portal/students/new')}
-              >
-                <Plus className="h-4 w-4 mr-1.5" />
-                Créer un élève
-              </Button>
-            ) : undefined
-          }
+          description={search ? 'Essayez un autre terme.' : 'Créez votre premier élève.'}
+          action={!search ? (
+            <StudentFormDialog
+              trigger={
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#c2440f] hover:bg-[#a33a0d] text-white rounded-md transition-colors">
+                  <Plus className="h-4 w-4" /> Créer un élève
+                </button>
+              }
+            />
+          ) : undefined}
         />
       ) : (
-        <div className="rounded-lg border border-border overflow-hidden bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30">
-                <TableHead className="font-semibold">Nom</TableHead>
-                <TableHead className="font-semibold">Genre</TableHead>
-                <TableHead className="font-semibold">Date de naissance</TableHead>
-                <TableHead className="font-semibold">Classe</TableHead>
-                <TableHead className="font-semibold">Statut</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map(student => (
-                <TableRow
-                  key={student.id}
-                  className="cursor-pointer hover:bg-muted/20"
-                  onClick={() => router.push(`/admin-portal/students/${student.id}`)}
-                >
-                  <TableCell className="font-medium">
-                    {student.lastName} {student.firstName}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={student.gender} />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {student.birthDate
-                      ? new Date(student.birthDate).toLocaleDateString('fr-FR')
-                      : '—'}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {student.activeClassName ?? (
-                      <span className="text-muted-foreground italic">Non inscrit</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={student.isActive ? 'active' : 'inactive'} />
-                  </TableCell>
-                  <TableCell onClick={e => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="cursor-pointer"
-                          onClick={() => router.push(`/admin-portal/students/${student.id}`)}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Modifier
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          className="cursor-pointer"
-                          onClick={() => handleDeactivate(student)}
-                        >
-                          <UserX className="mr-2 h-4 w-4" />
-                          Désactiver
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="rounded-lg border border-border bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
+                  <th className="px-3 py-3 text-left w-8">#</th>
+                  <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} />
+                  <th className="px-3 py-3 text-left">Étoiles</th>
+                  <th className="px-3 py-3 text-left">Trophée</th>
+                  <th className="px-3 py-3 text-left">Numéro de téléphone</th>
+                  <SortTh label="Date de naissance" onClick={() => toggleSort('birthDate')} />
+                  <th className="px-3 py-3 text-left min-w-[160px]">Nom du parent 1</th>
+                  <th className="px-3 py-3 text-left min-w-[160px]">Nom du parent 2</th>
+                  <th className="px-3 py-3 text-left">Nb. classes</th>
+                  <th className="px-3 py-3 text-left">Classes</th>
+                  <th className="px-3 py-3 text-left">Trimestre 1</th>
+                  <th className="px-3 py-3 text-left">Trimestre 2</th>
+                  <th className="px-3 py-3 text-left">Trimestre 3</th>
+                  <th className="px-3 py-3 text-left">Statut</th>
+                  <th className="px-3 py-3 text-left">Présent</th>
+                  <th className="px-3 py-3 text-left">En retard</th>
+                  <th className="px-3 py-3 text-left">Absent</th>
+                  <th className="px-3 py-3 text-left">Excusé</th>
+                  <th className="px-3 py-3 text-left min-w-[110px]">Année d&apos;inscription</th>
+                  <th className="px-3 py-3 text-left min-w-[110px]">Date d&apos;adhésion</th>
+                  <th className="px-3 py-3 text-left min-w-[130px]">Numéro d&apos;urgence</th>
+                  <th className="px-3 py-3 text-left min-w-[130px]">Commentaire</th>
+                  <th className="px-3 py-3 text-left min-w-[220px]">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((s, i) => (
+                  <StudentRow key={s.id} student={s} index={i} onDeactivate={handleDeactivate} />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
   )
 }
 
+function SortTh({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <th className="px-3 py-3 text-left font-semibold min-w-[180px]">
+      <button onClick={onClick} className="flex items-center gap-1 hover:text-foreground transition-colors uppercase tracking-wide text-xs">
+        {label} <ArrowUpDown className="h-3 w-3" />
+      </button>
+    </th>
+  )
+}
+
+function StudentRow({ student: s, index, onDeactivate }: {
+  student: StudentListItem
+  index: number
+  onDeactivate: (id: string) => void
+}) {
+  return (
+    <tr className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors">
+      <td className="px-3 py-3 text-muted-foreground text-xs">{index + 1}.</td>
+
+      {/* Nom + ID */}
+      <td className="px-3 py-3">
+        <div className="flex items-start gap-2">
+          <div className={cn('mt-1.5 h-2 w-2 rounded-full shrink-0', s.isActive ? 'bg-blue-500' : 'bg-gray-300')} />
+          <div>
+            <p className="font-semibold text-foreground">{s.lastName} {s.firstName}</p>
+            {s.studentCustomId && (
+              <p className="text-xs text-muted-foreground mt-0.5">ID : {s.studentCustomId}</p>
+            )}
+          </div>
+        </div>
+      </td>
+
+      {/* Étoiles */}
+      <td className="px-3 py-3"><span className="text-amber-500">⭐</span> 0</td>
+
+      {/* Trophée */}
+      <td className="px-3 py-3 text-muted-foreground text-xs italic">Pas encore</td>
+
+      {/* Téléphone */}
+      <td className="px-3 py-3 font-medium">{s.parentPhone ?? <span className="text-muted-foreground">—</span>}</td>
+
+      {/* Date naissance */}
+      <td className="px-3 py-3">
+        {s.birthDate ? (
+          <div>
+            <p className="font-medium">{calcAge(s.birthDate)}</p>
+            <p className="text-xs text-muted-foreground">
+              {new Date(s.birthDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </p>
+          </div>
+        ) : <span className="text-muted-foreground">—</span>}
+      </td>
+
+      {/* Parent 1 */}
+      <td className="px-3 py-3">
+        {s.parentName1 ? (
+          <div>
+            <p className="font-medium text-xs">{s.parentName1}</p>
+            {s.parentEmail1 && <p className="text-xs text-muted-foreground">{s.parentEmail1}</p>}
+          </div>
+        ) : <span className="text-muted-foreground">—</span>}
+      </td>
+
+      {/* Parent 2 */}
+      <td className="px-3 py-3">
+        {s.parentName2 ? (
+          <div>
+            <p className="font-medium text-xs">{s.parentName2}</p>
+            {s.parentEmail2 && <p className="text-xs text-muted-foreground">{s.parentEmail2}</p>}
+          </div>
+        ) : <span className="text-muted-foreground">—</span>}
+      </td>
+
+      {/* Nb classes */}
+      <td className="px-3 py-3 text-center">
+        <span className="font-medium">{s.activeClassId ? '1' : '0'}</span>
+        <span className="text-xs text-muted-foreground ml-1">classe</span>
+      </td>
+
+      {/* Classe */}
+      <td className="px-3 py-3">
+        {s.activeClassName
+          ? <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">{s.activeClassName}</span>
+          : <span className="text-muted-foreground text-xs italic">—</span>}
+      </td>
+
+      {/* Paiements T1/T2/T3 */}
+      <td className="px-3 py-3"><PaymentBadge paid={s.paidT1} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paidT2} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paidT3} /></td>
+
+      {/* Statut */}
+      <td className="px-3 py-3">
+        <span className={cn(
+          'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
+          s.isActive ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
+        )}>
+          {s.isActive ? 'Inscrit' : 'Inactif'}
+        </span>
+      </td>
+
+      {/* Présences (placeholder) */}
+      <td className="px-3 py-3 text-center text-muted-foreground">—</td>
+      <td className="px-3 py-3 text-center text-muted-foreground">—</td>
+      <td className="px-3 py-3 text-center text-muted-foreground">—</td>
+      <td className="px-3 py-3 text-center text-muted-foreground">—</td>
+
+      {/* Année inscription */}
+      <td className="px-3 py-3 text-xs">{s.academicYear ?? '—'}</td>
+
+      {/* Date adhésion */}
+      <td className="px-3 py-3 text-xs text-muted-foreground">
+        {s.enrolledAt
+          ? new Date(s.enrolledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+          : new Date(s.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+      </td>
+
+      {/* Urgence */}
+      <td className="px-3 py-3 text-xs">{s.emergencyPhone ?? <span className="text-muted-foreground italic">Non renseigné</span>}</td>
+
+      {/* Notes */}
+      <td className="px-3 py-3 text-xs text-muted-foreground">
+        {s.notes ?? <span className="italic">Cliquer pour ajouter</span>}
+      </td>
+
+      {/* Actions */}
+      <td className="px-3 py-3">
+        <div className="flex items-center gap-1.5">
+          <ActionBtn label="Report Card"    color="blue"  />
+          <ActionBtn label="Présences"      color="green" />
+          <ActionBtn label="Payments"       color="green" />
+          <ActionBtn label="Homework"       color="green" />
+          <StudentFormDialog
+            student={s as unknown as import('@/modules/students/students.types').Student}
+            trigger={
+              <button className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors">
+                <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M4 16l-.5 4 4-.5 9.293-9.293-3.536-3.536L4 16z" />
+                </svg>
+              </button>
+            }
+          />
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+function ActionBtn({ label, color }: { label: string; color: 'blue' | 'green' }) {
+  const cls = color === 'blue'
+    ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
+    : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+  return (
+    <button className={cn('inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium transition-colors', cls)}>
+      {label}
+    </button>
+  )
+}
+
+function PaymentBadge({ paid }: { paid: boolean | null | undefined }) {
+  return paid
+    ? <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">Payé</span>
+    : <span className="text-muted-foreground text-xs">—</span>
+}
+
 function StudentsSkeleton() {
   return (
-    <div className="rounded-lg border border-border overflow-hidden bg-white">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/30">
-            {['Nom', 'Genre', 'Date de naissance', 'Classe', 'Statut', ''].map(h => (
-              <TableHead key={h} className="font-semibold">{h}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <TableRow key={i}>
-              {Array.from({ length: 6 }).map((_, j) => (
-                <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+    <div className="rounded-lg border border-border bg-white overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/20">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <th key={i} className="px-3 py-3"><Skeleton className="h-3 w-20" /></th>
               ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <tr key={i} className="border-b border-border/50">
+                {Array.from({ length: 10 }).map((_, j) => (
+                  <td key={j} className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

@@ -9,6 +9,7 @@ export const profiles = pgTable('profiles', {
   userId: uuid('user_id').notNull().unique(),
   fullName: text('full_name'),
   phone: text('phone'),
+  gender: text('gender'),   // 'male' | 'female' | null
   avatarUrl: text('avatar_url'),
   preferredLanguage: text('preferred_language').default('fr'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

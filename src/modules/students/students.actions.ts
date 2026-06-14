@@ -91,3 +91,19 @@ export async function deactivateStudentAction(
     return err("Impossible de désactiver l'élève.")
   }
 }
+
+export async function deleteStudentAction(
+  studentId: string
+): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return unauthorized()
+
+  try {
+    await studentsService.delete(session.schoolId, studentId)
+    revalidatePath(ROUTES.admin.students)
+    return ok(undefined)
+  } catch (e) {
+    console.error('[deleteStudentAction]', e)
+    return err("Impossible de supprimer l'élève.")
+  }
+}

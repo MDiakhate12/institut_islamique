@@ -78,6 +78,9 @@ export const ROUTES = {
     startNewYear: '/admin-portal/start-new-year',
     roadmap: '/admin-portal/roadmap',
     schoolSettings: '/admin-portal/school-settings',
+    profile: '/admin-portal/profile',
+    tv: '/admin-portal/tv',
+    rankings: '/admin-portal/rankings',
   },
   teacher: {
     root: '/teacher-portal',

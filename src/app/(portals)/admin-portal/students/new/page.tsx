@@ -1,18 +1,8 @@
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader'
-import { StudentForm } from '../StudentForm'
-
-export const metadata = { title: 'Créer un élève — Qaf School' }
+// La création se fait via le dialog sur la page /students
+// Cette page redirige vers la liste
+import { redirect } from 'next/navigation'
+import { ROUTES } from '@/lib/constants'
 
 export default function NewStudentPage() {
-  return (
-    <div className="max-w-2xl">
-      <PageHeader
-        title="Créer un nouvel élève"
-        subtitle="Renseignez les informations de l'élève"
-      />
-      <div className="bg-white rounded-xl border border-border p-6">
-        <StudentForm />
-      </div>
-    </div>
-  )
+  redirect(ROUTES.admin.students)
 }

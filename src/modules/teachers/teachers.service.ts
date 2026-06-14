@@ -19,6 +19,7 @@ export const teachersService = {
         createdAt: schoolMembers.createdAt,
         fullName: profiles.fullName,
         phone: profiles.phone,
+        gender: profiles.gender,
         avatarUrl: profiles.avatarUrl,
       })
       .from(schoolMembers)
@@ -59,6 +60,7 @@ export const teachersService = {
     return members.map(m => ({
       ...m,
       teacherType: m.teacherType as 'volunteer' | 'paid' | null,
+      gender: m.gender ?? null,
       createdAt: m.createdAt,
       email: emailMap.get(m.userId) ?? '',
       classCount: classCountMap.get(m.id) ?? 0,
@@ -77,6 +79,7 @@ export const teachersService = {
         createdAt: schoolMembers.createdAt,
         fullName: profiles.fullName,
         phone: profiles.phone,
+        gender: profiles.gender,
         avatarUrl: profiles.avatarUrl,
       })
       .from(schoolMembers)
@@ -90,6 +93,7 @@ export const teachersService = {
     return {
       ...member,
       teacherType: member.teacherType as 'volunteer' | 'paid' | null,
+      gender: member.gender ?? null,
       createdAt: member.createdAt,
       email: user?.email ?? '',
     }
@@ -109,10 +113,10 @@ export const teachersService = {
     // 2. Créer ou mettre à jour le profil
     await db
       .insert(profiles)
-      .values({ userId, fullName: data.fullName, phone: data.phone ?? null })
+      .values({ userId, fullName: data.fullName, phone: data.phone ?? null, gender: data.gender ?? null })
       .onConflictDoUpdate({
         target: profiles.userId,
-        set: { fullName: data.fullName, phone: data.phone ?? null, updatedAt: new Date() },
+        set: { fullName: data.fullName, phone: data.phone ?? null, gender: data.gender ?? null, updatedAt: new Date() },
       })
 
     // 3. Créer le school_member avec rôle teacher
@@ -137,12 +141,13 @@ export const teachersService = {
       createdAt: member.createdAt,
       fullName: data.fullName,
       phone: data.phone ?? null,
+      gender: data.gender ?? null,
       avatarUrl: null,
       email: data.email,
     }
   },
 
-  // UPDATE — modifier profil + type
+  // UPDATE — modifier profil + type + statut
   async update(schoolId: string, memberId: string, data: UpdateTeacherInput): Promise<void> {
     // Récupérer userId
     const [member] = await db
@@ -153,11 +158,14 @@ export const teachersService = {
 
     if (!member) throw new Error('Enseignant introuvable')
 
-    // Mettre à jour school_members si teacherType change
-    if (data.teacherType !== undefined) {
+    // Mettre à jour school_members (type + statut actif)
+    const memberUpdate: Record<string, unknown> = {}
+    if (data.teacherType !== undefined) memberUpdate.teacherType = data.teacherType
+    if (data.isActive !== undefined) memberUpdate.isPending = !data.isActive
+    if (Object.keys(memberUpdate).length > 0) {
       await db
         .update(schoolMembers)
-        .set({ teacherType: data.teacherType })
+        .set(memberUpdate)
         .where(eq(schoolMembers.id, memberId))
     }
 
@@ -167,6 +175,7 @@ export const teachersService = {
       .set({
         ...(data.fullName && { fullName: data.fullName }),
         ...(data.phone !== undefined && { phone: data.phone }),
+        ...(data.gender !== undefined && { gender: data.gender }),
         updatedAt: new Date(),
       })
       .where(eq(profiles.userId, member.userId))

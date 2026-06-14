@@ -1,65 +1,40 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import { useTeachers, useRemoveTeacher } from '@/modules/teachers/teachers.hooks'
-import { PageHeader } from '@/components/shared/PageHeader/PageHeader'
-import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
-import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge'
-import { TeacherInviteForm } from './TeacherInviteForm'
+import { useTeachers } from '@/modules/teachers/teachers.hooks'
+import { TeacherFormDialog } from './TeacherForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Users, Plus, Download, MoreHorizontal, Pencil, UserMinus, Search,
-  BookOpen, Mail, Phone,
-} from 'lucide-react'
+import { Download, Search, Mail, Phone, Pencil, Copy, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportTeachersToExcel } from './teachers.excel'
 import type { TeacherListItem } from '@/modules/teachers/teachers.types'
+import type { Teacher } from '@/modules/teachers/teachers.types'
 
-type TypeFilter = 'all' | 'volunteer' | 'paid'
-type StatusFilter = 'all' | 'active' | 'pending'
+// ── Filter state ────────────────────────────────────────────────────────────
+type GenderFilter   = 'male' | 'female' | null
+type ActiveFilter   = true | false | null
+type BenevolFilter  = true | false | null
 
-function getInitials(fullName: string | null): string {
-  if (!fullName) return '?'
-  return fullName
-    .split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function shortId(id: string) {
+  return id.replace(/-/g, '').slice(0, 8).toUpperCase()
 }
 
 export function TeachersClient() {
-  const router = useRouter()
   const { data: teachers, isLoading } = useTeachers()
-  const { mutate: remove } = useRemoveTeacher()
 
-  const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
-  const [inviteOpen, setInviteOpen] = useState(false)
+  const [search,       setSearch]       = useState('')
+  const [genderFilter, setGenderFilter] = useState<GenderFilter>(null)
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>(null)
+  const [benevolFilter,setBenevolFilter]= useState<BenevolFilter>(null)
 
   const filtered = useMemo(() => {
     if (!teachers) return []
     return teachers.filter(t => {
-      if (typeFilter !== 'all' && t.teacherType !== typeFilter) return false
-      if (statusFilter === 'active' && t.isPending) return false
-      if (statusFilter === 'pending' && !t.isPending) return false
+      if (genderFilter !== null && t.gender !== genderFilter) return false
+      if (activeFilter !== null && !t.isPending !== activeFilter) return false
+      if (benevolFilter !== null && (t.teacherType === 'volunteer') !== benevolFilter) return false
       if (search) {
         const q = search.toLowerCase()
         return (
@@ -70,263 +45,251 @@ export function TeachersClient() {
       }
       return true
     })
-  }, [teachers, search, typeFilter, statusFilter])
-
-  function handleRemove(teacher: TeacherListItem) {
-    if (!confirm(`Retirer ${teacher.fullName ?? 'cet enseignant'} de l'école ?`)) return
-    remove(teacher.id, {
-      onSuccess: (result) => {
-        if (!result.success) toast.error(result.error)
-      },
-    })
-  }
+  }, [teachers, search, genderFilter, activeFilter, benevolFilter])
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Enseignants"
-        count={teachers?.length}
-        actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-green-600 text-green-700 hover:bg-green-50"
-              onClick={() => teachers && exportTeachersToExcel(teachers)}
-              disabled={!teachers?.length}
-            >
-              <Download className="h-4 w-4 mr-1.5" />
-              Télécharger en Excel
-            </Button>
-            <Button
-              size="sm"
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
-              onClick={() => setInviteOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-1.5" />
-              Créer un nouvel enseignant
-            </Button>
-          </>
-        }
-      />
-
-      {/* Filtres */}
-      <div className="flex items-center gap-3 flex-wrap">
-        {/* Recherche */}
-        <div className="relative flex-1 min-w-48 max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un enseignant..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-8 h-8 text-sm"
-          />
-        </div>
-
-        {/* Chips type */}
-        <div className="flex gap-1.5">
-          {([
-            { value: 'all',       label: 'Tous' },
-            { value: 'volunteer', label: 'Bénévoles' },
-            { value: 'paid',      label: 'Payés' },
-          ] as { value: TypeFilter; label: string }[]).map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => setTypeFilter(value)}
-              className={cn(
-                'h-7 px-3 rounded-full text-xs font-medium transition-colors border',
-                typeFilter === value
-                  ? value === 'volunteer' ? 'bg-purple-500 text-white border-purple-500'
-                    : value === 'paid'      ? 'bg-green-500 text-white border-green-500'
-                    : 'bg-foreground text-background border-foreground'
-                  : 'bg-white text-muted-foreground border-border hover:border-foreground/30'
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Chips statut */}
-        <div className="flex gap-1.5">
-          {([
-            { value: 'all',     label: 'Tous' },
-            { value: 'active',  label: 'Actifs' },
-            { value: 'pending', label: 'En attente' },
-          ] as { value: StatusFilter; label: string }[]).map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => setStatusFilter(value)}
-              className={cn(
-                'h-7 px-3 rounded-full text-xs font-medium transition-colors border',
-                statusFilter === value
-                  ? value === 'active'  ? 'bg-green-500 text-white border-green-500'
-                    : value === 'pending' ? 'bg-orange-400 text-white border-orange-400'
-                    : 'bg-foreground text-background border-foreground'
-                  : 'bg-white text-muted-foreground border-border hover:border-foreground/30'
-              )}
-            >
-              {label}
-            </button>
-          ))}
+    <div className="p-6 space-y-4">
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h1 className="text-xl font-semibold text-foreground">
+          Enseignants{' '}
+          {teachers && (
+            <span className="text-sm font-normal text-muted-foreground">
+              ({teachers.length} enseignant{teachers.length !== 1 ? 's' : ''})
+            </span>
+          )}
+        </h1>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-green-600 text-green-700 hover:bg-green-50 gap-1.5"
+            onClick={() => teachers && exportTeachersToExcel(teachers)}
+            disabled={!teachers?.length}
+          >
+            <Download className="h-4 w-4" />
+            Télécharger en Excel
+          </Button>
+          <TeacherFormDialog />
         </div>
       </div>
 
-      {/* Grille de cartes */}
+      {/* ── Search ── */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher un enseignant par nom, ID ou email..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-9 h-9"
+        />
+      </div>
+
+      {/* ── Filter chips ── */}
+      <div className="flex items-center gap-4 flex-wrap text-sm">
+        {/* Genre */}
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-xs">Genre :</span>
+          <CircleChip
+            color="bg-blue-500"
+            active={genderFilter === 'male'}
+            onClick={() => setGenderFilter(genderFilter === 'male' ? null : 'male')}
+            title="Masculin"
+          />
+          <CircleChip
+            color="bg-pink-400"
+            active={genderFilter === 'female'}
+            onClick={() => setGenderFilter(genderFilter === 'female' ? null : 'female')}
+            title="Féminin"
+          />
+        </div>
+
+        {/* Actif */}
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-xs">Actif :</span>
+          <CircleChip
+            color="bg-emerald-500"
+            active={activeFilter === true}
+            onClick={() => setActiveFilter(activeFilter === true ? null : true)}
+            title="Actif"
+          />
+          <CircleChip
+            color="bg-red-400"
+            active={activeFilter === false}
+            onClick={() => setActiveFilter(activeFilter === false ? null : false)}
+            title="Inactif"
+          />
+        </div>
+
+        {/* Bénévole */}
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-xs">Bénévole :</span>
+          <CircleChip
+            color="bg-emerald-500"
+            active={benevolFilter === true}
+            onClick={() => setBenevolFilter(benevolFilter === true ? null : true)}
+            title="Bénévole"
+          />
+          <CircleChip
+            color="bg-yellow-400"
+            active={benevolFilter === false}
+            onClick={() => setBenevolFilter(benevolFilter === false ? null : false)}
+            title="Payé"
+          />
+        </div>
+      </div>
+
+      {/* ── Cards grid ── */}
       {isLoading ? (
         <TeachersSkeleton />
       ) : filtered.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title={search ? 'Aucun enseignant trouvé' : 'Aucun enseignant pour le moment'}
-          description={
-            search
-              ? 'Essayez un autre terme de recherche.'
-              : 'Invitez votre premier enseignant par email.'
-          }
-          action={
-            !search ? (
-              <Button
-                size="sm"
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
-                onClick={() => setInviteOpen(true)}
-              >
-                <Plus className="h-4 w-4 mr-1.5" />
-                Inviter un enseignant
-              </Button>
-            ) : undefined
-          }
-        />
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="font-medium text-foreground">Aucun enseignant trouvé</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {search ? 'Essayez un autre terme de recherche.' : 'Créez votre premier enseignant.'}
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(teacher => (
-            <TeacherCard
-              key={teacher.id}
-              teacher={teacher}
-              onEdit={() => router.push(`/admin-portal/teachers/${teacher.id}`)}
-              onRemove={() => handleRemove(teacher)}
-            />
+            <TeacherCard key={teacher.id} teacher={teacher} />
           ))}
         </div>
       )}
-
-      {/* Dialog invitation */}
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Inviter un enseignant</DialogTitle>
-          </DialogHeader>
-          <TeacherInviteForm
-            onSuccess={() => setInviteOpen(false)}
-            onCancel={() => setInviteOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
 
-interface TeacherCardProps {
-  teacher: TeacherListItem
-  onEdit: () => void
-  onRemove: () => void
+// ── CircleChip ──────────────────────────────────────────────────────────────
+function CircleChip({ color, active, onClick, title }: {
+  color: string
+  active: boolean
+  onClick: () => void
+  title: string
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className={cn(
+        'w-5 h-5 rounded-full transition-all',
+        color,
+        active ? 'ring-2 ring-offset-1 ring-foreground/40 scale-110' : 'opacity-60 hover:opacity-90'
+      )}
+    />
+  )
 }
 
-function TeacherCard({ teacher, onEdit, onRemove }: TeacherCardProps) {
-  return (
-    <div
-      className="bg-white rounded-xl border border-border p-5 flex flex-col gap-4 hover:shadow-sm transition-shadow cursor-pointer"
-      onClick={onEdit}
-    >
-      {/* En-tête : avatar + nom + menu */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-11 w-11 shrink-0">
-            <AvatarImage src={teacher.avatarUrl ?? undefined} alt={teacher.fullName ?? ''} />
-            <AvatarFallback className="bg-[#f9e8d8] text-[#7a4f30] font-semibold text-sm">
-              {getInitials(teacher.fullName)}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-semibold text-sm leading-tight">
-              {teacher.fullName ?? <span className="italic text-muted-foreground">Sans nom</span>}
-            </p>
-            {teacher.isPending && (
-              <span className="text-xs text-orange-600 font-medium">En attente d'activation</span>
-            )}
-          </div>
-        </div>
+// ── TeacherCard ─────────────────────────────────────────────────────────────
+function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
+  const isActive   = !teacher.isPending
+  const isVolunteer = teacher.teacherType === 'volunteer'
+  const id          = shortId(teacher.id)
 
-        <div onClick={e => e.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted shrink-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem className="cursor-pointer" onClick={onEdit}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Modifier
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                className="cursor-pointer"
-                onClick={onRemove}
-              >
-                <UserMinus className="mr-2 h-4 w-4" />
-                Retirer de l'école
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+  return (
+    <div className="bg-white rounded-xl border border-border p-4 flex flex-col gap-3 hover:shadow-sm transition-shadow">
+
+      {/* Row 1: Name + badges */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+          <span className="font-semibold text-sm truncate">
+            {teacher.fullName ?? <span className="italic text-muted-foreground">Sans nom</span>}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {teacher.teacherType && (
+            <span className={cn(
+              'text-xs px-2 py-0.5 rounded-full font-medium border',
+              isVolunteer
+                ? 'text-emerald-700 bg-emerald-50 border-emerald-300'
+                : 'text-blue-700 bg-blue-50 border-blue-300'
+            )}>
+              {isVolunteer ? 'Volunteer' : '$Paid'}
+            </span>
+          )}
+          <span className={cn(
+            'text-xs px-2 py-0.5 rounded-full font-medium',
+            isActive
+              ? 'bg-emerald-500 text-white'
+              : 'bg-orange-100 text-orange-700'
+          )}>
+            {isActive ? 'Active' : 'En attente'}
+          </span>
         </div>
       </div>
 
-      {/* Infos de contact */}
-      <div className="space-y-1.5 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2 truncate">
+      {/* Row 2: ID + copy */}
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="font-mono">{id}</span>
+        <button
+          type="button"
+          title="Copier l'ID"
+          onClick={() => navigator.clipboard.writeText(teacher.id)}
+          className="hover:text-foreground transition-colors"
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+      </div>
+
+      {/* Row 3: Active class (if any) */}
+      {teacher.classCount > 0 && (
+        <div className="flex items-center gap-1.5">
+          <BookOpen className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+          <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full truncate">
+            {teacher.classCount} classe{teacher.classCount !== 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+
+      {/* Row 4: Contact */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Mail className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">{teacher.email}</span>
         </div>
         {teacher.phone && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Phone className="h-3.5 w-3.5 shrink-0" />
             <span>{teacher.phone}</span>
           </div>
         )}
       </div>
 
-      {/* Badges pied de carte */}
-      <div className="flex items-center justify-between pt-1 border-t border-border/60">
-        <div className="flex gap-1.5 flex-wrap">
-          {teacher.teacherType && (
-            <StatusBadge status={teacher.teacherType} />
-          )}
-        </div>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <BookOpen className="h-3.5 w-3.5" />
-          <span>{teacher.classCount} classe{teacher.classCount !== 1 ? 's' : ''}</span>
-        </div>
+      {/* Row 5: Edit button */}
+      <div className="flex justify-end pt-1 border-t border-border/50">
+        <TeacherFormDialog
+          teacher={teacher as unknown as Teacher}
+          trigger={
+            <button
+              type="button"
+              className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          }
+        />
       </div>
     </div>
   )
 }
 
+// ── Skeleton ─────────────────────────────────────────────────────────────────
 function TeachersSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-xl border border-border p-5 space-y-4 animate-pulse">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-full bg-muted" />
-            <div className="space-y-1.5 flex-1">
-              <div className="h-3.5 bg-muted rounded w-3/4" />
-              <div className="h-3 bg-muted rounded w-1/2" />
-            </div>
+        <div key={i} className="bg-white rounded-xl border border-border p-4 space-y-3 animate-pulse">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-muted" />
+            <div className="h-3.5 bg-muted rounded w-2/3" />
           </div>
-          <div className="space-y-2">
+          <div className="h-3 bg-muted rounded w-1/3" />
+          <div className="space-y-1.5">
             <div className="h-3 bg-muted rounded w-full" />
             <div className="h-3 bg-muted rounded w-2/3" />
           </div>
-          <div className="h-3 bg-muted rounded w-1/3 pt-1" />
         </div>
       ))}
     </div>

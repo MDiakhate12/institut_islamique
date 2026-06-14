@@ -5,17 +5,21 @@ import { schools } from './schools'
 import { schoolMembers } from './auth'
 
 export const genderEnum = pgEnum('gender', ['male', 'female'])
-export const classTypeEnum = pgEnum('class_type', ['quran', 'nuraniyah'])
 
 // Catalogue global — 36 modèles, sans school_id
+// subjectCode : 'QRN' | 'ARA' | 'ISL' | 'NUR' | custom
+// levelNumber : '100', '101', '201' … (texte pour flexibilité)
+// code        : composite unique ex. 'QRN-100'
 export const classCatalog = pgTable('class_catalog', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  code: text('code').notNull().unique(),
-  name: text('name').notNull(),
-  type: classTypeEnum('type').notNull(),
-  level: text('level'),
-  description: text('description'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  id:           uuid('id').primaryKey().defaultRandom(),
+  code:         text('code').notNull().unique(),   // 'QRN-100'
+  subjectCode:  text('subject_code').notNull(),    // 'QRN', 'ARA', 'ISL', 'NUR'…
+  levelNumber:  text('level_number'),              // '100', '101'…
+  name:         text('name').notNull(),            // nom complet affiché
+  nextClassId:  uuid('next_class_id'),             // self-ref géré en app layer
+  curriculum:   text('curriculum'),                // HTML riche du programme
+  createdAt:    timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:    timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const students = pgTable('students', {
@@ -28,6 +32,15 @@ export const students = pgTable('students', {
   profilePhotoUrl: text('profile_photo_url'),
   notes: text('notes'),
   isActive: boolean('is_active').notNull().default(true),
+  // Informations famille
+  parentPhone:   text('parent_phone'),
+  parentName1:   text('parent_name_1'),
+  parentName2:   text('parent_name_2'),
+  parentEmail1:  text('parent_email_1'),
+  parentEmail2:  text('parent_email_2'),
+  emergencyPhone: text('emergency_phone'),
+  // ID élève affiché (ex : 625432895-1)
+  studentCustomId: text('student_custom_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   createdBy: uuid('created_by'),
@@ -44,6 +57,7 @@ export const classes = pgTable('classes', {
   schoolId: uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
   catalogClassId: uuid('catalog_class_id').references(() => classCatalog.id),
   teacherId: uuid('teacher_id').references(() => schoolMembers.id),
+  assistantTeacherId: uuid('assistant_teacher_id').references(() => schoolMembers.id),
   name: text('name').notNull(),
   room: text('room'),
   section: text('section'),
@@ -64,4 +78,8 @@ export const classEnrollments = pgTable('class_enrollments', {
   schoolId: uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
   enrolledAt: timestamp('enrolled_at', { withTimezone: true }).defaultNow().notNull(),
   unenrolledAt: timestamp('unenrolled_at', { withTimezone: true }),
+  // Statut de paiement par trimestre
+  paidT1: boolean('paid_t1').notNull().default(false),
+  paidT2: boolean('paid_t2').notNull().default(false),
+  paidT3: boolean('paid_t3').notNull().default(false),
 })

@@ -16,6 +16,7 @@ export type Teacher = {
   // Depuis profiles
   fullName: string | null
   phone: string | null
+  gender: string | null
   avatarUrl: string | null
   // Depuis auth.users (email)
   email: string
