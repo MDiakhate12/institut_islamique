@@ -11,12 +11,13 @@ import {
   StickyNote, Mail, UserSquare2, Megaphone, Cake,
   Monitor, Trophy, Tv,
   Settings, Shield, RefreshCw, UserCog, Sparkles, Lightbulb,
-  Home, Search, ChevronDown, ChevronRight, ChevronLeft,
+  Home, Search, ChevronDown, ChevronRight, ChevronLeft, User,
   MessageCircle, DollarSign,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import type { Session } from '@/lib/auth/session'
+import { UserProfileDialog } from './UserProfileDialog'
 
 interface NavItem {
   label: string
@@ -100,9 +101,10 @@ function getInitials(name: string): string {
 interface SidebarProps {
   session: Session
   userFullName?: string | null
+  schoolName?: string | null
 }
 
-export function Sidebar({ session, userFullName }: SidebarProps) {
+export function Sidebar({ session, userFullName, schoolName }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -263,34 +265,62 @@ export function Sidebar({ session, userFullName }: SidebarProps) {
         ))}
       </nav>
 
-      {/* ── Infos utilisateur ── */}
-      {!collapsed && (
-        <div className="px-4 py-3 border-t border-white/20 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-full bg-white/25 flex items-center justify-center
-                            text-white text-xs font-bold shrink-0 border border-white/30">
-              {getInitials(displayName)}
-            </div>
-            <div className="min-w-0">
-              <p className="text-white text-sm font-medium truncate">{displayName}</p>
-              <p className="text-white/60 text-xs truncate">{session.email}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Bas de sidebar : user + home ── */}
+      <div className="shrink-0 border-t border-white/20">
 
-      {/* ── Accueil du portail (sticky bas) ── */}
-      <div className="sticky bottom-0 p-4 border-t border-white/20 bg-[#8B4429] z-20 shrink-0">
-        <Link
-          href={ROUTES.admin.root}
-          className={cn(
-            'flex items-center gap-2.5 text-white/90 hover:text-white transition-colors text-sm font-medium',
-            collapsed ? 'justify-center' : ''
-          )}
-        >
-          <Home className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>Accueil du portail</span>}
-        </Link>
+        {/* User block — cliquable → ouvre le dialog profil */}
+        {!collapsed && (
+          <UserProfileDialog
+            session={session}
+            userFullName={userFullName}
+            schoolName={schoolName}
+          >
+            <div className="flex items-center gap-2.5 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer w-full">
+              <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center
+                              text-white text-xs font-bold shrink-0 border border-white/30">
+                {getInitials(displayName)
+                  ? <span>{getInitials(displayName)}</span>
+                  : <User className="h-4 w-4 text-white/80" />
+                }
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-white text-sm font-semibold truncate leading-tight">{displayName}</p>
+                <p className="text-white/60 text-xs truncate">{session.email}</p>
+              </div>
+            </div>
+          </UserProfileDialog>
+        )}
+
+        {collapsed && (
+          <UserProfileDialog
+            session={session}
+            userFullName={userFullName}
+            schoolName={schoolName}
+          >
+            <div className="flex justify-center py-3 hover:bg-white/10 transition-colors cursor-pointer">
+              <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center
+                              text-white text-xs font-bold border border-white/30">
+                {getInitials(displayName) || <User className="h-4 w-4 text-white/80" />}
+              </div>
+            </div>
+          </UserProfileDialog>
+        )}
+
+        {/* Accueil du portail */}
+        <div className="px-3 pb-3">
+          <Link
+            href={ROUTES.admin.root}
+            className={cn(
+              'flex items-center gap-2.5 w-full px-4 py-2.5 rounded-xl',
+              'bg-white/15 hover:bg-white/25 border border-white/20',
+              'text-white text-sm font-medium transition-colors',
+              collapsed ? 'justify-center px-2' : ''
+            )}
+          >
+            <Home className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Accueil du portail</span>}
+          </Link>
+        </div>
       </div>
     </div>
   )

@@ -13,7 +13,7 @@ export function PortalLayout({ children, session, schoolName, userFullName }: Po
   return (
     // Pas d'overflow-hidden ici → le bouton collapse de la sidebar peut déborder
     <div className="flex h-[100dvh]">
-      <Sidebar session={session} userFullName={userFullName} />
+      <Sidebar session={session} userFullName={userFullName} schoolName={schoolName} />
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         <TopBar session={session} schoolName={schoolName} userFullName={userFullName} />
         {/* bg-[#FFF8F0] = fond crème warm des pages intérieures */}
