@@ -1,25 +1,63 @@
 # Qaf School — Instructions permanentes pour Claude Code
 
-> Ce fichier est lu par Claude Code à chaque session. Il contient tout le contexte
-> nécessaire pour travailler sur ce projet sans briefing verbal. Ne jamais le supprimer.
-> Le mettre à jour dès qu'une décision d'architecture change.
+> **Ce fichier est lu par Claude Code à chaque session.**
+> Il contient tout le contexte nécessaire pour travailler sur ce projet sans briefing verbal.
+> Ne jamais le supprimer. Le mettre à jour dès qu'une décision d'architecture change.
+> Plusieurs développeurs travaillent sur ce projet avec leur propre session Claude — ce fichier est le seul briefing commun.
+
+---
+
+## 0. Comment travailler avec Claude Code sur ce projet
+
+### Workflow standard pour coder une nouvelle page
+
+1. **Aller sur le site de référence** : https://www.qaf.app/admin-portal  
+   Se connecter et naviguer jusqu'à la page à reproduire.
+
+2. **Prendre des screenshots manuellement** (c'est le développeur qui le fait, pas Claude).  
+   Capturer tous les états de la page : liste vide, liste remplie, modal ouvert, états d'erreur, etc.
+
+3. **Créer un dossier de screenshots** avec la convention de nommage suivante :
+   ```
+   admin_<nom_de_la_page>    → pour les pages du portail admin
+   teacher_<nom_de_la_page>  → pour les pages du portail enseignant
+   parent_<nom_de_la_page>   → pour les pages du portail parent
+   public_<nom>              → pour les pages publiques
+
+   Exemples : admin_students, admin_budget, teacher_attendance, parent_homework
+   ```
+
+4. **Dans la session Claude Code**, ajouter le dossier de screenshots au contexte (drag & drop ou "Add to context").
+
+5. **Écrire le prompt** en décrivant la page à construire. Claude dispose alors du visuel exact ET du contexte complet de ce fichier.
+
+### Ce que Claude ne fait jamais dans ce projet
+- Ne prend jamais de screenshot de lui-même
+- Ne propose jamais d'architecture différente de celle décrite ici sans le signaler explicitement
+- Ne touche jamais aux fichiers du schéma Drizzle sans vérifier qu'une migration est nécessaire
+
+### Avant de commencer une tâche
+Lire ces sections en priorité :
+- **Section 4** — Conventions de code (règles absolues)
+- **Section 7** — Décisions d'architecture (pièges connus)
+- **Section 9** — État d'avancement (quoi est déjà construit)
 
 ---
 
 ## 1. Contexte produit
 
 **Qaf School** est une application SaaS de gestion scolaire islamique multi-tenant.
-Site actuel de référence : https://www.qaf.app/admin-portal
+Site de référence : https://www.qaf.app/admin-portal
 
 ### Ce que fait l'application
 Chaque école (tenant) gère indépendamment :
-- Ses élèves, enseignants et classes (Coran / Nuraniyah)
+- Ses élèves, enseignants et classes (Coran / Nuraniyah / Arabe / Islamique)
 - Les présences, devoirs, notes d'examens et étoiles (système gamifié)
 - Sa comptabilité (frais de scolarité, dépenses)
 - Ses communications (annonces, emails aux parents)
 - Son calendrier académique
-- Un catalogue de classes pré-définies (34 modèles disponibles)
-- Des inscriptions en ligne via formulaires configurables
+- Un catalogue de classes pré-définies (**36 modèles** disponibles)
+- Des inscriptions en ligne via formulaires configurables (form builder)
 - Une TV mode (affichage mural)
 
 ### Rôles utilisateur
@@ -28,46 +66,49 @@ Un même compte peut cumuler plusieurs rôles simultanément :
 - **Teacher (Enseignant)** — accès au portail enseignant (ses classes uniquement)
 - **Parent** — accès au portail parent (ses enfants uniquement)
 
-### Données de l'école de référence (Grande Mosquée Lyon Ouest / Attawba)
-Observées lors de l'audit visuel (juin 2026), utiles pour tester :
-- **Admin** : Abdeslam Ouili (salim.ouili@gmail.com, 0625432895, membre depuis April 13 2026)
-- **Rôles cumulés** : School Admin + Enseignant + Parent sur le même compte
-- **École** : Attawba (identifiant interne), jours de classe : Dimanche + Samedi
+Sous-rôles admin (exclusifs) :
+- `admin` → accès complet
+- `treasurer` → Budget, Dépenses, Élèves, Annonces uniquement
+- `manager` → admin complet SAUF Budget & Dépenses
+
+### École de référence pour les tests (Attawba / Grande Mosquée Lyon Ouest)
+- **Admin** : Abdeslam Ouili — salim.ouili@gmail.com — 0625432895
+- **Rôles** : School Admin + Enseignant + Parent (cumulés sur le même compte)
+- **Slug** : `attawba`
+- **School ID** : `46ab59d0-5078-465d-af56-e9e88db6d71e`
+- Jours de classe : Dimanche + Samedi
 - 1 élève : Chahine BENYAHIA (classe QRN-402-1, famille OUILI)
 - 3 enseignants : Aliou SY (bénévole), Aliou SYY (payé), assam (bénévole)
 - 1 classe active : "Advanced Surahs – From Juz'01 to Juz'24" (QRN-402-1, Room 1)
-- Budget : 270€ — 1 paiement Tuition / Annually / Check, statut Vérifié, soumis par Abdeslam Ouili
-- Catalogue : **36 classes** disponibles (non 34)
-- Permissions : 1 admin (Abdeslam Ouili) + 1 pending (lahbak.inttic@gmail.com)
+- Budget : 270€ — 1 paiement Tuition / Annually / Check — Vérifié
 
 ---
 
 ## 2. Stack technique
 
-| Couche | Technologie | Raison |
+| Couche | Technologie | Notes |
 |---|---|---|
-| Framework | **Next.js 15 — App Router** | Server Components natifs, Server Actions, routing moderne |
-| Langage | **TypeScript strict** | Types = documentation fiable pour l'IA |
-| Base de données | **Supabase (PostgreSQL)** | Relationnel, RLS multi-tenant natif, remplace Firebase |
-| ORM | **Drizzle ORM** | Schéma TypeScript pur, AI-friendly, léger, Next.js 15 natif |
-| Auth | **Supabase Auth** | JWT, multi-providers, RLS intégré, remplace Firebase Auth |
-| Storage | **Supabase Storage** | Fichiers, photos profil, remplace Firebase Storage |
-| UI components | **Shadcn/ui** | Composants dans le codebase, modifiables directement |
-| Styling | **Tailwind CSS v4** | Vocabulaire de design cohérent et lisible par l'IA |
-| Validation | **Zod** | Schémas = source de vérité pour types + validation |
-| Formulaires | **React Hook Form + Zod** | Intégration native, pas de logique de form custom |
-| State serveur | **Server Actions + TanStack Query** | Pas de Redux, pas de Zustand global |
-| Email | **Resend** | API email transactionnel, templates React, remplace Gmail OAuth |
-| Déploiement | **Vercel** | Edge functions, intégration Next.js native |
+| Framework | **Next.js 16 — App Router** | Server Components, Server Actions, `proxy.ts` (pas `middleware.ts`) |
+| Langage | **TypeScript strict** | Types inférés depuis Drizzle — jamais définis manuellement |
+| Base de données | **Supabase (PostgreSQL)** | RLS multi-tenant, remplace Firebase |
+| ORM | **Drizzle ORM** | Schéma dans `src/db/schema/`, source de vérité absolue |
+| Auth | **Supabase Auth** | JWT, session gérée via `src/lib/auth/session.ts` |
+| Storage | **Supabase Storage** | Photos profil, logos école |
+| UI components | **Shadcn/ui v4** | Basé sur **@base-ui/react** (pas Radix) — voir section 7 |
+| Styling | **Tailwind CSS v4** | Pas de CSS modules, pas de style inline |
+| Validation | **Zod** | Schémas = source de vérité types + validation formulaires |
+| Formulaires | **React Hook Form + Zod** | Intégration native |
+| State serveur | **TanStack Query v5 + Server Actions** | Pas de Redux, pas de Zustand |
+| IDs client | **nanoid** | Pour générer des IDs dans les composants client |
+| Drag & Drop | **@dnd-kit/core + @dnd-kit/sortable** | Utilisé dans le FormBuilder |
+| Email | **Resend** | API email transactionnel |
+| Déploiement | **Vercel** | |
 
-> **ADR** : voir `docs/decisions/ADR-002-supabase-drizzle.md` pour le raisonnement complet.
-
-### Pourquoi Supabase + Drizzle (et pas Firebase)
-- PostgreSQL = JOIN, transactions ACID, rapports complexes natifs
-- Row Level Security = isolation multi-tenant au niveau base de données (plus sûr que du code)
-- Auth + Storage + DB dans un seul service (même DX que Firebase, mais relationnel)
-- Drizzle = schéma en TypeScript pur → Claude peut lire et modifier le schéma directement
-- Types générés automatiquement depuis le schéma → zéro désynchronisation types/DB
+### Supabase Drizzle — connexion DB
+```
+postgresql://postgres:2qZWrDUaQrHYzZRL@db.nlsltdzoqustykrldaxh.supabase.co:5432/postgres
+```
+Scripts disponibles : `db:push`, `db:migrate`, `db:studio`, `db:generate`
 
 ---
 
@@ -75,88 +116,117 @@ Observées lors de l'audit visuel (juin 2026), utiles pour tester :
 
 ```
 src/
-├── app/                          # Routes Next.js (App Router uniquement)
-│   ├── (auth)/                   # Login, register, reset password
+├── app/
+│   ├── (auth)/                       # Login, reset password
 │   │   └── login/page.tsx
-│   ├── (portals)/                # Route group — layout avec sidebar
-│   │   ├── layout.tsx            # Layout partagé portails
-│   │   ├── admin-portal/         # Portail School Admin
-│   │   │   ├── page.tsx          # Dashboard d'accueil
-│   │   │   ├── students/
-│   │   │   ├── teachers/
-│   │   │   ├── classes/
-│   │   │   ├── track-exams/
-│   │   │   ├── attendance/
-│   │   │   ├── homework/
-│   │   │   ├── track-stars/
-│   │   │   ├── class-catalog/
-│   │   │   ├── academic-calendar/
-│   │   │   ├── reports/
-│   │   │   ├── book-tracking/
-│   │   │   ├── substitutions/
-│   │   │   ├── registrations/
-│   │   │   ├── registration-forms/
+│   ├── (portals)/                    # Layout partagé avec sidebar
+│   │   ├── layout.tsx
+│   │   ├── admin-portal/             # Portail School Admin
+│   │   │   ├── page.tsx
+│   │   │   ├── students/             # ✅ Construit
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── new/page.tsx
+│   │   │   │   ├── [id]/page.tsx
+│   │   │   │   ├── StudentsClient.tsx
+│   │   │   │   ├── StudentForm.tsx
+│   │   │   │   └── students.excel.ts
+│   │   │   ├── teachers/             # ✅ Construit
+│   │   │   ├── classes/              # ✅ Construit
+│   │   │   ├── class-catalog/        # ✅ Construit (avec DnD, classe précédente/suivante)
+│   │   │   │   ├── ClassCatalogClient.tsx
+│   │   │   │   └── ClassCatalogForm.tsx
+│   │   │   ├── academic-calendar/    # ✅ Construit
+│   │   │   │   ├── AcademicCalendarClient.tsx
+│   │   │   │   ├── EventFormDialog.tsx
+│   │   │   │   └── EventDetailDialog.tsx
+│   │   │   ├── registration-forms/   # ✅ Construit (form builder complet)
+│   │   │   │   ├── FormBuilder.tsx
+│   │   │   │   ├── RegistrationFormsClient.tsx
+│   │   │   │   ├── AddFieldDialog.tsx
+│   │   │   │   ├── AddInfoBlockDialog.tsx
+│   │   │   │   ├── AddSectionDialog.tsx
+│   │   │   │   └── RichTextEditor.tsx
+│   │   │   ├── registrations/        # ✅ Construit (liste)
+│   │   │   ├── school-settings/      # ✅ Construit
+│   │   │   ├── track-exams/          # ❌ À construire
+│   │   │   ├── attendance/           # ❌ À construire
+│   │   │   ├── homework/             # ❌ À construire
+│   │   │   ├── track-stars/          # ❌ À construire
+│   │   │   ├── reports/              # ❌ À construire
+│   │   │   ├── book-tracking/        # ❌ À construire
+│   │   │   ├── substitutions/        # ❌ À construire
 │   │   │   ├── finance/
-│   │   │   │   ├── budget/
-│   │   │   │   └── expenses/
+│   │   │   │   ├── budget/           # ❌ À construire
+│   │   │   │   └── expenses/         # ❌ À construire
 │   │   │   ├── communication/
-│   │   │   │   └── send-email/
-│   │   │   ├── announcements/        # URL directe (pas sous /communication/)
-│   │   │   ├── parents/              # URL directe (pas sous /communication/)
-│   │   │   ├── sticky-notes/
-│   │   │   ├── birthdays/
-│   │   │   ├── permissions/          # Gestion admins/trésoriers/gestionnaires
-│   │   │   ├── start-new-year/       # Wizard nouvelle année académique
-│   │   │   ├── roadmap/              # Demandes de fonctionnalités (votes)
-│   │   │   └── school-settings/      # Paramètres école (remplace /settings)
-│   │   └── teacher-portal/       # Portail Enseignant
-│   │   └── parent-portal/        # Portail Parent
-│   └── api/                      # API routes si besoin (webhooks, etc.)
+│   │   │   │   └── send-email/       # ❌ À construire
+│   │   │   ├── announcements/        # ❌ À construire
+│   │   │   ├── parents/              # ❌ À construire
+│   │   │   ├── sticky-notes/         # ❌ À construire
+│   │   │   ├── birthdays/            # ❌ À construire
+│   │   │   ├── permissions/          # ❌ À construire
+│   │   │   ├── start-new-year/       # ❌ À construire
+│   │   │   └── roadmap/              # ❌ À construire
+│   │   ├── teacher-portal/           # ❌ À construire
+│   │   └── parent-portal/            # ❌ À construire
+│   └── portal/
+│       └── register/[schoolSlug]/    # ✅ Portail public d'inscription
+│           ├── layout.tsx
+│           ├── page.tsx              # Nouvel élève
+│           ├── PublicRegistrationForm.tsx
+│           ├── reenroll/page.tsx     # Réinscription
+│           └── success/page.tsx
 │
-├── modules/                      # Logique métier par domaine — CŒUR DU PROJET
-│   ├── students/
-│   │   ├── students.types.ts
-│   │   ├── students.schema.ts
-│   │   ├── students.service.ts
-│   │   ├── students.actions.ts
-│   │   └── students.hooks.ts
-│   ├── teachers/
-│   ├── classes/
-│   ├── attendance/
-│   ├── homework/
-│   ├── exams/
-│   ├── stars/
-│   ├── finance/
-│   ├── communication/
-│   ├── registrations/
-│   ├── calendar/
-│   └── school/                   # Tenant / paramètres école
+├── modules/                          # Logique métier — CŒUR DU PROJET
+│   ├── students/     ✅ (types, schema, service, actions, hooks)
+│   ├── teachers/     ✅
+│   ├── classes/      ✅ (inclut class_catalog et class_enrollments)
+│   ├── calendar/     ✅
+│   ├── registrations/ ✅ (form builder + soumission publique)
+│   ├── school/       ✅ (paramètres, settings JSONB)
+│   ├── attendance/   ❌
+│   ├── exams/        ❌
+│   ├── finance/      ❌
+│   ├── homework/     ❌
+│   ├── stars/        ❌
+│   ├── substitutions/ ❌
+│   ├── communication/ ❌
+│   └── books/        ❌
 │
 ├── components/
-│   ├── ui/                       # Composants Shadcn (générés, ne pas modifier manuellement)
-│   ├── shared/                   # Composants réutilisables custom
-│   │   ├── DataTable/            # Tableau générique avec tri/filtre/export
-│   │   ├── PageHeader/           # En-tête de page standardisé
-│   │   ├── StatusBadge/          # Badge coloré statut
-│   │   ├── EmptyState/           # État vide avec illustration
-│   │   ├── ConfirmDialog/        # Modale de confirmation destructive
-│   │   └── ExcelExportButton/    # Bouton export Excel (présent partout)
+│   ├── ui/                           # Shadcn/ui (ne pas modifier)
+│   ├── shared/                       # Composants réutilisables custom
 │   └── layouts/
 │       ├── Sidebar/
+│       │   ├── Sidebar.tsx           # Sidebar dépliable avec UserProfileDialog
+│       │   └── UserProfileDialog.tsx # Dialog profil/déconnexion (clic sur bloc user)
 │       ├── Header/
 │       └── PortalLayout/
 │
-├── lib/
-│   ├── firebase/
-│   │   ├── config.ts             # Initialisation Firebase client
-│   │   ├── admin.ts              # Firebase Admin SDK (server uniquement)
-│   │   └── client.ts             # Helpers client (getDoc, etc.)
-│   ├── utils.ts                  # Fonctions utilitaires générales
-│   ├── constants.ts              # Constantes globales (rôles, statuts, etc.)
-│   └── result.ts                 # Pattern Result<T, E>
+├── db/
+│   ├── schema/
+│   │   ├── index.ts       # Export centralisé
+│   │   ├── schools.ts     # Table schools + type SchoolSettings
+│   │   ├── auth.ts        # profiles, school_members
+│   │   ├── academic.ts    # students, classes, class_catalog, class_enrollments
+│   │   ├── tracking.ts    # attendance, homework, exams, stars
+│   │   ├── finance.ts     # payments, expenses
+│   │   ├── communication.ts # announcements
+│   │   └── operations.ts  # registrations, registration_forms, substitutions,
+│   │                      # academic_events, book_tracking, sticky_notes
+│   └── index.ts           # Client Drizzle
 │
-└── types/
-    └── index.ts                  # Types globaux (User, School, Role, etc.)
+└── lib/
+    ├── auth/
+    │   ├── session.ts      # requireSession() — à appeler dans chaque page protégée
+    │   ├── permissions.ts  # Guards par rôle
+    │   └── admin.ts        # Supabase Admin SDK
+    ├── supabase/
+    │   ├── server.ts       # Client server-side
+    │   └── client.ts       # Client browser-side
+    ├── result.ts           # Pattern ActionResult<T>
+    ├── utils.ts            # cn(), helpers
+    └── constants.ts        # Constantes globales
 ```
 
 ---
@@ -165,504 +235,419 @@ src/
 
 ### 4.1 Nommage des fichiers
 ```
-Composants React       → PascalCase          StudentCard.tsx
-Hooks                  → camelCase + use      useStudents.ts
-Server Actions         → camelCase + Action   createStudentAction.ts
-Services               → camelCase + Service  studentsService.ts (dans module)
-Types/Interfaces       → PascalCase + Type    StudentType ou IStudent
-Schémas Zod            → camelCase + Schema   studentSchema
-Pages Next.js          → lowercase kebab      /students/[id]/page.tsx
+Composants React        → PascalCase           StudentCard.tsx
+Hooks                   → camelCase + use       useStudents.ts
+Server Actions          → fichier .actions.ts   students.actions.ts
+Services                → fichier .service.ts   students.service.ts
+Schémas Zod             → fichier .schema.ts    students.schema.ts
+Types                   → fichier .types.ts     students.types.ts
+Pages Next.js           → lowercase kebab       /students/[id]/page.tsx
+Dossiers de screenshots → admin_<page>          admin_students, parent_homework
 ```
 
 ### 4.2 Structure obligatoire d'un module
-Quand tu crées ou modifies un module, respecter strictement cet ordre :
+Respecter cet ordre dans chaque module :
 
 ```typescript
-// 1. [module].types.ts — TOUJOURS en premier
-export interface StudentType {
+// 1. [module].types.ts
+export type Student = {
   id: string
-  schoolId: string          // Toujours présent — isolation tenant
+  schoolId: string   // ← TOUJOURS présent — isolation tenant
   firstName: string
-  lastName: string
   // ...
-  createdAt: Timestamp
-  updatedAt: Timestamp
 }
 
-// 2. [module].schema.ts — Schéma Zod qui infère les types de formulaire
+// 2. [module].schema.ts
 import { z } from 'zod'
-export const createStudentSchema = z.object({
-  firstName: z.string().min(1, 'Prénom requis'),
-  lastName: z.string().min(1, 'Nom requis'),
-  // ...
-})
+export const createStudentSchema = z.object({ ... })
 export type CreateStudentInput = z.infer<typeof createStudentSchema>
 
-// 3. [module].service.ts — SEUL endroit pour toucher Firebase
-import { adminDb } from '@/lib/firebase/admin'
+// 3. [module].service.ts — SEUL endroit qui touche Drizzle/DB
+import { db } from '@/db'
 export const studentsService = {
-  async getBySchool(schoolId: string): Promise<StudentType[]> { ... },
-  async getById(schoolId: string, studentId: string): Promise<StudentType | null> { ... },
-  async create(schoolId: string, data: CreateStudentInput): Promise<StudentType> { ... },
-  async update(schoolId: string, id: string, data: Partial<StudentType>): Promise<void> { ... },
-  async delete(schoolId: string, id: string): Promise<void> { ... },
+  async getBySchool(schoolId: string): Promise<Student[]> { ... },
+  async create(schoolId: string, data: CreateStudentInput): Promise<Student> { ... },
 }
 
 // 4. [module].actions.ts — Server Actions qui appellent le service
 'use server'
-import { studentsService } from './students.service'
-export async function getStudentsAction(schoolId: string): Promise<ActionResult<StudentType[]>> { ... }
-
-// 5. [module].hooks.ts — React hooks côté client
-'use client'
-import { useQuery } from '@tanstack/react-query'
-export function useStudents(schoolId: string) {
-  return useQuery({ queryKey: ['students', schoolId], queryFn: ... })
-}
-```
-
-### 4.3 Pattern Result — gestion d'erreurs uniformisée
-**Ne jamais** faire de try/catch dans un composant React. Toujours utiliser :
-
-```typescript
-// src/lib/result.ts
-export type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string }
-
-// Dans une Server Action
-export async function createStudentAction(input: CreateStudentInput): Promise<ActionResult<StudentType>> {
+import { requireSession } from '@/lib/auth/session'
+import { ok, err } from '@/lib/result'
+export async function getStudentsAction(): Promise<ActionResult<Student[]>> {
+  const session = await requireSession()
   try {
-    const student = await studentsService.create(schoolId, input)
-    return { success: true, data: student }
-  } catch (error) {
-    return { success: false, error: 'Erreur lors de la création de l\'élève' }
+    const data = await studentsService.getBySchool(session.schoolId)
+    return ok(data)
+  } catch (e) {
+    return err('Erreur lors du chargement')
   }
 }
 
-// Dans un composant
-const result = await createStudentAction(data)
-if (!result.success) {
-  toast.error(result.error)
-  return
+// 5. [module].hooks.ts — React hooks côté client
+'use client'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+export function useStudents() {
+  return useQuery({ queryKey: ['students'], queryFn: () => getStudentsAction().then(r => r.data) })
 }
-// result.data est typé correctement ici
 ```
 
-### 4.4 Règles Supabase/Drizzle — absolues
-- ❌ Ne jamais importer le client Supabase directement dans un composant React
-- ❌ Ne jamais appeler la DB dans un hook React (passer par Server Actions)
-- ✅ Tout accès DB passe par `src/modules/[module]/[module].service.ts` via Drizzle
-- ✅ Le client Supabase Admin (service role) uniquement dans les Server Actions et API routes
-- ✅ Toutes les tables ont une colonne `school_id` + RLS policy correspondante
-- ✅ Le schéma Drizzle est la source de vérité — jamais de SQL brut en dehors de migrations
-- ✅ Les types TypeScript sont inférés depuis le schéma Drizzle (`$inferSelect`, `$inferInsert`)
+### 4.3 Pattern ActionResult — gestion d'erreurs
+
+```typescript
+// src/lib/result.ts
+export type ActionResult<T> = { success: true; data: T } | { success: false; error: string }
+export const ok  = <T>(data: T): ActionResult<T>  => ({ success: true, data })
+export const err = (e: string): ActionResult<never> => ({ success: false, error: e })
+export const unauthorized = () => err('Non autorisé')
+
+// Dans un composant client — ne jamais faire de try/catch ici
+const result = await someAction()
+if (!result.success) { toast.error(result.error); return }
+// result.data est typé ici
+```
+
+### 4.4 Règles DB / Drizzle — absolues
+- ❌ Jamais importer Supabase/Drizzle directement dans un composant React ou un hook
+- ❌ Jamais de SQL brut en dehors des migrations
+- ✅ Tout accès DB passe par `src/modules/[module]/[module].service.ts`
+- ✅ Toutes les tables ont une colonne `school_id`
+- ✅ Le schéma Drizzle (`src/db/schema/`) est la source de vérité absolue
+- ✅ Inférer les types depuis Drizzle : `$inferSelect`, `$inferInsert` (ne pas les réécrire)
 
 ### 4.5 Composants — règles
-- Préférer les **Server Components** par défaut
-- Ajouter `'use client'` uniquement si nécessaire (interactivité, hooks, formulaires)
-- Un composant = un fichier. Pas de composants inline dans les pages.
-- Les pages (`page.tsx`) sont légères : elles importent des composants, n'ont pas de JSX complexe
-- Toujours utiliser les composants **Shadcn** pour l'UI de base avant d'en créer un custom
+- Server Components par défaut ; `'use client'` uniquement si nécessaire
+- Un composant = un fichier
+- Les `page.tsx` sont légères : data fetching + passage de props à un composant client
+- Toujours Shadcn en premier, composant custom uniquement si Shadcn ne suffit pas
 
 ### 4.6 Styling — règles
-- ❌ Jamais de style inline (`style={{ color: 'red' }}`)
-- ❌ Jamais de fichiers CSS modules custom (sauf exception justifiée)
-- ✅ Classes Tailwind exclusivement
-- ✅ Utiliser les tokens sémantiques définis dans `tailwind.config.ts` (voir section Design)
-- ✅ `cn()` de `lib/utils.ts` pour les classes conditionnelles
+- ❌ Jamais de style inline `style={{ ... }}`
+- ❌ Jamais de fichiers CSS modules (sauf exception justifiée — ex: calendar.css)
+- ✅ Tailwind exclusivement
+- ✅ `cn()` de `@/lib/utils` pour les classes conditionnelles
 
 ---
 
 ## 5. Design system
 
-### Palette de couleurs (identité Qaf School — à définir dans tailwind.config.ts)
-```typescript
-colors: {
-  qaf: {
-    // Brun chaud — couleur principale sidebar et accents
-    brown: {
-      50:  '#fdf6f0',
-      100: '#f9e8d8',
-      500: '#9c6b47',
-      700: '#7a4f30',
-      900: '#3d2415',
-    },
-    // Beige/Crème — fond des pages contenu
-    cream: {
-      50:  '#fefcf8',
-      100: '#fdf5e8',
-      200: '#f9ead0',
-    },
-    // Vert succès
-    success: '#16a34a',
-    // Orange CTA principal
-    cta: '#c2440f',
-  }
-}
+### Couleurs principales (utiliser ces valeurs exactes)
+```
+#c2440f  → Orange brûlé — CTA principal, boutons "Créer", focus rings, onglet actif
+#7a4f30  → Brun chaud    — Sidebar, boutons "Nudge Teachers", sections secondaires
+#5c3820  → Brun foncé   — Hover sur brun chaud
+#16a34a  → Vert          — Export Excel, actions positives, succès
+#fdf6f0  → Beige clair   — Fond des pages, filigrane
 ```
 
-### Composants de design récurrents observés sur le site
+### Couleurs de boutons (à respecter absolument)
+- **Orange `#c2440f` hover `#a33a0d`** → actions principales (Créer, Enregistrer, Soumettre)
+- **Vert `#16a34a`** → export Excel
+- **Brun `#7a4f30` hover `#5c3820`** → actions de communication, Ajouter une section
+- **Outline/blanc** → actions tertiaires (Aperçu, Annuler, Copier le lien)
+- **Rouge destructif** → Supprimer, Zone de danger
 
-**Layout & Navigation**
-- **Sidebar** : fond brun dégradé, sections dépliables (Académique, Finance…), user profile en bas, bouton "Accueil du portail"
-- **TopBar** : "Application Scolaire Qaf" + statut Connecté + badge école + badges rôles (School Admin/Enseignant/Parent) colorés
-- **CollapseButton** : chevron rond brun pour réduire/étendre la sidebar
+### Composants récurrents
 
-**Composants de liste**
-- **PageHeader** : titre h1 + sous-titre gris + boutons d'action alignés à droite (Export Excel vert, Créer orange)
-- **DataTable** : tableau avec colonnes triables (↕), barre de recherche, filtres dropdowns, export Excel
-- **FilterChips** : petits ronds colorés toggle (bleu/rose = genre, vert/rouge = inscrit/actif, jaune = bénévole)
-- **KpiCard** : 3 cartes côte à côte — couleurs distinctes par contexte (beige/brun/vert pour budget, vert/orange/bleu pour dépenses, beige/brun/vert pour substitutions)
+**Layout**
+- **Sidebar** : fond brun dégradé, sections dépliables, bloc user cliquable en bas (ouvre `UserProfileDialog`)
+- **UserProfileDialog** : dialog avec avatar, rôles, infos compte, lien "Modifier le profil", bouton "Se déconnecter"
+- **TopBar** : "Application Scolaire Qaf" + statut + badge école + badges rôles colorés
 
-**Composants de contenu**
-- **StatusBadge** : `Vérifié` (vert), `En attente` (orange), `Rejeté` (rouge), `Bénévole` (violet), `Payé` (vert), `School Admin` (gris), `Enseignant` (vert clair), `Parent` (bleu)
-- **UserCard** : carte enseignant/admin avec avatar, email, téléphone, rôle, actions edit/delete
-- **SplitPanel** : panneau gauche (sélecteur de classe) + panneau droit (contenu) — utilisé dans Livres, Présences
-- **TabNav** : onglets horizontaux (Ouvert/Actif/Historique, Par classe/Par élève/Complétion/Type)
-- **EmptyState** : icône + message + sous-texte contextuel (ex: "Aucune inscription trouvée")
-- **WarningBanner** : bandeau jaune/orange en haut de page (ex: période d'examens fermée)
+**Listes**
+- **PageHeader** : `h1` + sous-titre gris + boutons action à droite (Export vert + Créer orange)
+- **DataTable** : colonnes triables, recherche, filtres dropdowns, export Excel
+- **FilterChips** : pills ronds toggle colorés (genre bleu/rose, actif vert/rouge, bénévole jaune)
+- **KpiCard** : 3 cartes côte à côte, couleurs distinctes par contexte
 
-**Actions**
-- **NudgeButton** : bouton cloche "Nudge Teachers" (brun foncé), présent sur Présences et Devoirs
-- **ExcelExportButton** : bouton vert "Télécharger en Excel", présent sur toutes les listes
-- **CreateButton** : bouton orange "Créer un…", toujours en haut à droite des pages liste
-- **DangerZone** : section rouge "Zone de danger" dans les settings (actions irréversibles)
-
-### Couleurs de boutons observées (à respecter)
-- Orange `#c2440f` → actions principales (Créer, Enregistrer, CTA)
-- Vert `#16a34a` → export Excel, actions secondaires positives
-- Brun `#7a4f30` → Nudge Teachers, actions de communication
-- Blanc/outline → actions tertiaires (Aperçu, Annuler)
+**UI**
+- **StatusBadge** : Vérifié (vert), En attente (orange), Rejeté (rouge), Système (ambre), Bénévole (violet)
+- **SplitPanel** : gauche sélecteur de classe, droite contenu — Livres, Présences
+- **EmptyState** : icône + titre + sous-texte contextuel
+- **WarningBanner** : bandeau ambre en haut (ex: période d'examens fermée)
+- **NudgeButton** : cloche brun foncé, présent sur Présences et Devoirs
 
 ---
 
 ## 6. Modèle de données (PostgreSQL / Drizzle)
 
-> Schéma complet dans `src/db/schema/`. Chaque table a sa RLS policy dans Supabase.
-> Voir `docs/architecture/data-model.md` pour le diagramme ERD complet.
+Schéma complet dans `src/db/schema/`. Fichiers :
+- `schools.ts`     → schools (+ type SchoolSettings en JSONB)
+- `auth.ts`        → profiles, school_members
+- `academic.ts`    → students, classes, class_catalog, class_enrollments
+- `tracking.ts`    → attendance, attendance_records, homework, homework_grades, exam_results
+- `finance.ts`     → payments, expenses
+- `communication.ts` → announcements
+- `operations.ts`  → registrations, registration_forms, substitutions, academic_events, book_tracking, sticky_notes
 
-### Tables principales (toutes ont `school_id` sauf les tables globales)
+### Tables clés
 
 ```
-Gestion des utilisateurs (Supabase Auth gère l'identité)
-  profiles          — informations profil (lié à auth.users)
-  school_members    — membre d'une école avec ses rôles (admin/teacher/parent + sous-rôle admin)
-
-Académique
-  schools           — écoles / tenants
-  students          — élèves
-  parent_students   — lien parent ↔ élève (many-to-many)
-  class_catalog     — 36 modèles globaux (pas de school_id)
-  classes           — classes actives d'une école
-  class_enrollments — inscriptions élève ↔ classe
-
-Suivi quotidien
-  attendance        — session de présences (par classe/jour)
-  attendance_records — statut par élève dans une session
-  homework          — devoirs assignés
-  homework_grades   — notation par élève (étoiles 1-5)
-  exam_results      — notes d'examens par trimestre
-
-Finance
-  payments          — paiements (budget/revenus)
-  expenses          — demandes de dépenses
-
-Communication
-  announcements     — annonces école (+ annonces globales Qaf)
-
-Autres
-  academic_events   — calendrier académique
-  registrations     — inscriptions en ligne
-  registration_forms — schéma des formulaires configurables
-  substitutions     — demandes de remplacement
-  sticky_notes      — mémos admin
-  book_tracking     — distribution des livres
+schools           — tenants (slug unique, settings JSONB)
+profiles          — infos utilisateur (lié à auth.users)
+school_members    — membre d'une école + rôles + sous-rôle admin
+students          — élèves (school_id obligatoire)
+parent_students   — lien parent ↔ élève (many-to-many)
+class_catalog     — 36 modèles globaux (pas de school_id, nextClassId self-ref)
+classes           — classes actives d'une école
+class_enrollments — inscriptions élève ↔ classe (paidT1/T2/T3)
+registration_forms — schéma JSONB du form builder (getOrCreate à la 1ère visite)
+registrations     — soumissions parents (formData JSONB, status pending/approved/rejected)
+academic_events   — calendrier (createdBy → school_members.id)
 ```
 
-### Types fondamentaux (inférés depuis Drizzle)
+### Enums Drizzle (ne pas redéfinir)
+```typescript
+gender                → 'male' | 'female'
+registration_status   → 'pending' | 'approved' | 'rejected'
+substitution_status   → 'open' | 'active' | 'completed'
+academic_event_type   → 'exam' | 'meeting' | 'fun_event' | 'holiday' | ...
+```
+
+### Type SchoolSettings (JSONB dans schools.settings)
+Contient : `schoolDays`, `academicYear`, `currentTrimester`, `allowNewRegistrations`,
+`gradeLevels`, `rooms`, `classPeriods`, `financialOptions`, `paymentModes`, etc.
+Voir `src/db/schema/schools.ts` pour la définition complète.
+
+---
+
+## 7. Décisions d'architecture — LIRE AVANT DE CODER
+
+### 7.1 @base-ui/react : `render` prop, pas `asChild`
+Shadcn v4 utilise **@base-ui/react** (pas Radix). La prop `asChild` n'existe pas.
+Pour passer un élément custom à un trigger, utiliser la prop `render` :
+
+```tsx
+// ❌ FAUX — crée un <button> imbriqué dans un <button> → erreur hydration
+<DialogTrigger>
+  <Button>Ouvrir</Button>
+</DialogTrigger>
+
+// ✅ CORRECT
+<DialogTrigger render={<Button variant="outline">Ouvrir</Button>} />
+
+// ✅ CORRECT avec props dynamiques
+const trigger = <Button className="...">Ouvrir</Button>
+<DialogTrigger render={trigger} />
+```
+
+### 7.2 FK vers school_members.id ≠ auth.users UUID
+`session.userId` = UUID de `auth.users`.  
+Toutes les FK en base (ex: `created_by`, `teacher_id`, `reviewed_by`) pointent vers **`school_members.id`**, qui est un UUID différent.
 
 ```typescript
-// Les types viennent du schéma Drizzle — ne pas les définir manuellement
-import type { InferSelectModel, InferInsertModel } from 'drizzle-orm'
-import { students } from '@/db/schema'
-type Student = InferSelectModel<typeof students>
-type NewStudent = InferInsertModel<typeof students>
-
-// Enums définis dans le schéma Drizzle
-type UserPortalRole = 'admin' | 'teacher' | 'parent'  // cumulables
-type AdminSubRole = 'admin' | 'treasurer' | 'manager'  // exclusifs
-// admin     → accès complet admin portal
-// treasurer → Budget, Dépenses, Élèves, Annonces
-// manager   → admin complet SAUF Budget & Dépenses
-
-type Gender = 'male' | 'female'
-type TeacherType = 'volunteer' | 'paid'
-type PaymentStatus = 'verified' | 'pending' | 'rejected'
-type PaymentMethod = 'cash' | 'check' | 'paypal' | 'venmo' | 'no_fees' | 'other'
-type PaymentCategory = 'tuition' | 'registration' | 'donation' | 'other'
-type PaymentPeriod = 'annually' | 'trimester_1' | 'trimester_2' | 'trimester_3'
-type ExpenseStatus = 'pending' | 'approved' | 'paid' | 'rejected'
-type SubstitutionStatus = 'open' | 'active' | 'completed'
+// Pattern obligatoire avant toute insertion avec FK school_members
+async function getMemberId(userId: string, schoolId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ id: schoolMembers.id })
+    .from(schoolMembers)
+    .where(and(eq(schoolMembers.userId, userId), eq(schoolMembers.schoolId, schoolId)))
+    .limit(1)
+  return row?.id ?? null
+}
 ```
 
----
-
-## 7. Fonctionnalités à reconstruire proprement
-
-Ces features existent dans l'app actuelle mais ont des problèmes identifiés lors de l'audit :
-
-### 7.1 Période d'examens (PRIORITÉ HAUTE)
-**Problème actuel** : Un switch global ferme/ouvre les examens pour toute l'école. Les enseignants et parents voient un bandeau "Période d'examens fermée" bloquant tout.
-**À refaire** : La période d'examens doit être configurable par trimestre et par classe, pas globalement. Ajouter un état `examPeriod: { trimester: 1|2|3, isOpen: boolean, openedAt: Timestamp, closedAt: Timestamp }` par classe.
-
-### 7.2 Rapports (PRIORITÉ HAUTE)
-**Problème actuel** : Les rapports d'historique de présences ne fonctionnent pas car la "date de début d'année" n'est pas définie dans les paramètres.
-**À refaire** : Le premier accès aux Rapports doit déclencher un onboarding guidé pour configurer les dates de l'année scolaire. Bloquer l'accès aux rapports avec un message explicatif + CTA vers les paramètres si non configuré.
-
-### 7.3 Intégration email (PRIORITÉ MOYENNE)
-**Problème actuel** : La page "Envoyer un email" demande une connexion Gmail OAuth mais l'intégration semble incomplète.
-**À refaire** : Flow OAuth Gmail complet avec gestion du token refresh, fallback sur un template d'email si non connecté, confirmation avant envoi groupé.
-
-### 7.4 Tableau de bord présences/devoirs (PRIORITÉ MOYENNE)
-**Problème actuel** : Les pages Suivi des présences et Suivi des devoirs affichent "0 classes journées" sans contexte quand rien n'est saisi.
-**À refaire** : Ajouter un vrai dashboard d'alerte avec : liste des classes sans saisie du jour, compteur jours consécutifs sans saisie, bouton Nudge Teachers contextuel par classe.
-
-### 7.5 Onboarding école (PRIORITÉ HAUTE pour nouveau tenant)
-**Problème actuel** : Plusieurs fonctionnalités ne marchent pas sans config préalable (date d'année, Gmail, etc.).
-**À refaire** : Checklist d'onboarding affichée sur le dashboard admin jusqu'à complétion : [ ] Configurer l'année scolaire [ ] Ajouter un enseignant [ ] Créer une classe [ ] Inscrire un premier élève [ ] Connecter l'email.
-
----
-
-## 8. Modules — ordre de développement
-
-Développer dans cet ordre strict. Ne pas sauter à un module suivant si le précédent n'est pas terminé (types + service + actions + UI).
-
-```
-Phase 1 — Fondations ✅ TERMINÉE (Juin 2026)
-  [x] Setup Next.js 16 + TypeScript strict + ESLint (src/proxy.ts = middleware Next.js 16)
-  [x] Supabase config (lib/supabase/server.ts + client.ts + admin.ts)
-  [x] Drizzle ORM + schéma complet (src/db/schema/ — 7 fichiers, 20+ tables)
-  [x] Shadcn/ui v4 (Base UI, pas Radix) + Tailwind v4 + design tokens qaf (globals.css)
-  [x] Layout admin (Sidebar dépliable + TopBar + PortalLayout)
-  [x] Auth (login form + signIn/signOut actions + callback route + proxy.ts guard)
-  [x] Types globaux (lib/constants.ts) + Pattern ActionResult (lib/result.ts)
-  [x] Scripts DB (db:push, db:migrate, db:studio, db:generate)
-
-  ⚠️ IMPORTANT — Next.js 16 différences vs 15 :
-  - middleware.ts → proxy.ts (export default function proxy())
-  - Shadcn utilise @base-ui/react (pas Radix) → pas de prop asChild → utiliser render prop
-  - Composant <form> n'existe pas dans shadcn v4 → créé manuellement dans src/components/ui/form.tsx
-
-Phase 2 — Module Students (premier module complet, sert de référence)
-  [ ] students.types.ts
-  [ ] students.schema.ts
-  [ ] students.service.ts
-  [ ] students.actions.ts
-  [ ] students.hooks.ts
-  [ ] Page liste /admin-portal/students
-  [ ] Page détail /admin-portal/students/[id]
-  [ ] Formulaire création/édition
-
-Phase 3 — Module Teachers
-Phase 4 — Module Classes
-Phase 5 — Module Attendance
-Phase 6 — Module Homework
-Phase 7 — Module Exams
-Phase 8 — Module Stars
-Phase 9 — Module Finance (Budget + Expenses)
-Phase 10 — Module Communication (Email + Announcements)
-Phase 11 — Module Registrations
-Phase 12 — Module Calendar
-Phase 13 — Reports
-Phase 14 — Settings + Onboarding
-Phase 15 — Teacher Portal
-Phase 16 — Parent Portal
-Phase 17 — TV Mode
+### 7.3 IDs côté client
+Pour générer des IDs dans les composants React (pas de serveur) :
+```typescript
+import { nanoid } from 'nanoid'
+const id = `section-${nanoid(8)}`   // ex: 'section-aB3xKp9m'
+const id = `cf-${nanoid(8)}`         // custom field
+const id = `ib-${nanoid(8)}`         // info block
 ```
 
+### 7.4 Formulaire d'inscription — architecture
+- La table `registration_forms` stocke le schéma JSONB du form builder
+- `registrationsService.getOrCreateForm(schoolId, formType)` crée le formulaire par défaut à la 1ère visite
+- À la soumission d'un formulaire `new_student`, `submitRegistrationAction` :
+  1. Crée immédiatement un enregistrement dans `students`
+  2. Stocke le `studentId` dans `formData._studentId`
+  3. Crée la `registration` en statut `pending`
+- Le form builder utilise `@dnd-kit` pour le drag & drop
+
+### 7.5 Éditeur de texte riche (admin)
+Utiliser `contentEditable` + `document.execCommand` (voir `RichTextEditor.tsx`).
+Ne pas installer TipTap, Quill ou autre — la solution en place est suffisante pour l'admin.
+
+### 7.6 Classe précédente dans le catalogue
+La relation "classe précédente/suivante" est gérée via une seule colonne `nextClassId` (self-ref sur `class_catalog`).
+La classe précédente est calculée par inversion dans `classesService.getAll()`.
+Quand l'utilisateur choisit une classe précédente dans le formulaire, le service met à jour le `nextClassId` de cette classe précédente pour pointer vers la classe courante.
+
+### 7.7 Sidebar UserProfileDialog
+Le bloc utilisateur en bas de la sidebar (nom + email) est cliquable et ouvre `UserProfileDialog`.
+Ce dialog affiche : rôles, infos compte, lien "Modifier le profil" et bouton "Se déconnecter".
+`schoolName` est passé du `PortalLayout` → `Sidebar` → `UserProfileDialog`.
+
 ---
 
-## 9. Règles de collaboration (deux développeurs + Claude Code)
+## 8. État d'avancement des modules
 
-- **Une branche par feature** : `feature/module-students`, `feature/auth`, etc.
-- **Jamais de push direct sur `main`** — toujours une PR, même petite
-- **Répartition des modules** : chaque développeur prend un module de A à Z (types → UI), pas de découpage par layer
-- **Mettre à jour ce fichier** dès qu'une décision d'architecture change
-- **Documenter les décisions importantes** dans `docs/decisions/` au format ADR
-- **Claude Code** : toujours l'ouvrir à la racine du repo pour qu'il lise ce fichier en premier
+### ✅ Complètement construit (types + service + actions + hooks + UI)
+
+| Module | Pages |
+|---|---|
+| **Auth** | Login, callback, signOut, session guard |
+| **Layout** | Sidebar (avec UserProfileDialog), Header, PortalLayout |
+| **School** | `/admin-portal/school-settings` |
+| **Students** | `/admin-portal/students` (liste + détail + création/édition) |
+| **Teachers** | `/admin-portal/teachers` |
+| **Classes** | `/admin-portal/classes` |
+| **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante, curriculum riche) |
+| **Calendar** | `/admin-portal/academic-calendar` (vues Année/Mois/Semaine/Jour) |
+| **Registration Forms** | `/admin-portal/registration-forms` (form builder DnD complet) |
+| **Registrations** | `/admin-portal/registrations` (liste) |
+| **Public Portal** | `/portal/register/[schoolSlug]` (nouvel élève + réinscription + succès) |
+
+### ❌ À construire (aucun fichier de module)
+
+| Module | Pages à créer |
+|---|---|
+| **Attendance** | `/admin-portal/attendance`, portail enseignant |
+| **Homework** | `/admin-portal/homework`, portail enseignant |
+| **Exams** | `/admin-portal/track-exams`, portail enseignant |
+| **Stars** | `/admin-portal/track-stars`, portail enseignant |
+| **Finance** | `/admin-portal/finance/budget`, `/admin-portal/finance/expenses` |
+| **Communication** | `/admin-portal/communication/send-email`, `/admin-portal/announcements` |
+| **Substitutions** | `/admin-portal/substitutions` |
+| **Book Tracking** | `/admin-portal/book-tracking` |
+| **Reports** | `/admin-portal/reports` |
+| **Parents** | `/admin-portal/parents` |
+| **Permissions** | `/admin-portal/permissions` |
+| **Sticky Notes** | `/admin-portal/sticky-notes` |
+| **Birthdays** | `/admin-portal/birthdays` |
+| **Start New Year** | `/admin-portal/start-new-year` |
+| **Roadmap** | `/admin-portal/roadmap` |
+| **Teacher Portal** | Tout le portail enseignant |
+| **Parent Portal** | Tout le portail parent |
+| **TV Mode** | Affichage mural |
 
 ---
 
-## 10. Observations visuelles page par page (audit juin 2026)
+## 9. Problèmes connus à corriger (backlog)
 
-> Screenshots disponibles dans `screenshots/admin_portal/` (future structure : teacher_portal/, parent_portal/).
-> Chaque sous-dossier correspond à une section du portail.
+### 9.1 Période d'examens
+**Problème** : Switch global dans school-settings. Les enseignants et parents voient "Période d'examens fermée".  
+**Solution** : Configurable par trimestre et par classe (colonnes `examPeriodT1Open/T2Open/T3Open` déjà dans le schéma `classes`). Retirer le switch global.
 
-### Dashboard (`/admin-portal`)
-- Fond beige chaud avec diamants décoratifs en filigrane
-- Sidebar brun dégradé, section "Académique" dépliable
-- Pas de vraie homepage : redirige vers la première section disponible
+### 9.2 Rapports
+**Problème** : "Date de début d'année non définie" — rapports inopérants si non configuré.  
+**Solution** : Bloquer l'accès avec un message + CTA vers school-settings si `yearStartDate` est null.
 
-### Étudiants (`/admin-portal/students`)
-- En-tête : "Élèves" + "1 élève" + Export Excel + "Créer un nouvel élève"
-- Filtres dropdowns : Toutes les années, Trimestre 1/2/3 (tous les statuts)
-- Filter chips ronds : Genre (bleu/rose), Inscrit (vert/rouge), Age (dropdown)
-- Table avec colonnes triables — données réelles : Chahine BENYAHIA
+### 9.3 Intégration email
+**Problème** : Page Gmail OAuth incomplète.  
+**Solution** : Passer à Resend (déjà dans la stack). La page `send-email` doit utiliser l'API Resend, pas OAuth Gmail.
 
-### Enseignants (`/admin-portal/teachers`)
-- Vue cartes (pas tableau), 3 enseignants
-- Filter chips : Genre, Actif (vert/rouge), Bénévole (vert/jaune)
-- Bouton : Export Excel + "Créer un nouvel enseignant"
+### 9.4 Dashboard présences/devoirs
+**Problème** : Affiche "0 classes" sans contexte.  
+**Solution** : Liste des classes sans saisie du jour + compteur jours consécutifs + Nudge contextuel par classe.
 
-### Classes (`/admin-portal/classes`)
-- "1 classe" — filtres : Tous les types, Tous les enseignants, Toutes les salles
-- Groupement par : "Par type de classe", "Par salle de classe"
-- Bouton : Export Excel + "Créer une nouvelle offre de classe"
+---
 
-### Suivi des examens (`/admin-portal/track-exams`)
-- **⚠️ BANDEAU JAUNE** : "Période d'examens fermée — Les enseignants et les parents ne peuvent pas voir les boutons d'examens et de notes dans leur portail" + CTA "Activer dans les paramètres"
-- Titre : "Suivre les notes d'examen — Suivi de Trimestre 1 2026-2027 • 1 Classes • 1 sans soumission"
-- Actions : Summary PDF, Rapport par email
-- Vues : Par classe / Par élève / Complétion / Type
-- Classe affichée : "Advanced Surahs – From Juz'01 to Juz'24" avec stats 0/1/1/0/0
+## 10. Règles de collaboration (équipe + Claude Code)
 
-### Suivi des présences (`/admin-portal/attendance`)
+### Git
+- **Une branche par feature** : `feature/module-attendance`, `fix/exams-period`, etc.
+- **Jamais de push direct sur `main`** — toujours une PR
+- **Chaque dev prend un module de A à Z** (types → service → actions → hooks → UI), pas de découpage par layer
+
+### Mettre à jour ce fichier
+**Après chaque session de développement significative** mettre à jour :
+- La checklist de la Section 8 (✅/❌)
+- La Section 7 si une nouvelle décision d'architecture a été prise
+- La Section 9 si un bug est découvert ou corrigé
+
+### Claude Code — spécificités multi-session
+- Chaque développeur a sa propre session Claude Code → ce fichier est le seul briefing commun
+- **Ne pas supposer** que Claude connaît ce qui a été fait dans une autre session
+- Si une décision technique est prise en session, la documenter ici immédiatement
+- Toujours lancer Claude Code depuis la racine du repo (`/institut-islamique/`)
+
+---
+
+## 11. Observations visuelles page par page (audit juin 2026)
+
+> Le site de référence https://www.qaf.app/admin-portal est la source de vérité visuelle.
+> Toujours prendre des screenshots à jour avant de construire une page.
+> Les notes ci-dessous sont un complément pour les pages pas encore construites.
+
+### Pages à construire — détails visuels clés
+
+**Suivi des présences** (`/attendance`)
 - Sélecteur de date + navigation Jour précédent/suivant + bouton "Summary"
-- **"Aperçu des présences"** : 0/1 teachers + **"Nudge Teachers"** (cloche, brun foncé)
-- 0 classes soumises (cercle vert avec checkmark)
+- "Aperçu des présences" : ratio teachers ayant soumis + **Nudge Teachers** (cloche, brun `#7a4f30`)
 - Section "Statistiques des élèves" (vide si aucune saisie)
 - Section "Sélectionner une classe" groupée par salle
 
-### Suivi des devoirs (`/admin-portal/homework`)
+**Suivi des devoirs** (`/homework`)
 - Structure identique aux présences
 - "Aperçu des devoirs" + Nudge Teachers
-- Section "Vue d'ensemble des classes" groupée par salle
-- "Aucun devoir assigné cette semaine" comme message vide de la classe
+- "Vue d'ensemble des classes" groupée par salle
 
-### Suivi des étoiles (`/admin-portal/track-stars`)
-- "Consultation des notations pour [date]" + navigation
-- "Aperçu des notations" : 1/1 Enseignants n'ayant pas soumis de devoir
+**Suivi des étoiles** (`/track-stars`)
+- Navigation date + "Aperçu des notations" (ratio enseignants)
 - Recherche par enseignant ou classe
-- Vue "Par nom d'enseignant" / "Par classe"
-- Carte enseignant : Aliou SYY, 1 classe, stats 0/0/0 + "Aucun devoir assigné cette semaine"
+- Toggle : "Par nom d'enseignant" / "Par classe"
 
-### Catalogue des classes (`/admin-portal/class-catalog`)
-- **36 classes** dans le catalogue global
-- Bouton "Créer une nouvelle classe"
-- Liste chargée avec un skeleton au départ
+**Suivi des examens** (`/track-exams`)
+- Bandeau jaune si période fermée
+- Titre : "Suivi de Trimestre X 2025-2026 • N Classes • N sans soumission"
+- Vues : Par classe / Par élève / Complétion / Type
+- Actions : Summary PDF, Rapport par email
 
-### Calendrier académique (`/admin-portal/academic-calendar`)
-- Vues : Année / Mois / Semaine / Jour (toggle buttons)
-- Filtre "Tous les événements"
-- Bouton "Créer un événement"
-- Calendrier grille avec dates (juin 2026 visible)
+**Budget** (`/finance/budget`)
+- 3 KPI cards : Total Revenus (beige), Dépenses payées (brun), Budget restant (vert)
+- Boutons : "Enregistrer un revenu" (orange), "Rappeler les parents impayés" (brun)
+- Filter chips : mode paiement + catégorie + période + statut
+- Table avec lignes : parent → élève — type — montant — statut (Vérifié/En attente/Rejeté)
 
-### Rapports et analyses (`/admin-portal/reports`)
-- **Section 1** : "Historique des présences scolaires" — toggles 4/8/12 semaines + Pourcentage/Nombre
-  - **⚠️ ERREUR** : "Aucune donnée de présence disponible — Date de début d'année non définie dans les paramètres de l'école"
-- **Section 2** : "Statistiques de remplacement des enseignants" — boutons "Voir les enseignants" et "Voir les remplacements"
+**Dépenses** (`/finance/expenses`)
+- 3 KPI cards : Approuvé (vert), En attente (orange), Payé (bleu)
+- Filtres statut + catégorie, bouton "Nouvelle dépense" (orange)
 
-### Suivi des livres (`/admin-portal/book-tracking`)
-- Layout split : panneau gauche (sélecteur de classe avec recherche) + panneau droit (détail)
-- Vue "Par classe" / "Par élève"
-- Sous-titre : "Gérer la distribution des livres pour 2025-2026"
-- État vide : "Aucune classe sélectionnée — Veuillez sélectionner une classe"
-
-### Substitutions (`/admin-portal/substitutions`)
-- 3 KPI cards : "Demandes ouvertes 0" (beige), "En cours 0" (brun), "Terminé 0" (vert)
-- Barre de recherche + bouton "Créer une demande"
-- Tabs : Ouvert (0) / Actif (0) / Historique (0)
-
-### Inscriptions (`/admin-portal/registrations`)
-- Titre "Inscriptions des élèves" avec 2 boutons : "Modifier les formulaires d'inscription" (orange) + "Télécharger en Excel" (vert)
-- "Aucune inscription trouvée"
-
-### Formulaires d'inscription (`/admin-portal/registration-forms`)
-- **Form builder complet** : drag-and-drop, onglets "Nouvel élève" / "Réinscription"
-- "7 éléments" sur le formulaire
-- Actions : "Ajouter un bloc d'info", "Ajouter une section", "Réinitialiser", "Aperçu"
-- Formulaire avec sections : "Informations de l'étudiant" (Prénom, Nom, Date de naissance…)
-- Info : "Ce formulaire est conçu pour l'inscription d'un seul étudiant"
-
-### Budget (`/admin-portal/finance/budget`)
-- 3 KPI cards : Budget Total Revenus 270€ (beige), Dépenses payées 0€ (brun), Budget restant 270€ (vert)
-- Boutons : "Enregistrer un revenu" (orange pleine largeur), "Rappeler les parents impayés" (brun), "Télécharger en Excel"
-- Filter chips : Venmo / Cash / Check / PayPal / No Fees + Scolarité / Inscription / Don / Autre + Trimestre 1/2/3 / Annually + **"I really can't afford"**
-- Statuts : En attente / Vérifié / Rejeté
-- 1 résultat : OUILI → Chahine BENYAHIA — Tuition / Annually / Check — 270€ — Vérifié
-
-### Dépenses (`/admin-portal/finance/expenses`)
-- 3 KPI cards : Approuvé $0.00 (vert bordure), En attente $0.00 (orange bordure), Payé $0.00 (bleu bordure)
-- Recherche + filtres "Tous les statuts" / "Toutes les catégories"
-- "Demandes (0)" — "Aucune demande de dépense ne correspond à vos filtres"
-- Bouton "Nouvelle dépense" (orange)
-
-### Email (`/admin-portal/communication/send-email`)
-- "Envoyer un e-mail" avec section "Intégration Email"
-- "Connectez votre compte Gmail pour envoyer des e-mails. Disponible dans le futur prochainement."
-- Bouton "Se connecter avec Gmail" (grisé/inactif)
-
-### Annonces (`/admin-portal/announcements`)
-- URL : `/admin-portal/announcements` (pas sous /communication/)
-- "Restez informé des dernières nouvelles et annonces de Grande Mosquée Lyon Ouest"
+**Annonces** (`/announcements`)
+- URL directe (pas sous /communication/)
 - Bouton "Créer une annonce"
-- Annonce globale de Qaf Admin : "What's New!" (Apr 5, 2026) avec badge "Global" + "Everyone"
-  - Features listées pour Parents et Enseignants (Achievements & Stars, Exam Signatures, etc.)
+- Annonces globales Qaf avec badge "Global"
 
-### Parents (`/admin-portal/parents`)
-- URL : `/admin-portal/parents` (pas sous /communication/)
-- "Chargement des parents..." au chargement
-
-### Sticky Notes (`/admin-portal/sticky-notes`)
-- "Mes mémos — Suivez vos tâches et vos idées"
-- Fond beige avec diamants décoratifs (même style que dashboard)
-- Bouton "Nouvelle note"
-
-### Anniversaires (`/admin-portal/birthdays`)
-- "Birthdays — Celebrating our wonderful students" (interface en anglais ici !)
-- "No birthdays in June — Check another month for celebrations"
-
-### Permissions (`/admin-portal/permissions`)
+**Permissions** (`/permissions`)
 - 3 sections : Administrateurs / Trésoriers / Gestionnaires
-- **Administrateurs** : Abdeslam Ouili (salim.ouili@gmail.com, 0625432895) — badges School Admin + Teacher — + lahbak.inttic@gmail.com (Pending)
-- **Trésoriers** : "Aucun trésorier assigné"  → Budget, Dépenses, Élèves, Annonces
-- **Gestionnaires** : "Aucun gestionnaire assigné" → Admin complet sauf Budget & Dépenses
-- Boutons : "Ajouter un nouvel administrateur" (orange), "Ajouter un nouveau trésorier" (vert), "Ajouter un nouveau gestionnaire" (bleu)
+- Boutons "Ajouter" distincts par rôle (orange/vert/bleu)
+- Affiche : nom, email, téléphone, badges rôles, statut pending
 
-### Paramètres de l'école (`/admin-portal/school-settings`)
-- Section **Opérations scolaires** : Sélecteur année académique + Sélecteur trimestre
-  - Checkbox : "Autoriser les nouvelles inscriptions" (coché) + lien "Modifier le formulaire"
-  - Checkbox : "Activer l'affichage des examens et notes dans les portails parents et enseignants" (**décoché** → source du bug période d'examens)
-- Section **Jours de classe** : 7 jours, Dimanche + Samedi sélectionnés
-- Section **Identité de l'école** + **Logo de l'école**
-- Bouton "Contacter le support"
+**Substitutions** (`/substitutions`)
+- 3 KPI cards : Ouvertes (beige), En cours (brun), Terminées (vert)
+- Tabs : Ouvert / Actif / Historique
+- Bouton "Créer une demande"
 
-### Modifier le profil (`/admin-portal/edit-profile`)
-- 2 colonnes : Identité (Nom, Téléphone, École, Rôles, Langue) | Détails du compte (membre depuis, ID enseignant, enfants liés)
-- Rôles toggles : Administrateur / Parent / Enseignant (checkboxes)
-- Langue : Français (selector)
-- Section "Gérer les enfants" avec bouton "Ajouter un enfant"
-- Section "Zone de danger" (rouge)
+**Suivi des livres** (`/book-tracking`)
+- Layout SplitPanel : sélecteur classe (gauche) + détail (droite)
+- Toggle : "Par classe" / "Par élève"
 
-### Nouvelle année (`/admin-portal/start-new-year`)
-- Page avec fond beige et diamants (même style dashboard) — wizard de démarrage d'année
+**Rapports** (`/reports`)
+- Historique présences : toggles 4/8/12 semaines + Pourcentage/Nombre
+- Statistiques substitutions : "Voir les enseignants" / "Voir les remplacements"
+- Bloqué si `yearStartDate` null → afficher message + CTA settings
 
-### Roadmap (`/admin-portal/roadmap`)
-- "Demandes de fonctionnalités — Votez pour ce qui sera développé ensuite"
-- Toggles : Populaire / Nouveau
-- Bouton "Suggérer une fonctionnalité"
-- Message : "Aidez-nous à nous concentrer sur l'essentiel..."
+**Sticky Notes** (`/sticky-notes`)
+- Fond beige avec diamants en filigrane (même style que le dashboard)
+- Bouton "Nouvelle note"
+- Notes repositionnables (drag)
+
+**Anniversaires** (`/birthdays`)
+- Navigation par mois
+- Affiche les élèves dont l'anniversaire est dans le mois sélectionné
 
 ---
 
-## 11. Ce qui ne doit jamais changer
+## 12. Ce qui ne doit jamais changer
 
-- L'identité visuelle chaude (brun/doré/crème) de Qaf School
+- L'identité visuelle chaude (brun `#7a4f30` / orange `#c2440f` / beige `#fdf6f0`)
 - La navigation par modules dépliables dans la sidebar gauche
 - Le système multi-rôles cumulables sur un même compte
 - L'architecture multi-tenant avec isolation par `schoolId`
 - L'export Excel disponible sur toutes les listes
-- Le bouton "Nudge Teachers" sur les pages de suivi
-- Le système d'étoiles gamifié (Bronze → Mythic, 10 niveaux de trophées)
+- Le bouton "Nudge Teachers" sur les pages de suivi (présences, devoirs, étoiles)
+- Le système d'étoiles gamifié
 - Les filtres visuels par chips colorés (genre, statut, inscription)
+- Le pattern ActionResult pour toutes les Server Actions
+- La convention de nommage des dossiers de screenshots (`admin_<page>`)
