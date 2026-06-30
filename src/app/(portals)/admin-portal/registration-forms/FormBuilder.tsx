@@ -15,7 +15,7 @@ type AnyProps = Record<string, any>
 import { CSS } from '@dnd-kit/utilities'
 import {
   ChevronDown, ChevronRight, GripVertical, Pencil, Trash2, Lock,
-  Plus, Info, AlertTriangle, CheckCircle, XCircle,
+  Plus, Info, AlertTriangle, CheckCircle, XCircle, Star, Circle, Square, X, BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
@@ -23,7 +23,7 @@ import { AddSectionDialog } from './AddSectionDialog'
 import { AddFieldDialog } from './AddFieldDialog'
 import type {
   FormItem, FormSection, InfoBlock, FormField, CustomField, FormType,
-  InfoBlockStyle,
+  InfoBlockStyle, RegistrationClassItem,
 } from '@/modules/registrations/registrations.types'
 
 // ── Style config ───────────────────────────────────────────────────────────────
@@ -35,6 +35,97 @@ const INFO_BLOCK_STYLES: Record<InfoBlockStyle, {
   warning: { bg: 'bg-amber-50',   border: 'border-amber-200',  icon: <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />, titleColor: 'text-amber-700' },
   success: { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: <CheckCircle  className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />, titleColor: 'text-emerald-700' },
   error:   { bg: 'bg-red-50',     border: 'border-red-200',    icon: <XCircle      className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />,    titleColor: 'text-red-700' },
+}
+
+// ── Field type visual preview (shown inside the builder row) ──────────────────
+
+function FieldTypePreview({ field }: { field: FormField }) {
+  const { type } = field
+  const options     = 'options'     in field ? field.options     : undefined
+  const placeholder = 'placeholder' in field ? field.placeholder : undefined
+
+  const pill = 'text-[10px] px-2 py-0.5 border border-border rounded-full text-muted-foreground bg-muted'
+
+  // text / email / tel / number / textarea → "Espace réservé : [value]" chip
+  if (type === 'text' || type === 'email' || type === 'tel' || type === 'number' || type === 'textarea') {
+    if (!placeholder) return null
+    return (
+      <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted rounded-md px-2 py-0.5 border border-border/50 max-w-xs truncate">
+        <span className="font-medium shrink-0">Espace réservé :</span>
+        <span className="truncate">{placeholder}</span>
+      </div>
+    )
+  }
+
+  if (type === 'date') {
+    return (
+      <div className="mt-1.5 h-6 w-28 rounded border border-border/60 bg-muted/40 px-2 flex items-center gap-1.5">
+        <span className="text-[10px] text-muted-foreground/50">jj/mm/aaaa</span>
+      </div>
+    )
+  }
+
+  if (type === 'select') {
+    return (
+      <div className="mt-1.5 h-6 max-w-xs rounded border border-border/60 bg-muted/40 px-2 flex items-center justify-between">
+        <span className="text-[10px] text-muted-foreground/50">Sélectionner une option</span>
+        <ChevronDown className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+      </div>
+    )
+  }
+
+  if (type === 'radio' && options?.length) {
+    return (
+      <div className="flex gap-1.5 mt-1.5 flex-wrap">
+        {options.map(opt => (
+          <span key={opt} className={cn(pill, 'flex items-center gap-1')}>
+            <Circle className="h-2.5 w-2.5 shrink-0" />
+            {opt}
+          </span>
+        ))}
+      </div>
+    )
+  }
+
+  if (type === 'multiple' && options?.length) {
+    return (
+      <div className="flex gap-1.5 mt-1.5 flex-wrap">
+        {options.map(opt => (
+          <span key={opt} className={cn(pill, 'flex items-center gap-1')}>
+            <Square className="h-2.5 w-2.5 shrink-0" />
+            {opt}
+          </span>
+        ))}
+      </div>
+    )
+  }
+
+  // yes_no — no preview below (indicator shown before label in FieldRow)
+  if (type === 'yes_no') return null
+
+  if (type === 'rating') {
+    return (
+      <div className="flex items-center gap-2 mt-1.5">
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5].map(i => (
+            <Star key={i} className="h-3.5 w-3.5 text-muted-foreground/25" />
+          ))}
+        </div>
+        <span className="text-[10px] text-muted-foreground/50 italic">(Rating Example)</span>
+      </div>
+    )
+  }
+
+  if (type === 'checkbox') {
+    return (
+      <div className="flex items-center gap-1.5 mt-1.5">
+        <Square className="h-3 w-3 text-muted-foreground/30 shrink-0" />
+        <span className="text-[10px] text-muted-foreground/50">Case à cocher</span>
+      </div>
+    )
+  }
+
+  return null
 }
 
 // ── Field row ──────────────────────────────────────────────────────────────────
@@ -73,33 +164,24 @@ function FieldRow({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
+        {/* Label row */}
         <div className="flex items-center gap-1.5 flex-wrap">
+          {/* yes_no indicator — small orange square matching qaf.app */}
+          {field.type === 'yes_no' && (
+            <span className="inline-block h-3.5 w-3.5 rounded-[3px] bg-[#c2440f] shrink-0" />
+          )}
           <span className="text-sm font-medium text-foreground">{field.label}</span>
           {field.required && <span className="text-[#c2440f] text-sm font-medium">*</span>}
           {isSystem && <Lock className="h-3 w-3 text-amber-500 shrink-0" />}
         </div>
-        {!isSystem && field.kind === 'custom_field' && field.placeholder && (
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Espace réservé : {field.placeholder}
-          </p>
-        )}
-        {isSystem && 'placeholder' in field && field.placeholder && (
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Espace réservé : {field.placeholder}
-          </p>
-        )}
+
+        {/* Note */}
         {field.note && (
-          <p className="text-xs text-muted-foreground/70 italic mt-1">{field.note}</p>
+          <p className="text-xs text-muted-foreground/70 italic mt-0.5">{field.note}</p>
         )}
-        {field.options && field.type === 'radio' && (
-          <div className="flex gap-1.5 mt-1.5 flex-wrap">
-            {field.options.map(opt => (
-              <span key={opt} className="text-[10px] px-2 py-0.5 bg-muted rounded-full text-muted-foreground border border-border">
-                {opt}
-              </span>
-            ))}
-          </div>
-        )}
+
+        {/* Type-specific visual preview */}
+        <FieldTypePreview field={field} />
       </div>
 
       {/* Right badges/actions */}
@@ -142,9 +224,68 @@ function SortableFieldRow({ field, onDelete, onEdit }: { field: FormField; onDel
   )
 }
 
+// ── Helpers for class selection ────────────────────────────────────────────────
+
+function groupBySubject(classes: RegistrationClassItem[]): Record<string, RegistrationClassItem[]> {
+  return classes.reduce<Record<string, RegistrationClassItem[]>>((acc, cls) => {
+    if (!acc[cls.subjectCode]) acc[cls.subjectCode] = []
+    acc[cls.subjectCode].push(cls)
+    return acc
+  }, {})
+}
+
+const SUBJECT_COLORS: Record<string, { bg: string; text: string }> = {
+  QRN: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  ARA: { bg: 'bg-purple-100',  text: 'text-purple-700'  },
+  ISL: { bg: 'bg-amber-100',   text: 'text-amber-700'   },
+  NUR: { bg: 'bg-orange-100',  text: 'text-orange-700'  },
+}
+
+function SubjectLabel({ code, count }: { code: string; count: number }) {
+  const colors = SUBJECT_COLORS[code] ?? { bg: 'bg-muted', text: 'text-muted-foreground' }
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      <span className={cn('text-[11px] font-bold px-2 py-0.5 rounded uppercase', colors.bg, colors.text)}>
+        Classe {code}
+      </span>
+      <span className="text-[11px] text-muted-foreground">
+        {count} classe{count > 1 ? 's' : ''}
+      </span>
+    </div>
+  )
+}
+
+function BuilderSyllabusDialog({ cls, onClose }: { cls: RegistrationClassItem; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="bg-[#5c3820] px-5 py-4 flex items-start justify-between gap-4 shrink-0">
+          <h3 className="text-white font-semibold text-sm leading-snug">
+            {cls.name} ({cls.code}) — Programme
+          </h3>
+          <button type="button" onClick={onClose} className="text-white/70 hover:text-white shrink-0 mt-0.5">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5">
+          {cls.curriculum
+            ? <div
+                className="text-sm [&_h2]:text-[#c2440f] [&_h2]:font-semibold [&_h2]:mb-1 [&_h3]:text-[#c2440f] [&_h3]:font-semibold [&_h3]:mb-1 [&_h4]:text-[#c2440f] [&_h4]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_li]:mb-0.5 space-y-0.5"
+                dangerouslySetInnerHTML={{ __html: cls.curriculum }}
+              />
+            : <p className="text-sm text-muted-foreground">Aucun syllabus disponible pour cette classe.</p>
+          }
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Class selection preview (system section) ───────────────────────────────────
 
-function ClassSelectionPreview({ formType }: { formType: FormType }) {
+function ClassSelectionPreview({ formType, classes = [] }: { formType: FormType; classes: RegistrationClassItem[] }) {
+  const [syllabusClass, setSyllabusClass] = useState<RegistrationClassItem | null>(null)
+
   if (formType === 'reenrollment') {
     return (
       <div className="px-4 py-4 flex items-start gap-3">
@@ -159,27 +300,53 @@ function ClassSelectionPreview({ formType }: { formType: FormType }) {
     )
   }
 
+  const grouped = groupBySubject(classes)
+  const subjects = Object.keys(grouped)
+
+  if (subjects.length === 0) {
+    return (
+      <div className="px-4 py-4 text-sm text-muted-foreground italic">
+        Aucune classe active. Ajoutez des classes dans le catalogue pour les voir ici.
+      </div>
+    )
+  }
+
   return (
-    <div className="px-4 py-4">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="h-5 w-5 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center">
-          <span className="text-[9px] font-bold text-emerald-600">✓</span>
-        </div>
-        <span className="text-xs text-muted-foreground italic">Class Selection (Preview From Catalog)</span>
-      </div>
-      <div className="space-y-2">
-        {(['QRN', 'ARA', 'NUR'] as const).map(code => (
-          <div key={code} className="flex items-center gap-2">
-            <div className={cn(
-              'text-[10px] font-bold px-1.5 py-0.5 rounded',
-              code === 'QRN' ? 'bg-emerald-100 text-emerald-700' :
-              code === 'ARA' ? 'bg-purple-100 text-purple-700' :
-              'bg-orange-100 text-orange-700'
-            )}>{code}</div>
-            <span className="text-xs text-muted-foreground">Select {code} Class</span>
+    <div className="px-4 py-4 space-y-5">
+      <p className="text-xs text-muted-foreground italic">Aperçu de la sélection de classe depuis le catalogue</p>
+
+      {subjects.map(subject => {
+        const classList = grouped[subject]
+        return (
+          <div key={subject}>
+            <SubjectLabel code={subject} count={classList.length} />
+            <div className="grid grid-cols-2 gap-2">
+              {classList.map(cls => (
+                <div key={cls.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border bg-muted/20">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-foreground leading-snug line-clamp-2">{cls.name}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{cls.fullCode}</p>
+                  </div>
+                  {cls.curriculum && (
+                    <button
+                      type="button"
+                      onClick={() => setSyllabusClass(cls)}
+                      className="shrink-0 flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-[#7a4f30] text-white hover:bg-[#5c3820] transition-colors"
+                    >
+                      <BookOpen className="h-2.5 w-2.5" />
+                      Syllabus
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+        )
+      })}
+
+      {syllabusClass && (
+        <BuilderSyllabusDialog cls={syllabusClass} onClose={() => setSyllabusClass(null)} />
+      )}
     </div>
   )
 }
@@ -187,11 +354,12 @@ function ClassSelectionPreview({ formType }: { formType: FormType }) {
 // ── Section block ──────────────────────────────────────────────────────────────
 
 function SectionBlock({
-  section, formType, onUpdateFields, onEdit, onDelete,
+  section, formType, classes, onUpdateFields, onEdit, onDelete,
   listeners, attributes, style: dragStyle,
 }: {
   section: FormSection
   formType: FormType
+  classes?: RegistrationClassItem[]
   onUpdateFields: (fields: FormField[]) => void
   onEdit: () => void
   onDelete?: () => void
@@ -315,7 +483,7 @@ function SectionBlock({
           )}
 
           {/* Class section preview */}
-          {isClassSection && <ClassSelectionPreview formType={formType} />}
+          {isClassSection && <ClassSelectionPreview formType={formType} classes={classes ?? []} />}
 
           {/* Fields */}
           {!isClassSection && (
@@ -457,9 +625,10 @@ interface FormBuilderProps {
   items: FormItem[]
   formType: FormType
   onChange: (items: FormItem[]) => void
+  classes?: RegistrationClassItem[]
 }
 
-export function FormBuilder({ items, formType, onChange }: FormBuilderProps) {
+export function FormBuilder({ items, formType, onChange, classes = [] }: FormBuilderProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   const [editingInfoBlock, setEditingInfoBlock] = useState<InfoBlock | null>(null)
   const [editingSection,   setEditingSection]   = useState<FormSection | null>(null)
@@ -511,6 +680,7 @@ export function FormBuilder({ items, formType, onChange }: FormBuilderProps) {
                     key={item.id}
                     section={item}
                     formType={formType}
+                    classes={classes}
                     onUpdateFields={(fields) => updateSection(item.id, fields)}
                     onEdit={() => setEditingSection(item)}
                     onDelete={!item.isSystem ? () => deleteItem(item.id) : undefined}

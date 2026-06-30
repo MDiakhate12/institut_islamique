@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { useRegistrationForm, useUpdateRegistrationForm, useResetRegistrationForm } from '@/modules/registrations/registrations.hooks'
-import type { FormItem, FormType, InfoBlock, FormSection } from '@/modules/registrations/registrations.types'
+import type { FormItem, FormType, InfoBlock, FormSection, RegistrationClassItem } from '@/modules/registrations/registrations.types'
 import { Button } from '@/components/ui/button'
 import { FormBuilder } from './FormBuilder'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
@@ -46,7 +46,7 @@ function useHistory(initial: FormItem[]) {
 
 // ── Tab content ────────────────────────────────────────────────────────────────
 
-function TabContent({ formType, schoolSlug }: { formType: FormType; schoolSlug: string }) {
+function TabContent({ formType, schoolSlug, classes }: { formType: FormType; schoolSlug: string; classes: RegistrationClassItem[] }) {
   const { data: form, isLoading } = useRegistrationForm(formType)
   const update = useUpdateRegistrationForm()
   const reset  = useResetRegistrationForm()
@@ -192,6 +192,7 @@ function TabContent({ formType, schoolSlug }: { formType: FormType; schoolSlug: 
           items={hist.current}
           formType={formType}
           onChange={handleChange}
+          classes={classes}
         />
       </div>
 
@@ -268,7 +269,7 @@ function TabContent({ formType, schoolSlug }: { formType: FormType; schoolSlug: 
 
 // ── Root client ────────────────────────────────────────────────────────────────
 
-export function RegistrationFormsClient({ schoolSlug }: { schoolSlug: string }) {
+export function RegistrationFormsClient({ schoolSlug, classes }: { schoolSlug: string; classes: RegistrationClassItem[] }) {
   const [activeTab, setActiveTab] = useState<FormType>('new_student')
 
   return (
@@ -300,7 +301,7 @@ export function RegistrationFormsClient({ schoolSlug }: { schoolSlug: string }) 
       </div>
 
       {/* Tab content — key forces remount on tab change */}
-      <TabContent key={activeTab} formType={activeTab} schoolSlug={schoolSlug} />
+      <TabContent key={activeTab} formType={activeTab} schoolSlug={schoolSlug} classes={classes} />
     </div>
   )
 }

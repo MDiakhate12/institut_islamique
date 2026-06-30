@@ -6,7 +6,8 @@ import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { registrationsService } from './registrations.service'
 import { studentsService } from '@/modules/students/students.service'
-import type { FormType, FormItem, RegistrationForm, SystemFieldKey } from './registrations.types'
+import { scheduledClassesService } from '@/modules/classes/classes.service'
+import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem } from './registrations.types'
 import { db } from '@/db'
 import { schools } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -151,7 +152,7 @@ export async function submitRegistrationAction(
 export async function getPublicRegistrationFormAction(
   schoolSlug: string,
   formType: FormType
-): Promise<ActionResult<{ form: RegistrationForm; schoolName: string; gradeOptions: string[]; academicYear: string }>> {
+): Promise<ActionResult<{ form: RegistrationForm; schoolName: string; gradeOptions: string[]; academicYear: string; classes: RegistrationClassItem[] }>> {
   try {
     const [school] = await db
       .select({ id: schools.id, name: schools.name, settings: schools.settings })
@@ -161,14 +162,30 @@ export async function getPublicRegistrationFormAction(
 
     if (!school) return err('École introuvable')
 
-    const form = await registrationsService.getOrCreateForm(school.id, formType)
-    const settings = school.settings as { gradeLevels?: string[]; academicYear?: string } | null
-    const gradeOptions  = settings?.gradeLevels  ?? []
-    const academicYear  = settings?.academicYear ?? '2025-2026'
+    const [form, classes] = await Promise.all([
+      registrationsService.getOrCreateForm(school.id, formType),
+      scheduledClassesService.getForRegistration(school.id),
+    ])
+    const settings     = school.settings as { gradeLevels?: string[]; academicYear?: string } | null
+    const gradeOptions = settings?.gradeLevels  ?? []
+    const academicYear = settings?.academicYear ?? '2025-2026'
 
-    return ok({ form, schoolName: school.name, gradeOptions, academicYear })
+    return ok({ form, schoolName: school.name, gradeOptions, academicYear, classes })
   } catch (e) {
     console.error('[getPublicRegistrationFormAction]', e)
     return err('Impossible de charger le formulaire')
+  }
+}
+
+// ── Admin: get classes for the form builder preview ───────────────────────────
+
+export async function getAdminRegistrationClassesAction(): Promise<ActionResult<RegistrationClassItem[]>> {
+  const session = await requireSession()
+  try {
+    const data = await scheduledClassesService.getForRegistration(session.schoolId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getAdminRegistrationClassesAction]', e)
+    return err('Impossible de charger les classes')
   }
 }

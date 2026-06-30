@@ -7,28 +7,35 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import { X, Plus } from 'lucide-react'
+import {
+  Plus, XCircle,
+  Type, AlignLeft, Mail, Phone, CalendarDays, ChevronDown,
+  CircleDot, ToggleLeft, CheckSquare, Hash, Star,
+} from 'lucide-react'
 import type { CustomField, FieldType } from '@/modules/registrations/registrations.types'
 
 // ── Field type definitions ─────────────────────────────────────────────────────
+// Row 1 (6 items) + Row 2 (5 items) — matches qaf.app layout
+// "Case à cocher" is not selectable from this dialog (used only in default schema)
 
-const FIELD_TYPES: {
-  value: FieldType
-  label: string
-  icon: string
-  hasOptions: boolean
-  hasPlaceholder: boolean
-}[] = [
-  { value: 'text',     label: 'Texte court',      icon: 'T',  hasOptions: false, hasPlaceholder: true  },
-  { value: 'textarea', label: 'Texte long',        icon: '≡',  hasOptions: false, hasPlaceholder: true  },
-  { value: 'email',    label: 'E-mail',            icon: '@',  hasOptions: false, hasPlaceholder: true  },
-  { value: 'tel',      label: 'Téléphone',         icon: '✆',  hasOptions: false, hasPlaceholder: true  },
-  { value: 'date',     label: 'Date',              icon: '▦',  hasOptions: false, hasPlaceholder: false },
-  { value: 'select',   label: 'Liste déroulante',  icon: '▼',  hasOptions: true,  hasPlaceholder: false },
-  { value: 'radio',    label: 'Choix unique',      icon: '◉',  hasOptions: true,  hasPlaceholder: false },
-  { value: 'checkbox', label: 'Case à cocher',     icon: '☑',  hasOptions: false, hasPlaceholder: false },
-  { value: 'rating',   label: 'Évaluation ★',      icon: '★',  hasOptions: false, hasPlaceholder: false },
+const ROW1: { value: FieldType; label: string; icon: React.ReactNode; hasOptions: boolean; hasPlaceholder: boolean }[] = [
+  { value: 'text',     label: 'Texte court',     icon: <Type         className="h-5 w-5" />, hasOptions: false, hasPlaceholder: true  },
+  { value: 'textarea', label: 'Texte long',       icon: <AlignLeft    className="h-5 w-5" />, hasOptions: false, hasPlaceholder: true  },
+  { value: 'email',    label: 'E-mail',           icon: <Mail         className="h-5 w-5" />, hasOptions: false, hasPlaceholder: true  },
+  { value: 'tel',      label: 'Téléphone',        icon: <Phone        className="h-5 w-5" />, hasOptions: false, hasPlaceholder: true  },
+  { value: 'date',     label: 'Date',             icon: <CalendarDays className="h-5 w-5" />, hasOptions: false, hasPlaceholder: false },
+  { value: 'select',   label: 'Liste déroulante', icon: <ChevronDown  className="h-5 w-5" />, hasOptions: true,  hasPlaceholder: false },
 ]
+
+const ROW2: typeof ROW1 = [
+  { value: 'radio',    label: 'Choix unique',          icon: <CircleDot   className="h-5 w-5" />, hasOptions: true,  hasPlaceholder: false },
+  { value: 'yes_no',   label: 'Oui / Non',             icon: <ToggleLeft  className="h-5 w-5" />, hasOptions: false, hasPlaceholder: false },
+  { value: 'multiple', label: 'Choix multiple',         icon: <CheckSquare className="h-5 w-5" />, hasOptions: true,  hasPlaceholder: false },
+  { value: 'number',   label: 'Nombre',                icon: <Hash        className="h-5 w-5" />, hasOptions: false, hasPlaceholder: true  },
+  { value: 'rating',   label: 'Évaluation par étoiles', icon: <Star       className="h-5 w-5" />, hasOptions: false, hasPlaceholder: false },
+]
+
+const ALL_TYPES = [...ROW1, ...ROW2]
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 
@@ -39,49 +46,76 @@ interface Props {
   existing?: CustomField
 }
 
+// ── Type selector card ─────────────────────────────────────────────────────────
+
+function TypeCard({
+  ft, selected, onClick,
+}: {
+  ft: typeof ROW1[0]
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex flex-col items-center justify-center gap-2 py-3 px-1 rounded-xl border-2 transition-all text-center',
+        selected
+          ? 'border-[#7a4f30] bg-[#7a4f30]/5 text-[#7a4f30]'
+          : 'border-border bg-white text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground'
+      )}
+    >
+      <span className="shrink-0">{ft.icon}</span>
+      <span className="text-[9px] font-semibold leading-tight tracking-wide uppercase">
+        {ft.label}
+      </span>
+    </button>
+  )
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function AddFieldDialog({ open, onOpenChange, onAdd, existing }: Props) {
   const isEdit = !!existing
 
-  const [label,       setLabel]       = useState(existing?.label       ?? '')
-  const [type,        setType]        = useState<FieldType>(existing?.type ?? 'text')
-  const [required,    setRequired]    = useState(existing?.required     ?? false)
-  const [placeholder, setPlaceholder] = useState(existing?.placeholder ?? '')
-  const [note,        setNote]        = useState(existing?.note        ?? '')
-  const [options,     setOptions]     = useState<string[]>(existing?.options ?? [])
-  const [optionInput, setOptionInput] = useState('')
+  const [label,         setLabel]         = useState(existing?.label       ?? '')
+  const [type,          setType]          = useState<FieldType>(existing?.type ?? 'text')
+  const [required,      setRequired]      = useState(existing?.required     ?? false)
+  const [placeholder,   setPlaceholder]   = useState(existing?.placeholder ?? '')
+  const [note,          setNote]          = useState(existing?.note        ?? '')
+  const [options,       setOptions]       = useState<string[]>(existing?.options ?? [])
+  const [addingOption,  setAddingOption]  = useState(false)
+  const [optionInput,   setOptionInput]   = useState('')
 
-  const selectedType    = FIELD_TYPES.find(t => t.value === type)!
-  const showPlaceholder = selectedType.hasPlaceholder
-  const showOptions     = selectedType.hasOptions
+  const selectedTypeDef = ALL_TYPES.find(t => t.value === type)!
+  const showPlaceholder = selectedTypeDef.hasPlaceholder
+  const showOptions     = selectedTypeDef.hasOptions
   const canSubmit       = label.trim().length > 0 && (!showOptions || options.length > 0)
 
-  function addOption() {
+  function commitOption() {
     const trimmed = optionInput.trim()
     if (trimmed && !options.includes(trimmed)) {
       setOptions(prev => [...prev, trimmed])
     }
     setOptionInput('')
+    setAddingOption(false)
+  }
+
+  function handleOptionKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter')  { e.preventDefault(); commitOption() }
+    if (e.key === 'Escape') { setOptionInput(''); setAddingOption(false) }
   }
 
   function removeOption(opt: string) {
     setOptions(prev => prev.filter(o => o !== opt))
   }
 
-  function handleOptionKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') { e.preventDefault(); addOption() }
-  }
-
   function resetForm() {
-    if (isEdit) return // Don't reset when editing
-    setLabel('')
-    setType('text')
-    setRequired(false)
-    setPlaceholder('')
-    setNote('')
-    setOptions([])
-    setOptionInput('')
+    if (isEdit) return
+    setLabel(''); setType('text'); setRequired(false)
+    setPlaceholder(''); setNote(''); setOptions([])
+    setOptionInput(''); setAddingOption(false)
   }
 
   function handleSubmit() {
@@ -100,32 +134,62 @@ export function AddFieldDialog({ open, onOpenChange, onAdd, existing }: Props) {
     onOpenChange(false)
   }
 
+  function handleTypeSelect(newType: FieldType) {
+    setType(newType)
+    setOptions([])
+    setAddingOption(false)
+    setOptionInput('')
+  }
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v && !isEdit) resetForm()
-        onOpenChange(v)
-      }}
-    >
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(v) => { if (!v && !isEdit) resetForm(); onOpenChange(v) }}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+
+        {/* ── Header with Obligatoire toggle ─────────────────────────────── */}
         <DialogHeader>
-          <DialogTitle>
-            {isEdit ? 'Modifier la question' : 'Ajouter une question'}
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {isEdit
-              ? 'Modifiez les paramètres de ce champ personnalisé'
-              : 'Créez un champ personnalisé à ajouter à cette section'}
-          </p>
+          <div className="flex items-start justify-between pr-7">
+            <div>
+              <DialogTitle>
+                {isEdit ? 'Modifier la question' : 'Ajouter une question à la section'}
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {isEdit
+                  ? 'Modifiez les paramètres de ce champ'
+                  : 'Créez une nouvelle question pour votre formulaire d\'inscription'}
+              </p>
+            </div>
+
+            {/* Obligatoire toggle */}
+            <button
+              type="button"
+              onClick={() => setRequired(r => !r)}
+              className="flex items-center gap-2 shrink-0 ml-4 mt-0.5"
+            >
+              <span className={cn(
+                'text-sm font-medium transition-colors',
+                required ? 'text-[#c2440f]' : 'text-muted-foreground'
+              )}>
+                Obligatoire
+              </span>
+              <div className={cn(
+                'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+                required ? 'bg-[#c2440f]' : 'bg-muted-foreground/30'
+              )}>
+                <span className={cn(
+                  'inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform',
+                  required ? 'translate-x-[18px]' : 'translate-x-0.5'
+                )} />
+              </div>
+            </button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-5 pt-1">
 
-          {/* ── Label ─────────────────────────────────────────────────────── */}
+          {/* ── Libellé ────────────────────────────────────────────────────── */}
           <div className="space-y-1.5">
-            <Label className="text-sm">
-              Question / Libellé <span className="text-destructive">*</span>
+            <Label className="text-sm font-medium">
+              Libellé de la question <span className="text-destructive">*</span>
             </Label>
             <Input
               autoFocus
@@ -136,87 +200,81 @@ export function AddFieldDialog({ open, onOpenChange, onAdd, existing }: Props) {
             />
           </div>
 
-          {/* ── Type selector ─────────────────────────────────────────────── */}
+          {/* ── Type selector — row 1 (6) + row 2 (5) ────────────────────── */}
           <div className="space-y-2">
-            <Label className="text-sm">Type de champ</Label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {FIELD_TYPES.map(ft => (
-                <button
-                  key={ft.value}
-                  type="button"
-                  onClick={() => { setType(ft.value); setOptions([]) }}
-                  className={cn(
-                    'flex items-center gap-2 px-2.5 py-2.5 rounded-lg border text-left transition-all',
-                    type === ft.value
-                      ? 'border-[#c2440f] bg-[#c2440f]/5 text-[#c2440f] font-medium'
-                      : 'border-border text-foreground hover:border-muted-foreground/40'
-                  )}
-                >
-                  <span className="text-base leading-none w-4 text-center shrink-0 select-none">
-                    {ft.icon}
-                  </span>
-                  <span className="text-xs leading-tight">{ft.label}</span>
-                </button>
-              ))}
+            <Label className="text-sm font-medium text-[#c2440f]">Type de question</Label>
+            <div className="space-y-2">
+              <div className="grid grid-cols-6 gap-2">
+                {ROW1.map(ft => (
+                  <TypeCard key={ft.value} ft={ft} selected={type === ft.value} onClick={() => handleTypeSelect(ft.value)} />
+                ))}
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {ROW2.map(ft => (
+                  <TypeCard key={ft.value} ft={ft} selected={type === ft.value} onClick={() => handleTypeSelect(ft.value)} />
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* ── Options (for radio / select) ───────────────────────────────── */}
+          {/* ── Options (radio / select / multiple) ───────────────────────── */}
           {showOptions && (
             <div className="space-y-2">
-              <Label className="text-sm">
+              <Label className="text-sm font-medium">
                 Options <span className="text-destructive">*</span>
               </Label>
+
+              {/* Options list */}
               {options.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
                   {options.map(opt => (
-                    <span
-                      key={opt}
-                      className="flex items-center gap-1 text-xs px-2 py-1 bg-muted border border-border rounded-full"
-                    >
-                      {opt}
+                    <div key={opt} className="flex items-center justify-between px-3 py-2.5">
+                      <span className="text-sm text-foreground">{opt}</span>
                       <button
                         type="button"
                         onClick={() => removeOption(opt)}
-                        className="text-muted-foreground hover:text-red-500 transition-colors ml-0.5"
+                        className="text-muted-foreground/50 hover:text-red-500 transition-colors ml-2 shrink-0"
                       >
-                        <X className="h-2.5 w-2.5" />
+                        <XCircle className="h-4 w-4" />
                       </button>
-                    </span>
+                    </div>
                   ))}
                 </div>
               )}
-              <div className="flex gap-2">
+
+              {/* Add option — inline input or text link */}
+              {addingOption ? (
                 <Input
+                  autoFocus
                   value={optionInput}
                   onChange={e => setOptionInput(e.target.value)}
                   onKeyDown={handleOptionKeyDown}
+                  onBlur={() => { if (optionInput.trim()) commitOption(); else setAddingOption(false) }}
                   placeholder="Saisir une option puis Entrée…"
                   className="h-8 text-sm"
                 />
-                <Button
+              ) : (
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addOption}
-                  className="h-8 px-2.5 shrink-0"
+                  onClick={() => setAddingOption(true)}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              {options.length === 0 && (
-                <p className="text-xs text-muted-foreground italic">
-                  Ajoutez au moins une option pour ce champ
-                </p>
+                  Ajouter une option
+                </button>
+              )}
+
+              {options.length === 0 && !addingOption && (
+                <p className="text-xs text-muted-foreground italic">Ajoutez au moins une option</p>
               )}
             </div>
           )}
 
-          {/* ── Placeholder ────────────────────────────────────────────────── */}
+          {/* ── Texte d'espace réservé (placeholder) ─────────────────────── */}
           {showPlaceholder && (
             <div className="space-y-1.5">
-              <Label className="text-sm">
-                Texte indicatif{' '}
+              <Label className="text-sm font-medium">
+                Texte d&apos;espace réservé{' '}
                 <span className="text-muted-foreground font-normal">(facultatif)</span>
               </Label>
               <Input
@@ -228,10 +286,10 @@ export function AddFieldDialog({ open, onOpenChange, onAdd, existing }: Props) {
             </div>
           )}
 
-          {/* ── Note d'aide ────────────────────────────────────────────────── */}
+          {/* ── Texte d'aide (note) ────────────────────────────────────────── */}
           <div className="space-y-1.5">
-            <Label className="text-sm">
-              Note d'aide{' '}
+            <Label className="text-sm font-medium">
+              Texte d&apos;aide{' '}
               <span className="text-muted-foreground font-normal">(facultatif)</span>
             </Label>
             <Input
@@ -241,33 +299,6 @@ export function AddFieldDialog({ open, onOpenChange, onAdd, existing }: Props) {
               className="h-9"
             />
           </div>
-
-          {/* ── Required toggle ────────────────────────────────────────────── */}
-          <label className="flex items-center gap-3 cursor-pointer select-none">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={required}
-              onClick={() => setRequired(r => !r)}
-              className={cn(
-                'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none',
-                required ? 'bg-[#c2440f]' : 'bg-muted-foreground/30'
-              )}
-            >
-              <span
-                className={cn(
-                  'inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform',
-                  required ? 'translate-x-[18px]' : 'translate-x-0.5'
-                )}
-              />
-            </button>
-            <div>
-              <p className="text-sm font-medium leading-none">Champ obligatoire</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {required ? 'Les parents devront remplir ce champ' : 'Ce champ est optionnel'}
-              </p>
-            </div>
-          </label>
 
           {/* ── Actions ────────────────────────────────────────────────────── */}
           <div className="flex justify-end gap-2 pt-1 border-t border-border">

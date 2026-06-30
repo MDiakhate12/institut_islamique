@@ -3,10 +3,10 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Info, AlertTriangle, CheckCircle, XCircle, Star } from 'lucide-react'
+import { Info, AlertTriangle, CheckCircle, XCircle, Star, X, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { submitRegistrationAction } from '@/modules/registrations/registrations.actions'
-import type { FormItem, FormSection, InfoBlock, FormField, FormType, InfoBlockStyle } from '@/modules/registrations/registrations.types'
+import type { FormItem, FormSection, InfoBlock, FormField, FormType, InfoBlockStyle, RegistrationClassItem } from '@/modules/registrations/registrations.types'
 
 // ── Style config ───────────────────────────────────────────────────────────────
 
@@ -35,16 +35,22 @@ function FieldRenderer({
   const inputClass = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]/50 transition-colors'
 
   const labelEl = (
-    <label className="text-sm font-medium text-foreground block mb-1.5">
+    <label className="text-sm font-medium text-foreground block mb-1">
       {label}
       {required && <span className="text-[#c2440f] ml-0.5">*</span>}
     </label>
   )
 
+  // Shared note element (placed before input)
+  const noteEl = note ? (
+    <p className="text-xs text-muted-foreground mb-1.5">{note}</p>
+  ) : null
+
   if (type === 'text' || type === 'email' || type === 'tel') {
     return (
       <div>
         {labelEl}
+        {noteEl}
         <input
           type={type}
           value={(value as string) ?? ''}
@@ -52,7 +58,22 @@ function FieldRenderer({
           placeholder={placeholder}
           className={inputClass}
         />
-        {note && <p className="text-xs text-muted-foreground italic mt-1">{note}</p>}
+      </div>
+    )
+  }
+
+  if (type === 'number') {
+    return (
+      <div>
+        {labelEl}
+        {noteEl}
+        <input
+          type="number"
+          value={(value as string) ?? ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          className={inputClass}
+        />
       </div>
     )
   }
@@ -70,12 +91,13 @@ function FieldRenderer({
     return (
       <div>
         {labelEl}
+        {noteEl}
         <textarea
           value={(value as string) ?? ''}
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           rows={4}
-          className={cn(inputClass, 'resize-none')}
+          className={cn(inputClass, 'resize-y')}
         />
       </div>
     )
@@ -101,32 +123,43 @@ function FieldRenderer({
     )
   }
 
+  // Radio — full-width option cards with radio circle (matches qaf.app)
   if (type === 'radio') {
     return (
       <div>
         {labelEl}
-        {note && <p className="text-xs text-muted-foreground italic mb-2">{note}</p>}
-        <div className="flex flex-wrap gap-2">
-          {options.map(opt => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => onChange(opt)}
-              className={cn(
-                'px-4 py-2 rounded-full border text-sm transition-all',
-                value === opt
-                  ? 'border-[#c2440f] bg-[#c2440f]/5 text-[#c2440f] font-medium'
-                  : 'border-border text-foreground hover:border-muted-foreground/50'
-              )}
-            >
-              {opt}
-            </button>
-          ))}
+        {noteEl}
+        <div className="space-y-2">
+          {options.map(opt => {
+            const isSelected = value === opt
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => onChange(opt)}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all',
+                  isSelected
+                    ? 'border-[#c2440f] bg-[#c2440f]/5'
+                    : 'border-border bg-white hover:border-muted-foreground/30'
+                )}
+              >
+                <div className={cn(
+                  'h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0',
+                  isSelected ? 'border-[#c2440f]' : 'border-muted-foreground/40'
+                )}>
+                  {isSelected && <div className="h-2.5 w-2.5 rounded-full bg-[#c2440f]" />}
+                </div>
+                <span className={cn('text-sm', isSelected ? 'text-[#c2440f] font-medium' : 'text-foreground')}>{opt}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
     )
   }
 
+  // Checkbox — inline label+checkbox (for photo consent, policy acknowledgement)
   if (type === 'checkbox') {
     return (
       <label className="flex items-start gap-3 cursor-pointer">
@@ -134,7 +167,7 @@ function FieldRenderer({
           type="checkbox"
           checked={(value as boolean) ?? false}
           onChange={e => onChange(e.target.checked)}
-          className="mt-0.5 h-4 w-4 rounded border-border text-[#c2440f] focus:ring-[#c2440f]/20 shrink-0"
+          className="mt-0.5 h-4 w-4 rounded border-border accent-[#c2440f] shrink-0"
         />
         <div>
           <span className="text-sm text-foreground">{label}</span>
@@ -145,28 +178,233 @@ function FieldRenderer({
     )
   }
 
+  // Rating — clickable stars with X/5 counter (matches qaf.app)
   if (type === 'rating') {
     const rating = (value as number) ?? 0
     return (
       <div>
         {labelEl}
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map(star => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => onChange(star)}
-              className="transition-colors"
-            >
-              <Star className={cn('h-7 w-7', star <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30')} />
-            </button>
-          ))}
+        {noteEl}
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map(star => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => onChange(star)}
+                className="transition-colors"
+              >
+                <Star className={cn('h-7 w-7', star <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30')} />
+              </button>
+            ))}
+          </div>
+          {rating > 0 && (
+            <span className="text-sm text-muted-foreground font-medium">{rating}/5</span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Yes/No — single checkbox (matches qaf.app: checked = oui, unchecked = non)
+  if (type === 'yes_no') {
+    return (
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={(value as boolean) ?? false}
+          onChange={e => onChange(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-border accent-[#c2440f] shrink-0"
+        />
+        <div>
+          <span className="text-sm text-foreground">{label}</span>
+          {required && <span className="text-[#c2440f] ml-0.5">*</span>}
+          {note && <p className="text-xs text-muted-foreground mt-1">{note}</p>}
+        </div>
+      </label>
+    )
+  }
+
+  // Multiple — full-width option cards with checkboxes (matches qaf.app)
+  if (type === 'multiple') {
+    const selected = (value as string[]) ?? []
+    return (
+      <div>
+        {labelEl}
+        {noteEl}
+        <div className="space-y-2">
+          {options.map(opt => {
+            const isChecked = selected.includes(opt)
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  const next = isChecked
+                    ? selected.filter(s => s !== opt)
+                    : [...selected, opt]
+                  onChange(next)
+                }}
+                className={cn(
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all',
+                  isChecked
+                    ? 'border-[#c2440f] bg-[#c2440f]/5'
+                    : 'border-border bg-white hover:border-muted-foreground/30'
+                )}
+              >
+                <div className={cn(
+                  'h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
+                  isChecked ? 'border-[#c2440f] bg-[#c2440f]' : 'border-muted-foreground/40 bg-white'
+                )}>
+                  {isChecked && (
+                    <svg viewBox="0 0 12 12" className="h-3 w-3 text-white fill-current">
+                      <path d="M1.5 6L4.5 9L10.5 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    </svg>
+                  )}
+                </div>
+                <span className={cn('text-sm', isChecked ? 'text-[#c2440f] font-medium' : 'text-foreground')}>{opt}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
     )
   }
 
   return null
+}
+
+// ── Class selection helpers ────────────────────────────────────────────────────
+
+function groupBySubject(classes: RegistrationClassItem[]): Record<string, RegistrationClassItem[]> {
+  return classes.reduce<Record<string, RegistrationClassItem[]>>((acc, cls) => {
+    if (!acc[cls.subjectCode]) acc[cls.subjectCode] = []
+    acc[cls.subjectCode].push(cls)
+    return acc
+  }, {})
+}
+
+function PublicSyllabusDialog({ cls, onClose }: { cls: RegistrationClassItem; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="bg-[#5c3820] px-5 py-4 flex items-start justify-between gap-4 shrink-0">
+          <h3 className="text-white font-semibold text-sm leading-snug">
+            {cls.name} ({cls.code}) — Programme
+          </h3>
+          <button type="button" onClick={onClose} className="text-white/70 hover:text-white shrink-0 mt-0.5">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5">
+          {cls.curriculum
+            ? <div
+                className="text-sm [&_h2]:text-[#c2440f] [&_h2]:font-semibold [&_h2]:mb-1 [&_h3]:text-[#c2440f] [&_h3]:font-semibold [&_h3]:mb-1 [&_h4]:text-[#c2440f] [&_h4]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_li]:mb-0.5"
+                dangerouslySetInnerHTML={{ __html: cls.curriculum }}
+              />
+            : <p className="text-sm text-muted-foreground">Aucun syllabus disponible pour cette classe.</p>
+          }
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ClassSelectionCards({
+  classes, formData, onFieldChange,
+}: {
+  classes: RegistrationClassItem[]
+  formData: Record<string, unknown>
+  onFieldChange: (key: string, value: unknown) => void
+}) {
+  const [syllabusClass, setSyllabusClass] = useState<RegistrationClassItem | null>(null)
+  const grouped = groupBySubject(classes)
+  const subjects = Object.keys(grouped)
+
+  if (subjects.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground italic">
+        Aucune classe disponible pour l'inscription.
+      </p>
+    )
+  }
+
+  return (
+    <>
+      <div className="space-y-6">
+        {subjects.map(subject => {
+          const classList = grouped[subject]
+          const selectedId = formData[`class_${subject}`] as string | undefined
+
+          return (
+            <div key={subject}>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Classe {subject}
+              </p>
+              <div className="grid grid-cols-3 gap-2.5">
+                {classList.map(cls => {
+                  const isSelected = selectedId === cls.id
+                  return (
+                    <div
+                      key={cls.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onFieldChange(`class_${subject}`, isSelected ? undefined : cls.id)}
+                      onKeyDown={e => e.key === 'Enter' && onFieldChange(`class_${subject}`, isSelected ? undefined : cls.id)}
+                      className={cn(
+                        'relative flex flex-col gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all',
+                        isSelected
+                          ? 'border-[#c2440f] bg-[#c2440f]/5'
+                          : 'border-border bg-white hover:border-muted-foreground/30'
+                      )}
+                    >
+                      {/* Selected checkmark */}
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-[#c2440f] flex items-center justify-center shrink-0">
+                          <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
+                            <path d="M2 6L4.5 8.5L10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      )}
+
+                      {/* Class name */}
+                      <p className={cn(
+                        'text-xs font-medium leading-snug line-clamp-3',
+                        isSelected ? 'text-[#c2440f] pr-6' : 'text-foreground',
+                      )}>
+                        {cls.name}
+                      </p>
+
+                      {/* Code badge */}
+                      <span className="inline-flex self-start text-[10px] bg-[#7a4f30] text-white rounded px-1.5 py-0.5 font-medium">
+                        {cls.fullCode}
+                      </span>
+
+                      {/* Syllabus button */}
+                      {cls.curriculum && (
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); setSyllabusClass(cls) }}
+                          className="inline-flex self-start items-center gap-1 text-[10px] bg-[#7a4f30] text-white rounded px-1.5 py-0.5 hover:bg-[#5c3820] transition-colors"
+                        >
+                          <BookOpen className="h-2.5 w-2.5" />
+                          Syllabus
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {syllabusClass && (
+        <PublicSyllabusDialog cls={syllabusClass} onClose={() => setSyllabusClass(null)} />
+      )}
+    </>
+  )
 }
 
 // ── Info block renderer ────────────────────────────────────────────────────────
@@ -190,7 +428,7 @@ function InfoBlockRenderer({ block }: { block: InfoBlock }) {
 // ── Section renderer ───────────────────────────────────────────────────────────
 
 function SectionRenderer({
-  section, formType, formData, onFieldChange, gradeOptions, prefilledStudent,
+  section, formType, formData, onFieldChange, gradeOptions, prefilledStudent, classes,
 }: {
   section: FormSection
   formType: FormType
@@ -198,6 +436,7 @@ function SectionRenderer({
   onFieldChange: (key: string, value: unknown) => void
   gradeOptions?: string[]
   prefilledStudent?: { name: string; id: string }
+  classes?: RegistrationClassItem[]
 }) {
   const isClassSection = section.systemKey === 'class_selection'
 
@@ -239,22 +478,13 @@ function SectionRenderer({
           </div>
         )}
 
-        {/* Class selection — new student */}
+        {/* Class selection — new student: selectable cards */}
         {isClassSection && formType === 'new_student' && (
-          <div className="space-y-3">
-            {(['QRN', 'ARA', 'NUR'] as const).map(code => (
-              <div key={code}>
-                <label className="text-sm font-medium block mb-1.5">Classe {code}</label>
-                <select
-                  value={(formData[`class_${code}`] as string) ?? ''}
-                  onChange={e => onFieldChange(`class_${code}`, e.target.value)}
-                  className="w-full border border-border rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20"
-                >
-                  <option value="">Sélectionner une classe {code}</option>
-                </select>
-              </div>
-            ))}
-          </div>
+          <ClassSelectionCards
+            classes={classes ?? []}
+            formData={formData}
+            onFieldChange={onFieldChange}
+          />
         )}
 
         {/* Regular fields */}
@@ -283,6 +513,7 @@ export interface PublicRegistrationFormProps {
   prefilledStudent?: { name: string; id: string }
   academicYear?: string
   gradeOptions?: string[]
+  classes?: RegistrationClassItem[]
 }
 
 export function PublicRegistrationForm({
@@ -291,6 +522,7 @@ export function PublicRegistrationForm({
   prefilledStudent,
   academicYear = '2026-2027',
   gradeOptions,
+  classes = [],
 }: PublicRegistrationFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState<Record<string, unknown>>({})
@@ -368,6 +600,7 @@ export function PublicRegistrationForm({
                 onFieldChange={handleFieldChange}
                 gradeOptions={gradeOptions}
                 prefilledStudent={prefilledStudent}
+                classes={classes}
               />
             )
           })}
@@ -382,8 +615,8 @@ export function PublicRegistrationForm({
           </button>
 
           <p className="text-center text-xs text-muted-foreground pb-4">
-            En cliquant sur "Soumettre l'inscription", vous acceptez nos{' '}
-            <a href="#" className="text-[#c2440f] hover:underline">Conditions d'utilisation</a>
+            En cliquant sur &quot;Soumettre l&apos;inscription&quot;, vous acceptez nos{' '}
+            <a href="#" className="text-[#c2440f] hover:underline">Conditions d&apos;utilisation</a>
             {' '}et{' '}
             <a href="#" className="text-[#c2440f] hover:underline">Politique de confidentialité</a>
           </p>

@@ -352,4 +352,31 @@ export const scheduledClassesService = {
       .orderBy(asc(classes.room))
     return rows.map(r => r.room).filter((r): r is string => r !== null)
   },
+
+  // Light fetch for the registration form class picker (no teacher/count joins)
+  async getForRegistration(schoolId: string) {
+    const rows = await db
+      .select({
+        id:          classes.id,
+        name:        classes.name,
+        section:     classes.section,
+        subjectCode: classCatalog.subjectCode,
+        catalogCode: classCatalog.code,
+        levelNumber: classCatalog.levelNumber,
+        curriculum:  classCatalog.curriculum,
+      })
+      .from(classes)
+      .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
+      .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
+      .orderBy(asc(classCatalog.subjectCode), asc(classCatalog.levelNumber), asc(classes.section))
+
+    return rows.map(r => ({
+      id:          r.id,
+      name:        r.name,
+      code:        r.catalogCode ?? '',
+      fullCode:    buildFullCode(r.catalogCode, r.section),
+      subjectCode: r.subjectCode ?? 'Other',
+      curriculum:  r.curriculum,
+    }))
+  },
 }

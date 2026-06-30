@@ -2,7 +2,7 @@
 
 export type FormType = 'new_student' | 'reenrollment'
 export type InfoBlockStyle = 'info' | 'warning' | 'success' | 'error'
-export type FieldType = 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'rating' | 'date'
+export type FieldType = 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'rating' | 'date' | 'yes_no' | 'number' | 'multiple'
 
 export type SystemFieldKey =
   | 'firstName' | 'lastName' | 'birthDate' | 'gender'
@@ -57,6 +57,17 @@ export type FormSection = {
 }
 
 export type FormItem = FormSection | InfoBlock
+
+// ── Class item for registration form ──────────────────────────────────────────
+
+export type RegistrationClassItem = {
+  id: string
+  name: string
+  code: string        // e.g. "QRN-100" (from catalog)
+  fullCode: string    // e.g. "QRN-100-1" (with section)
+  subjectCode: string // "QRN" | "ARA" | "ISL" | "NUR" | …
+  curriculum: string | null
+}
 
 // ── DB entity types ────────────────────────────────────────────────────────────
 
