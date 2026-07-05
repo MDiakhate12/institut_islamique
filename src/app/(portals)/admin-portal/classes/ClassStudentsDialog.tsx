@@ -105,9 +105,6 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium leading-none">{e.firstName} {e.lastName}</p>
-                    {e.parentPhone && (
-                      <p className="text-xs text-muted-foreground mt-0.5">Parent: {e.parentPhone}</p>
-                    )}
                   </div>
                   {/* Status badge */}
                   <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">

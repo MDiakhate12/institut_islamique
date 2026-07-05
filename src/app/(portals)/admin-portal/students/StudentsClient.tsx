@@ -45,11 +45,16 @@ export function StudentsClient() {
       if (activeFilter === 'inactive' && s.isActive)  return false
       if (search) {
         const q = search.toLowerCase()
+        const guardianMatch = s.guardians.some(g =>
+          (g.phone ?? '').includes(q) ||
+          (g.email ?? '').toLowerCase().includes(q) ||
+          g.firstName.toLowerCase().includes(q)
+        )
         return (
           s.firstName.toLowerCase().includes(q) ||
           s.lastName.toLowerCase().includes(q) ||
-          (s.parentPhone ?? '').includes(q) ||
-          (s.studentCustomId ?? '').toLowerCase().includes(q)
+          (s.studentCustomId ?? '').toLowerCase().includes(q) ||
+          guardianMatch
         )
       }
       return true
@@ -179,15 +184,10 @@ export function StudentsClient() {
                   <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} />
                   <th className="px-3 py-3 text-left">Étoiles</th>
                   <th className="px-3 py-3 text-left">Trophée</th>
-                  <th className="px-3 py-3 text-left">Numéro de téléphone</th>
                   <SortTh label="Date de naissance" onClick={() => toggleSort('birthDate')} />
-                  <th className="px-3 py-3 text-left min-w-[160px]">Nom du parent 1</th>
-                  <th className="px-3 py-3 text-left min-w-[160px]">Nom du parent 2</th>
+                  <th className="px-3 py-3 text-left min-w-[200px]">Tuteurs</th>
                   <th className="px-3 py-3 text-left">Nb. classes</th>
                   <th className="px-3 py-3 text-left">Classes</th>
-                  <th className="px-3 py-3 text-left">Trimestre 1</th>
-                  <th className="px-3 py-3 text-left">Trimestre 2</th>
-                  <th className="px-3 py-3 text-left">Trimestre 3</th>
                   <th className="px-3 py-3 text-left">Statut</th>
                   <th className="px-3 py-3 text-left">Présent</th>
                   <th className="px-3 py-3 text-left">En retard</th>
@@ -195,7 +195,6 @@ export function StudentsClient() {
                   <th className="px-3 py-3 text-left">Excusé</th>
                   <th className="px-3 py-3 text-left min-w-[110px]">Année d&apos;inscription</th>
                   <th className="px-3 py-3 text-left min-w-[110px]">Date d&apos;adhésion</th>
-                  <th className="px-3 py-3 text-left min-w-[130px]">Numéro d&apos;urgence</th>
                   <th className="px-3 py-3 text-left min-w-[130px]">Commentaire</th>
                   <th className="px-3 py-3 text-left min-w-[220px]">Actions</th>
                 </tr>
@@ -251,9 +250,6 @@ function StudentRow({ student: s, index, onDeactivate }: {
       {/* Trophée */}
       <td className="px-3 py-3 text-muted-foreground text-xs italic">Pas encore</td>
 
-      {/* Téléphone */}
-      <td className="px-3 py-3 font-medium">{s.parentPhone ?? <span className="text-muted-foreground">—</span>}</td>
-
       {/* Date naissance */}
       <td className="px-3 py-3">
         {s.birthDate ? (
@@ -266,24 +262,20 @@ function StudentRow({ student: s, index, onDeactivate }: {
         ) : <span className="text-muted-foreground">—</span>}
       </td>
 
-      {/* Parent 1 */}
+      {/* Tuteurs */}
       <td className="px-3 py-3">
-        {s.parentName1 ? (
-          <div>
-            <p className="font-medium text-xs">{s.parentName1}</p>
-            {s.parentEmail1 && <p className="text-xs text-muted-foreground">{s.parentEmail1}</p>}
+        {s.guardians.length === 0 ? (
+          <span className="text-muted-foreground text-xs italic">—</span>
+        ) : (
+          <div className="space-y-1">
+            {s.guardians.map(g => (
+              <div key={g.id}>
+                <p className="font-medium text-xs">{g.firstName} {g.lastName}</p>
+                {g.phone && <p className="text-xs text-muted-foreground">{g.phone}</p>}
+              </div>
+            ))}
           </div>
-        ) : <span className="text-muted-foreground">—</span>}
-      </td>
-
-      {/* Parent 2 */}
-      <td className="px-3 py-3">
-        {s.parentName2 ? (
-          <div>
-            <p className="font-medium text-xs">{s.parentName2}</p>
-            {s.parentEmail2 && <p className="text-xs text-muted-foreground">{s.parentEmail2}</p>}
-          </div>
-        ) : <span className="text-muted-foreground">—</span>}
+        )}
       </td>
 
       {/* Nb classes */}
@@ -298,11 +290,6 @@ function StudentRow({ student: s, index, onDeactivate }: {
           ? <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">{s.activeClassName}</span>
           : <span className="text-muted-foreground text-xs italic">—</span>}
       </td>
-
-      {/* Paiements T1/T2/T3 */}
-      <td className="px-3 py-3"><PaymentBadge paid={s.paidT1} /></td>
-      <td className="px-3 py-3"><PaymentBadge paid={s.paidT2} /></td>
-      <td className="px-3 py-3"><PaymentBadge paid={s.paidT3} /></td>
 
       {/* Statut */}
       <td className="px-3 py-3">
@@ -329,9 +316,6 @@ function StudentRow({ student: s, index, onDeactivate }: {
           ? new Date(s.enrolledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
           : new Date(s.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
       </td>
-
-      {/* Urgence */}
-      <td className="px-3 py-3 text-xs">{s.emergencyPhone ?? <span className="text-muted-foreground italic">Non renseigné</span>}</td>
 
       {/* Notes */}
       <td className="px-3 py-3 text-xs text-muted-foreground">
@@ -372,11 +356,6 @@ function ActionBtn({ label, color }: { label: string; color: 'blue' | 'green' })
   )
 }
 
-function PaymentBadge({ paid }: { paid: boolean | null | undefined }) {
-  return paid
-    ? <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">Payé</span>
-    : <span className="text-muted-foreground text-xs">—</span>
-}
 
 function StudentsSkeleton() {
   return (

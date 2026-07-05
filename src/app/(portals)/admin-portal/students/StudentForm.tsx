@@ -31,25 +31,16 @@ export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormPr
   // ── Form state ici (survit à la fermeture du dialog) ──────────────────────
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDelete]    = useTransition()
-  const [paidT1, setPaidT1] = useState(false)
-  const [paidT2, setPaidT2] = useState(false)
-  const [paidT3, setPaidT3] = useState(false)
 
   const form = useForm<CreateStudentInput>({
     resolver: zodResolver(createStudentSchema),
     defaultValues: {
-      firstName:      student?.firstName     ?? '',
-      lastName:       student?.lastName      ?? '',
-      gender:         student?.gender        ?? 'male',
-      isActive:       student?.isActive      ?? true,
-      birthDate:      student?.birthDate     ?? '',
-      parentPhone:    student?.parentPhone   ?? '',
-      parentName1:    student?.parentName1   ?? '',
-      parentName2:    student?.parentName2   ?? '',
-      parentEmail1:   student?.parentEmail1  ?? '',
-      parentEmail2:   student?.parentEmail2  ?? '',
-      emergencyPhone: student?.emergencyPhone ?? '',
-      notes:          student?.notes         ?? '',
+      firstName: student?.firstName ?? '',
+      lastName:  student?.lastName  ?? '',
+      gender:    student?.gender    ?? 'male',
+      isActive:  student?.isActive  ?? true,
+      birthDate: student?.birthDate ?? '',
+      notes:     student?.notes     ?? '',
     },
   })
 
@@ -125,12 +116,8 @@ export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormPr
             </div>
           </div>
 
-          {/* Téléphone parent / Genre ou ID élève */}
+          {/* Genre ou ID élève */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Téléphone du parent</label>
-              <Input placeholder="0X XX XX XX XX" {...form.register('parentPhone')} />
-            </div>
             {isEditing && student.studentCustomId ? (
               <div>
                 <label className="text-sm font-medium mb-1 block text-muted-foreground">ID Élève</label>
@@ -176,18 +163,6 @@ export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormPr
             </div>
           )}
 
-          {/* Parents */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Parent 1 (Père)</label>
-              <Input placeholder="Nom du père" {...form.register('parentName1')} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Parent 2 (Mère)</label>
-              <Input placeholder="Nom de la mère" {...form.register('parentName2')} />
-            </div>
-          </div>
-
           {/* Statut actif */}
           <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 border border-border">
             <span className="text-sm text-muted-foreground">L&apos;élève est actuellement inscrit et actif</span>
@@ -207,51 +182,6 @@ export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormPr
                 )} />
               </button>
             </div>
-          </div>
-
-          {/* Paiements */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Paiements</label>
-            <div className="flex gap-2">
-              {([1, 2, 3] as const).map(t => {
-                const val    = t === 1 ? paidT1 : t === 2 ? paidT2 : paidT3
-                const setVal = t === 1 ? setPaidT1 : t === 2 ? setPaidT2 : setPaidT3
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setVal(!val)}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors',
-                      val
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
-                        : 'bg-white border-border text-muted-foreground'
-                    )}
-                  >
-                    {val && <span>✓</span>}
-                    Trimestre {t}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Emails */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Email 1</label>
-              <Input placeholder="Email principal" type="email" {...form.register('parentEmail1')} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Email 2</label>
-              <Input placeholder="Email secondaire" type="email" {...form.register('parentEmail2')} />
-            </div>
-          </div>
-
-          {/* Numéro d'urgence */}
-          <div>
-            <label className="text-sm font-medium mb-1 block">Numéro d&apos;urgence</label>
-            <Input placeholder="Numéro d'urgence" {...form.register('emergencyPhone')} />
           </div>
 
           {/* Boutons */}

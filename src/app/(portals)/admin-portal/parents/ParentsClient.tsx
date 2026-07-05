@@ -14,7 +14,7 @@ import type { StudentParentInfo } from '@/modules/parents/parents.types'
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function isAtRisk(s: StudentParentInfo) {
-  return s.connectedParents.length === 0 && !!(s.parentEmail1 || s.parentEmail2)
+  return s.connectedParents.length === 0 && s.guardians.some(g => !!g.email)
 }
 
 function hasApp(s: StudentParentInfo) {
@@ -26,10 +26,15 @@ function cleanPhone(phone: string) {
 }
 
 function getStudentEmails(s: StudentParentInfo): { email: string; label: string }[] {
-  const emails: { email: string; label: string }[] = []
-  if (s.parentEmail1) emails.push({ email: s.parentEmail1, label: 'E-mail 1' })
-  if (s.parentEmail2) emails.push({ email: s.parentEmail2, label: 'E-mail 2' })
-  return emails
+  return s.guardians
+    .filter(g => !!g.email)
+    .map(g => ({ email: g.email!, label: g.firstName }))
+}
+
+function getPrimaryPhone(s: StudentParentInfo): string | null {
+  return s.guardians.find(g => g.isPrimary)?.phone
+    ?? s.guardians.find(g => !!g.phone)?.phone
+    ?? null
 }
 
 // ── Bulk email dialog ──────────────────────────────────────────────────────────
@@ -301,9 +306,11 @@ export function ParentsClient({
       const q = search.toLowerCase()
       list = list.filter(s =>
         `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
-        (s.parentPhone ?? '').toLowerCase().includes(q) ||
-        (s.parentEmail1 ?? '').toLowerCase().includes(q) ||
-        (s.parentEmail2 ?? '').toLowerCase().includes(q),
+        s.guardians.some(g =>
+          (g.phone ?? '').toLowerCase().includes(q) ||
+          (g.email ?? '').toLowerCase().includes(q) ||
+          g.firstName.toLowerCase().includes(q)
+        ),
       )
     }
     return list
@@ -439,24 +446,18 @@ export function ParentsClient({
                     }
                   </td>
 
-                  {/* Registered parents */}
+                  {/* Registered guardians */}
                   <td className="px-4 py-3">
                     <div className="space-y-1.5">
-                      {student.parentName1 && (
-                        <div>
-                          <p className="text-xs font-medium text-foreground">{student.parentName1}</p>
-                          <p className="text-[10px] text-muted-foreground">Nom du Parent 1</p>
-                        </div>
-                      )}
-                      {student.parentName2 && (
-                        <div>
-                          <p className="text-xs font-medium text-foreground">{student.parentName2}</p>
-                          <p className="text-[10px] text-muted-foreground">Nom du Parent 2</p>
-                        </div>
-                      )}
-                      {!student.parentName1 && !student.parentName2 && (
-                        <span className="text-muted-foreground/60 italic text-xs">—</span>
-                      )}
+                      {student.guardians.length === 0
+                        ? <span className="text-muted-foreground/60 italic text-xs">—</span>
+                        : student.guardians.map(g => (
+                          <div key={g.id}>
+                            <p className="text-xs font-medium text-foreground">{g.firstName} {g.lastName}</p>
+                            <p className="text-[10px] text-muted-foreground capitalize">{g.relationship}</p>
+                          </div>
+                        ))
+                      }
                     </div>
                   </td>
 
@@ -482,15 +483,18 @@ export function ParentsClient({
 
                   {/* Contact */}
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                    {student.parentPhone ?? '—'}
+                    {getPrimaryPhone(student) ?? '—'}
                   </td>
 
                   {/* Actions */}
                   <td className="px-4 py-3">
+                    {(() => {
+                      const phone = getPrimaryPhone(student)
+                      return (
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      {student.parentPhone && (
+                      {phone && (
                         <a
-                          href={`https://wa.me/${cleanPhone(student.parentPhone)}`}
+                          href={`https://wa.me/${cleanPhone(phone)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
@@ -510,6 +514,8 @@ export function ParentsClient({
                         </button>
                       )}
                     </div>
+                      )
+                    })()}
                   </td>
                 </tr>
               )

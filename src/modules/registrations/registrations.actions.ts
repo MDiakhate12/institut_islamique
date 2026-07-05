@@ -9,7 +9,7 @@ import { studentsService } from '@/modules/students/students.service'
 import { scheduledClassesService } from '@/modules/classes/classes.service'
 import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem } from './registrations.types'
 import { db } from '@/db'
-import { schools } from '@/db/schema'
+import { schools, guardians } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 const PATH = '/admin-portal/registration-forms'
@@ -105,7 +105,7 @@ export async function submitRegistrationAction(
       return fieldId ? (formData[fieldId] as string | undefined) : undefined
     }
 
-    // 3. For new_student: create a student record immediately
+    // 3. For new_student: create a student record + guardian records
     let studentId: string | undefined
     if (formType === 'new_student') {
       const firstName = get('firstName')?.trim()
@@ -113,7 +113,6 @@ export async function submitRegistrationAction(
       const genderRaw = get('gender')
 
       if (firstName && lastName && genderRaw) {
-        // Map French labels to DB enum values
         const gender: 'male' | 'female' =
           genderRaw === 'Masculin' || genderRaw === 'male' ? 'male' : 'female'
 
@@ -121,25 +120,40 @@ export async function submitRegistrationAction(
           firstName,
           lastName,
           gender,
-          isActive:      true,
-          birthDate:     get('birthDate')      || undefined,
-          parentName1:   get('fatherName')     || undefined,
-          parentName2:   get('motherName')     || undefined,
-          parentEmail1:  get('primaryEmail')   || undefined,
-          parentEmail2:  get('secondaryEmail') || undefined,
-          parentPhone:   get('primaryPhone')   || undefined,
-          emergencyPhone: get('secondaryPhone') || undefined,
+          isActive:  true,
+          birthDate: get('birthDate') || undefined,
         })
         studentId = student.id
+
+        // Create guardian records from form data
+        const fatherName = get('fatherName')?.trim()
+        const motherName = get('motherName')?.trim()
+        if (fatherName) {
+          await db.insert(guardians).values({
+            schoolId: school.id,
+            studentId,
+            relationship:   'father',
+            firstName:      fatherName,
+            isPrimary:      true,
+            email:          get('primaryEmail')   || null,
+            phone:          get('primaryPhone')   || null,
+            emergencyPhone: get('secondaryPhone') || null,
+          })
+        }
+        if (motherName) {
+          await db.insert(guardians).values({
+            schoolId: school.id,
+            studentId,
+            relationship: 'mother',
+            firstName:    motherName,
+            email:        get('secondaryEmail') || null,
+          })
+        }
       }
     }
 
-    // 4. Save registration — embed studentId in formData so it's retrievable later
-    const enrichedData = studentId
-      ? { ...formData, _studentId: studentId }
-      : formData
-
-    const registration = await registrationsService.submit(school.id, form.id, enrichedData)
+    // 4. Save registration with proper studentId FK
+    const registration = await registrationsService.submit(school.id, form.id, formData, studentId)
     return ok({ id: registration.id, studentId })
   } catch (e) {
     console.error('[submitRegistrationAction]', e)

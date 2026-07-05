@@ -87,6 +87,7 @@ export const registrationsService = {
       id: r.id,
       schoolId: r.schoolId,
       formId: r.formId ?? null,
+      studentId: r.studentId ?? null,
       formData: (r.formData as Record<string, unknown>) ?? {},
       status: r.status as Registration['status'],
       submittedAt: r.submittedAt,
@@ -96,16 +97,22 @@ export const registrationsService = {
     }))
   },
 
-  async submit(schoolId: string, formId: string | null, formData: Record<string, unknown>): Promise<Registration> {
+  async submit(
+    schoolId: string,
+    formId: string | null,
+    formData: Record<string, unknown>,
+    studentId?: string,
+  ): Promise<Registration> {
     const [row] = await db
       .insert(registrations)
-      .values({ schoolId, formId, formData, status: 'pending' })
+      .values({ schoolId, formId, formData, status: 'pending', studentId: studentId ?? null })
       .returning()
 
     return {
       id: row.id,
       schoolId: row.schoolId,
       formId: row.formId ?? null,
+      studentId: row.studentId ?? null,
       formData: (row.formData as Record<string, unknown>) ?? {},
       status: row.status as Registration['status'],
       submittedAt: row.submittedAt,

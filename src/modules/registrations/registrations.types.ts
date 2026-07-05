@@ -88,6 +88,7 @@ export type Registration = {
   id: string
   schoolId: string
   formId: string | null
+  studentId: string | null
   formData: Record<string, unknown>
   status: RegistrationStatus
   submittedAt: Date

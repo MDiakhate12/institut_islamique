@@ -1,57 +1,70 @@
 import { db } from '@/db'
-import { students, classEnrollments, classes } from '@/db/schema'
+import { students, classEnrollments, classes, guardians } from '@/db/schema'
 import { eq, and, isNull, desc } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
-import type { Student, StudentListItem } from './students.types'
+import type { Student, StudentListItem, GuardianSummary } from './students.types'
 
 function generateCustomId(): string {
   return `${Math.floor(Math.random() * 900_000_000 + 100_000_000)}-1`
 }
 
 export const studentsService = {
-  // READ — liste complète avec classe active + paiements
   async getBySchool(schoolId: string): Promise<StudentListItem[]> {
-    const rows = await db
-      .select({
-        id:              students.id,
-        firstName:       students.firstName,
-        lastName:        students.lastName,
-        gender:          students.gender,
-        birthDate:       students.birthDate,
-        isActive:        students.isActive,
-        createdAt:       students.createdAt,
-        parentPhone:     students.parentPhone,
-        parentName1:     students.parentName1,
-        parentName2:     students.parentName2,
-        parentEmail1:    students.parentEmail1,
-        parentEmail2:    students.parentEmail2,
-        emergencyPhone:  students.emergencyPhone,
-        studentCustomId: students.studentCustomId,
-        notes:           students.notes,
-        // Classe active
-        activeClassName: classes.name,
-        activeClassId:   classes.id,
-        academicYear:    classes.academicYear,
-        enrollmentId:    classEnrollments.id,
-        enrolledAt:      classEnrollments.enrolledAt,
-        // Paiements
-        paidT1: classEnrollments.paidT1,
-        paidT2: classEnrollments.paidT2,
-        paidT3: classEnrollments.paidT3,
-      })
-      .from(students)
-      .leftJoin(
-        classEnrollments,
-        and(
-          eq(classEnrollments.studentId, students.id),
-          isNull(classEnrollments.unenrolledAt)
+    const [studentRows, guardianRows] = await Promise.all([
+      db
+        .select({
+          id:              students.id,
+          firstName:       students.firstName,
+          lastName:        students.lastName,
+          gender:          students.gender,
+          birthDate:       students.birthDate,
+          isActive:        students.isActive,
+          createdAt:       students.createdAt,
+          studentCustomId: students.studentCustomId,
+          notes:           students.notes,
+          activeClassName: classes.name,
+          activeClassId:   classes.id,
+          academicYear:    classes.academicYear,
+          enrollmentId:    classEnrollments.id,
+          enrolledAt:      classEnrollments.enrolledAt,
+        })
+        .from(students)
+        .leftJoin(
+          classEnrollments,
+          and(
+            eq(classEnrollments.studentId, students.id),
+            isNull(classEnrollments.unenrolledAt)
+          )
         )
-      )
-      .leftJoin(classes, eq(classes.id, classEnrollments.classId))
-      .where(eq(students.schoolId, schoolId))
-      .orderBy(desc(students.createdAt))
+        .leftJoin(classes, eq(classes.id, classEnrollments.classId))
+        .where(eq(students.schoolId, schoolId))
+        .orderBy(desc(students.createdAt)),
 
-    return rows
+      db
+        .select({
+          id:           guardians.id,
+          studentId:    guardians.studentId,
+          relationship: guardians.relationship,
+          firstName:    guardians.firstName,
+          lastName:     guardians.lastName,
+          email:        guardians.email,
+          phone:        guardians.phone,
+          isPrimary:    guardians.isPrimary,
+        })
+        .from(guardians)
+        .where(eq(guardians.schoolId, schoolId)),
+    ])
+
+    const guardiansByStudent = guardianRows.reduce<Record<string, GuardianSummary[]>>((acc, g) => {
+      if (!acc[g.studentId]) acc[g.studentId] = []
+      acc[g.studentId].push(g)
+      return acc
+    }, {})
+
+    return studentRows.map(s => ({
+      ...s,
+      guardians: guardiansByStudent[s.id] ?? [],
+    }))
   },
 
   async getById(schoolId: string, studentId: string): Promise<Student | null> {
@@ -67,17 +80,14 @@ export const studentsService = {
     const [student] = await db
       .insert(students)
       .values({
-        ...data,
         schoolId,
-        birthDate:    data.birthDate    || null,
-        parentPhone:  data.parentPhone  || null,
-        parentName1:  data.parentName1  || null,
-        parentName2:  data.parentName2  || null,
-        parentEmail1: data.parentEmail1 || null,
-        parentEmail2: data.parentEmail2 || null,
-        emergencyPhone: data.emergencyPhone || null,
+        firstName:       data.firstName,
+        lastName:        data.lastName,
+        gender:          data.gender,
+        isActive:        data.isActive,
+        birthDate:       data.birthDate || null,
+        notes:           data.notes     || null,
         studentCustomId: generateCustomId(),
-        notes:        data.notes        || null,
       })
       .returning()
     return student
@@ -90,19 +100,6 @@ export const studentsService = {
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
       .returning()
     return updated
-  },
-
-  // Mise à jour du statut de paiement d'une inscription
-  async updateEnrollmentPayments(
-    enrollmentId: string,
-    paidT1: boolean,
-    paidT2: boolean,
-    paidT3: boolean,
-  ): Promise<void> {
-    await db
-      .update(classEnrollments)
-      .set({ paidT1, paidT2, paidT3 })
-      .where(eq(classEnrollments.id, enrollmentId))
   },
 
   async deactivate(schoolId: string, studentId: string): Promise<void> {

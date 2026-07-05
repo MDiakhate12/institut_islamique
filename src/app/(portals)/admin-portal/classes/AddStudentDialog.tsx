@@ -36,7 +36,7 @@ export function AddStudentDialog({ scheduledClass, open, onOpenChange, onStudent
       s.firstName.toLowerCase().includes(q) ||
       s.lastName.toLowerCase().includes(q) ||
       (s.studentCustomId?.toLowerCase().includes(q) ?? false) ||
-      (s.parentPhone?.includes(q) ?? false)
+      false
     )
   })
 
@@ -99,8 +99,7 @@ export function AddStudentDialog({ scheduledClass, open, onOpenChange, onStudent
                 <div>
                   <p className="text-sm font-medium">{s.firstName} {s.lastName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {s.studentCustomId && <span className="mr-2">{s.studentCustomId}</span>}
-                    {s.parentPhone && <span>Parent: {s.parentPhone}</span>}
+                    {s.studentCustomId && <span>{s.studentCustomId}</span>}
                   </p>
                 </div>
                 <Button

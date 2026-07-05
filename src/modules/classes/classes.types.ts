@@ -48,11 +48,7 @@ export type EnrolledStudentInClass = {
   studentId: string
   firstName: string
   lastName: string
-  parentPhone: string | null
   studentCustomId: string | null
-  paidT1: boolean
-  paidT2: boolean
-  paidT3: boolean
   enrolledAt: Date
   unenrolledAt: Date | null
 }

@@ -281,11 +281,7 @@ export const scheduledClassesService = {
         studentId:       students.id,
         firstName:       students.firstName,
         lastName:        students.lastName,
-        parentPhone:     students.parentPhone,
         studentCustomId: students.studentCustomId,
-        paidT1:          classEnrollments.paidT1,
-        paidT2:          classEnrollments.paidT2,
-        paidT3:          classEnrollments.paidT3,
         enrolledAt:      classEnrollments.enrolledAt,
         unenrolledAt:    classEnrollments.unenrolledAt,
       })
