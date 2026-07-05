@@ -88,6 +88,15 @@ export const registrationClassSelections = pgTable('registration_class_selection
   createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+export const otpCodes = pgTable('otp_codes', {
+  id:        uuid('id').primaryKey().defaultRandom(),
+  phone:     text('phone').notNull(),
+  code:      text('code').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt:    timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 export const stickyNotes = pgTable('sticky_notes', {
   id:        uuid('id').primaryKey().defaultRandom(),
   schoolId:  uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),

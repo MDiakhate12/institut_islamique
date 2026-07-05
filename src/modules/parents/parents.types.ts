@@ -20,3 +20,17 @@ export type StudentParentInfo = {
   guardians: Guardian[]
   connectedParents: ConnectedParent[]
 }
+
+export type EnrolledClass = {
+  classId: string
+  className: string
+  room: string | null
+  section: string | null
+}
+
+export type ChildWithClasses = {
+  studentId: string
+  firstName: string
+  lastName: string
+  classes: EnrolledClass[]
+}

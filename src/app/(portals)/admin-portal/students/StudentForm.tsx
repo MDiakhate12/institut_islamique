@@ -163,6 +163,21 @@ export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormPr
             </div>
           )}
 
+          {/* Téléphone du parent */}
+          {!isEditing && (
+            <div>
+              <label className="text-sm font-medium mb-1 block">Téléphone du parent</label>
+              <Input
+                type="tel"
+                placeholder="0X XX XX XX XX"
+                {...form.register('parentPhone')}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Utilisé par le parent pour lier son compte à cet élève
+              </p>
+            </div>
+          )}
+
           {/* Statut actif */}
           <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 border border-border">
             <span className="text-sm text-muted-foreground">L&apos;élève est actuellement inscrit et actif</span>

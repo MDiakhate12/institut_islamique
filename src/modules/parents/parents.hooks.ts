@@ -1,7 +1,7 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { getParentsAction } from './parents.actions'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getParentsAction, sendOtpAction, verifyOtpAndLinkAction, getChildrenAction } from './parents.actions'
 
 export function useParents() {
   return useQuery({
@@ -10,6 +10,36 @@ export function useParents() {
       const result = await getParentsAction()
       if (!result.success) throw new Error(result.error)
       return result.data
+    },
+  })
+}
+
+export function useChildren() {
+  return useQuery({
+    queryKey: ['children'],
+    queryFn: async () => {
+      const result = await getChildrenAction()
+      if (!result.success) throw new Error(result.error)
+      return result.data
+    },
+  })
+}
+
+export function useSendOtp() {
+  return useMutation({
+    mutationFn: (phone: string) => sendOtpAction(phone),
+  })
+}
+
+export function useVerifyOtpAndLink() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ phone, code }: { phone: string; code: string }) =>
+      verifyOtpAndLinkAction(phone, code),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['children'] })
+      }
     },
   })
 }

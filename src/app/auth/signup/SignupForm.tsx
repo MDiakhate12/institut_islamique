@@ -1,0 +1,280 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { toast } from 'sonner'
+import { signUpAction } from '../actions'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CheckCircle, Mail } from 'lucide-react'
+
+const signupSchema = z
+  .object({
+    fullName:       z.string().min(2, 'Nom requis'),
+    email:          z.string().email('Email invalide'),
+    schoolId:       z.string().min(1, 'Veuillez sélectionner une école'),
+    phone:          z.string().min(8, 'Numéro de téléphone requis'),
+    isParent:       z.boolean(),
+    isTeacher:      z.boolean(),
+    password:       z.string().min(8, 'Minimum 8 caractères'),
+    confirmPassword: z.string(),
+    acceptedTerms:  z.boolean().refine(v => v === true, { message: 'Vous devez accepter les conditions' }),
+  })
+  .refine(d => d.password === d.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  })
+  .refine(d => d.isParent || d.isTeacher, {
+    message: 'Sélectionnez au moins un rôle',
+    path: ['isParent'],
+  })
+
+type SignupInput = z.infer<typeof signupSchema>
+
+interface Props {
+  schools: { id: string; name: string }[]
+}
+
+export function SignupForm({ schools }: Props) {
+  const [isPending, startTransition] = useTransition()
+  const [confirmed, setConfirmed] = useState(false)
+
+  const form = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      fullName: '', email: '', schoolId: '', phone: '',
+      isParent: true, isTeacher: false,
+      password: '', confirmPassword: '', acceptedTerms: false,
+    },
+  })
+
+  function onSubmit(data: SignupInput) {
+    startTransition(async () => {
+      const result = await signUpAction({
+        fullName:   data.fullName,
+        email:      data.email,
+        schoolId:   data.schoolId,
+        phone:      data.phone,
+        isParent:   data.isParent,
+        isTeacher:  data.isTeacher,
+        password:   data.password,
+      })
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+      if (result?.needsConfirmation) {
+        setConfirmed(true)
+      }
+    })
+  }
+
+  if (confirmed) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-6 text-center">
+        <div className="h-14 w-14 rounded-full bg-green-50 flex items-center justify-center">
+          <Mail className="h-7 w-7 text-green-600" />
+        </div>
+        <h3 className="font-semibold text-gray-900">Vérifiez votre email</h3>
+        <p className="text-sm text-muted-foreground max-w-xs">
+          Un lien de confirmation a été envoyé à votre adresse email. Cliquez sur le lien pour
+          activer votre compte.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Nom complet */}
+        <FormField
+          control={form.control}
+          name="fullName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nom complet *</FormLabel>
+              <FormControl>
+                <Input placeholder="Prénom Nom" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Email */}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>E-mail *</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="votre@email.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* École */}
+        <FormField
+          control={form.control}
+          name="schoolId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>École *</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner votre école" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {schools.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Téléphone */}
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Numéro de téléphone *</FormLabel>
+              <FormControl>
+                <Input type="tel" placeholder="0X XX XX XX XX" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Rôles */}
+        <div className="space-y-2">
+          <FormLabel>Je suis *</FormLabel>
+          <div className="flex gap-4">
+            <FormField
+              control={form.control}
+              name="isParent"
+              render={({ field }) => (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={field.value}
+                    onChange={field.onChange}
+                    className="h-4 w-4 accent-[#c2440f] cursor-pointer"
+                  />
+                  <span className="text-sm font-medium">Parent</span>
+                </label>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isTeacher"
+              render={({ field }) => (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={field.value}
+                    onChange={field.onChange}
+                    className="h-4 w-4 accent-[#c2440f] cursor-pointer"
+                  />
+                  <span className="text-sm font-medium">Enseignant</span>
+                </label>
+              )}
+            />
+          </div>
+          {form.formState.errors.isParent && (
+            <p className="text-sm font-medium text-destructive">
+              {form.formState.errors.isParent.message}
+            </p>
+          )}
+        </div>
+
+        {/* Mot de passe */}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mot de passe *</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirmer le mot de passe *</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="••••••••" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* CGU */}
+        <FormField
+          control={form.control}
+          name="acceptedTerms"
+          render={({ field }) => (
+            <FormItem>
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!field.value}
+                  onChange={e => field.onChange(e.target.checked || undefined)}
+                  className="mt-0.5 h-4 w-4 accent-[#c2440f] cursor-pointer shrink-0"
+                />
+                <span className="text-sm text-muted-foreground leading-snug">
+                  J'accepte les{' '}
+                  <span className="text-[#c2440f] underline cursor-pointer">
+                    Conditions Générales d'Utilisation
+                  </span>{' '}
+                  et la{' '}
+                  <span className="text-[#c2440f] underline cursor-pointer">
+                    Politique de confidentialité
+                  </span>
+                </span>
+              </label>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          disabled={isPending || !form.watch('acceptedTerms')}
+          className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-2"
+        >
+          {isPending ? (
+            'Création du compte…'
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4" />
+              Créer un compte
+            </>
+          )}
+        </Button>
+      </form>
+    </Form>
+  )
+}

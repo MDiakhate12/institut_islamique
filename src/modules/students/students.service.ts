@@ -90,6 +90,18 @@ export const studentsService = {
         studentCustomId: generateCustomId(),
       })
       .returning()
+
+    if (data.parentPhone?.trim()) {
+      await db.insert(guardians).values({
+        schoolId,
+        studentId:    student.id,
+        firstName:    'Parent',
+        relationship: 'guardian',
+        phone:        data.parentPhone.trim(),
+        isPrimary:    true,
+      })
+    }
+
     return student
   },
 

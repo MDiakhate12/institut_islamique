@@ -1,12 +1,13 @@
 import { z } from 'zod'
 
 export const createStudentSchema = z.object({
-  firstName: z.string().min(1, 'Le prénom est requis'),
-  lastName:  z.string().min(1, 'Le nom est requis'),
-  gender:    z.enum(['male', 'female'], { message: 'Le genre est requis' }),
-  isActive:  z.boolean(),
-  birthDate: z.string().optional(),
-  notes:     z.string().optional(),
+  firstName:   z.string().min(1, 'Le prénom est requis'),
+  lastName:    z.string().min(1, 'Le nom est requis'),
+  gender:      z.enum(['male', 'female'], { message: 'Le genre est requis' }),
+  isActive:    z.boolean(),
+  birthDate:   z.string().optional(),
+  notes:       z.string().optional(),
+  parentPhone: z.string().optional(),
 })
 
 export const updateStudentSchema = createStudentSchema.partial()
