@@ -5,9 +5,11 @@ import type { PortalRole, AdminSubRole } from '@/lib/constants'
 export interface Session {
   userId: string
   schoolId: string
+  memberId: string
   roles: PortalRole[]
   adminSubRole: AdminSubRole | null
   email: string
+  isPending: boolean
 }
 
 export async function getSession(): Promise<Session | null> {
@@ -16,12 +18,11 @@ export async function getSession(): Promise<Session | null> {
 
   if (error || !user) return null
 
-  // Récupérer l'appartenance à l'école depuis school_members
   const { data: member } = await supabase
     .from('school_members')
-    .select('school_id, portal_roles, admin_sub_role')
+    .select('id, school_id, portal_roles, admin_sub_role, is_pending')
     .eq('user_id', user.id)
-    .eq('is_pending', false)
+    .neq('user_id', '00000000-0000-0000-0000-000000000000')
     .single()
 
   if (!member) return null
@@ -29,9 +30,11 @@ export async function getSession(): Promise<Session | null> {
   return {
     userId: user.id,
     schoolId: member.school_id,
+    memberId: member.id,
     roles: member.portal_roles as PortalRole[],
     adminSubRole: member.admin_sub_role as AdminSubRole | null,
     email: user.email ?? '',
+    isPending: member.is_pending ?? false,
   }
 }
 

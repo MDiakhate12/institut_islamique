@@ -487,6 +487,25 @@ Le bloc utilisateur en bas de la sidebar (nom + email) est cliquable et ouvre `U
 Ce dialog affiche : rôles, infos compte, lien "Modifier le profil" et bouton "Se déconnecter".
 `schoolName` est passé du `PortalLayout` → `Sidebar` → `UserProfileDialog`.
 
+### 7.8 Activation enseignant — NIL_UUID sentinel
+Quand un admin crée un enseignant, le record `school_members` est créé avec `userId = '00000000-0000-0000-0000-000000000000'` (NIL_UUID) + `pendingEmail = email` + `isPending = true`.
+Quand l'enseignant s'inscrit sur `/auth/signup`, `signUpAction` cherche ce record et met à jour `userId` avec le vrai `auth.users.id`.
+L'enseignant voit une gate de vérification (`TeacherActivationGate`) tant que `isPending = true`.
+Il entre son code d'activation (= `session.memberId` = UUID du record `school_members`) → `activateTeacherAction` → `isPending = false`.
+
+**`getSession()`** : suppression du filtre `.eq('is_pending', false)` → retourne maintenant `isPending: boolean` + `memberId: string` dans la session. Filtrage NIL_UUID : `.neq('user_id', NIL_UUID)`.
+
+### 7.9 Select onValueChange — valeur null
+`@base-ui/react/select` peut envoyer `null` dans `onValueChange`. Toujours filtrer :
+```tsx
+onValueChange={(v) => { if (v) setFoo(v) }}
+// ou
+onValueChange={(v) => v && setValue('field', v)}
+```
+
+### 7.10 Dialogs — ne pas importer depuis @base-ui-components
+Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer directement depuis `@base-ui-components/react/dialog`.
+
 ---
 
 ## 8. État d'avancement des modules
@@ -495,11 +514,11 @@ Ce dialog affiche : rôles, infos compte, lien "Modifier le profil" et bouton "S
 
 | Module | Pages |
 |---|---|
-| **Auth** | Login, callback, signOut, session guard |
-| **Layout** | Sidebar (avec UserProfileDialog), Header, PortalLayout |
+| **Auth** | Login, callback, signOut, session guard + `/auth/signup` (parent + enseignant) |
+| **Layout** | Sidebar (avec UserProfileDialog), Header, PortalLayout, TeacherSidebar, TeacherActivationGate |
 | **School** | `/admin-portal/school-settings` |
 | **Students** | `/admin-portal/students` (liste + détail + création/édition) |
-| **Teachers** | `/admin-portal/teachers` |
+| **Teachers** | `/admin-portal/teachers` (avec flow création + code d'activation) |
 | **Classes** | `/admin-portal/classes` |
 | **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante, curriculum riche) |
 | **Calendar** | `/admin-portal/academic-calendar` (vues Année/Mois/Semaine/Jour) |
@@ -507,14 +526,21 @@ Ce dialog affiche : rôles, infos compte, lien "Modifier le profil" et bouton "S
 | **Registrations** | `/admin-portal/registrations` (liste, décodée depuis `formData` + filtres + export Excel) |
 | **Public Portal** | `/portal/register/[schoolSlug]` (nouvel élève + réinscription + succès) |
 | **Parent Portal — Enrollment** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès — réutilise le même form-builder que le portail public, voir §7.8) |
+| **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) |
+
+### 🔄 Partiellement construit
+
+| Module | État |
+|---|---|
+| **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Seule page devoirs construite |
+| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment (sélection élève, réinscription, nouvel élève) ✅ — Devoirs, Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps, Paramètres du profil restent à construire |
 
 ### ❌ À construire (aucun fichier de module)
 
 | Module | Pages à créer |
 |---|---|
-| **Attendance** | `/admin-portal/attendance`, portail enseignant |
-| **Homework** | `/admin-portal/homework`, portail enseignant |
-| **Exams** | `/admin-portal/track-exams`, portail enseignant |
+| **Attendance** | `/admin-portal/attendance`, `/teacher-portal/attendance` |
+| **Exams** | `/admin-portal/track-exams`, `/teacher-portal/exams` |
 | **Stars** | `/admin-portal/track-stars`, portail enseignant |
 | **Finance** | `/admin-portal/finance/budget`, `/admin-portal/finance/expenses` |
 | **Communication** | `/admin-portal/communication/send-email`, `/admin-portal/announcements` |
@@ -527,8 +553,6 @@ Ce dialog affiche : rôles, infos compte, lien "Modifier le profil" et bouton "S
 | **Birthdays** | `/admin-portal/birthdays` |
 | **Start New Year** | `/admin-portal/start-new-year` |
 | **Roadmap** | `/admin-portal/roadmap` |
-| **Teacher Portal** | Tout le portail enseignant |
-| **Parent Portal (reste)** | Devoirs, Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps, Paramètres du profil (dashboard, sidebar, Mes enfants + liaison OTP et Enrollment sont déjà construits — voir tableau ✅ ci-dessus) |
 | **TV Mode** | Affichage mural |
 
 ---
