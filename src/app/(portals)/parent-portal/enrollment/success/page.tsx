@@ -1,40 +1,39 @@
 import Link from 'next/link'
-import { CheckCircle, Users } from 'lucide-react'
+import { CheckCircle, Plus } from 'lucide-react'
+import { requireSession } from '@/lib/auth/session'
+import { schoolService } from '@/modules/school/school.service'
 
-export default function EnrollmentSuccessPage() {
+export default async function EnrollmentSuccessPage() {
+  const session = await requireSession()
+  const school = await schoolService.getById(session.schoolId)
+  const schoolName = school?.name ?? ''
+  const academicYear = school?.settings?.academicYear ?? '2026-2027'
+
   return (
-    <div className="flex items-center justify-center px-4 py-16">
-      <div className="max-w-md w-full text-center space-y-6">
-        <div className="flex justify-center">
-          <div className="h-20 w-20 rounded-full bg-emerald-100 flex items-center justify-center">
-            <CheckCircle className="h-10 w-10 text-emerald-500" />
-          </div>
-        </div>
+    <div>
+      <div className="bg-[#c2440f] py-6 text-center">
+        <h1 className="text-2xl font-bold text-white">Inscription à {schoolName}</h1>
+        <p className="text-white/80 text-sm mt-1">Année scolaire {academicYear}</p>
+      </div>
 
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Inscription reçue !</h2>
-          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-            Votre demande d&apos;inscription a été soumise avec succès.
-            L&apos;équipe de l&apos;école examinera votre dossier et vous contactera prochainement.
+      <div className="flex items-center justify-center px-4 py-16">
+        <div className="max-w-md w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-8 text-center space-y-4">
+          <CheckCircle className="h-16 w-16 text-emerald-500 mx-auto" strokeWidth={1.75} />
+
+          <h2 className="text-2xl font-bold text-emerald-900">Inscription soumise !</h2>
+
+          <p className="text-emerald-800 text-sm leading-relaxed">
+            Merci ! Votre demande d&apos;inscription a été soumise avec succès. Nous examinerons votre demande et vous contacterons bientôt.
           </p>
-        </div>
 
-        <div className="bg-white border border-border rounded-xl p-4 text-left space-y-2">
-          <p className="text-sm font-medium text-foreground">Prochaines étapes :</p>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li className="flex items-start gap-2"><span className="text-[#c2440f] mt-0.5">•</span>Vous recevrez une confirmation par e-mail</li>
-            <li className="flex items-start gap-2"><span className="text-[#c2440f] mt-0.5">•</span>L&apos;école examinera votre demande sous 5-7 jours ouvrables</li>
-            <li className="flex items-start gap-2"><span className="text-[#c2440f] mt-0.5">•</span>Vous serez contacté pour finaliser l&apos;inscription</li>
-          </ul>
+          <Link
+            href="/parent-portal/enrollment"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-full transition-colors text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            Soumettre une autre inscription
+          </Link>
         </div>
-
-        <Link
-          href="/parent-portal/enrollment"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#c2440f] hover:bg-[#a33a0d] text-white font-medium rounded-xl transition-colors text-sm"
-        >
-          <Users className="h-4 w-4" />
-          Retour à la liste des élèves
-        </Link>
       </div>
     </div>
   )
