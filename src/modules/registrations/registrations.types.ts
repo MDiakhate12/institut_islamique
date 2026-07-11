@@ -97,6 +97,26 @@ export type Registration = {
   notes: string | null
 }
 
+/** Decoded registration row for the admin list — joins student/guardian/class data
+ *  and pulls display fields out of `formData` using the form's schema. */
+export type RegistrationWithDetails = {
+  id: string
+  studentId: string | null
+  studentCustomId: string | null
+  studentFirstName: string | null
+  studentLastName: string | null
+  studentBirthDate: string | null
+  formType: FormType | null
+  status: RegistrationStatus
+  submittedAt: Date
+  grade: string | null
+  regularSchool: string | null
+  paymentFrequency: string | null
+  financialAid: string | null
+  classes: { fullCode: string; name: string }[]
+  parents: { name: string; email: string | null; phone: string | null }[]
+}
+
 // ── Default form schemas ───────────────────────────────────────────────────────
 
 export const DEFAULT_NEW_STUDENT_SCHEMA: FormItem[] = [
@@ -160,7 +180,7 @@ export const DEFAULT_NEW_STUDENT_SCHEMA: FormItem[] = [
       { kind: 'system_field', id: 'sf-payment-freq',  fieldKey: 'paymentFrequency', label: 'Préférez-vous payer les frais semestriellement ou annuellement ?', type: 'radio',    required: true,  options: ['Annuellement', 'Semestriellement'] },
       { kind: 'system_field', id: 'sf-financial-aid', fieldKey: 'financialAid',     label: "Si vous avez besoin d'une aide financière, quelle est la meilleure option pour vous ?", type: 'select', required: false },
       { kind: 'system_field', id: 'sf-sponsorship',   fieldKey: 'sponsorship',      label: 'Aimeriez-vous parrainer les frais de scolarité et/ou de fournitures d\'un étudiant ?', type: 'radio', required: false, options: ['Non, merci.', 'Oui, bien sûr. Nous vous contacterons pour l\'organiser.'], note: "Parrainage : certains de nos étudiants bénéficient d'une exemption de leurs frais de scolarité et/ou de fournitures. Par conséquent, parrainer un étudiant serait très utile." },
-      { kind: 'custom_field', id: 'cf-photo-consent', label: 'Le personnel de [école] peut prendre et utiliser les photographies et vidéos de mon enfant publiquement dans les publications imprimées, les publications en ligne, les présentations, le site web de [école] et les réseaux sociaux, sur le bulletin d\'information (entre les enseignants et les parents). Je comprends également qu\'aucun droit d\'auteur, frais ou autre rémunération ne m\'est dû en raison de cet usage.', type: 'checkbox', required: false },
+      { kind: 'custom_field', id: 'cf-photo-consent', label: 'Le personnel de l\'école peut prendre et utiliser les photographies et vidéos de mon enfant publiquement dans les publications imprimées, les publications en ligne, les présentations, le site web de l\'école et les réseaux sociaux, sur le bulletin d\'information (entre les enseignants et les parents). Je comprends également qu\'aucun droit d\'auteur, frais ou autre rémunération ne m\'est dû en raison de cet usage.', type: 'checkbox', required: false },
       { kind: 'custom_field', id: 'cf-comments',      label: 'Questions ou Commentaires', type: 'textarea', required: false, placeholder: 'Entrez toute question ou commentaire que vous avez…' },
       { kind: 'custom_field', id: 'cf-acknowledge',   label: "J'acknowledge que j'ai lu et accepte les politiques et les directives ci-dessus", type: 'checkbox', required: true,  note: "Avant d'envoyer le formulaire, veuillez vous assurer que vous avez examiné et accepté les règlements énoncés sur le site web de l'école." },
     ],
@@ -213,7 +233,7 @@ export const DEFAULT_REENROLLMENT_SCHEMA: FormItem[] = [
       { kind: 'system_field', id: 'sf-financial-aid', fieldKey: 'financialAid',     label: "Si vous avez besoin d'une aide financière, quelle est la meilleure option pour vous ?", type: 'select', required: false },
       { kind: 'system_field', id: 'sf-sponsorship',   fieldKey: 'sponsorship',      label: 'Aimeriez-vous parrainer les frais de scolarité et/ou de fournitures d\'un étudiant ?', type: 'radio', required: false, options: ['Non, merci.', 'Oui, bien sûr. Nous vous contacterons pour l\'organiser.'] },
       { kind: 'custom_field', id: 'cf-rating',        label: "Comment évaluez-vous l'école l'année dernière ?", type: 'rating', required: false },
-      { kind: 'custom_field', id: 'cf-photo-consent', label: 'Le personnel de [école] peut prendre et utiliser les photographies et vidéos de mon enfant publiquement.', type: 'checkbox', required: false },
+      { kind: 'custom_field', id: 'cf-photo-consent', label: 'Le personnel de l\'école peut prendre et utiliser les photographies et vidéos de mon enfant publiquement.', type: 'checkbox', required: false },
       { kind: 'custom_field', id: 'cf-comments',      label: 'Questions ou Commentaires', type: 'textarea', required: false, placeholder: 'Entrez toute question ou commentaire que vous avez…' },
       { kind: 'custom_field', id: 'cf-acknowledge',   label: "J'acknowledge que j'ai lu et accepte les politiques et les directives ci-dessus", type: 'checkbox', required: true },
     ],

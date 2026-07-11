@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button'
 import { FormBuilder } from './FormBuilder'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
 import { AddSectionDialog } from './AddSectionDialog'
-import { Link, RefreshCw, ExternalLink, Plus, RotateCcw, RotateCw, Undo2, Redo2, Info } from 'lucide-react'
+import { Link, RefreshCw, ExternalLink, Plus, RotateCcw, Undo2, Redo2, Info, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { nanoid } from 'nanoid'
 
-const TABS: { key: FormType; label: string }[] = [
-  { key: 'new_student',  label: 'Nouvel élève' },
-  { key: 'reenrollment', label: 'Réinscription' },
+const TABS: { key: FormType; label: string; icon: typeof Users }[] = [
+  { key: 'new_student',  label: 'Nouvel élève',  icon: Users },
+  { key: 'reenrollment', label: 'Réinscription', icon: RefreshCw },
 ]
 
 // ── History hook ───────────────────────────────────────────────────────────────
@@ -46,7 +46,13 @@ function useHistory(initial: FormItem[]) {
 
 // ── Tab content ────────────────────────────────────────────────────────────────
 
-function TabContent({ formType, schoolSlug, classes }: { formType: FormType; schoolSlug: string; classes: RegistrationClassItem[] }) {
+function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
+  formType: FormType
+  schoolSlug: string
+  classes: RegistrationClassItem[]
+  activeTab: FormType
+  onTabChange: (tab: FormType) => void
+}) {
   const { data: form, isLoading } = useRegistrationForm(formType)
   const update = useUpdateRegistrationForm()
   const reset  = useResetRegistrationForm()
@@ -115,14 +121,28 @@ function TabContent({ formType, schoolSlug, classes }: { formType: FormType; sch
     <div className="flex flex-col h-full">
       {/* ── Toolbar ── */}
       <div className="flex items-center justify-between gap-3 pb-4 flex-wrap">
-        {/* Tabs + count */}
-        <div className="flex items-center gap-1">
-          {TABS.map(tab => (
-            <span key={tab.key} className="text-sm text-muted-foreground">
-              {/* Tabs are at parent level, this is just the count indicator */}
-            </span>
-          ))}
-          <span className="ml-2 text-xs text-muted-foreground bg-muted/60 border border-border rounded-full px-2 py-0.5 font-medium">
+        {/* Tabs + item count */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="inline-flex items-center gap-1 p-1 bg-[#fdf6f0] border border-border/60 rounded-xl">
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => onTabChange(tab.key)}
+                className={cn(
+                  'flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                  activeTab === tab.key
+                    ? 'bg-white text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <tab.icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-xs text-muted-foreground bg-muted/60 border border-border rounded-full px-2 py-0.5 font-medium">
             {itemCount} élément{itemCount > 1 ? 's' : ''}
           </span>
         </div>
@@ -280,28 +300,15 @@ export function RegistrationFormsClient({ schoolSlug, classes }: { schoolSlug: s
         <p className="text-sm text-muted-foreground mt-1">Faites glisser pour réorganiser, cliquez pour modifier</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 mb-5 border-b border-border">
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
-              activeTab === tab.key
-                ? 'border-[#c2440f] text-[#c2440f]'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* Tab content — key forces remount on tab change */}
-      <TabContent key={activeTab} formType={activeTab} schoolSlug={schoolSlug} classes={classes} />
+      <TabContent
+        key={activeTab}
+        formType={activeTab}
+        schoolSlug={schoolSlug}
+        classes={classes}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
     </div>
   )
 }

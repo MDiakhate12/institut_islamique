@@ -14,7 +14,7 @@ export default async function ReenrollmentPage({ params, searchParams }: Props) 
   const result = await getPublicRegistrationFormAction(schoolSlug, 'reenrollment')
   if (!result.success) notFound()
 
-  const { form, schoolName, gradeOptions, academicYear, classes } = result.data
+  const { form, schoolName, gradeOptions, financialOptions, academicYear, classes } = result.data
 
   // In preview mode, show mock student data
   const prefilledStudent = preview === 'true'
@@ -30,6 +30,7 @@ export default async function ReenrollmentPage({ params, searchParams }: Props) 
       isPreview={preview === 'true'}
       prefilledStudent={prefilledStudent}
       gradeOptions={gradeOptions}
+      financialOptions={financialOptions}
       academicYear={academicYear}
       classes={classes}
     />

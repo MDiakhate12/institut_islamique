@@ -6,7 +6,7 @@ import { useState } from 'react'
 import {
   Users, BookMarked, CalendarCheck, Megaphone, Music2,
   CalendarOff, Star, CalendarDays, Library, FileText,
-  CreditCard, UserPlus, Clock, Settings, Home,
+  CreditCard, Download, Clock, Settings, Home,
   ChevronLeft, ChevronRight, User,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -31,7 +31,7 @@ const PARENT_NAV: NavItem[] = [
   { label: 'Catalogue des classes',   href: '/parent-portal/catalog',    icon: Library },
   { label: 'Voir les notes d\'examen',href: '/parent-portal/exams',      icon: FileText },
   { label: 'Statut de paiement',      href: '/parent-portal/payments',   icon: CreditCard },
-  { label: 'S\'inscrire maintenant',  href: '/portal/register',          icon: UserPlus },
+  { label: 'S\'inscrire maintenant',  href: '/parent-portal/enrollment', icon: Download },
   { label: 'Emploi du temps',         href: '/parent-portal/schedule',   icon: Clock },
   { label: 'Paramètres du profil',    href: '/parent-portal/profile',    icon: Settings },
 ]

@@ -13,9 +13,11 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyProps = Record<string, any>
 import { CSS } from '@dnd-kit/utilities'
+import Link from 'next/link'
 import {
   ChevronDown, ChevronRight, GripVertical, Pencil, Trash2, Lock,
   Plus, Info, AlertTriangle, CheckCircle, XCircle, Star, Circle, Square, X, BookOpen,
+  Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
@@ -61,6 +63,27 @@ function FieldTypePreview({ field }: { field: FormField }) {
     return (
       <div className="mt-1.5 h-6 w-28 rounded border border-border/60 bg-muted/40 px-2 flex items-center gap-1.5">
         <span className="text-[10px] text-muted-foreground/50">jj/mm/aaaa</span>
+      </div>
+    )
+  }
+
+  // System selects whose options come from school settings, not this field's own
+  // `options` array — editing them here would do nothing, so point to settings instead.
+  if (field.kind === 'system_field' && (field.fieldKey === 'schoolGrade' || field.fieldKey === 'financialAid')) {
+    const isGrade = field.fieldKey === 'schoolGrade'
+    return (
+      <div className="mt-1.5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 max-w-md">
+        <Settings className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="min-w-0">
+          <p className="text-xs text-blue-700">
+            {isGrade
+              ? 'Les options de niveau sont gérées dans les paramètres de l\'école'
+              : 'Les options financières sont gérées dans les paramètres de l\'école'}
+          </p>
+          <Link href="/admin-portal/school-settings" className="text-xs text-blue-600 underline hover:text-blue-800">
+            {isGrade ? 'Configurer les niveaux scolaires' : 'Configurer les options financières'}
+          </Link>
+        </div>
       </div>
     )
   }
@@ -374,7 +397,12 @@ function SectionBlock({
 
   const fieldCount = section.fields.length
   const isClassSection = section.systemKey === 'class_selection'
-  const totalCount = isClassSection ? '— Automatique' : `${fieldCount} champ${fieldCount > 1 ? 's' : ''}`
+  const classCount = (classes ?? []).length
+  const totalCount = isClassSection
+    ? (formType === 'reenrollment'
+        ? '— Automatique'
+        : `${classCount} classe${classCount > 1 ? 's' : ''} disponible${classCount > 1 ? 's' : ''}`)
+    : `${fieldCount} champ${fieldCount > 1 ? 's' : ''}`
 
   function handleFieldDragEnd(event: DragEndEvent) {
     const { active, over } = event
