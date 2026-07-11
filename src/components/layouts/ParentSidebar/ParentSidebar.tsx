@@ -7,7 +7,7 @@ import {
   Users, BookMarked, CalendarCheck, Megaphone, Music2,
   CalendarOff, Star, CalendarDays, Library, FileText,
   CreditCard, Download, Clock, Settings, Home,
-  ChevronLeft, ChevronRight, User,
+  ChevronLeft, ChevronRight, User, Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/auth/session'
@@ -51,6 +51,8 @@ export function ParentSidebar({ session, userFullName, schoolName }: ParentSideb
   const [collapsed, setCollapsed] = useState(false)
 
   const displayName = userFullName || session.email.split('@')[0]
+  const hasTeacherRole = session.roles.includes('teacher')
+  const hasAdminRole = session.roles.includes('admin')
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + '/')
@@ -94,6 +96,23 @@ export function ParentSidebar({ session, userFullName, schoolName }: ParentSideb
         )}
       </Link>
 
+      {/* Portal switcher (only if multi-role) */}
+      {!collapsed && hasTeacherRole && (
+        <div className="px-3 pt-2 pb-1 shrink-0">
+          <div className="flex rounded-lg overflow-hidden border border-white/20 text-xs">
+            <div className="flex-1 text-center py-1.5 bg-white/20 text-white font-semibold">
+              Portail parents
+            </div>
+            <Link
+              href="/teacher-portal"
+              className="flex-1 text-center py-1.5 text-white/60 hover:bg-white/10 transition-colors"
+            >
+              Portail enseignants
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 scrollbar-hide">
         {PARENT_NAV.map(item => {
@@ -117,6 +136,20 @@ export function ParentSidebar({ session, userFullName, schoolName }: ParentSideb
           )
         })}
       </nav>
+
+      {/* Admin portal button */}
+      {hasAdminRole && !collapsed && (
+        <div className="px-3 pb-2 shrink-0">
+          <Link
+            href="/admin-portal"
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-white/30
+                       text-white/80 text-xs font-medium hover:bg-white/10 transition-colors"
+          >
+            <Shield className="h-3.5 w-3.5 shrink-0" />
+            Portail d&apos;administration
+          </Link>
+        </div>
+      )}
 
       {/* User block */}
       <div className="shrink-0 border-t border-white/20">

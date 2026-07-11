@@ -117,6 +117,8 @@ export function Sidebar({ session, userFullName, schoolName }: SidebarProps) {
   const [search, setSearch] = useState('')
 
   const displayName = userFullName || session.email.split('@')[0]
+  const hasParentRole = session.roles.includes('parent')
+  const hasTeacherRole = session.roles.includes('teacher')
 
   function toggleSection(label: string) {
     setExpandedSections(prev => ({ ...prev, [label]: !prev[label] }))
@@ -264,6 +266,32 @@ export function Sidebar({ session, userFullName, schoolName }: SidebarProps) {
           </div>
         ))}
       </nav>
+
+      {/* Autres portails (si rôles cumulés) */}
+      {!collapsed && (hasParentRole || hasTeacherRole) && (
+        <div className="px-3 pb-2 shrink-0 space-y-1.5">
+          {hasParentRole && (
+            <Link
+              href="/parent-portal"
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-white/30
+                         text-white/80 text-xs font-medium hover:bg-white/10 transition-colors"
+            >
+              <Users className="h-3.5 w-3.5 shrink-0" />
+              Portail parents
+            </Link>
+          )}
+          {hasTeacherRole && (
+            <Link
+              href="/teacher-portal"
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-white/30
+                         text-white/80 text-xs font-medium hover:bg-white/10 transition-colors"
+            >
+              <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+              Portail enseignants
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* ── Bas de sidebar : user + home ── */}
       <div className="shrink-0 border-t border-white/20">
