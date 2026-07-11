@@ -32,5 +32,6 @@ export type ChildWithClasses = {
   studentId: string
   firstName: string
   lastName: string
+  studentCustomId: string | null
   classes: EnrolledClass[]
 }

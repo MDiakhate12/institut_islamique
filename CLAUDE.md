@@ -168,7 +168,13 @@ src/
 │   │   │   ├── start-new-year/       # ❌ À construire
 │   │   │   └── roadmap/              # ❌ À construire
 │   │   ├── teacher-portal/           # ❌ À construire
-│   │   └── parent-portal/            # ❌ À construire
+│   │   └── parent-portal/            # 🟡 Partiellement construit
+│   │       ├── layout.tsx            # ✅ Sidebar + guard rôle 'parent'
+│   │       ├── page.tsx / ParentDashboard.tsx  # ✅ Dashboard
+│   │       ├── children/             # ✅ Mes enfants + liaison OTP (LinkChildModal)
+│   │       ├── enrollment/           # ✅ S'inscrire maintenant (sélection élève,
+│   │       │                         #    [studentId] réinscription, new, success)
+│   │       └── (devoirs, présences, annonces, etc.) # ❌ À construire
 │   └── portal/
 │       └── register/[schoolSlug]/    # ✅ Portail public d'inscription
 │           ├── layout.tsx
@@ -456,13 +462,16 @@ const id = `ib-${nanoid(8)}`         // info block
 ```
 
 ### 7.4 Formulaire d'inscription — architecture
-- La table `registration_forms` stocke le schéma JSONB du form builder
+- La table `registration_forms` stocke le schéma JSONB du form builder (un formulaire par `(schoolId, formType)`, `formType` = `'new_student' | 'reenrollment'`)
 - `registrationsService.getOrCreateForm(schoolId, formType)` crée le formulaire par défaut à la 1ère visite
 - À la soumission d'un formulaire `new_student`, `submitRegistrationAction` :
-  1. Crée immédiatement un enregistrement dans `students`
-  2. Stocke le `studentId` dans `formData._studentId`
+  1. Crée immédiatement un enregistrement dans `students` (+ `guardians` depuis les champs père/mère)
+  2. Passe le `studentId` créé à `registrationsService.submit(...)` (colonne `registrations.student_id`, pas dans `formData`)
   3. Crée la `registration` en statut `pending`
 - Le form builder utilise `@dnd-kit` pour le drag & drop
+- **Un seul formulaire, deux consommateurs** : le portail public (`/portal/register/[schoolSlug]`) et le portail parent authentifié (`/parent-portal/enrollment`) appellent tous les deux `getPublicRegistrationFormAction` + rendent `PublicRegistrationForm` sans variante — toute modification du formulaire par l'admin (`/admin-portal/registration-forms`) se répercute automatiquement des deux côtés, sans déploiement de code.
+- `submitRegistrationAction(schoolSlug, formType, formData, knownStudentId?, submitterMemberId?)` — les 2 derniers paramètres sont optionnels et réservés au flux parent-portal authentifié : `knownStudentId` évite de re-matcher l'élève pour une réinscription (on le connaît déjà, on a cliqué dessus dans le sélecteur), `submitterMemberId` déclenche l'auto-liaison (`parentStudents`) du nouvel élève au parent qui vient de le créer, pour qu'il apparaisse immédiatement dans "Mes enfants" sans passer par le flux OTP (décision produit : ne pas attendre l'approbation admin).
+- Le sélecteur `/parent-portal/enrollment` marque un élève « Inscrit » (non cliquable) dès qu'une ligne existe dans `registrations` pour son `studentId` — il n'y a pas de notion d'année scolaire sur `registrations`, donc « déjà inscrit » = « a déjà une soumission », peu importe son statut.
 
 ### 7.5 Éditeur de texte riche (admin)
 Utiliser `contentEditable` + `document.execCommand` (voir `RichTextEditor.tsx`).
@@ -514,8 +523,9 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante, curriculum riche) |
 | **Calendar** | `/admin-portal/academic-calendar` (vues Année/Mois/Semaine/Jour) |
 | **Registration Forms** | `/admin-portal/registration-forms` (form builder DnD complet) |
-| **Registrations** | `/admin-portal/registrations` (liste) |
+| **Registrations** | `/admin-portal/registrations` (liste, décodée depuis `formData` + filtres + export Excel) |
 | **Public Portal** | `/portal/register/[schoolSlug]` (nouvel élève + réinscription + succès) |
+| **Parent Portal — Enrollment** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès — réutilise le même form-builder que le portail public, voir §7.8) |
 | **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) |
 
 ### 🔄 Partiellement construit
@@ -523,7 +533,7 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | Module | État |
 |---|---|
 | **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Seule page devoirs construite |
-| **Parent Portal** | ParentSidebar + layout ✅ — Pages enfants partiellement construites |
+| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment (sélection élève, réinscription, nouvel élève) ✅ — Devoirs, Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps, Paramètres du profil restent à construire |
 
 ### ❌ À construire (aucun fichier de module)
 

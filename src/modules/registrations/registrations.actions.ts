@@ -4,10 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { requireSession } from '@/lib/auth/session'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
-import { registrationsService } from './registrations.service'
+import { registrationsService, buildKeyToIdMap } from './registrations.service'
 import { studentsService } from '@/modules/students/students.service'
 import { scheduledClassesService } from '@/modules/classes/classes.service'
-import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem } from './registrations.types'
+import { parentsService } from '@/modules/parents/parents.service'
+import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem, RegistrationWithDetails } from './registrations.types'
 import { db } from '@/db'
 import { schools, guardians } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -62,29 +63,14 @@ export async function resetRegistrationFormAction(
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Build a map from system field keys to their form field IDs using the stored schema. */
-function buildKeyToIdMap(schema: FormItem[]): Partial<Record<SystemFieldKey, string>> {
-  const map: Partial<Record<SystemFieldKey, string>> = {}
-  for (const item of schema) {
-    if (item.kind === 'section') {
-      for (const field of item.fields) {
-        if (field.kind === 'system_field') {
-          map[field.fieldKey] = field.id
-        }
-      }
-    }
-  }
-  return map
-}
-
 // ── Public submission action (no auth) ────────────────────────────────────────
 
 export async function submitRegistrationAction(
   schoolSlug: string,
   formType: FormType,
-  formData: Record<string, unknown>
+  formData: Record<string, unknown>,
+  knownStudentId?: string,
+  submitterMemberId?: string,
 ): Promise<ActionResult<{ id: string; studentId?: string }>> {
   try {
     // 1. Find school by slug
@@ -106,8 +92,8 @@ export async function submitRegistrationAction(
     }
 
     // 3. For new_student: create a student record + guardian records
-    let studentId: string | undefined
-    if (formType === 'new_student') {
+    let studentId: string | undefined = knownStudentId
+    if (formType === 'new_student' && !studentId) {
       const firstName = get('firstName')?.trim()
       const lastName  = get('lastName')?.trim()
       const genderRaw = get('gender')
@@ -150,6 +136,11 @@ export async function submitRegistrationAction(
           })
         }
       }
+
+      // Auto-link the newly created student to the submitting parent, if known
+      if (studentId && submitterMemberId) {
+        await parentsService.linkStudentsToParent(submitterMemberId, [studentId], school.id)
+      }
     }
 
     // 4. Save registration with proper studentId FK
@@ -166,7 +157,7 @@ export async function submitRegistrationAction(
 export async function getPublicRegistrationFormAction(
   schoolSlug: string,
   formType: FormType
-): Promise<ActionResult<{ form: RegistrationForm; schoolName: string; gradeOptions: string[]; academicYear: string; classes: RegistrationClassItem[] }>> {
+): Promise<ActionResult<{ form: RegistrationForm; schoolName: string; gradeOptions: string[]; financialOptions: string[]; academicYear: string; classes: RegistrationClassItem[] }>> {
   try {
     const [school] = await db
       .select({ id: schools.id, name: schools.name, settings: schools.settings })
@@ -180,11 +171,12 @@ export async function getPublicRegistrationFormAction(
       registrationsService.getOrCreateForm(school.id, formType),
       scheduledClassesService.getForRegistration(school.id),
     ])
-    const settings     = school.settings as { gradeLevels?: string[]; academicYear?: string } | null
-    const gradeOptions = settings?.gradeLevels  ?? []
-    const academicYear = settings?.academicYear ?? '2025-2026'
+    const settings         = school.settings as { gradeLevels?: string[]; financialOptions?: string[]; academicYear?: string } | null
+    const gradeOptions     = settings?.gradeLevels      ?? []
+    const financialOptions = settings?.financialOptions ?? []
+    const academicYear     = settings?.academicYear     ?? '2025-2026'
 
-    return ok({ form, schoolName: school.name, gradeOptions, academicYear, classes })
+    return ok({ form, schoolName: school.name, gradeOptions, financialOptions, academicYear, classes })
   } catch (e) {
     console.error('[getPublicRegistrationFormAction]', e)
     return err('Impossible de charger le formulaire')
@@ -201,5 +193,20 @@ export async function getAdminRegistrationClassesAction(): Promise<ActionResult<
   } catch (e) {
     console.error('[getAdminRegistrationClassesAction]', e)
     return err('Impossible de charger les classes')
+  }
+}
+
+// ── Admin: list submitted registrations ────────────────────────────────────────
+
+export async function getRegistrationsAction(): Promise<ActionResult<RegistrationWithDetails[]>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return unauthorized()
+
+  try {
+    const data = await registrationsService.getBySchoolWithDetails(session.schoolId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getRegistrationsAction]', e)
+    return err('Impossible de charger les inscriptions')
   }
 }

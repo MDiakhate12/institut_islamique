@@ -173,7 +173,12 @@ export const parentsService = {
 
     const [studentRows, enrollmentRows] = await Promise.all([
       db
-        .select({ id: students.id, firstName: students.firstName, lastName: students.lastName })
+        .select({
+          id: students.id,
+          firstName: students.firstName,
+          lastName: students.lastName,
+          studentCustomId: students.studentCustomId,
+        })
         .from(students)
         .where(inArray(students.id, studentIds))
         .orderBy(asc(students.firstName)),
@@ -214,6 +219,7 @@ export const parentsService = {
       studentId: s.id,
       firstName: s.firstName,
       lastName:  s.lastName,
+      studentCustomId: s.studentCustomId,
       classes:   classesByStudent[s.id] ?? [],
     }))
   },

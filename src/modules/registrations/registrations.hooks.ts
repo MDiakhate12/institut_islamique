@@ -6,11 +6,25 @@ import {
   getRegistrationFormAction,
   updateRegistrationFormAction,
   resetRegistrationFormAction,
+  getRegistrationsAction,
 } from './registrations.actions'
 import type { FormType, FormItem } from './registrations.types'
 
 export const registrationKeys = {
   form: (formType: FormType) => ['registration-form', formType] as const,
+  list: ['registrations'] as const,
+}
+
+export function useRegistrations() {
+  return useQuery({
+    queryKey: registrationKeys.list,
+    queryFn: async () => {
+      const result = await getRegistrationsAction()
+      if (!result.success) throw new Error(result.error)
+      return result.data
+    },
+    staleTime: 30_000,
+  })
 }
 
 export function useRegistrationForm(formType: FormType) {

@@ -14,7 +14,7 @@ export default async function NewStudentRegistrationPage({ params, searchParams 
   const result = await getPublicRegistrationFormAction(schoolSlug, 'new_student')
   if (!result.success) notFound()
 
-  const { form, schoolName, gradeOptions, academicYear, classes } = result.data
+  const { form, schoolName, gradeOptions, financialOptions, academicYear, classes } = result.data
 
   return (
     <PublicRegistrationForm
@@ -24,6 +24,7 @@ export default async function NewStudentRegistrationPage({ params, searchParams 
       schema={form.formSchema}
       isPreview={preview === 'true'}
       gradeOptions={gradeOptions}
+      financialOptions={financialOptions}
       academicYear={academicYear}
       classes={classes}
     />

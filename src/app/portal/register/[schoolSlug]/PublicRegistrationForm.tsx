@@ -20,12 +20,13 @@ const BLOCK_STYLES: Record<InfoBlockStyle, { bg: string; border: string; icon: R
 // ── Field renderer ─────────────────────────────────────────────────────────────
 
 function FieldRenderer({
-  field, value, onChange, gradeOptions,
+  field, value, onChange, gradeOptions, financialOptions,
 }: {
   field: FormField
   value: unknown
   onChange: (v: unknown) => void
   gradeOptions?: string[]
+  financialOptions?: string[]
 }) {
   const { type, label, required } = field
   const placeholder = 'placeholder' in field ? (field.placeholder ?? '') : ''
@@ -104,7 +105,7 @@ function FieldRenderer({
   }
 
   if (type === 'select') {
-    const selectOptions = gradeOptions ?? options
+    const selectOptions = gradeOptions ?? financialOptions ?? options
     return (
       <div>
         {labelEl}
@@ -428,13 +429,14 @@ function InfoBlockRenderer({ block }: { block: InfoBlock }) {
 // ── Section renderer ───────────────────────────────────────────────────────────
 
 function SectionRenderer({
-  section, formType, formData, onFieldChange, gradeOptions, prefilledStudent, classes,
+  section, formType, formData, onFieldChange, gradeOptions, financialOptions, prefilledStudent, classes,
 }: {
   section: FormSection
   formType: FormType
   formData: Record<string, unknown>
   onFieldChange: (key: string, value: unknown) => void
   gradeOptions?: string[]
+  financialOptions?: string[]
   prefilledStudent?: { name: string; id: string }
   classes?: RegistrationClassItem[]
 }) {
@@ -495,6 +497,7 @@ function SectionRenderer({
             value={formData[field.id]}
             onChange={v => onFieldChange(field.id, v)}
             gradeOptions={field.kind === 'system_field' && field.fieldKey === 'schoolGrade' ? gradeOptions : undefined}
+            financialOptions={field.kind === 'system_field' && field.fieldKey === 'financialAid' ? financialOptions : undefined}
           />
         ))}
       </div>
@@ -513,7 +516,13 @@ export interface PublicRegistrationFormProps {
   prefilledStudent?: { name: string; id: string }
   academicYear?: string
   gradeOptions?: string[]
+  financialOptions?: string[]
   classes?: RegistrationClassItem[]
+  initialFormData?: Record<string, unknown>
+  studentId?: string
+  submitterMemberId?: string
+  backHref?: string
+  successHref?: string
 }
 
 export function PublicRegistrationForm({
@@ -522,10 +531,16 @@ export function PublicRegistrationForm({
   prefilledStudent,
   academicYear = '2026-2027',
   gradeOptions,
+  financialOptions,
   classes = [],
+  initialFormData,
+  studentId,
+  submitterMemberId,
+  backHref,
+  successHref,
 }: PublicRegistrationFormProps) {
   const router = useRouter()
-  const [formData, setFormData] = useState<Record<string, unknown>>({})
+  const [formData, setFormData] = useState<Record<string, unknown>>(initialFormData ?? {})
   const [isPending, startTransition] = useTransition()
 
   function handleFieldChange(key: string, value: unknown) {
@@ -539,9 +554,9 @@ export function PublicRegistrationForm({
       return
     }
     startTransition(async () => {
-      const result = await submitRegistrationAction(schoolSlug, formType, formData)
+      const result = await submitRegistrationAction(schoolSlug, formType, formData, studentId, submitterMemberId)
       if (!result.success) { toast.error(result.error); return }
-      router.push(`/portal/register/${schoolSlug}/success`)
+      router.push(successHref ?? `/portal/register/${schoolSlug}/success`)
     })
   }
 
@@ -558,7 +573,7 @@ export function PublicRegistrationForm({
         {formType === 'reenrollment' && (
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => backHref ? router.push(backHref) : router.back()}
             className="text-sm text-[#c2440f] hover:underline flex items-center gap-1"
           >
             ← Sélectionner un autre élève
@@ -599,6 +614,7 @@ export function PublicRegistrationForm({
                 formData={formData}
                 onFieldChange={handleFieldChange}
                 gradeOptions={gradeOptions}
+                financialOptions={financialOptions}
                 prefilledStudent={prefilledStudent}
                 classes={classes}
               />
