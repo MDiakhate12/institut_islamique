@@ -506,6 +506,17 @@ onValueChange={(v) => v && setValue('field', v)}
 ### 7.10 Dialogs — ne pas importer depuis @base-ui-components
 Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer directement depuis `@base-ui-components/react/dialog`.
 
+### 7.11 Select — valeur affichée vide/brute au premier rendu
+`@base-ui/react/select` n'affiche pas automatiquement le label correspondant à la `value` initiale tant que le contenu du dropdown n'a jamais été monté (le `Popup` est en portal, monté à la demande) : `<SelectValue />` seul affiche la valeur brute (ex. `"fr"` au lieu de `"Français"`). Toujours passer une render-prop à `SelectValue` pour mapper explicitement valeur → label :
+
+```tsx
+<SelectValue>{(v: string) => LABELS[v] ?? v}</SelectValue>
+```
+
+### 7.12 Page "Modifier le profil" — un composant, plusieurs portails
+
+`ProfileSettingsClient` (`src/components/shared/ProfileSettingsClient.tsx`) est le composant unique rendu par `/admin-portal/profile` et `/parent-portal/profile` (même pattern "un composant, plusieurs consommateurs" que le form-builder d'inscription, voir §7.4). Il n'a pas de prop `portal` — tout est piloté par `session.roles` : la checkbox "Administrateur" est toujours désactivée (le rôle admin ne se retire/s'ajoute que via `/admin-portal/permissions`, pas encore construit), les blocs "ID Enseignant" et "Enfants liés"/"Gérer les enfants" ne s'affichent que si l'utilisateur a le rôle correspondant. Le module `src/modules/profile/` gère nom/téléphone/rôles/langue via Drizzle ; changement d'e-mail, mot de passe et suppression de compte appellent directement `supabase.auth.updateUser()`/`supabaseAdmin.auth.admin.deleteUser()` depuis les server actions (pas de service Drizzle pour ces opérations, elles ne touchent pas nos tables). Chaque action sensible (email, mot de passe, suppression) ré-authentifie d'abord via `signInWithPassword` avant d'agir. Le lien "Edit Profile" de `UserProfileDialog` prend une prop `profileHref` (passée par chaque sidebar : admin/parent/teacher) — avant §7.12 il pointait toujours vers `/admin-portal/profile` en dur, quel que soit le portail d'où il était ouvert. Le "Délier l'enfant" vit dans `parentsService.unlinkChild` / `unlinkChildAction` (module `parents`, pas `profile`, car il opère sur `parent_students`). Le bouton "+ Ajouter un enfant" réutilise `LinkChildModal` déjà construit pour `/parent-portal/children`.
+
 ---
 
 ## 8. État d'avancement des modules
@@ -527,13 +538,14 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Public Portal** | `/portal/register/[schoolSlug]` (nouvel élève + réinscription + succès) |
 | **Parent Portal — Enrollment** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès — réutilise le même form-builder que le portail public, voir §7.8) |
 | **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) |
+| **Profile** | `/admin-portal/profile` + `/parent-portal/profile` (composant partagé `ProfileSettingsClient`, voir §7.12 — identité, rôles, langue, e-mail, mot de passe, gestion des enfants, suppression de compte) |
 
 ### 🔄 Partiellement construit
 
 | Module | État |
 |---|---|
-| **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Seule page devoirs construite |
-| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment (sélection élève, réinscription, nouvel élève) ✅ — Devoirs, Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps, Paramètres du profil restent à construire |
+| **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Seule page devoirs construite (pas encore de `/teacher-portal/profile`, le lien sidebar existe mais 404) |
+| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment (sélection élève, réinscription, nouvel élève), Paramètres du profil ✅ — Devoirs, Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps restent à construire |
 
 ### ❌ À construire (aucun fichier de module)
 

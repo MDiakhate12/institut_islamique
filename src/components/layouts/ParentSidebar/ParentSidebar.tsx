@@ -154,7 +154,7 @@ export function ParentSidebar({ session, userFullName, schoolName }: ParentSideb
       {/* User block */}
       <div className="shrink-0 border-t border-white/20">
         {!collapsed ? (
-          <UserProfileDialog session={session} userFullName={userFullName} schoolName={schoolName}>
+          <UserProfileDialog session={session} userFullName={userFullName} schoolName={schoolName} profileHref="/parent-portal/profile">
             <div className="flex items-center gap-2.5 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer w-full">
               <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center
                               text-white text-xs font-bold shrink-0 border border-white/30">
@@ -167,7 +167,7 @@ export function ParentSidebar({ session, userFullName, schoolName }: ParentSideb
             </div>
           </UserProfileDialog>
         ) : (
-          <UserProfileDialog session={session} userFullName={userFullName} schoolName={schoolName}>
+          <UserProfileDialog session={session} userFullName={userFullName} schoolName={schoolName} profileHref="/parent-portal/profile">
             <div className="flex justify-center py-3 hover:bg-white/10 transition-colors cursor-pointer">
               <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center
                               text-white text-xs font-bold border border-white/30">

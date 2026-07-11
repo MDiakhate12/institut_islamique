@@ -223,4 +223,16 @@ export const parentsService = {
       classes:   classesByStudent[s.id] ?? [],
     }))
   },
+
+  async unlinkChild(schoolMemberId: string, studentId: string, schoolId: string): Promise<void> {
+    await db
+      .delete(parentStudents)
+      .where(
+        and(
+          eq(parentStudents.schoolMemberId, schoolMemberId),
+          eq(parentStudents.studentId, studentId),
+          eq(parentStudents.schoolId, schoolId),
+        )
+      )
+  },
 }

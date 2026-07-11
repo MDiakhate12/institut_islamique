@@ -12,6 +12,7 @@ interface Props {
   session: Session
   userFullName?: string | null
   schoolName?: string | null
+  profileHref?: string
   children: React.ReactElement // the trigger (user block in sidebar)
 }
 
@@ -25,7 +26,7 @@ function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
 }
 
-export function UserProfileDialog({ session, userFullName, schoolName, children }: Props) {
+export function UserProfileDialog({ session, userFullName, schoolName, profileHref = '/admin-portal/profile', children }: Props) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -154,7 +155,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, children 
             {/* Actions */}
             <div className="space-y-2 pt-1">
               <Link
-                href="/admin-portal/profile"
+                href={profileHref}
                 onClick={() => setOpen(false)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
                            bg-gradient-to-r from-[#c2440f] to-[#a33a0d] text-white font-medium text-sm
