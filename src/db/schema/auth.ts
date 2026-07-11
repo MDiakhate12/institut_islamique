@@ -25,6 +25,7 @@ export const schoolMembers = pgTable('school_members', {
   adminSubRole: adminSubRoleEnum('admin_sub_role'),
   teacherType: teacherTypeEnum('teacher_type'),   // null si pas enseignant
   isPending: boolean('is_pending').notNull().default(false),
+  pendingEmail: text('pending_email'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   createdBy: uuid('created_by'),
 })

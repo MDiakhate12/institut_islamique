@@ -20,7 +20,7 @@ import type { Teacher } from '@/modules/teachers/teachers.types'
 
 interface TeacherFormProps {
   teacher?: Teacher
-  trigger?: React.ReactNode
+  trigger?: React.ReactElement
   onSuccess?: () => void
 }
 
@@ -106,14 +106,14 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        {trigger ?? (
+      <DialogTrigger
+        render={trigger ?? (
           <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
             <Plus className="h-4 w-4" />
             Créer un nouvel enseignant
           </Button>
         )}
-      </DialogTrigger>
+      />
       <DialogContent className="w-[calc(100%-2rem)] max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">

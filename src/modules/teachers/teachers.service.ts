@@ -5,10 +5,10 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { InviteTeacherInput, UpdateTeacherInput } from './teachers.schema'
 import type { Teacher, TeacherListItem } from './teachers.types'
 
+const NIL_UUID = '00000000-0000-0000-0000-000000000000'
+
 export const teachersService = {
-  // READ — tous les enseignants de l'école avec nb de classes
   async getBySchool(schoolId: string): Promise<TeacherListItem[]> {
-    // Récupérer les school_members qui ont le rôle teacher
     const members = await db
       .select({
         id: schoolMembers.id,
@@ -16,6 +16,7 @@ export const teachersService = {
         schoolId: schoolMembers.schoolId,
         teacherType: schoolMembers.teacherType,
         isPending: schoolMembers.isPending,
+        pendingEmail: schoolMembers.pendingEmail,
         createdAt: schoolMembers.createdAt,
         fullName: profiles.fullName,
         phone: profiles.phone,
@@ -33,16 +34,18 @@ export const teachersService = {
 
     if (members.length === 0) return []
 
-    // Récupérer les emails depuis Supabase Auth (service role)
-    const userIds = members.map(m => m.userId)
-    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-    const emailMap = new Map(
-      users
-        .filter(u => userIds.includes(u.id))
-        .map(u => [u.id, u.email ?? ''])
-    )
+    // Fetch emails from Supabase Auth for real users (not NIL_UUID placeholders)
+    const realUserIds = members.map(m => m.userId).filter(id => id !== NIL_UUID)
+    let emailMap = new Map<string, string>()
+    if (realUserIds.length > 0) {
+      const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
+      emailMap = new Map(
+        users
+          .filter(u => realUserIds.includes(u.id))
+          .map(u => [u.id, u.email ?? ''])
+      )
+    }
 
-    // Compter les classes actives par enseignant
     const { classes } = await import('@/db/schema')
     const classCounts = await db
       .select({
@@ -62,12 +65,11 @@ export const teachersService = {
       teacherType: m.teacherType as 'volunteer' | 'paid' | null,
       gender: m.gender ?? null,
       createdAt: m.createdAt,
-      email: emailMap.get(m.userId) ?? '',
+      email: emailMap.get(m.userId) || m.pendingEmail || '',
       classCount: classCountMap.get(m.id) ?? 0,
     }))
   },
 
-  // READ — un seul enseignant
   async getById(schoolId: string, memberId: string): Promise<Teacher | null> {
     const [member] = await db
       .select({
@@ -76,6 +78,7 @@ export const teachersService = {
         schoolId: schoolMembers.schoolId,
         teacherType: schoolMembers.teacherType,
         isPending: schoolMembers.isPending,
+        pendingEmail: schoolMembers.pendingEmail,
         createdAt: schoolMembers.createdAt,
         fullName: profiles.fullName,
         phone: profiles.phone,
@@ -89,55 +92,44 @@ export const teachersService = {
 
     if (!member) return null
 
-    const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(member.userId)
+    let email = member.pendingEmail || ''
+    if (member.userId !== NIL_UUID) {
+      const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(member.userId)
+      email = user?.email ?? email
+    }
+
     return {
       ...member,
       teacherType: member.teacherType as 'volunteer' | 'paid' | null,
       gender: member.gender ?? null,
       createdAt: member.createdAt,
-      email: user?.email ?? '',
+      email,
     }
   },
 
-  // CREATE — invite un enseignant par email
+  // Creates a pending teacher record (admin flow — no email invite, teacher self-registers)
   async invite(schoolId: string, data: InviteTeacherInput, invitedBy: string): Promise<Teacher> {
-    // 1. Inviter via Supabase Auth (envoie un email d'invitation)
-    const { data: authData, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      data.email,
-      { redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback` }
-    )
-    if (error) throw new Error(error.message)
-
-    const userId = authData.user.id
-
-    // 2. Créer ou mettre à jour le profil
-    await db
-      .insert(profiles)
-      .values({ userId, fullName: data.fullName, phone: data.phone ?? null, gender: data.gender ?? null })
-      .onConflictDoUpdate({
-        target: profiles.userId,
-        set: { fullName: data.fullName, phone: data.phone ?? null, gender: data.gender ?? null, updatedAt: new Date() },
-      })
-
-    // 3. Créer le school_member avec rôle teacher
     const [member] = await db
       .insert(schoolMembers)
       .values({
         schoolId,
-        userId,
+        userId: NIL_UUID,
         portalRoles: ['teacher'],
         teacherType: data.teacherType,
-        isPending: false,
+        isPending: true,
+        pendingEmail: data.email.toLowerCase(),
         createdBy: invitedBy,
       })
       .returning()
 
+    // Store name/phone in a pseudo-profile keyed by NIL_UUID — or just return as-is
+    // Profile will be created when the teacher actually signs up
     return {
       id: member.id,
-      userId,
+      userId: NIL_UUID,
       schoolId,
       teacherType: data.teacherType,
-      isPending: false,
+      isPending: true,
       createdAt: member.createdAt,
       fullName: data.fullName,
       phone: data.phone ?? null,
@@ -147,9 +139,7 @@ export const teachersService = {
     }
   },
 
-  // UPDATE — modifier profil + type + statut
   async update(schoolId: string, memberId: string, data: UpdateTeacherInput): Promise<void> {
-    // Récupérer userId
     const [member] = await db
       .select({ userId: schoolMembers.userId })
       .from(schoolMembers)
@@ -158,7 +148,6 @@ export const teachersService = {
 
     if (!member) throw new Error('Enseignant introuvable')
 
-    // Mettre à jour school_members (type + statut actif)
     const memberUpdate: Record<string, unknown> = {}
     if (data.teacherType !== undefined) memberUpdate.teacherType = data.teacherType
     if (data.isActive !== undefined) memberUpdate.isPending = !data.isActive
@@ -169,19 +158,20 @@ export const teachersService = {
         .where(eq(schoolMembers.id, memberId))
     }
 
-    // Mettre à jour le profil
-    await db
-      .update(profiles)
-      .set({
-        ...(data.fullName && { fullName: data.fullName }),
-        ...(data.phone !== undefined && { phone: data.phone }),
-        ...(data.gender !== undefined && { gender: data.gender }),
-        updatedAt: new Date(),
-      })
-      .where(eq(profiles.userId, member.userId))
+    // Only update profile if the teacher has a real auth account
+    if (member.userId !== NIL_UUID) {
+      await db
+        .update(profiles)
+        .set({
+          ...(data.fullName && { fullName: data.fullName }),
+          ...(data.phone !== undefined && { phone: data.phone }),
+          ...(data.gender !== undefined && { gender: data.gender }),
+          updatedAt: new Date(),
+        })
+        .where(eq(profiles.userId, member.userId))
+    }
   },
 
-  // REMOVE — retirer le rôle teacher (ne supprime pas le compte)
   async removeFromSchool(schoolId: string, memberId: string): Promise<void> {
     await db
       .delete(schoolMembers)

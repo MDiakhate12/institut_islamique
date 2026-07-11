@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { teachersService } from './teachers.service'
 import { inviteTeacherSchema, updateTeacherSchema } from './teachers.schema'
 import { requireSession } from '@/lib/auth/session'
@@ -8,6 +9,9 @@ import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import type { Teacher, TeacherListItem } from './teachers.types'
 import { ROUTES } from '@/lib/constants'
+import { db } from '@/db'
+import { schoolMembers } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 export async function getTeachersAction(): Promise<ActionResult<TeacherListItem[]>> {
   const session = await requireSession()
@@ -86,4 +90,25 @@ export async function removeTeacherAction(memberId: string): Promise<ActionResul
     console.error('[removeTeacherAction]', e)
     return err("Impossible de retirer cet enseignant.")
   }
+}
+
+export async function activateTeacherAction(code: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
+
+  if (!session.roles.includes('teacher')) return err('Non autorisé')
+  if (!session.isPending) {
+    redirect('/teacher-portal/homework')
+  }
+
+  if (code.trim().toLowerCase() !== session.memberId.toLowerCase()) {
+    return err('Code invalide. Entrez le code complet (format : xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).')
+  }
+
+  await db
+    .update(schoolMembers)
+    .set({ isPending: false, pendingEmail: null })
+    .where(eq(schoolMembers.id, session.memberId))
+
+  revalidatePath('/teacher-portal', 'layout')
+  redirect('/teacher-portal/homework')
 }

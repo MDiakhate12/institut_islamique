@@ -7,6 +7,8 @@ import { db } from '@/db'
 import { profiles, schoolMembers } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
 
+const NIL_UUID = '00000000-0000-0000-0000-000000000000'
+
 export async function signInAction(email: string, password: string) {
   const supabase = await createClient()
   const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -20,18 +22,18 @@ export async function signInAction(email: string, password: string) {
 
   if (userId) {
     const [member] = await db
-      .select({ portalRoles: schoolMembers.portalRoles })
+      .select({ portalRoles: schoolMembers.portalRoles, isPending: schoolMembers.isPending })
       .from(schoolMembers)
-      .where(and(eq(schoolMembers.userId, userId), eq(schoolMembers.isPending, false)))
+      .where(and(eq(schoolMembers.userId, userId)))
       .limit(1)
 
     const roles = member?.portalRoles ?? []
-    if (roles.includes('admin')) {
-      destination = '/admin-portal'
-    } else if (roles.includes('teacher')) {
+    if (roles.includes('teacher')) {
       destination = '/teacher-portal'
     } else if (roles.includes('parent')) {
       destination = '/parent-portal'
+    } else if (roles.includes('admin')) {
+      destination = '/admin-portal'
     }
   }
 
@@ -80,6 +82,42 @@ export async function signUpAction(input: {
   if (input.isTeacher) roles.push('teacher')
   if (roles.length === 0) roles.push('parent')
 
+  if (input.isTeacher) {
+    // Check for an admin-created pending record with this email
+    const [adminRecord] = await db
+      .select({ id: schoolMembers.id })
+      .from(schoolMembers)
+      .where(
+        and(
+          eq(schoolMembers.schoolId, input.schoolId),
+          eq(schoolMembers.userId, NIL_UUID),
+          eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
+        )
+      )
+      .limit(1)
+
+    if (adminRecord) {
+      // Link the real user to the admin-created record
+      await db
+        .update(schoolMembers)
+        .set({ userId, pendingEmail: null })
+        .where(eq(schoolMembers.id, adminRecord.id))
+    } else {
+      // No admin record — create a pending member (awaiting admin activation code)
+      await db.insert(schoolMembers).values({
+        userId,
+        schoolId: input.schoolId,
+        portalRoles: ['teacher'],
+        isPending: true,
+      })
+    }
+
+    if (!data.session) return { needsConfirmation: true }
+    revalidatePath('/', 'layout')
+    redirect('/teacher-portal')
+  }
+
+  // Parent (or combined parent+teacher — parent takes precedence for redirect)
   const [existing] = await db
     .select({ id: schoolMembers.id })
     .from(schoolMembers)
@@ -95,9 +133,7 @@ export async function signUpAction(input: {
     })
   }
 
-  if (!data.session) {
-    return { needsConfirmation: true }
-  }
+  if (!data.session) return { needsConfirmation: true }
 
   revalidatePath('/', 'layout')
   if (input.isParent) redirect('/parent-portal')
