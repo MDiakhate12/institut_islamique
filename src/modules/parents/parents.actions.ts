@@ -87,3 +87,17 @@ export async function getChildrenAction(): Promise<ActionResult<ChildWithClasses
     return err('Impossible de charger les enfants')
   }
 }
+
+export async function unlinkChildAction(studentId: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  try {
+    const memberId = await parentsService.getMemberId(session.userId, session.schoolId)
+    if (!memberId) return err('Compte parent introuvable')
+
+    await parentsService.unlinkChild(memberId, studentId, session.schoolId)
+    return ok(undefined)
+  } catch (e) {
+    console.error('[unlinkChildAction]', e)
+    return err('Impossible de délier cet enfant')
+  }
+}

@@ -88,6 +88,7 @@ export const ROUTES = {
     attendance: '/teacher-portal/attendance',
     homework: '/teacher-portal/homework',
     exams: '/teacher-portal/exams',
+    profile: '/teacher-portal/profile',
   },
   parent: {
     root: '/parent-portal',
@@ -95,5 +96,6 @@ export const ROUTES = {
     attendance: '/parent-portal/attendance',
     homework: '/parent-portal/homework',
     payments: '/parent-portal/payments',
+    profile: '/parent-portal/profile',
   },
 } as const
