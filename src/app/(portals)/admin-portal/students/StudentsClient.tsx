@@ -6,10 +6,7 @@ import { useStudents, useDeactivateStudent } from '@/modules/students/students.h
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Users, Plus, Download, MoreHorizontal, Pencil, UserX, ArrowUpDown } from 'lucide-react'
+import { Users, Plus, Download, ArrowUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
@@ -154,7 +151,7 @@ export function StudentsClient() {
             className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'inactive' ? 'bg-red-400 border-red-400' : 'border-red-400 bg-white')} />
         </div>
         <select className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer">
-          <option>Age</option>
+          <option>Âge</option>
         </select>
       </div>
 
@@ -185,9 +182,13 @@ export function StudentsClient() {
                   <th className="px-3 py-3 text-left">Étoiles</th>
                   <th className="px-3 py-3 text-left">Trophée</th>
                   <SortTh label="Date de naissance" onClick={() => toggleSort('birthDate')} />
-                  <th className="px-3 py-3 text-left min-w-[200px]">Tuteurs</th>
+                  <th className="px-3 py-3 text-left min-w-[160px]">Nom du parent 1</th>
+                  <th className="px-3 py-3 text-left min-w-[160px]">Nom du parent 2</th>
                   <th className="px-3 py-3 text-left">Nb. classes</th>
-                  <th className="px-3 py-3 text-left">Classes</th>
+                  <th className="px-3 py-3 text-left min-w-[100px]">Classes</th>
+                  <th className="px-3 py-3 text-left">Trimestre 1</th>
+                  <th className="px-3 py-3 text-left">Trimestre 2</th>
+                  <th className="px-3 py-3 text-left">Trimestre 3</th>
                   <th className="px-3 py-3 text-left">Statut</th>
                   <th className="px-3 py-3 text-left">Présent</th>
                   <th className="px-3 py-3 text-left">En retard</th>
@@ -195,8 +196,10 @@ export function StudentsClient() {
                   <th className="px-3 py-3 text-left">Excusé</th>
                   <th className="px-3 py-3 text-left min-w-[110px]">Année d&apos;inscription</th>
                   <th className="px-3 py-3 text-left min-w-[110px]">Date d&apos;adhésion</th>
-                  <th className="px-3 py-3 text-left min-w-[130px]">Commentaire</th>
-                  <th className="px-3 py-3 text-left min-w-[220px]">Actions</th>
+                  <th className="px-3 py-3 text-left min-w-[120px]">Dernière présence</th>
+                  <th className="px-3 py-3 text-left min-w-[130px]">Numéro d&apos;urgence</th>
+                  <th className="px-3 py-3 text-left min-w-[180px]">Commentaire</th>
+                  <th className="px-3 py-3 text-left min-w-[280px]">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -222,11 +225,30 @@ function SortTh({ label, onClick }: { label: string; onClick: () => void }) {
   )
 }
 
+function PaymentBadge({ paid }: { paid: boolean }) {
+  return (
+    <span className={cn(
+      'inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium',
+      paid
+        ? 'bg-green-100 text-green-700 border border-green-200'
+        : 'bg-red-50 text-red-600 border border-red-200'
+    )}>
+      {paid ? 'Payé' : 'Non payé'}
+    </span>
+  )
+}
+
 function StudentRow({ student: s, index, onDeactivate }: {
   student: StudentListItem
   index: number
   onDeactivate: (id: string) => void
 }) {
+  const father = s.guardians.find(g => g.relationship === 'father' || g.isPrimary)
+  const mother = s.guardians.find(g => g.relationship === 'mother') ?? s.guardians.find(g => !g.isPrimary)
+
+  const emergencyPhone = father?.emergencyPhone
+    ?? s.guardians.find(g => g.emergencyPhone)?.emergencyPhone
+
   return (
     <tr className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors">
       <td className="px-3 py-3 text-muted-foreground text-xs">{index + 1}.</td>
@@ -262,20 +284,25 @@ function StudentRow({ student: s, index, onDeactivate }: {
         ) : <span className="text-muted-foreground">—</span>}
       </td>
 
-      {/* Tuteurs */}
+      {/* Nom du parent 1 (père) */}
       <td className="px-3 py-3">
-        {s.guardians.length === 0 ? (
-          <span className="text-muted-foreground text-xs italic">—</span>
-        ) : (
-          <div className="space-y-1">
-            {s.guardians.map(g => (
-              <div key={g.id}>
-                <p className="font-medium text-xs">{g.firstName} {g.lastName}</p>
-                {g.phone && <p className="text-xs text-muted-foreground">{g.phone}</p>}
-              </div>
-            ))}
+        {father ? (
+          <div>
+            <p className="font-medium text-xs">{father.firstName} {father.lastName}</p>
+            {father.email && <p className="text-xs text-muted-foreground">{father.email}</p>}
+            {father.phone && <p className="text-xs text-muted-foreground">{father.phone}</p>}
           </div>
-        )}
+        ) : <span className="text-muted-foreground text-xs italic">—</span>}
+      </td>
+
+      {/* Nom du parent 2 (mère) */}
+      <td className="px-3 py-3">
+        {mother ? (
+          <div>
+            <p className="font-medium text-xs">{mother.firstName} {mother.lastName}</p>
+            {mother.email && <p className="text-xs text-muted-foreground">{mother.email}</p>}
+          </div>
+        ) : <span className="text-muted-foreground text-xs italic">—</span>}
       </td>
 
       {/* Nb classes */}
@@ -288,8 +315,13 @@ function StudentRow({ student: s, index, onDeactivate }: {
       <td className="px-3 py-3">
         {s.activeClassName
           ? <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">{s.activeClassName}</span>
-          : <span className="text-muted-foreground text-xs italic">—</span>}
+          : <span className="text-muted-foreground text-xs italic">Aucune classe</span>}
       </td>
+
+      {/* Paiements T1/T2/T3 */}
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT1} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT2} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT3} /></td>
 
       {/* Statut */}
       <td className="px-3 py-3">
@@ -302,10 +334,18 @@ function StudentRow({ student: s, index, onDeactivate }: {
       </td>
 
       {/* Présences (placeholder) */}
-      <td className="px-3 py-3 text-center text-muted-foreground">—</td>
-      <td className="px-3 py-3 text-center text-muted-foreground">—</td>
-      <td className="px-3 py-3 text-center text-muted-foreground">—</td>
-      <td className="px-3 py-3 text-center text-muted-foreground">—</td>
+      <td className="px-3 py-3 text-center">
+        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-semibold">0</span>
+      </td>
+      <td className="px-3 py-3 text-center">
+        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-orange-100 text-orange-700 text-[11px] font-semibold">0</span>
+      </td>
+      <td className="px-3 py-3 text-center">
+        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-100 text-red-700 text-[11px] font-semibold">0</span>
+      </td>
+      <td className="px-3 py-3 text-center">
+        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-purple-100 text-purple-700 text-[11px] font-semibold">0</span>
+      </td>
 
       {/* Année inscription */}
       <td className="px-3 py-3 text-xs">{s.academicYear ?? '—'}</td>
@@ -317,22 +357,35 @@ function StudentRow({ student: s, index, onDeactivate }: {
           : new Date(s.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
       </td>
 
-      {/* Notes */}
+      {/* Dernière présence */}
+      <td className="px-3 py-3 text-xs text-muted-foreground">Jamais</td>
+
+      {/* Numéro d'urgence */}
       <td className="px-3 py-3 text-xs text-muted-foreground">
-        {s.notes ?? <span className="italic">Cliquer pour ajouter</span>}
+        {emergencyPhone ?? 'Non renseigné'}
+      </td>
+
+      {/* Notes / Commentaire */}
+      <td className="px-3 py-3">
+        <label className="flex items-start gap-1.5 cursor-pointer">
+          <input type="checkbox" className="mt-0.5 h-3.5 w-3.5 rounded border-border" readOnly checked={false} />
+          <span className="text-xs text-muted-foreground">
+            {s.notes ?? 'Cliquer pour ajouter un commentaire'}
+          </span>
+        </label>
       </td>
 
       {/* Actions */}
       <td className="px-3 py-3">
-        <div className="flex items-center gap-1.5">
-          <ActionBtn label="Report Card"    color="blue"  />
-          <ActionBtn label="Présences"      color="green" />
-          <ActionBtn label="Payments"       color="green" />
-          <ActionBtn label="Homework"       color="green" />
+        <div className="flex items-center gap-1">
+          <ActionBtn label="Bulletin de notes" color="blue"   />
+          <ActionBtn label="Présences de l'élève" color="orange" />
+          <ActionBtn label="Paiements"          color="green" />
+          <ActionBtn label="Devoirs"            color="purple" />
           <StudentFormDialog
-            student={s as unknown as import('@/modules/students/students.types').Student}
+            student={s}
             trigger={
-              <button className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors">
+              <button className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors ml-0.5">
                 <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M4 16l-.5 4 4-.5 9.293-9.293-3.536-3.536L4 16z" />
                 </svg>
@@ -345,17 +398,19 @@ function StudentRow({ student: s, index, onDeactivate }: {
   )
 }
 
-function ActionBtn({ label, color }: { label: string; color: 'blue' | 'green' }) {
-  const cls = color === 'blue'
-    ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
-    : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+function ActionBtn({ label, color }: { label: string; color: 'blue' | 'green' | 'orange' | 'purple' }) {
+  const cls = {
+    blue:   'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
+    green:  'bg-green-50 border-green-200 text-green-700 hover:bg-green-100',
+    orange: 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100',
+    purple: 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100',
+  }[color]
   return (
     <button className={cn('inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium transition-colors', cls)}>
       {label}
     </button>
   )
 }
-
 
 function StudentsSkeleton() {
   return (
@@ -364,7 +419,7 @@ function StudentsSkeleton() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/20">
-              {Array.from({ length: 10 }).map((_, i) => (
+              {Array.from({ length: 14 }).map((_, i) => (
                 <th key={i} className="px-3 py-3"><Skeleton className="h-3 w-20" /></th>
               ))}
             </tr>
@@ -372,7 +427,7 @@ function StudentsSkeleton() {
           <tbody>
             {Array.from({ length: 5 }).map((_, i) => (
               <tr key={i} className="border-b border-border/50">
-                {Array.from({ length: 10 }).map((_, j) => (
+                {Array.from({ length: 14 }).map((_, j) => (
                   <td key={j} className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
                 ))}
               </tr>

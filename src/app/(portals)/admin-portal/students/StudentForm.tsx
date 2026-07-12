@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/dialog'
 import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Student } from '@/modules/students/students.types'
+import type { StudentListItem } from '@/modules/students/students.types'
 import { studentsKeys } from '@/modules/students/students.hooks'
 
 interface StudentFormProps {
-  student?: Student
+  student?: StudentListItem
   trigger?: React.ReactNode
   onSuccess?: () => void
 }
@@ -28,19 +28,28 @@ export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormPr
   const isEditing = !!student
   const queryClient = useQueryClient()
 
-  // ── Form state ici (survit à la fermeture du dialog) ──────────────────────
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDelete]    = useTransition()
+
+  const father = student?.guardians?.find(g => g.relationship === 'father' || g.isPrimary) ?? student?.guardians?.[0]
+  const mother = student?.guardians?.find(g => g.relationship === 'mother')
 
   const form = useForm<CreateStudentInput>({
     resolver: zodResolver(createStudentSchema),
     defaultValues: {
-      firstName: student?.firstName ?? '',
-      lastName:  student?.lastName  ?? '',
-      gender:    student?.gender    ?? 'male',
-      isActive:  student?.isActive  ?? true,
-      birthDate: student?.birthDate ?? '',
-      notes:     student?.notes     ?? '',
+      firstName:      student?.firstName   ?? '',
+      lastName:       student?.lastName    ?? '',
+      gender:         student?.gender      ?? 'male',
+      isActive:       student?.isActive    ?? true,
+      birthDate:      student?.birthDate   ?? '',
+      notes:          student?.notes       ?? '',
+      parentPhone:    father?.phone        ?? '',
+      parentName1:    father?.firstName    ?? '',
+      parentName2:    mother?.firstName    ?? '',
+      email1:         father?.email        ?? '',
+      email2:         mother?.email        ?? '',
+      emergencyPhone: father?.emergencyPhone ?? '',
+      enrollmentYear: student?.academicYear ?? '',
     },
   })
 
@@ -116,69 +125,31 @@ export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormPr
             </div>
           </div>
 
-          {/* Genre ou ID élève */}
-          <div className="grid grid-cols-2 gap-3">
-            {isEditing && student.studentCustomId ? (
-              <div>
-                <label className="text-sm font-medium mb-1 block text-muted-foreground">ID Élève</label>
-                <Input value={student.studentCustomId} readOnly className="bg-muted/30 text-muted-foreground" />
-              </div>
-            ) : (
-              <div>
-                <label className="text-sm font-medium mb-1 block">Genre *</label>
-                <select
-                  {...form.register('gender')}
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
-                >
-                  <option value="">Sélectionner le genre</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
-            )}
+          {/* Genre */}
+          <div>
+            <label className="text-sm font-medium mb-1 block">Genre</label>
+            <select
+              {...form.register('gender')}
+              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+            >
+              <option value="male">Masculin</option>
+              <option value="female">Féminin</option>
+            </select>
           </div>
 
-          {/* Genre (edit) + Date de naissance */}
-          {isEditing ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Genre</label>
-                <select
-                  {...form.register('gender')}
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Date de naissance</label>
-                <Input type="date" {...form.register('birthDate')} />
-              </div>
-            </div>
-          ) : (
+          {/* Nom du parent 1 / Nom du parent 2 */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">Date de naissance</label>
-              <Input type="date" {...form.register('birthDate')} />
+              <label className="text-sm font-medium mb-1 block">Nom du parent 1</label>
+              <Input placeholder="Nom du père / tuteur" {...form.register('parentName1')} />
             </div>
-          )}
-
-          {/* Téléphone du parent */}
-          {!isEditing && (
             <div>
-              <label className="text-sm font-medium mb-1 block">Téléphone du parent</label>
-              <Input
-                type="tel"
-                placeholder="0X XX XX XX XX"
-                {...form.register('parentPhone')}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Utilisé par le parent pour lier son compte à cet élève
-              </p>
+              <label className="text-sm font-medium mb-1 block">Nom du parent 2</label>
+              <Input placeholder="Nom de la mère / tuteur" {...form.register('parentName2')} />
             </div>
-          )}
+          </div>
 
-          {/* Statut actif */}
+          {/* Toggle inscrit */}
           <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 border border-border">
             <span className="text-sm text-muted-foreground">L&apos;élève est actuellement inscrit et actif</span>
             <div className="flex items-center gap-2">
@@ -197,6 +168,130 @@ export function StudentFormDialog({ student, trigger, onSuccess }: StudentFormPr
                 )} />
               </button>
             </div>
+          </div>
+
+          {/* Classes inscrites */}
+          {isEditing && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold">Classes inscrites</label>
+                <button
+                  type="button"
+                  className="text-sm text-[#c2440f] hover:underline"
+                >
+                  + Ajouter des classes
+                </button>
+              </div>
+              {student.activeClassName ? (
+                <div className="flex flex-wrap gap-2 p-2 bg-muted/10 rounded-lg border border-border">
+                  <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                    {student.activeClassName}
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 bg-muted/10 rounded-lg border border-border text-sm text-muted-foreground text-center">
+                  Aucune classe inscrite pour l&apos;instant. Cliquez sur &quot;Ajouter des classes&quot; pour inscrire cet élève.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Paiements T1/T2/T3 */}
+          {isEditing && (
+            <div>
+              <label className="text-sm font-semibold mb-2 block">Paiements</label>
+              <div className="flex items-center gap-2">
+                {(['T1', 'T2', 'T3'] as const).map((t) => {
+                  const key = t === 'T1' ? 'paymentT1' : t === 'T2' ? 'paymentT2' : 'paymentT3'
+                  const paid = student[key as 'paymentT1' | 'paymentT2' | 'paymentT3']
+                  return (
+                    <span
+                      key={t}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border',
+                        paid
+                          ? 'bg-green-50 border-green-300 text-green-700'
+                          : 'bg-white border-[#c2440f]/40 text-[#c2440f]'
+                      )}
+                    >
+                      <span className={cn(
+                        'h-3 w-3 rounded-sm border',
+                        paid ? 'bg-green-500 border-green-500' : 'border-[#c2440f]/40'
+                      )} />
+                      Trimestre {t.slice(1)}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* E-mail 1 / E-mail 2 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">E-mail 1</label>
+              <Input type="email" placeholder="E-mail principal" {...form.register('email1')} />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">E-mail 2</label>
+              <Input type="email" placeholder="E-mail secondaire" {...form.register('email2')} />
+            </div>
+          </div>
+
+          {/* Téléphone / Numéro d'urgence */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Téléphone du tuteur</label>
+              <Input
+                type="tel"
+                placeholder="0X XX XX XX XX"
+                {...form.register('parentPhone')}
+              />
+              {!isEditing && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Utilisé pour lier le compte parent
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Numéro d&apos;urgence</label>
+              <Input
+                type="tel"
+                placeholder="0X XX XX XX XX"
+                {...form.register('emergencyPhone')}
+              />
+            </div>
+          </div>
+
+          {/* Date de naissance */}
+          <div>
+            <label className="text-sm font-medium mb-1 block">Date de naissance</label>
+            <Input type="date" {...form.register('birthDate')} />
+          </div>
+
+          {/* Année d'inscription */}
+          {isEditing && (
+            <div>
+              <label className="text-sm font-medium mb-1 block">Année d&apos;inscription</label>
+              <Input
+                {...form.register('enrollmentYear')}
+                placeholder="2026-2027"
+                readOnly
+                className="bg-muted/30 text-muted-foreground"
+                value={student.academicYear ?? '—'}
+              />
+            </div>
+          )}
+
+          {/* Commentaire */}
+          <div>
+            <label className="text-sm font-medium mb-1 block">Commentaire</label>
+            <textarea
+              {...form.register('notes')}
+              placeholder="Ajouter des notes sur l'élève..."
+              rows={3}
+              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 resize-none"
+            />
           </div>
 
           {/* Boutons */}

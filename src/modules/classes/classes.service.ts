@@ -375,4 +375,28 @@ export const scheduledClassesService = {
       curriculum:  r.curriculum,
     }))
   },
+
+  // All catalog entries for the registration form class picker (not school-specific)
+  async getCatalogForForm() {
+    const rows = await db
+      .select({
+        id:          classCatalog.id,
+        code:        classCatalog.code,
+        name:        classCatalog.name,
+        subjectCode: classCatalog.subjectCode,
+        levelNumber: classCatalog.levelNumber,
+        curriculum:  classCatalog.curriculum,
+      })
+      .from(classCatalog)
+      .orderBy(asc(classCatalog.subjectCode), asc(classCatalog.levelNumber))
+
+    return rows.map(r => ({
+      id:          r.code,   // store the catalog code in formData (e.g. "QRN-100")
+      code:        r.code,
+      fullCode:    r.code,
+      name:        r.name,
+      subjectCode: r.subjectCode,
+      curriculum:  r.curriculum,
+    }))
+  },
 }

@@ -4,7 +4,7 @@ import {
   classes, classCatalog, schoolMembers, profiles,
   classEnrollments, students,
 } from '@/db/schema'
-import { eq, and, sql, or, notInArray } from 'drizzle-orm'
+import { eq, and, sql, or, notInArray, desc } from 'drizzle-orm'
 import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent } from './homework.types'
 import type { CreateHomeworkInput, UpdateHomeworkInput } from './homework.schema'
 import { nanoid } from 'nanoid'
@@ -137,7 +137,7 @@ export const homeworkService = {
       .leftJoin(schoolMembers, eq(schoolMembers.id, homework.createdBy))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(and(eq(homework.schoolId, schoolId), eq(homework.classId, classId)))
-      .orderBy(homework.createdAt)
+      .orderBy(desc(homework.createdAt))
 
     return rows.map(r => ({
       ...r,
