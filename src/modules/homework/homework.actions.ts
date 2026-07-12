@@ -6,7 +6,8 @@ import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { homeworkService } from './homework.service'
 import { createHomeworkSchema, updateHomeworkSchema } from './homework.schema'
-import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent } from './homework.types'
+import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem } from './homework.types'
+import { createClient } from '@/lib/supabase/server'
 
 const path = '/teacher-portal/homework'
 
@@ -155,5 +156,54 @@ export async function endVirtualSessionAction(sessionId: string): Promise<Action
   } catch (e) {
     console.error('[endVirtualSessionAction]', e)
     return err('Impossible de terminer la session')
+  }
+}
+
+export async function getParentHomeworkAction(): Promise<ActionResult<{ children: ParentChild[]; homeworkItems: ParentHomeworkItem[] }>> {
+  const session = await requireSession()
+  try {
+    const data = await homeworkService.getForParent(session.schoolId, session.memberId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getParentHomeworkAction]', e)
+    return err('Impossible de charger les devoirs')
+  }
+}
+
+export async function submitHomeworkRecordingAction(
+  homeworkId: string,
+  studentId: string,
+  recordingBlob: { base64: string; mimeType: string; durationSeconds: number | null },
+): Promise<ActionResult<string>> {
+  const session = await requireSession()
+  try {
+    const supabase = await createClient()
+    const bytes = Buffer.from(recordingBlob.base64, 'base64')
+    const ext = recordingBlob.mimeType.includes('webm') ? 'webm' : 'mp4'
+    const filePath = `${session.schoolId}/${homeworkId}/${studentId}/${Date.now()}.${ext}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('homework-submissions')
+      .upload(filePath, bytes, { contentType: recordingBlob.mimeType, upsert: true })
+
+    if (uploadError) return err('Impossible de téléverser l\'enregistrement')
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('homework-submissions')
+      .getPublicUrl(filePath)
+
+    await homeworkService.submitRecording(
+      session.schoolId,
+      homeworkId,
+      studentId,
+      publicUrl,
+      recordingBlob.durationSeconds,
+    )
+
+    revalidatePath('/parent-portal/homework')
+    return ok(publicUrl)
+  } catch (e) {
+    console.error('[submitHomeworkRecordingAction]', e)
+    return err('Impossible de soumettre le devoir')
   }
 }

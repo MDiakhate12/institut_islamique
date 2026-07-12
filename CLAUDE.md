@@ -537,7 +537,7 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Registrations** | `/admin-portal/registrations` (liste, décodée depuis `formData` + filtres + export Excel) |
 | **Public Portal** | `/portal/register/[schoolSlug]` (nouvel élève + réinscription + succès) |
 | **Parent Portal — Enrollment** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès — réutilise le même form-builder que le portail public, voir §7.8) |
-| **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) |
+| **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) + `/parent-portal/homework` (vue parent, lecteur Coran inline, soumission audio MediaRecorder) |
 | **Profile** | `/admin-portal/profile` + `/parent-portal/profile` (composant partagé `ProfileSettingsClient`, voir §7.12 — identité, rôles, langue, e-mail, mot de passe, gestion des enfants, suppression de compte) |
 
 ### 🔄 Partiellement construit
@@ -545,7 +545,7 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | Module | État |
 |---|---|
 | **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Seule page devoirs construite (pas encore de `/teacher-portal/profile`, le lien sidebar existe mais 404) |
-| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment (sélection élève, réinscription, nouvel élève), Paramètres du profil ✅ — Devoirs, Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps restent à construire |
+| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment ✅, Paramètres du profil ✅, Devoirs ✅ (vue chronologie/classe, lecteur Coran 6 récitateurs, soumission audio MediaRecorder → Supabase Storage) — Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps restent à construire |
 
 ### ❌ À construire (aucun fichier de module)
 

@@ -85,6 +85,16 @@ export const virtualSessions = pgTable('virtual_sessions', {
   endedAt: timestamp('ended_at', { withTimezone: true }),
 })
 
+export const homeworkSubmissions = pgTable('homework_submissions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  homeworkId: uuid('homework_id').notNull().references(() => homework.id, { onDelete: 'cascade' }),
+  studentId: uuid('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  schoolId: uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+  recordingUrl: text('recording_url').notNull(),
+  durationSeconds: integer('duration_seconds'),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 export const teacherHomeworkClasses = pgTable('teacher_homework_classes', {
   id: uuid('id').primaryKey().defaultRandom(),
   schoolId: uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
