@@ -106,6 +106,7 @@ export type RegistrationWithDetails = {
   studentFirstName: string | null
   studentLastName: string | null
   studentBirthDate: string | null
+  studentGender: string | null
   formType: FormType | null
   status: RegistrationStatus
   submittedAt: Date
@@ -113,8 +114,11 @@ export type RegistrationWithDetails = {
   regularSchool: string | null
   paymentFrequency: string | null
   financialAid: string | null
+  photoConsent: boolean | null
+  policyConsent: boolean | null
   classes: { fullCode: string; name: string }[]
   parents: { name: string; email: string | null; phone: string | null }[]
+  customFields: { label: string; value: string }[]
 }
 
 // ── Default form schemas ───────────────────────────────────────────────────────

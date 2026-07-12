@@ -1,5 +1,5 @@
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm'
-import { students, classEnrollments, classes } from '@/db/schema'
+import { students } from '@/db/schema'
 
 export type Student    = InferSelectModel<typeof students>
 export type NewStudent = InferInsertModel<typeof students>
@@ -11,6 +11,7 @@ export type GuardianSummary = {
   lastName: string
   email: string | null
   phone: string | null
+  emergencyPhone: string | null
   isPrimary: boolean
 }
 
@@ -25,4 +26,7 @@ export type StudentListItem = Pick<
   enrollmentId?:     string | null
   enrolledAt?:       Date | string | null
   guardians:         GuardianSummary[]
+  paymentT1:         boolean
+  paymentT2:         boolean
+  paymentT3:         boolean
 }

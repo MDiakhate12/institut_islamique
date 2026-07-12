@@ -3,7 +3,6 @@ import { registrationForms, registrations, students, guardians } from '@/db/sche
 import { and, eq, desc, inArray } from 'drizzle-orm'
 import type { FormType, FormItem, RegistrationForm, Registration, SystemFieldKey, RegistrationWithDetails } from './registrations.types'
 import { DEFAULT_NEW_STUDENT_SCHEMA, DEFAULT_REENROLLMENT_SCHEMA } from './registrations.types'
-import { scheduledClassesService } from '@/modules/classes/classes.service'
 
 /** Build a map from system field keys to their form field IDs using the stored schema. */
 export function buildKeyToIdMap(schema: FormItem[]): Partial<Record<SystemFieldKey, string>> {
@@ -140,6 +139,7 @@ export const registrationsService = {
         studentLastName:  students.lastName,
         studentCustomId:  students.studentCustomId,
         studentBirthDate: students.birthDate,
+        studentGender:    students.gender,
       })
       .from(registrations)
       .leftJoin(registrationForms, eq(registrations.formId, registrationForms.id))
@@ -153,29 +153,24 @@ export const registrationsService = {
 
     type GuardianRow = { studentId: string; firstName: string; lastName: string; email: string | null; phone: string | null }
 
-    const [guardianRows, classItems] = await Promise.all([
-      studentIds.length > 0
-        ? db
-            .select({
-              studentId: guardians.studentId,
-              firstName: guardians.firstName,
-              lastName:  guardians.lastName,
-              email:     guardians.email,
-              phone:     guardians.phone,
-            })
-            .from(guardians)
-            .where(inArray(guardians.studentId, studentIds))
-        : Promise.resolve([] as GuardianRow[]),
-      scheduledClassesService.getForRegistration(schoolId),
-    ])
+    const guardianRows = studentIds.length > 0
+      ? await db
+          .select({
+            studentId: guardians.studentId,
+            firstName: guardians.firstName,
+            lastName:  guardians.lastName,
+            email:     guardians.email,
+            phone:     guardians.phone,
+          })
+          .from(guardians)
+          .where(inArray(guardians.studentId, studentIds))
+      : ([] as GuardianRow[])
 
     const guardiansByStudent = guardianRows.reduce<Record<string, GuardianRow[]>>((acc, g) => {
       if (!acc[g.studentId]) acc[g.studentId] = []
       acc[g.studentId].push(g)
       return acc
     }, {})
-
-    const classById = new Map(classItems.map(c => [c.id, c]))
 
     return rows.map(r => {
       const schema = (r.formSchema as FormItem[] | null) ?? []
@@ -186,11 +181,38 @@ export const registrationsService = {
         return fieldId ? ((formData[fieldId] as string | undefined) ?? null) : null
       }
 
+      // formData stores catalog codes directly (e.g. "QRN-100")
       const selectedClasses = Object.entries(formData)
-        .filter(([key]) => key.startsWith('class_'))
-        .map(([, classId]) => classById.get(classId as string))
-        .filter((c): c is NonNullable<typeof c> => !!c)
-        .map(c => ({ fullCode: c.fullCode, name: c.name }))
+        .filter(([key, val]) => key.startsWith('class_') && val)
+        .map(([, code]) => ({ fullCode: code as string, name: '' }))
+
+      // Consents: checkbox values stored as boolean in formData
+      const photoConsent  = (formData['cf-photo-consent'] === true || formData['cf-photo-consent'] === 'true') ? true
+                          : (formData['cf-photo-consent'] === false || formData['cf-photo-consent'] === 'false') ? false
+                          : null
+      const policyConsent = (formData['cf-acknowledge'] === true || formData['cf-acknowledge'] === 'true') ? true
+                          : (formData['cf-acknowledge'] === false || formData['cf-acknowledge'] === 'false') ? false
+                          : null
+
+      // Custom fields: any field not system/class/consent
+      const systemOrKnownKeys = new Set([
+        ...Object.values(schema).flatMap(item =>
+          item.kind === 'section' ? item.fields.map(f => f.id) : []
+        ),
+        'cf-photo-consent', 'cf-acknowledge', 'cf-comments',
+      ])
+      const customFields: { label: string; value: string }[] = []
+      for (const item of schema) {
+        if (item.kind !== 'section') continue
+        for (const field of item.fields) {
+          if (field.kind !== 'custom_field') continue
+          if (field.id === 'cf-photo-consent' || field.id === 'cf-acknowledge' || field.id === 'cf-comments') continue
+          const val = formData[field.id]
+          if (val !== undefined && val !== null && val !== '') {
+            customFields.push({ label: field.label, value: String(val) })
+          }
+        }
+      }
 
       const parents = (r.studentId ? guardiansByStudent[r.studentId] : undefined) ?? []
 
@@ -201,6 +223,7 @@ export const registrationsService = {
         studentFirstName: r.studentFirstName ?? null,
         studentLastName:  r.studentLastName ?? null,
         studentBirthDate: r.studentBirthDate ?? null,
+        studentGender:    r.studentGender ?? null,
         formType:         (r.formType as FormType | null) ?? null,
         status:           r.status as Registration['status'],
         submittedAt:      r.submittedAt,
@@ -208,8 +231,11 @@ export const registrationsService = {
         regularSchool:    get('regularSchool'),
         paymentFrequency: get('paymentFrequency'),
         financialAid:     get('financialAid'),
+        photoConsent,
+        policyConsent,
         classes:          selectedClasses,
         parents:          parents.map(p => ({ name: `${p.firstName} ${p.lastName}`.trim(), email: p.email, phone: p.phone })),
+        customFields,
       }
     })
   },

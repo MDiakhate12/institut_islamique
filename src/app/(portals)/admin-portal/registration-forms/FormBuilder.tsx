@@ -20,12 +20,16 @@ import {
   Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
 import { AddSectionDialog } from './AddSectionDialog'
 import { AddFieldDialog } from './AddFieldDialog'
 import type {
   FormItem, FormSection, InfoBlock, FormField, CustomField, FormType,
-  InfoBlockStyle, RegistrationClassItem,
+  InfoBlockStyle, RegistrationClassItem, SystemField, FieldType,
 } from '@/modules/registrations/registrations.types'
 
 // ── Style config ───────────────────────────────────────────────────────────────
@@ -209,21 +213,21 @@ function FieldRow({
 
       {/* Right badges/actions */}
       <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
-        {isSystem
-          ? <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Système</span>
-          : (
-            <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
-              <button type="button" onClick={onEdit} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              {onDelete && (
-                <button type="button" onClick={onDelete} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          )
-        }
+        {isSystem && (
+          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Système</span>
+        )}
+        <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+          {onEdit && (
+            <button type="button" onClick={onEdit} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {onDelete && (
+            <button type="button" onClick={onDelete} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -244,6 +248,208 @@ function SortableFieldRow({ field, onDelete, onEdit }: { field: FormField; onDel
         isOver={isOver}
       />
     </div>
+  )
+}
+
+// ── Edit system field dialog ───────────────────────────────────────────────────
+
+const FIELD_TYPE_LABELS: Partial<Record<FieldType, string>> = {
+  text: 'Texte court', textarea: 'Texte long', email: 'E-mail', tel: 'Téléphone',
+  date: 'Date', select: 'Liste déroulante', radio: 'Choix unique', yes_no: 'Oui / Non',
+  multiple: 'Choix multiple', number: 'Nombre', rating: 'Évaluation', checkbox: 'Case à cocher',
+}
+
+function EditSystemFieldDialog({
+  open, onOpenChange, field, onSave,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  field: SystemField
+  onSave: (updated: SystemField) => void
+}) {
+  const [label,         setLabel]         = useState(field.label)
+  const [required,      setRequired]      = useState(field.required)
+  const [placeholder,   setPlaceholder]   = useState(field.placeholder ?? '')
+  const [note,          setNote]          = useState(field.note ?? '')
+  const [options,       setOptions]       = useState<string[]>(field.options ?? [])
+  const [addingOption,  setAddingOption]  = useState(false)
+  const [optionInput,   setOptionInput]   = useState('')
+
+  const showPlaceholder = ['text', 'email', 'tel', 'number', 'textarea'].includes(field.type)
+  const showOptions     = ['select', 'radio', 'multiple'].includes(field.type)
+  const canSave         = label.trim().length > 0 && (!showOptions || options.length > 0)
+
+  function commitOption() {
+    const trimmed = optionInput.trim()
+    if (trimmed && !options.includes(trimmed)) setOptions(prev => [...prev, trimmed])
+    setOptionInput('')
+    setAddingOption(false)
+  }
+
+  function handleOptionKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter')  { e.preventDefault(); commitOption() }
+    if (e.key === 'Escape') { setOptionInput(''); setAddingOption(false) }
+  }
+
+  function handleSave() {
+    if (!canSave) return
+    onSave({
+      ...field,
+      label:       label.trim(),
+      required,
+      placeholder: showPlaceholder && placeholder.trim() ? placeholder.trim() : undefined,
+      note:        note.trim() || undefined,
+      options:     showOptions && options.length > 0 ? options : undefined,
+    })
+    onOpenChange(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-start justify-between pr-7">
+            <div>
+              <DialogTitle>Modifier le champ système</DialogTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Libellé, options et texte d&apos;aide sont modifiables
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRequired(r => !r)}
+              className="flex items-center gap-2 shrink-0 ml-4 mt-0.5"
+            >
+              <span className={cn('text-sm font-medium transition-colors', required ? 'text-[#c2440f]' : 'text-muted-foreground')}>
+                Obligatoire
+              </span>
+              <div className={cn('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', required ? 'bg-[#c2440f]' : 'bg-muted-foreground/30')}>
+                <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform', required ? 'translate-x-[18px]' : 'translate-x-0.5')} />
+              </div>
+            </button>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-5 pt-1">
+          {/* System info banner */}
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+            <Lock className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-700 space-y-0.5">
+              <p><span className="font-semibold">Clé système :</span> {field.fieldKey}</p>
+              <p><span className="font-semibold">Type :</span> {FIELD_TYPE_LABELS[field.type] ?? field.type}</p>
+              <p className="text-amber-600/80">La clé et le type sont verrouillés — ils sont utilisés pour enregistrer les données de l&apos;élève.</p>
+            </div>
+          </div>
+
+          {/* Label */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              Libellé de la question <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              autoFocus
+              value={label}
+              onChange={e => setLabel(e.target.value)}
+              placeholder="Libellé affiché sur le formulaire"
+              className="h-9"
+            />
+          </div>
+
+          {/* Options */}
+          {showOptions && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Options <span className="text-destructive">*</span>
+              </Label>
+              {options.length > 0 && (
+                <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
+                  {options.map(opt => (
+                    <div key={opt} className="flex items-center justify-between px-3 py-2.5">
+                      <span className="text-sm text-foreground">{opt}</span>
+                      <button
+                        type="button"
+                        onClick={() => setOptions(prev => prev.filter(o => o !== opt))}
+                        className="text-muted-foreground/50 hover:text-red-500 transition-colors ml-2 shrink-0"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {addingOption ? (
+                <Input
+                  autoFocus
+                  value={optionInput}
+                  onChange={e => setOptionInput(e.target.value)}
+                  onKeyDown={handleOptionKeyDown}
+                  onBlur={() => { if (optionInput.trim()) commitOption(); else setAddingOption(false) }}
+                  placeholder="Saisir une option puis Entrée…"
+                  className="h-8 text-sm"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddingOption(true)}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Ajouter une option
+                </button>
+              )}
+              {options.length === 0 && !addingOption && (
+                <p className="text-xs text-muted-foreground italic">Ajoutez au moins une option</p>
+              )}
+            </div>
+          )}
+
+          {/* Placeholder */}
+          {showPlaceholder && (
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">
+                Texte d&apos;espace réservé{' '}
+                <span className="text-muted-foreground font-normal">(facultatif)</span>
+              </Label>
+              <Input
+                value={placeholder}
+                onChange={e => setPlaceholder(e.target.value)}
+                placeholder="Texte affiché quand le champ est vide…"
+                className="h-9"
+              />
+            </div>
+          )}
+
+          {/* Note */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">
+              Texte d&apos;aide{' '}
+              <span className="text-muted-foreground font-normal">(facultatif)</span>
+            </Label>
+            <Input
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="ex. : Ce numéro sera utilisé pour vous contacter en cas d'urgence"
+              className="h-9"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-2 pt-1 border-t border-border">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              Annuler
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={!canSave}
+              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+            >
+              Enregistrer les modifications
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -392,8 +598,9 @@ function SectionBlock({
 }) {
   const [expanded, setExpanded] = useState(true)
   const sensors = useSensors(useSensor(PointerSensor))
-  const [addingField,  setAddingField]  = useState(false)
-  const [editingField, setEditingField] = useState<CustomField | null>(null)
+  const [addingField,       setAddingField]       = useState(false)
+  const [editingField,      setEditingField]      = useState<CustomField | null>(null)
+  const [editingSystemField, setEditingSystemField] = useState<SystemField | null>(null)
 
   const fieldCount = section.fields.length
   const isClassSection = section.systemKey === 'class_selection'
@@ -422,6 +629,10 @@ function SectionBlock({
   }
 
   function updateField(field: CustomField) {
+    onUpdateFields(section.fields.map(f => f.id === field.id ? field : f))
+  }
+
+  function updateSystemField(field: SystemField) {
     onUpdateFields(section.fields.map(f => f.id === field.id ? field : f))
   }
 
@@ -521,8 +732,12 @@ function SectionBlock({
                   <SortableFieldRow
                     key={field.id}
                     field={field}
-                    onDelete={field.kind === 'custom_field' ? () => deleteField(field.id) : undefined}
-                    onEdit={field.kind === 'custom_field' ? () => setEditingField(field) : undefined}
+                    onDelete={() => deleteField(field.id)}
+                    onEdit={
+                      field.kind === 'custom_field'
+                        ? () => setEditingField(field)
+                        : () => setEditingSystemField(field as SystemField)
+                    }
                   />
                 ))}
               </SortableContext>
@@ -550,13 +765,23 @@ function SectionBlock({
             onAdd={addField}
           />
 
-          {/* Edit field dialog */}
+          {/* Edit custom field dialog */}
           {editingField && (
             <AddFieldDialog
               open={!!editingField}
               onOpenChange={v => !v && setEditingField(null)}
               existing={editingField}
               onAdd={updateField}
+            />
+          )}
+
+          {/* Edit system field dialog */}
+          {editingSystemField && (
+            <EditSystemFieldDialog
+              open={!!editingSystemField}
+              onOpenChange={v => !v && setEditingSystemField(null)}
+              field={editingSystemField}
+              onSave={updateSystemField}
             />
           )}
         </div>

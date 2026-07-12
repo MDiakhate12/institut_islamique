@@ -1,5 +1,5 @@
 import { db } from '@/db'
-import { students, classEnrollments, classes, guardians } from '@/db/schema'
+import { students, classEnrollments, classes, guardians, payments } from '@/db/schema'
 import { eq, and, isNull, desc } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
 import type { Student, StudentListItem, GuardianSummary } from './students.types'
@@ -10,7 +10,7 @@ function generateCustomId(): string {
 
 export const studentsService = {
   async getBySchool(schoolId: string): Promise<StudentListItem[]> {
-    const [studentRows, guardianRows] = await Promise.all([
+    const [studentRows, guardianRows, paymentRows] = await Promise.all([
       db
         .select({
           id:              students.id,
@@ -42,17 +42,27 @@ export const studentsService = {
 
       db
         .select({
-          id:           guardians.id,
-          studentId:    guardians.studentId,
-          relationship: guardians.relationship,
-          firstName:    guardians.firstName,
-          lastName:     guardians.lastName,
-          email:        guardians.email,
-          phone:        guardians.phone,
-          isPrimary:    guardians.isPrimary,
+          id:             guardians.id,
+          studentId:      guardians.studentId,
+          relationship:   guardians.relationship,
+          firstName:      guardians.firstName,
+          lastName:       guardians.lastName,
+          email:          guardians.email,
+          phone:          guardians.phone,
+          emergencyPhone: guardians.emergencyPhone,
+          isPrimary:      guardians.isPrimary,
         })
         .from(guardians)
         .where(eq(guardians.schoolId, schoolId)),
+
+      db
+        .select({
+          studentId: payments.studentId,
+          period:    payments.period,
+          status:    payments.status,
+        })
+        .from(payments)
+        .where(and(eq(payments.schoolId, schoolId), eq(payments.status, 'verified'))),
     ])
 
     const guardiansByStudent = guardianRows.reduce<Record<string, GuardianSummary[]>>((acc, g) => {
@@ -61,10 +71,25 @@ export const studentsService = {
       return acc
     }, {})
 
-    return studentRows.map(s => ({
-      ...s,
-      guardians: guardiansByStudent[s.id] ?? [],
-    }))
+    type PaymentRow = { studentId: string | null; period: string; status: string }
+    const paymentsByStudent = (paymentRows as PaymentRow[]).reduce<Record<string, string[]>>((acc, p) => {
+      if (!p.studentId) return acc
+      if (!acc[p.studentId]) acc[p.studentId] = []
+      acc[p.studentId].push(p.period)
+      return acc
+    }, {})
+
+    return studentRows.map(s => {
+      const periods = paymentsByStudent[s.id] ?? []
+      const annually = periods.includes('annually')
+      return {
+        ...s,
+        guardians:  guardiansByStudent[s.id] ?? [],
+        paymentT1: annually || periods.includes('trimester_1'),
+        paymentT2: annually || periods.includes('trimester_2'),
+        paymentT3: annually || periods.includes('trimester_3'),
+      }
+    })
   },
 
   async getById(schoolId: string, studentId: string): Promise<Student | null> {
@@ -91,14 +116,27 @@ export const studentsService = {
       })
       .returning()
 
-    if (data.parentPhone?.trim()) {
+    if (data.parentPhone?.trim() || data.parentName1?.trim() || data.email1?.trim()) {
+      await db.insert(guardians).values({
+        schoolId,
+        studentId:      student.id,
+        firstName:      data.parentName1?.trim() || 'Parent',
+        relationship:   'father',
+        phone:          data.parentPhone?.trim() || null,
+        email:          data.email1?.trim()       || null,
+        emergencyPhone: data.emergencyPhone?.trim() || null,
+        isPrimary:      true,
+      })
+    }
+
+    if (data.parentName2?.trim()) {
       await db.insert(guardians).values({
         schoolId,
         studentId:    student.id,
-        firstName:    'Parent',
-        relationship: 'guardian',
-        phone:        data.parentPhone.trim(),
-        isPrimary:    true,
+        firstName:    data.parentName2.trim(),
+        relationship: 'mother',
+        email:        data.email2?.trim() || null,
+        isPrimary:    false,
       })
     }
 
@@ -106,11 +144,75 @@ export const studentsService = {
   },
 
   async update(schoolId: string, studentId: string, data: UpdateStudentInput): Promise<Student> {
+    const { parentPhone, parentName1, parentName2, email1, email2, emergencyPhone, enrollmentYear, ...studentData } = data
+
     const [updated] = await db
       .update(students)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...studentData, updatedAt: new Date() })
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
       .returning()
+
+    const needsGuardianUpdate = (
+      parentPhone !== undefined ||
+      parentName1 !== undefined ||
+      email1      !== undefined ||
+      emergencyPhone !== undefined
+    )
+
+    const needsMotherUpdate = parentName2 !== undefined || email2 !== undefined
+
+    if (needsGuardianUpdate || needsMotherUpdate) {
+      const existingGuardians = await db
+        .select()
+        .from(guardians)
+        .where(eq(guardians.studentId, studentId))
+
+      const father = existingGuardians.find(g => g.relationship === 'father' || g.isPrimary) ?? null
+      const mother = existingGuardians.find(g => g.relationship === 'mother') ?? null
+
+      if (needsGuardianUpdate) {
+        const patch: Record<string, unknown> = { updatedAt: new Date() }
+        if (parentName1   !== undefined) patch.firstName      = parentName1   || 'Parent'
+        if (parentPhone   !== undefined) patch.phone          = parentPhone.trim()  || null
+        if (email1        !== undefined) patch.email          = email1        || null
+        if (emergencyPhone !== undefined) patch.emergencyPhone = emergencyPhone || null
+
+        if (father) {
+          await db.update(guardians).set(patch).where(eq(guardians.id, father.id))
+        } else {
+          await db.insert(guardians).values({
+            schoolId,
+            studentId,
+            relationship:   'father',
+            firstName:      (parentName1 || 'Parent'),
+            isPrimary:      true,
+            phone:          parentPhone?.trim() || null,
+            email:          email1        || null,
+            emergencyPhone: emergencyPhone || null,
+          })
+        }
+      }
+
+      if (needsMotherUpdate) {
+        const patch: Record<string, unknown> = { updatedAt: new Date() }
+        if (parentName2 !== undefined) patch.firstName = parentName2 || ''
+        if (email2      !== undefined) patch.email     = email2      || null
+
+        if (mother) {
+          await db.update(guardians).set(patch).where(eq(guardians.id, mother.id))
+        } else if (parentName2) {
+          await db.insert(guardians).values({
+            schoolId,
+            studentId,
+            relationship: 'mother',
+            firstName:    parentName2,
+            isPrimary:    false,
+            email:        email2 || null,
+          })
+        }
+      }
+    }
+
     return updated
   },
 
