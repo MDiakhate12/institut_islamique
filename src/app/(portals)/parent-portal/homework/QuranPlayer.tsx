@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, RefreshCw, ChevronDown, Check } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, RefreshCw, ChevronDown, ChevronUp, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SURAHS } from '@/modules/homework/surahs.data'
 
@@ -26,8 +26,6 @@ const RECITERS = [
   { id: 'ar.mahermuaiqly',      arabic: 'الشيخ ماهر المعيقلي',          label: 'Sheikh Maher Al Muaiqly' },
 ]
 
-const REPEAT_COUNT = 3
-
 interface Props {
   surahNumber: number
   surahName: string
@@ -39,6 +37,7 @@ interface Props {
 export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, toVerse }: Props) {
   const [reciterId, setReciterId]   = useState(RECITERS[0].id)
   const [currentAyah, setAyah]      = useState(fromVerse)
+  const [repeatMax, setRepeatMax]   = useState(3)
   const [repeatCycle, setRepeat]    = useState(1)
   const [isPlaying, setPlaying]     = useState(false)
   const [progress, setProgress]     = useState(0)
@@ -46,7 +45,19 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
   const [currentTime, setCurrentTime] = useState(0)
   const [muted, setMuted]           = useState(false)
   const [showReciterMenu, setMenu]  = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioRef        = useRef<HTMLAudioElement | null>(null)
+  const repeatMaxRef    = useRef(repeatMax)
+  const repeatCycleRef  = useRef(repeatCycle)
+  const currentAyahRef  = useRef(currentAyah)
+  const toVerseRef      = useRef(toVerse)
+  const fromVerseRef    = useRef(fromVerse)
+  const surahNumberRef  = useRef(surahNumber)
+  useEffect(() => { repeatMaxRef.current   = repeatMax },   [repeatMax])
+  useEffect(() => { repeatCycleRef.current = repeatCycle }, [repeatCycle])
+  useEffect(() => { currentAyahRef.current = currentAyah }, [currentAyah])
+  useEffect(() => { toVerseRef.current     = toVerse },     [toVerse])
+  useEffect(() => { fromVerseRef.current   = fromVerse },   [fromVerse])
+  useEffect(() => { surahNumberRef.current = surahNumber }, [surahNumber])
   const totalAyahs = toVerse - fromVerse + 1
 
   const audioUrl = useCallback((ayah: number) => {
@@ -83,24 +94,30 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
     })
     audio.addEventListener('loadedmetadata', () => setDuration(audio.duration))
     audio.addEventListener('ended', () => {
-      setRepeat(prev => {
-        if (prev < REPEAT_COUNT) {
-          audio.currentTime = 0
-          audio.play()
-          return prev + 1
-        }
-        // move to next ayah
-        setAyah(cur => {
-          const next = cur + 1
-          if (next > toVerse) {
-            setPlaying(false)
-            return fromVerse
-          }
-          loadAyah(next, true)
-          return next
-        })
-        return 1
-      })
+      const cycle  = repeatCycleRef.current
+      const maxRep = repeatMaxRef.current
+
+      if (cycle < maxRep) {
+        repeatCycleRef.current = cycle + 1
+        setRepeat(cycle + 1)
+        audio.currentTime = 0
+        audio.play()
+        return
+      }
+
+      const next = currentAyahRef.current + 1
+      repeatCycleRef.current = 1
+      setRepeat(1)
+
+      if (next > toVerseRef.current) {
+        setPlaying(false)
+        currentAyahRef.current = fromVerseRef.current
+        setAyah(fromVerseRef.current)
+        return
+      }
+
+      currentAyahRef.current = next
+      loadAyah(next, true)
     })
     audio.addEventListener('play', () => setPlaying(true))
     audio.addEventListener('pause', () => setPlaying(false))
@@ -163,9 +180,9 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
           <button
             type="button"
             onClick={() => setMenu(m => !m)}
-            className="flex items-center gap-1 rounded-lg border border-orange-200 bg-white px-2 py-1.5 text-xs text-[#7a4f30] hover:bg-orange-50 transition-colors max-w-[180px]"
+            className="flex items-center gap-1 rounded-lg border border-orange-200 bg-white px-2 py-1.5 text-xs text-[#7a4f30] hover:bg-orange-50 transition-colors max-w-[220px]"
           >
-            <span className="truncate text-right font-medium">{reciter.arabic}</span>
+            <span className="truncate font-medium">{reciter.label}</span>
             <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
           </button>
           {showReciterMenu && (
@@ -238,19 +255,35 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
         >
           <SkipForward className="h-5 w-5" />
         </button>
-        <div className="flex items-center gap-1">
-          <RefreshCw className="h-4 w-4 text-[#c2440f]" />
-          <span className="text-xs font-bold text-[#c2440f]">{REPEAT_COUNT}×</span>
+        <div className="flex flex-col items-center gap-0">
+          <button
+            type="button"
+            onClick={() => setRepeatMax(r => Math.min(r + 1, 10))}
+            className="text-[#c2440f] hover:text-[#a33a0d] transition-colors p-0.5"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <div className="flex items-center gap-1">
+            <RefreshCw className="h-4 w-4 text-[#c2440f]" />
+            <span className="text-xs font-bold text-[#c2440f]">{repeatMax}×</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRepeatMax(r => Math.max(r - 1, 1))}
+            className="text-[#c2440f] hover:text-[#a33a0d] transition-colors p-0.5"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 
       {/* Repeat info */}
       <div className="mt-2 flex justify-center gap-2">
         <span className="rounded-full bg-white border border-orange-200 px-2.5 py-0.5 text-[10px] text-muted-foreground">
-          Répétition de chaque ayah {REPEAT_COUNT} fois
+          Répétition de chaque ayah {repeatMax} fois
         </span>
         <span className="rounded-full bg-white border border-orange-200 px-2.5 py-0.5 text-[10px] text-[#c2440f] font-medium">
-          {repeatCycle} sur {REPEAT_COUNT}
+          {repeatCycle} sur {repeatMax}
         </span>
       </div>
     </div>

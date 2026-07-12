@@ -102,3 +102,19 @@ export const teacherHomeworkClasses = pgTable('teacher_homework_classes', {
   classId: uuid('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
+
+export const teacherMyClasses = pgTable('teacher_my_classes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  schoolId: uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+  schoolMemberId: uuid('school_member_id').notNull().references(() => schoolMembers.id, { onDelete: 'cascade' }),
+  classId: uuid('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+export const teacherAttendanceClasses = pgTable('teacher_attendance_classes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  schoolId: uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+  schoolMemberId: uuid('school_member_id').notNull().references(() => schoolMembers.id, { onDelete: 'cascade' }),
+  classId: uuid('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})

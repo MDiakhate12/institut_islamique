@@ -20,7 +20,7 @@ interface NavItem {
 }
 
 const TEACHER_NAV: NavItem[] = [
-  { label: 'Mes classes',               href: '/teacher-portal/my-classes',   icon: Library },
+  { label: 'Mes classes',               href: '/teacher-portal/classes',       icon: Library },
   { label: 'Devoirs',                   href: '/teacher-portal/homework',      icon: BookMarked },
   { label: 'Présences',                 href: '/teacher-portal/attendance',    icon: CalendarCheck },
   { label: 'Annonces',                  href: '/teacher-portal/announcements', icon: Megaphone },

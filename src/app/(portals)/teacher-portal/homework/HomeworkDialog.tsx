@@ -125,8 +125,8 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
       surahName:   hasHifz ? selectedSurah?.name : undefined,
       surahArabic: hasHifz ? selectedSurah?.arabic : undefined,
       isFullSurah: hasHifz ? isFullSurah : false,
-      fromVerse:   hasHifz && !isFullSurah ? (fromVerse as number) : undefined,
-      toVerse:     hasHifz && !isFullSurah ? (toVerse as number) : undefined,
+      fromVerse:   hasHifz ? (isFullSurah ? 1 : (fromVerse as number)) : undefined,
+      toVerse:     hasHifz ? (isFullSurah ? (selectedSurah?.verses ?? 1) : (toVerse as number)) : undefined,
       hasRevision,
       revisionSurahs: hasRevision ? revisionSurahs : [],
       description: description.trim() || undefined,
@@ -171,7 +171,7 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Choisir une sourate" />
                 </SelectTrigger>
-                <SelectContent className="max-h-60">
+                <SelectContent className="max-h-72 overflow-y-auto">
                   {SURAHS.map(s => (
                     <SelectItem key={s.number} value={s.number.toString()}>
                       {s.name} — {s.arabic}

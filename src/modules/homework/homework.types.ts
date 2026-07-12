@@ -69,6 +69,44 @@ export type ParentChild = {
   lastName: string
 }
 
+export type AdminClassHomework = {
+  classId: string
+  className: string
+  classCode: string
+  subjectCode: string
+  section: string | null
+  room: string | null
+  teacherName: string | null
+  homework: {
+    id: string
+    surahName: string | null
+    surahArabic: string | null
+    isFullSurah: boolean
+    fromVerse: number | null
+    toVerse: number | null
+    revisionSurahs: HomeworkSurah[]
+    description: string | null
+    fileUrl: string | null
+    fileName: string | null
+    fileSize: number | null
+    assignedDate: string
+    createdByName: string | null
+  } | null
+  status: 'submitted' | 'missing'
+}
+
+export type AdminHomeworkOverview = {
+  date: string
+  classes: AdminClassHomework[]
+  stats: {
+    submitted: number
+    missing: number
+    total: number
+    teachersSubmitted: number
+    teachersTotal: number
+  }
+}
+
 export type ParentHomeworkItem = {
   id: string
   schoolId: string

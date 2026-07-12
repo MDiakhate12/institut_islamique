@@ -65,23 +65,67 @@ export function SubmitHomeworkDialog({
   const [duration, setDuration] = useState(0)
   const [waveActive, setWave]   = useState(false)
 
-  const mediaRecorder  = useRef<MediaRecorder | null>(null)
-  const chunks         = useRef<Blob[]>([])
-  const mimeTypeRef    = useRef<string>('audio/webm')
-  const timerRef       = useRef<ReturnType<typeof setInterval> | null>(null)
-  const audioRef       = useRef<HTMLAudioElement | null>(null)
+  const mediaRecorder = useRef<MediaRecorder | null>(null)
+  const chunks        = useRef<Blob[]>([])
+  const mimeTypeRef   = useRef<string>('audio/webm')
+  const blobRef       = useRef<Blob | null>(null)
+  const timerRef      = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Stable audio element — never unmounted, avoids the inline-ref re-render bug
+  const audioRef      = useRef<HTMLAudioElement | null>(null)
+
+  // Mount audio element once
+  useEffect(() => {
+    const audio = new Audio()
+    audioRef.current = audio
+    const onPlay        = () => setPlaying(true)
+    const onPause       = () => setPlaying(false)
+    const onTimeUpdate  = () => setPlayTime(audio.currentTime)
+    const onLoaded      = () => setDuration(audio.duration)
+    const onEnded       = () => { setPlaying(false); setPlayTime(0) }
+    audio.addEventListener('play',            onPlay)
+    audio.addEventListener('pause',           onPause)
+    audio.addEventListener('timeupdate',      onTimeUpdate)
+    audio.addEventListener('loadedmetadata',  onLoaded)
+    audio.addEventListener('ended',           onEnded)
+    return () => {
+      audio.pause()
+      audio.src = ''
+      audio.removeEventListener('play',           onPlay)
+      audio.removeEventListener('pause',          onPause)
+      audio.removeEventListener('timeupdate',     onTimeUpdate)
+      audio.removeEventListener('loadedmetadata', onLoaded)
+      audio.removeEventListener('ended',          onEnded)
+    }
+  }, [])
+
+  // Update audio src when blob URL changes
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    if (audioUrl) {
+      audio.src = audioUrl
+      audio.load()
+    } else {
+      audio.pause()
+      audio.src = ''
+    }
+  }, [audioUrl])
 
   useEffect(() => {
-    if (!open) {
-      resetState()
-    }
+    if (!open) resetState()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   function resetState() {
     stopTimer()
     mediaRecorder.current?.stop()
     mediaRecorder.current = null
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+    }
     if (audioUrl) URL.revokeObjectURL(audioUrl)
+    blobRef.current = null
     setAudioUrl(null)
     setState('idle')
     setElapsed(0)
@@ -113,6 +157,7 @@ export function SubmitHomeworkDialog({
       mr.onstop = () => {
         stream.getTracks().forEach(t => t.stop())
         const blob = new Blob(chunks.current, { type: mimeTypeRef.current })
+        blobRef.current = blob
         const url = URL.createObjectURL(blob)
         setAudioUrl(url)
         setState('preview')
@@ -140,13 +185,19 @@ export function SubmitHomeworkDialog({
   }
 
   async function handleSubmit() {
-    if (!audioUrl) return
+    const blob = blobRef.current
+    if (!blob) return
     setState('uploading')
     try {
-      const response = await fetch(audioUrl)
-      const blob = await response.blob()
       const buffer = await blob.arrayBuffer()
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      const uint8  = new Uint8Array(buffer)
+      // Chunked conversion — avoids stack overflow for large recordings
+      let binary = ''
+      const CHUNK = 0x8000
+      for (let i = 0; i < uint8.length; i += CHUNK) {
+        binary += String.fromCharCode(...uint8.subarray(i, i + CHUNK))
+      }
+      const base64 = btoa(binary)
 
       const result = await submitHomeworkRecordingAction(homeworkId, studentId, {
         base64,
@@ -247,24 +298,9 @@ export function SubmitHomeworkDialog({
         )}
 
         {/* State: preview */}
-        {state === 'preview' && audioUrl && (
+        {state === 'preview' && (
           <div className="flex flex-col items-center gap-4 py-4">
             <p className="text-sm font-medium text-foreground">Écoutez votre enregistrement</p>
-
-            {/* Hidden audio element */}
-            <audio
-              ref={el => {
-                audioRef.current = el
-                if (el && audioUrl) {
-                  el.src = audioUrl
-                  el.onplay = () => setPlaying(true)
-                  el.onpause = () => setPlaying(false)
-                  el.ontimeupdate = () => setPlayTime(el.currentTime)
-                  el.onloadedmetadata = () => setDuration(el.duration)
-                  el.onended = () => { setPlaying(false); setPlayTime(0) }
-                }
-              }}
-            />
 
             {/* Progress bar */}
             <div className="w-full space-y-1">
@@ -276,7 +312,7 @@ export function SubmitHomeworkDialog({
               </div>
               <div className="flex justify-between text-[10px] text-muted-foreground">
                 <span>{formatDuration(playTime)}</span>
-                <span>{formatDuration(elapsed)}</span>
+                <span>{duration > 0 ? formatDuration(duration) : formatDuration(elapsed)}</span>
               </div>
             </div>
 

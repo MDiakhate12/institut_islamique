@@ -101,12 +101,12 @@ function HomeworkCard({
 
   return (
     <div className={cn(
-      'rounded-2xl border bg-white shadow-sm overflow-hidden',
+      'rounded-2xl border bg-white shadow-sm',
       item.submissionUrl ? 'border-green-200' : 'border-border'
     )}>
       {/* Submitted banner */}
       {item.submissionUrl && (
-        <div className="bg-green-50 border-b border-green-200 px-4 py-1.5 flex items-center gap-2">
+        <div className="bg-green-50 border-b border-green-200 px-4 py-1.5 flex items-center gap-2 rounded-t-2xl">
           <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
           <span className="text-xs font-medium text-green-700">Devoir soumis</span>
         </div>
@@ -167,15 +167,22 @@ function HomeworkCard({
         )}
 
         {/* Quran player */}
-        {hasQuran && showPlayer && (
-          <QuranPlayer
-            surahNumber={item.surahName ? getSurahNumber(item.surahName) : 1}
-            surahName={item.surahName!}
-            surahArabic={item.surahArabic!}
-            fromVerse={item.fromVerse ?? 1}
-            toVerse={item.toVerse ?? 1}
-          />
-        )}
+        {hasQuran && showPlayer && (() => {
+          const surahData = SURAHS.find(s => s.name === item.surahName)
+          const fromV = item.fromVerse ?? 1
+          const toV = item.isFullSurah
+            ? (surahData?.verses ?? item.toVerse ?? 1)
+            : (item.toVerse ?? 1)
+          return (
+            <QuranPlayer
+              surahNumber={surahData?.number ?? 1}
+              surahName={item.surahName!}
+              surahArabic={item.surahArabic!}
+              fromVerse={fromV}
+              toVerse={toV}
+            />
+          )
+        })()}
 
         {/* Notes */}
         {item.description && (

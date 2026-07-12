@@ -89,7 +89,7 @@ const LIST_DAYS = [
 // ══════════════════════════════════════════════════════════════════════════════
 // Main component
 // ══════════════════════════════════════════════════════════════════════════════
-export function AcademicCalendarClient() {
+export function AcademicCalendarClient({ readonly = false }: { readonly?: boolean } = {}) {
   const [view, setView]             = useState<ViewMode>('month')
   const [date, setDate]             = useState(new Date())
   const [typeFilter, setTypeFilter] = useState<EventType | 'all'>('all')
@@ -287,14 +287,16 @@ export function AcademicCalendarClient() {
           {/* Event type filter */}
           <TypeFilterDropdown />
 
-          {/* Create button */}
-          <Button
-            onClick={openCreate}
-            className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5"
-          >
-            <Plus className="h-4 w-4" />
-            Ajouter un événement
-          </Button>
+          {/* Create button — admin only */}
+          {!readonly && (
+            <Button
+              onClick={openCreate}
+              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter un événement
+            </Button>
+          )}
         </div>
       </div>
 
@@ -356,8 +358,8 @@ export function AcademicCalendarClient() {
               onNavigate={setDate}
               onView={() => {}}
               onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              selectable
+              onSelectSlot={readonly ? undefined : handleSelectSlot}
+              selectable={!readonly}
               popup
               toolbar={false}
               components={{ event: EventComponent }}
@@ -388,6 +390,7 @@ export function AcademicCalendarClient() {
         event={detailEvent}
         onClose={() => setDetailEvent(null)}
         onEdit={(e) => { setDetailEvent(null); openEdit(e) }}
+        readonly={readonly}
       />
     </div>
   )

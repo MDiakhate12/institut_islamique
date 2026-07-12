@@ -17,6 +17,7 @@ interface Props {
   event: AcademicEvent | null
   onClose: () => void
   onEdit: (event: AcademicEvent) => void
+  readonly?: boolean
 }
 
 function formatTime(t: string) {
@@ -27,7 +28,7 @@ function formatTime(t: string) {
   return `${h12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`
 }
 
-export function EventDetailDialog({ event, onClose, onEdit }: Props) {
+export function EventDetailDialog({ event, onClose, onEdit, readonly = false }: Props) {
   const reminder = useSendReminder()
 
   if (!event) return null
@@ -118,27 +119,31 @@ export function EventDetailDialog({ event, onClose, onEdit }: Props) {
           <p className="text-sm text-muted-foreground px-1">{event.description}</p>
         )}
 
-        {/* Send reminder */}
-        <Button
-          onClick={() => reminder.mutate(event.id)}
-          disabled={reminder.isPending}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white gap-2"
-        >
-          <Bell className="h-4 w-4" />
-          {reminder.isPending ? 'Envoi...' : 'Send Reminder to Everyone'}
-        </Button>
+        {/* Send reminder — admin only */}
+        {!readonly && (
+          <Button
+            onClick={() => reminder.mutate(event.id)}
+            disabled={reminder.isPending}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white gap-2"
+          >
+            <Bell className="h-4 w-4" />
+            {reminder.isPending ? 'Envoi...' : 'Send Reminder to Everyone'}
+          </Button>
+        )}
 
         {/* Footer */}
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" onClick={onClose}>
-            Close
+            Fermer
           </Button>
-          <Button
-            className="flex-1 bg-foreground text-background hover:bg-foreground/90"
-            onClick={() => { onClose(); onEdit(event) }}
-          >
-            Edit Event
-          </Button>
+          {!readonly && (
+            <Button
+              className="flex-1 bg-foreground text-background hover:bg-foreground/90"
+              onClick={() => { onClose(); onEdit(event) }}
+            >
+              Edit Event
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

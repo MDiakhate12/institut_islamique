@@ -5,7 +5,7 @@ import {
   classEnrollments, students, parentStudents,
 } from '@/db/schema'
 import { eq, and, sql, or, notInArray, desc, inArray, isNull, asc } from 'drizzle-orm'
-import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem } from './homework.types'
+import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem, AdminClassHomework, AdminHomeworkOverview } from './homework.types'
 import type { CreateHomeworkInput, UpdateHomeworkInput } from './homework.schema'
 import { nanoid } from 'nanoid'
 
@@ -429,6 +429,118 @@ export const homeworkService = {
     return {
       children: childRows.map(r => ({ studentId: r.studentId, firstName: r.firstName, lastName: r.lastName })),
       homeworkItems,
+    }
+  },
+
+  // ── Admin overview ───────────────────────────────────────────────
+  async getAdminOverview(schoolId: string, date: string): Promise<AdminHomeworkOverview> {
+    const classRows = await db
+      .select({
+        classId:     classes.id,
+        className:   classes.name,
+        classCode:   classCatalog.code,
+        subjectCode: classCatalog.subjectCode,
+        section:     classes.section,
+        room:        classes.room,
+        teacherId:   classes.teacherId,
+        teacherName: profiles.fullName,
+      })
+      .from(classes)
+      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
+      .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
+      .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
+      .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
+      .orderBy(classes.room, classes.name)
+
+    if (classRows.length === 0) {
+      return { date, classes: [], stats: { submitted: 0, missing: 0, total: 0, teachersSubmitted: 0, teachersTotal: 0 } }
+    }
+
+    const classIds = classRows.map(r => r.classId)
+
+    const hwRows = await db
+      .select({
+        id:            homework.id,
+        classId:       homework.classId,
+        surahName:     homework.surahName,
+        surahArabic:   homework.surahArabic,
+        isFullSurah:   homework.isFullSurah,
+        fromVerse:     homework.fromVerse,
+        toVerse:       homework.toVerse,
+        revisionSurahs: homework.revisionSurahs,
+        description:   homework.description,
+        fileUrl:       homework.fileUrl,
+        fileName:      homework.fileName,
+        fileSize:      homework.fileSize,
+        assignedDate:  homework.assignedDate,
+        createdById:   homework.createdBy,
+        createdByName: profiles.fullName,
+        createdAt:     homework.createdAt,
+      })
+      .from(homework)
+      .leftJoin(schoolMembers, eq(schoolMembers.id, homework.createdBy))
+      .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
+      .where(and(
+        eq(homework.schoolId, schoolId),
+        inArray(homework.classId, classIds),
+        eq(homework.assignedDate, date),
+      ))
+      .orderBy(desc(homework.createdAt))
+
+    const hwByClass = new Map<string, typeof hwRows[0]>()
+    for (const hw of hwRows) {
+      if (!hwByClass.has(hw.classId)) hwByClass.set(hw.classId, hw)
+    }
+
+    const result: AdminClassHomework[] = classRows.map(c => {
+      const hw = hwByClass.get(c.classId) ?? null
+      return {
+        classId:     c.classId,
+        className:   c.className,
+        classCode:   c.classCode ?? '',
+        subjectCode: c.subjectCode ?? '',
+        section:     c.section ?? null,
+        room:        c.room ?? null,
+        teacherName: c.teacherName ?? null,
+        homework: hw ? {
+          id:            hw.id,
+          surahName:     hw.surahName ?? null,
+          surahArabic:   hw.surahArabic ?? null,
+          isFullSurah:   hw.isFullSurah ?? false,
+          fromVerse:     hw.fromVerse ?? null,
+          toVerse:       hw.toVerse ?? null,
+          revisionSurahs: (hw.revisionSurahs as { name: string; arabic: string }[]) ?? [],
+          description:   hw.description ?? null,
+          fileUrl:       hw.fileUrl ?? null,
+          fileName:      hw.fileName ?? null,
+          fileSize:      hw.fileSize ?? null,
+          assignedDate:  hw.assignedDate as string,
+          createdByName: hw.createdByName ?? null,
+        } : null,
+        status: hw ? 'submitted' : 'missing',
+      }
+    })
+
+    const submitted = result.filter(c => c.status === 'submitted').length
+    const missing   = result.filter(c => c.status === 'missing').length
+
+    const allTeacherIds = new Set(
+      classRows.map(c => c.teacherId).filter((id): id is string => id !== null)
+    )
+    const submittedTeacherIds = new Set(
+      hwRows.map(hw => hw.createdById).filter((id): id is string => id !== null)
+    )
+
+    return {
+      date,
+      classes: result,
+      stats: {
+        submitted,
+        missing,
+        total: result.length,
+        teachersSubmitted: submittedTeacherIds.size,
+        teachersTotal:     allTeacherIds.size,
+      },
     }
   },
 

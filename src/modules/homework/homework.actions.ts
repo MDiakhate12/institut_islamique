@@ -6,7 +6,7 @@ import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { homeworkService } from './homework.service'
 import { createHomeworkSchema, updateHomeworkSchema } from './homework.schema'
-import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem } from './homework.types'
+import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem, AdminHomeworkOverview } from './homework.types'
 import { createClient } from '@/lib/supabase/server'
 
 const path = '/teacher-portal/homework'
@@ -205,5 +205,18 @@ export async function submitHomeworkRecordingAction(
   } catch (e) {
     console.error('[submitHomeworkRecordingAction]', e)
     return err('Impossible de soumettre le devoir')
+  }
+}
+
+export async function getAdminHomeworkOverviewAction(
+  date: string,
+): Promise<ActionResult<AdminHomeworkOverview>> {
+  const session = await requireSession()
+  try {
+    const data = await homeworkService.getAdminOverview(session.schoolId, date)
+    return ok(data)
+  } catch (e) {
+    console.error('[getAdminHomeworkOverviewAction]', e)
+    return err('Erreur lors du chargement')
   }
 }
