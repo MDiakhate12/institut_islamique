@@ -526,14 +526,14 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Registrations** | `/admin-portal/registrations` (liste, décodée depuis `formData` + filtres + export Excel) |
 | **Public Portal** | `/portal/register/[schoolSlug]` (nouvel élève + réinscription + succès) |
 | **Parent Portal — Enrollment** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès — réutilise le même form-builder que le portail public, voir §7.8) |
-| **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) |
+| **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) + `/parent-portal/homework` (vue parent, lecteur Coran inline, soumission audio MediaRecorder) |
 
 ### 🔄 Partiellement construit
 
 | Module | État |
 |---|---|
 | **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Seule page devoirs construite |
-| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment (sélection élève, réinscription, nouvel élève) ✅ — Devoirs, Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps, Paramètres du profil restent à construire |
+| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment ✅, Devoirs ✅ (vue chronologie/classe, lecteur Coran 6 récitateurs, soumission audio MediaRecorder → Supabase Storage) — Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps, Paramètres du profil restent à construire |
 
 ### ❌ À construire (aucun fichier de module)
 

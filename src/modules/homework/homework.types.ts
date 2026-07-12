@@ -62,3 +62,34 @@ export type HomeworkStudent = {
   lastName: string
   status: 'pending' | 'submitted'
 }
+
+export type ParentChild = {
+  studentId: string
+  firstName: string
+  lastName: string
+}
+
+export type ParentHomeworkItem = {
+  id: string
+  schoolId: string
+  classId: string
+  className: string
+  classCode: string
+  classSection: string | null
+  subjectCode: string
+  assignedDate: string
+  surahName: string | null
+  surahArabic: string | null
+  fromVerse: number | null
+  toVerse: number | null
+  isFullSurah: boolean
+  revisionSurahs: HomeworkSurah[]
+  description: string | null
+  fileUrl: string | null
+  fileName: string | null
+  fileSize: number | null
+  teacherName: string | null
+  isLatest: boolean
+  submissionUrl: string | null
+  studentId: string
+}

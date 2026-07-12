@@ -1,11 +1,11 @@
 import { db } from '@/db'
 import {
-  homework, teacherHomeworkClasses, virtualSessions,
+  homework, homeworkSubmissions, teacherHomeworkClasses, virtualSessions,
   classes, classCatalog, schoolMembers, profiles,
-  classEnrollments, students,
+  classEnrollments, students, parentStudents,
 } from '@/db/schema'
-import { eq, and, sql, or, notInArray, desc } from 'drizzle-orm'
-import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent } from './homework.types'
+import { eq, and, sql, or, notInArray, desc, inArray, isNull, asc } from 'drizzle-orm'
+import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem } from './homework.types'
 import type { CreateHomeworkInput, UpdateHomeworkInput } from './homework.schema'
 import { nanoid } from 'nanoid'
 
@@ -282,5 +282,169 @@ export const homeworkService = {
       .update(virtualSessions)
       .set({ isActive: false, endedAt: new Date() })
       .where(and(eq(virtualSessions.id, sessionId), eq(virtualSessions.schoolId, schoolId)))
+  },
+
+  // ── Parent portal ────────────────────────────────────────────────
+  async getForParent(
+    schoolId: string,
+    memberId: string,
+  ): Promise<{ children: ParentChild[]; homeworkItems: ParentHomeworkItem[] }> {
+    const childRows = await db
+      .select({
+        studentId: parentStudents.studentId,
+        firstName: students.firstName,
+        lastName:  students.lastName,
+      })
+      .from(parentStudents)
+      .innerJoin(students, eq(students.id, parentStudents.studentId))
+      .where(and(eq(parentStudents.schoolMemberId, memberId), eq(parentStudents.schoolId, schoolId)))
+      .orderBy(asc(students.firstName))
+
+    if (childRows.length === 0) return { children: [], homeworkItems: [] }
+
+    const studentIds = childRows.map(r => r.studentId)
+
+    const enrollmentRows = await db
+      .select({ classId: classEnrollments.classId, studentId: classEnrollments.studentId })
+      .from(classEnrollments)
+      .where(
+        and(
+          eq(classEnrollments.schoolId, schoolId),
+          inArray(classEnrollments.studentId, studentIds),
+          isNull(classEnrollments.unenrolledAt),
+        )
+      )
+
+    if (enrollmentRows.length === 0) {
+      return {
+        children: childRows.map(r => ({ studentId: r.studentId, firstName: r.firstName, lastName: r.lastName })),
+        homeworkItems: [],
+      }
+    }
+
+    const classIds = [...new Set(enrollmentRows.map(r => r.classId))]
+    const studentByClass = new Map<string, string[]>()
+    for (const e of enrollmentRows) {
+      const arr = studentByClass.get(e.classId) ?? []
+      arr.push(e.studentId)
+      studentByClass.set(e.classId, arr)
+    }
+
+    const hwRows = await db
+      .select({
+        id:           homework.id,
+        schoolId:     homework.schoolId,
+        classId:      homework.classId,
+        className:    classes.name,
+        classCode:    classCatalog.code,
+        classSection: classes.section,
+        subjectCode:  classCatalog.subjectCode,
+        assignedDate: homework.assignedDate,
+        surahName:    homework.surahName,
+        surahArabic:  homework.surahArabic,
+        fromVerse:    homework.fromVerse,
+        toVerse:      homework.toVerse,
+        isFullSurah:  homework.isFullSurah,
+        revisionSurahs: homework.revisionSurahs,
+        description:  homework.description,
+        fileUrl:      homework.fileUrl,
+        fileName:     homework.fileName,
+        fileSize:     homework.fileSize,
+        teacherName:  profiles.fullName,
+        createdAt:    homework.createdAt,
+      })
+      .from(homework)
+      .leftJoin(classes, eq(classes.id, homework.classId))
+      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
+      .leftJoin(schoolMembers, eq(schoolMembers.id, homework.createdBy))
+      .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
+      .where(and(eq(homework.schoolId, schoolId), inArray(homework.classId, classIds)))
+      .orderBy(desc(homework.assignedDate), desc(homework.createdAt))
+
+    if (hwRows.length === 0) {
+      return {
+        children: childRows.map(r => ({ studentId: r.studentId, firstName: r.firstName, lastName: r.lastName })),
+        homeworkItems: [],
+      }
+    }
+
+    const hwIds = hwRows.map(r => r.id)
+    const submissionRows = await db
+      .select({
+        homeworkId:   homeworkSubmissions.homeworkId,
+        studentId:    homeworkSubmissions.studentId,
+        recordingUrl: homeworkSubmissions.recordingUrl,
+      })
+      .from(homeworkSubmissions)
+      .where(
+        and(
+          inArray(homeworkSubmissions.homeworkId, hwIds),
+          inArray(homeworkSubmissions.studentId, studentIds),
+        )
+      )
+
+    const submissionMap = new Map<string, string>()
+    for (const s of submissionRows) {
+      submissionMap.set(`${s.homeworkId}:${s.studentId}`, s.recordingUrl)
+    }
+
+    // Compute latest homework id per class (first in desc-ordered list)
+    const latestByClass = new Map<string, string>()
+    for (const row of hwRows) {
+      if (!latestByClass.has(row.classId)) latestByClass.set(row.classId, row.id)
+    }
+
+    // Expand: one item per (homework, student) for students enrolled in that class
+    const homeworkItems: ParentHomeworkItem[] = []
+    for (const row of hwRows) {
+      const enrolledStudents = studentByClass.get(row.classId) ?? []
+      for (const studentId of enrolledStudents) {
+        homeworkItems.push({
+          id:           row.id,
+          schoolId:     row.schoolId,
+          classId:      row.classId,
+          className:    row.className ?? '',
+          classCode:    row.classCode ?? '',
+          classSection: row.classSection ?? null,
+          subjectCode:  row.subjectCode ?? '',
+          assignedDate: row.assignedDate as string,
+          surahName:    row.surahName ?? null,
+          surahArabic:  row.surahArabic ?? null,
+          fromVerse:    row.fromVerse ?? null,
+          toVerse:      row.toVerse ?? null,
+          isFullSurah:  row.isFullSurah ?? false,
+          revisionSurahs: (row.revisionSurahs as any[]) ?? [],
+          description:  row.description ?? null,
+          fileUrl:      row.fileUrl ?? null,
+          fileName:     row.fileName ?? null,
+          fileSize:     row.fileSize ?? null,
+          teacherName:  row.teacherName ?? null,
+          isLatest:     latestByClass.get(row.classId) === row.id,
+          submissionUrl: submissionMap.get(`${row.id}:${studentId}`) ?? null,
+          studentId,
+        })
+      }
+    }
+
+    return {
+      children: childRows.map(r => ({ studentId: r.studentId, firstName: r.firstName, lastName: r.lastName })),
+      homeworkItems,
+    }
+  },
+
+  async submitRecording(
+    schoolId: string,
+    homeworkId: string,
+    studentId: string,
+    recordingUrl: string,
+    durationSeconds: number | null,
+  ): Promise<void> {
+    await db
+      .insert(homeworkSubmissions)
+      .values({ schoolId, homeworkId, studentId, recordingUrl, durationSeconds })
+      .onConflictDoUpdate({
+        target: [homeworkSubmissions.homeworkId, homeworkSubmissions.studentId],
+        set: { recordingUrl, durationSeconds, submittedAt: new Date() },
+      })
   },
 }
