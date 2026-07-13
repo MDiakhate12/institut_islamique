@@ -41,7 +41,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Étudiants',                  href: ROUTES.admin.students,           icon: Users },
       { label: 'Enseignants',                href: ROUTES.admin.teachers,           icon: GraduationCap },
       { label: 'Classes',                    href: ROUTES.admin.classes,            icon: BookOpen },
-      { label: 'Suivi des notes d\'examens', href: ROUTES.admin.trackExams,         icon: ClipboardList, wip: true },
+      { label: 'Suivi des notes d\'examens', href: ROUTES.admin.trackExams,         icon: ClipboardList },
       { label: 'Suivi des présences',        href: ROUTES.admin.attendance,         icon: CalendarCheck },
       { label: 'Suivi des devoirs',          href: ROUTES.admin.homework,           icon: BookMarked },
       { label: 'Suivi des étoiles',          href: ROUTES.admin.trackStars,         icon: Star, wip: true },

@@ -220,7 +220,7 @@ src/
 │   ├── parents/         ✅ (types+service+actions+hooks — lien parent-élève + OTP)
 │   ├── profile/         ✅ (types+schema+service+actions+hooks — partagé tous portails)
 │   ├── teacher-classes/ ✅ (types+service+actions+hooks — classes épinglées enseignant)
-│   ├── exams/           ❌
+│   ├── exams/           ✅ (types+schema+service+actions+hooks — teacher submit + admin tracking + parent view+signature)
 │   ├── finance/         ❌
 │   ├── stars/           ❌
 │   ├── substitutions/   ❌
@@ -574,12 +574,12 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Audio Coran** | `/teacher-portal/audio` + `/parent-portal/audio` (QuranAudioClient partagé, 6 récitateurs) |
 | **Teacher Classes** | `/teacher-portal/classes` (MyClassesClient — mes classes avec devoirs/présences) |
 | **Children** | `/parent-portal/children` (cartes par matière, badge subjectCode/level, Présence/Devoirs, Voir le programme) |
+| **Exams** | `/admin-portal/track-exams` (4 tabs, search, sort, email rapport, bandeau période) + `/teacher-portal/exams` (liste classes/élèves, star rating form) + `/parent-portal/exams` (bulletins read-only + signature parent) |
 
 ### ❌ ComingSoon (stub page existe, UI à construire, module backend absent)
 
 | Module | Pages concernées |
 |---|---|
-| **Exams** | `/admin-portal/track-exams`, `/teacher-portal/exams`, `/parent-portal/exams` |
 | **Stars** | `/admin-portal/track-stars`, `/parent-portal/stars` |
 | **Finance** | `/admin-portal/finance/budget`, `/admin-portal/finance/expenses`, `/parent-portal/payments` |
 | **Communication** | `/admin-portal/communication/send-email` |
