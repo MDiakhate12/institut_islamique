@@ -24,7 +24,7 @@ const TEACHER_NAV: NavItem[] = [
   { label: 'Mes classes',                   href: '/teacher-portal/classes',       icon: Library },
   { label: 'Devoirs',                       href: '/teacher-portal/homework',      icon: BookMarked },
   { label: 'Présences',                     href: '/teacher-portal/attendance',    icon: CalendarCheck },
-  { label: 'Annonces',                      href: '/teacher-portal/announcements', icon: Megaphone, wip: true },
+  { label: 'Annonces',                      href: '/teacher-portal/announcements', icon: Megaphone },
   { label: 'Audio Coran',                   href: '/teacher-portal/audio',         icon: Music2 },
   { label: 'Portail remplaçant',            href: '/teacher-portal/substitutions', icon: ArrowLeftRight, wip: true },
   { label: 'Calendrier académique',         href: '/teacher-portal/calendar',      icon: CalendarDays },

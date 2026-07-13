@@ -24,7 +24,7 @@ const PARENT_NAV: NavItem[] = [
   { label: 'Mes enfants',              href: '/parent-portal/children',      icon: Users },
   { label: 'Devoirs',                  href: '/parent-portal/homework',      icon: BookMarked },
   { label: 'Présences',                href: '/parent-portal/attendance',    icon: CalendarCheck },
-  { label: 'Annonces',                 href: '/parent-portal/announcements', icon: Megaphone, wip: true },
+  { label: 'Annonces',                 href: '/parent-portal/announcements', icon: Megaphone },
   { label: 'Audio Coran',              href: '/parent-portal/audio',         icon: Music2 },
   { label: "Demande d'absence",        href: '/parent-portal/absence',       icon: CalendarOff, wip: true },
   { label: 'Étoiles & Trophées',       href: '/parent-portal/stars',         icon: Star, wip: true },

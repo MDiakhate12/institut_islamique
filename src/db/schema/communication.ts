@@ -11,6 +11,7 @@ export const announcements = pgTable('announcements', {
   title: text('title').notNull(),
   content: text('content').notNull(),
   audience: audienceEnum('audience').notNull().default('everyone'),
+  imageUrl: text('image_url'),
   isGlobal: boolean('is_global').notNull().default(false),
   createdBy: uuid('created_by').references(() => schoolMembers.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

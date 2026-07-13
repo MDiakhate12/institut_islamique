@@ -69,7 +69,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Notes autocollantes', href: ROUTES.admin.stickyNotes,   icon: StickyNote, wip: true },
       { label: 'Envoyer un e-mail',   href: ROUTES.admin.sendEmail,     icon: Mail, wip: true },
       { label: 'Parents',             href: ROUTES.admin.parents,       icon: UserSquare2 },
-      { label: 'Annonces',            href: ROUTES.admin.announcements, icon: Megaphone, wip: true },
+      { label: 'Annonces',            href: ROUTES.admin.announcements, icon: Megaphone },
       { label: 'Anniversaires',       href: ROUTES.admin.birthdays,     icon: Cake, wip: true },
     ],
   },
@@ -86,7 +86,7 @@ const NAV_SECTIONS: NavSection[] = [
     icon: Settings,
     items: [
       { label: 'Paramètres de l\'école',      href: ROUTES.admin.schoolSettings, icon: Settings },
-      { label: 'Autorisations',               href: ROUTES.admin.permissions,    icon: Shield, wip: true },
+      { label: 'Autorisations',               href: ROUTES.admin.permissions,    icon: Shield },
       { label: 'Réinitialiser',               href: ROUTES.admin.startNewYear,   icon: RefreshCw, wip: true },
       { label: 'Paramètres du profil',        href: ROUTES.admin.profile,        icon: UserCog },
       { label: 'Nouveautés',                  href: ROUTES.admin.roadmap,        icon: Sparkles, wip: true },

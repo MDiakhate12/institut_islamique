@@ -1,7 +1,7 @@
 import { requireSession } from '@/lib/auth/session'
-import { ComingSoon } from '@/components/shared/ComingSoon'
+import { TeacherAnnouncementsClient } from './AnnouncementsClient'
 
 export default async function TeacherAnnouncementsPage() {
   await requireSession()
-  return <ComingSoon title="Annonces" />
+  return <TeacherAnnouncementsClient />
 }

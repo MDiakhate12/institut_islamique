@@ -1,7 +1,11 @@
 import { requireSession } from '@/lib/auth/session'
-import { ComingSoon } from '@/components/shared/ComingSoon'
+import { db } from '@/db'
+import { schools } from '@/db/schema'
+import { eq } from 'drizzle-orm'
+import { AnnouncementsClient } from './AnnouncementsClient'
 
 export default async function AnnouncementsPage() {
-  await requireSession()
-  return <ComingSoon title="Annonces" />
+  const session = await requireSession()
+  const [school] = await db.select({ name: schools.name }).from(schools).where(eq(schools.id, session.schoolId))
+  return <AnnouncementsClient schoolName={school?.name ?? 'votre école'} />
 }

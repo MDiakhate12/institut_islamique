@@ -160,11 +160,11 @@ src/
 │   │   │   │   └── expenses/         # ❌ À construire
 │   │   │   ├── communication/
 │   │   │   │   └── send-email/       # ❌ À construire
-│   │   │   ├── announcements/        # ❌ À construire
+│   │   │   ├── announcements/        # ✅ Construit (CRUD + éditeur RTE + upload image + audience)
 │   │   │   ├── parents/              # ❌ À construire
 │   │   │   ├── sticky-notes/         # ❌ À construire
 │   │   │   ├── birthdays/            # ❌ À construire
-│   │   │   ├── permissions/          # ❌ À construire
+│   │   │   ├── permissions/          # ✅ Construit (3 sections admin/trésorier/gestionnaire + search + revoke)
 │   │   │   ├── start-new-year/       # ❌ À construire
 │   │   │   └── roadmap/              # ❌ À construire
 │   │   ├── teacher-portal/           # ❌ À construire
@@ -539,13 +539,15 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Parent Portal — Enrollment** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès — réutilise le même form-builder que le portail public, voir §7.8) |
 | **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) + `/parent-portal/homework` (vue parent, lecteur Coran inline, soumission audio MediaRecorder) |
 | **Profile** | `/admin-portal/profile` + `/parent-portal/profile` (composant partagé `ProfileSettingsClient`, voir §7.12 — identité, rôles, langue, e-mail, mot de passe, gestion des enfants, suppression de compte) |
+| **Announcements** | `/admin-portal/announcements` (CRUD + éditeur RTE contentEditable + upload image Supabase Storage + audience Tous/Parents/Personnel) + `/teacher-portal/announcements` + `/parent-portal/announcements` (feed lecture seule, `AnnouncementFeed` partagé) |
+| **Permissions** | `/admin-portal/permissions` (3 sections : Administrateurs/Trésoriers/Gestionnaires — recherche par email, ajout avec pré-accès si user inexistant, révocation avec confirmation "REVOKE") |
 
 ### 🔄 Partiellement construit
 
 | Module | État |
 |---|---|
-| **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Devoirs ✅, Calendrier ✅, Catalogue ✅, Profil ✅ — Présences, Annonces, Audio Coran, Substitutions, Notes d'examen, Remboursements, Emploi du temps restent à construire |
-| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment ✅, Paramètres du profil ✅, Devoirs ✅ (vue chronologie/classe, lecteur Coran 6 récitateurs, soumission audio MediaRecorder → Supabase Storage) — Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps restent à construire |
+| **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Devoirs ✅, Calendrier ✅, Catalogue ✅, Profil ✅, Annonces ✅ — Présences, Audio Coran, Substitutions, Notes d'examen, Remboursements, Emploi du temps restent à construire |
+| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment ✅, Paramètres du profil ✅, Devoirs ✅, Annonces ✅ — Présences, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps restent à construire |
 
 ### 🔄 Partiellement construit (module créé, UI admin construite)
 
@@ -560,12 +562,11 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Exams** | `/admin-portal/track-exams`, `/teacher-portal/exams` |
 | **Stars** | `/admin-portal/track-stars`, portail enseignant |
 | **Finance** | `/admin-portal/finance/budget`, `/admin-portal/finance/expenses` |
-| **Communication** | `/admin-portal/communication/send-email`, `/admin-portal/announcements` |
+| **Communication** | `/admin-portal/communication/send-email` |
 | **Substitutions** | `/admin-portal/substitutions` |
 | **Book Tracking** | `/admin-portal/book-tracking` |
 | **Reports** | `/admin-portal/reports` |
 | **Parents** | `/admin-portal/parents` |
-| **Permissions** | `/admin-portal/permissions` |
 | **Sticky Notes** | `/admin-portal/sticky-notes` |
 | **Birthdays** | `/admin-portal/birthdays` |
 | **Start New Year** | `/admin-portal/start-new-year` |

@@ -1,7 +1,7 @@
 import { requireSession } from '@/lib/auth/session'
-import { ComingSoon } from '@/components/shared/ComingSoon'
+import { ParentAnnouncementsClient } from './AnnouncementsClient'
 
 export default async function ParentAnnouncementsPage() {
   await requireSession()
-  return <ComingSoon title="Annonces" />
+  return <ParentAnnouncementsClient />
 }
