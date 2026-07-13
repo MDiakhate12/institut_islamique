@@ -67,9 +67,21 @@ export const examResults = pgTable('exam_results', {
   classId: uuid('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
   studentId: uuid('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
   trimester: integer('trimester').notNull(),
+  academicYear: text('academic_year'),
+  // Star ratings (1-5)
+  attendance: integer('attendance'),
+  respectTeachers: integer('respect_teachers'),
+  respectOthers: integer('respect_others'),
+  bringBooks: integer('bring_books'),
+  participation: integer('participation'),
+  eagerness: integer('eagerness'),
+  // Text feedback
+  coveredContent: text('covered_content'),
+  generalComments: text('general_comments'),
+  // Exam score (0-100)
   score: integer('score'),
-  maxScore: integer('max_score').default(20),
-  notes: text('notes'),
+  // Parent signature
+  parentSignature: text('parent_signature'),
   submittedBy: uuid('submitted_by').references(() => schoolMembers.id),
   submittedAt: timestamp('submitted_at', { withTimezone: true }).defaultNow().notNull(),
 })

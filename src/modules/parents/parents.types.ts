@@ -26,6 +26,9 @@ export type EnrolledClass = {
   className: string
   room: string | null
   section: string | null
+  subjectCode: string | null
+  levelNumber: string | null
+  teacherName: string | null
 }
 
 export type ChildWithClasses = {

@@ -148,33 +148,56 @@ src/
 │   │   │   │   └── RichTextEditor.tsx
 │   │   │   ├── registrations/        # ✅ Construit (liste)
 │   │   │   ├── school-settings/      # ✅ Construit
-│   │   │   ├── track-exams/          # ❌ À construire
-│   │   │   ├── attendance/           # ❌ À construire
-│   │   │   ├── homework/             # ❌ À construire
-│   │   │   ├── track-stars/          # ❌ À construire
-│   │   │   ├── reports/              # ❌ À construire
-│   │   │   ├── book-tracking/        # ❌ À construire
-│   │   │   ├── substitutions/        # ❌ À construire
+│   │   │   ├── attendance/           # ✅ Construit (AdminAttendanceClient)
+│   │   │   ├── homework/             # ✅ Construit (HomeworkTrackingClient — suivi devoirs par classe)
+│   │   │   ├── parents/              # ✅ Construit (ParentsClient — liste élèves + parents liés)
+│   │   │   ├── announcements/        # ✅ Construit (CRUD + RTE + upload image + audience)
+│   │   │   ├── permissions/          # ✅ Construit (3 sections + search + revoke "REVOKE")
+│   │   │   ├── track-exams/          # ❌ ComingSoon
+│   │   │   ├── track-stars/          # ❌ ComingSoon
+│   │   │   ├── reports/              # ❌ ComingSoon
+│   │   │   ├── book-tracking/        # ❌ ComingSoon
+│   │   │   ├── substitutions/        # ❌ ComingSoon
 │   │   │   ├── finance/
-│   │   │   │   ├── budget/           # ❌ À construire
-│   │   │   │   └── expenses/         # ❌ À construire
+│   │   │   │   ├── budget/           # ❌ ComingSoon
+│   │   │   │   └── expenses/         # ❌ ComingSoon
 │   │   │   ├── communication/
-│   │   │   │   └── send-email/       # ❌ À construire
-│   │   │   ├── announcements/        # ✅ Construit (CRUD + éditeur RTE + upload image + audience)
-│   │   │   ├── parents/              # ❌ À construire
-│   │   │   ├── sticky-notes/         # ❌ À construire
-│   │   │   ├── birthdays/            # ❌ À construire
-│   │   │   ├── permissions/          # ✅ Construit (3 sections admin/trésorier/gestionnaire + search + revoke)
-│   │   │   ├── start-new-year/       # ❌ À construire
-│   │   │   └── roadmap/              # ❌ À construire
-│   │   ├── teacher-portal/           # ❌ À construire
+│   │   │   │   └── send-email/       # ❌ ComingSoon
+│   │   │   ├── sticky-notes/         # ❌ ComingSoon
+│   │   │   ├── birthdays/            # ❌ ComingSoon
+│   │   │   ├── start-new-year/       # ❌ ComingSoon
+│   │   │   └── roadmap/              # ❌ ComingSoon
+│   │   ├── teacher-portal/           # 🟡 Partiellement construit
+│   │   │   ├── layout.tsx            # ✅ Sidebar + gate d'activation
+│   │   │   ├── classes/              # ✅ Mes classes (MyClassesClient)
+│   │   │   ├── homework/             # ✅ Devoirs (CRUD + Jitsi)
+│   │   │   ├── attendance/           # ✅ Présences (AttendanceClient)
+│   │   │   ├── announcements/        # ✅ Annonces (feed lecture seule)
+│   │   │   ├── audio/                # ✅ Audio Coran (QuranAudioClient)
+│   │   │   ├── calendar/             # ✅ Calendrier (readonly, partagé admin)
+│   │   │   ├── catalog/              # ✅ Catalogue classes (readonly, partagé admin)
+│   │   │   ├── profile/              # ✅ Profil (partagé ProfileSettingsClient)
+│   │   │   ├── exams/                # ❌ ComingSoon
+│   │   │   ├── substitutions/        # ❌ ComingSoon
+│   │   │   ├── refunds/              # ❌ ComingSoon
+│   │   │   └── schedule/             # ❌ ComingSoon
 │   │   └── parent-portal/            # 🟡 Partiellement construit
 │   │       ├── layout.tsx            # ✅ Sidebar + guard rôle 'parent'
-│   │       ├── page.tsx / ParentDashboard.tsx  # ✅ Dashboard
-│   │       ├── children/             # ✅ Mes enfants + liaison OTP (LinkChildModal)
-│   │       ├── enrollment/           # ✅ S'inscrire maintenant (sélection élève,
-│   │       │                         #    [studentId] réinscription, new, success)
-│   │       └── (devoirs, présences, annonces, etc.) # ❌ À construire
+│   │       ├── page.tsx              # ✅ Dashboard
+│   │       ├── children/             # ✅ Classes de mes enfants (cartes par matière + Présence/Devoirs)
+│   │       ├── enrollment/           # ✅ S'inscrire (sélection, [studentId], new, success)
+│   │       ├── homework/             # ✅ Devoirs (vue chronologie/classe, lecteur Coran, audio MediaRecorder)
+│   │       ├── announcements/        # ✅ Annonces (feed lecture seule)
+│   │       ├── attendance/           # ✅ Présences (ParentAttendanceClient)
+│   │       ├── audio/                # ✅ Audio Coran (QuranAudioClient partagé)
+│   │       ├── calendar/             # ✅ Calendrier (readonly, partagé admin)
+│   │       ├── catalog/              # ✅ Catalogue classes (readonly, partagé admin)
+│   │       ├── profile/              # ✅ Profil (partagé ProfileSettingsClient)
+│   │       ├── exams/                # ❌ ComingSoon
+│   │       ├── payments/             # ❌ ComingSoon
+│   │       ├── stars/                # ❌ ComingSoon
+│   │       ├── absence/              # ❌ ComingSoon
+│   │       └── schedule/             # ❌ ComingSoon
 │   └── portal/
 │       └── register/[schoolSlug]/    # ✅ Portail public d'inscription
 │           ├── layout.tsx
@@ -184,20 +207,25 @@ src/
 │           └── success/page.tsx
 │
 ├── modules/                          # Logique métier — CŒUR DU PROJET
-│   ├── students/     ✅ (types, schema, service, actions, hooks)
-│   ├── teachers/     ✅
-│   ├── classes/      ✅ (inclut class_catalog et class_enrollments)
-│   ├── calendar/     ✅
-│   ├── registrations/ ✅ (form builder + soumission publique)
-│   ├── school/       ✅ (paramètres, settings JSONB)
-│   ├── attendance/   🟡 (types+service+actions+hooks — admin + teacher pages, pas encore parent)
-│   ├── exams/        ❌
-│   ├── finance/      ❌
-│   ├── homework/     ❌
-│   ├── stars/        ❌
-│   ├── substitutions/ ❌
-│   ├── communication/ ❌
-│   └── books/        ❌
+│   ├── students/        ✅ (types, schema, service, actions, hooks)
+│   ├── teachers/        ✅
+│   ├── classes/         ✅ (inclut class_catalog et class_enrollments)
+│   ├── calendar/        ✅
+│   ├── registrations/   ✅ (form builder + soumission publique)
+│   ├── school/          ✅ (paramètres, settings JSONB)
+│   ├── attendance/      ✅ (types+service+actions+hooks — admin + teacher + parent)
+│   ├── homework/        ✅ (types+schema+service+actions+hooks — teacher + admin + parent)
+│   ├── announcements/   ✅ (types+schema+service+actions+hooks — admin CRUD + teacher/parent feed)
+│   ├── permissions/     ✅ (types+service+actions+hooks — admin seulement)
+│   ├── parents/         ✅ (types+service+actions+hooks — lien parent-élève + OTP)
+│   ├── profile/         ✅ (types+schema+service+actions+hooks — partagé tous portails)
+│   ├── teacher-classes/ ✅ (types+service+actions+hooks — classes épinglées enseignant)
+│   ├── exams/           ❌
+│   ├── finance/         ❌
+│   ├── stars/           ❌
+│   ├── substitutions/   ❌
+│   ├── communication/   ❌
+│   └── books/           ❌
 │
 ├── components/
 │   ├── ui/                           # Shadcn/ui (ne pas modifier)
@@ -521,57 +549,51 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 
 ## 8. État d'avancement des modules
 
-### ✅ Complètement construit (types + service + actions + hooks + UI)
+### ✅ Complètement construit (tous portails concernés)
 
 | Module | Pages |
 |---|---|
 | **Auth** | Login, callback, signOut, session guard + `/auth/signup` (parent + enseignant) |
-| **Layout** | Sidebar (avec UserProfileDialog), Header, PortalLayout, TeacherSidebar, TeacherActivationGate |
+| **Layout** | Sidebar admin (UserProfileDialog), TeacherSidebar (gate activation), ParentSidebar, Header, PortalLayout |
 | **School** | `/admin-portal/school-settings` |
-| **Students** | `/admin-portal/students` (liste + détail + création/édition) |
-| **Teachers** | `/admin-portal/teachers` (avec flow création + code d'activation) |
+| **Students** | `/admin-portal/students` (liste + détail + création/édition + export Excel) |
+| **Teachers** | `/admin-portal/teachers` (liste + détail + flow activation NIL_UUID) |
 | **Classes** | `/admin-portal/classes` |
-| **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante, curriculum riche) |
-| **Calendar** | `/admin-portal/academic-calendar` (vues Année/Mois/Semaine/Jour) |
+| **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante) + `/teacher-portal/catalog` + `/parent-portal/catalog` (readonly partagé) |
+| **Calendar** | `/admin-portal/academic-calendar` (vues Année/Mois/Semaine/Jour) + `/teacher-portal/calendar` + `/parent-portal/calendar` (readonly partagé) |
 | **Registration Forms** | `/admin-portal/registration-forms` (form builder DnD complet) |
-| **Registrations** | `/admin-portal/registrations` (liste, décodée depuis `formData` + filtres + export Excel) |
+| **Registrations** | `/admin-portal/registrations` (liste + filtres + export Excel) |
 | **Public Portal** | `/portal/register/[schoolSlug]` (nouvel élève + réinscription + succès) |
-| **Parent Portal — Enrollment** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès — réutilise le même form-builder que le portail public, voir §7.8) |
-| **Homework** | `/teacher-portal/homework` (CRUD devoirs Coran + sessions virtuelles Jitsi) + `/parent-portal/homework` (vue parent, lecteur Coran inline, soumission audio MediaRecorder) |
-| **Profile** | `/admin-portal/profile` + `/parent-portal/profile` (composant partagé `ProfileSettingsClient`, voir §7.12 — identité, rôles, langue, e-mail, mot de passe, gestion des enfants, suppression de compte) |
-| **Announcements** | `/admin-portal/announcements` (CRUD + éditeur RTE contentEditable + upload image Supabase Storage + audience Tous/Parents/Personnel) + `/teacher-portal/announcements` + `/parent-portal/announcements` (feed lecture seule, `AnnouncementFeed` partagé) |
-| **Permissions** | `/admin-portal/permissions` (3 sections : Administrateurs/Trésoriers/Gestionnaires — recherche par email, ajout avec pré-accès si user inexistant, révocation avec confirmation "REVOKE") |
+| **Enrollment Parent** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès) |
+| **Homework** | `/admin-portal/homework` (HomeworkTrackingClient) + `/teacher-portal/homework` (CRUD + Jitsi) + `/parent-portal/homework` (lecteur Coran, audio MediaRecorder) |
+| **Attendance** | `/admin-portal/attendance` (vue jour, aperçu, stats salle, toggles élève) + `/teacher-portal/attendance` (AttendanceClient) + `/parent-portal/attendance` (ParentAttendanceClient) |
+| **Announcements** | `/admin-portal/announcements` (CRUD + RTE + image Supabase) + `/teacher-portal/announcements` + `/parent-portal/announcements` (feed partagé `AnnouncementFeed`) |
+| **Permissions** | `/admin-portal/permissions` (3 sections admin/trésorier/gestionnaire, search email, pré-accès, revoke "REVOKE") |
+| **Parents admin** | `/admin-portal/parents` (liste élèves avec parents liés) |
+| **Profile** | `/admin-portal/profile` + `/teacher-portal/profile` + `/parent-portal/profile` (composant partagé `ProfileSettingsClient`) |
+| **Audio Coran** | `/teacher-portal/audio` + `/parent-portal/audio` (QuranAudioClient partagé, 6 récitateurs) |
+| **Teacher Classes** | `/teacher-portal/classes` (MyClassesClient — mes classes avec devoirs/présences) |
+| **Children** | `/parent-portal/children` (cartes par matière, badge subjectCode/level, Présence/Devoirs, Voir le programme) |
 
-### 🔄 Partiellement construit
+### ❌ ComingSoon (stub page existe, UI à construire, module backend absent)
 
-| Module | État |
+| Module | Pages concernées |
 |---|---|
-| **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Devoirs ✅, Calendrier ✅, Catalogue ✅, Profil ✅, Annonces ✅ — Présences, Audio Coran, Substitutions, Notes d'examen, Remboursements, Emploi du temps restent à construire |
-| **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment ✅, Paramètres du profil ✅, Devoirs ✅, Annonces ✅ — Présences, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps restent à construire |
-
-### 🔄 Partiellement construit (module créé, UI admin construite)
-
-| Module | État |
-|---|---|
-| **Attendance** | `/admin-portal/attendance` ✅ (vue jour : aperçu, stats élèves groupées par salle, détail par classe avec toggles par élève) — `/teacher-portal/attendance` existe déjà — portal parent reste à faire |
-
-### ❌ À construire (aucun fichier de module)
-
-| Module | Pages à créer |
-|---|---|
-| **Exams** | `/admin-portal/track-exams`, `/teacher-portal/exams` |
-| **Stars** | `/admin-portal/track-stars`, portail enseignant |
-| **Finance** | `/admin-portal/finance/budget`, `/admin-portal/finance/expenses` |
+| **Exams** | `/admin-portal/track-exams`, `/teacher-portal/exams`, `/parent-portal/exams` |
+| **Stars** | `/admin-portal/track-stars`, `/parent-portal/stars` |
+| **Finance** | `/admin-portal/finance/budget`, `/admin-portal/finance/expenses`, `/parent-portal/payments` |
 | **Communication** | `/admin-portal/communication/send-email` |
-| **Substitutions** | `/admin-portal/substitutions` |
+| **Substitutions** | `/admin-portal/substitutions`, `/teacher-portal/substitutions` |
 | **Book Tracking** | `/admin-portal/book-tracking` |
 | **Reports** | `/admin-portal/reports` |
-| **Parents** | `/admin-portal/parents` |
+| **Absence** | `/parent-portal/absence` |
+| **Schedule** | `/teacher-portal/schedule`, `/parent-portal/schedule` |
+| **Refunds** | `/teacher-portal/refunds` |
 | **Sticky Notes** | `/admin-portal/sticky-notes` |
 | **Birthdays** | `/admin-portal/birthdays` |
 | **Start New Year** | `/admin-portal/start-new-year` |
 | **Roadmap** | `/admin-portal/roadmap` |
-| **TV Mode** | Affichage mural |
+| **Rankings / TV** | `/admin-portal/rankings`, `/admin-portal/tv` |
 
 ---
 

@@ -1,7 +1,7 @@
 import { db } from '@/db'
 import {
   students, parentStudents, guardians, schoolMembers, profiles,
-  classEnrollments, classes, otpCodes,
+  classEnrollments, classes, classCatalog, otpCodes,
 } from '@/db/schema'
 import { and, eq, asc, isNull, inArray, gt, desc } from 'drizzle-orm'
 import type {
@@ -185,14 +185,20 @@ export const parentsService = {
 
       db
         .select({
-          studentId: classEnrollments.studentId,
-          classId:   classEnrollments.classId,
-          className: classes.name,
-          room:      classes.room,
-          section:   classes.section,
+          studentId:   classEnrollments.studentId,
+          classId:     classEnrollments.classId,
+          className:   classes.name,
+          room:        classes.room,
+          section:     classes.section,
+          subjectCode: classCatalog.subjectCode,
+          levelNumber: classCatalog.levelNumber,
+          teacherName: profiles.fullName,
         })
         .from(classEnrollments)
         .leftJoin(classes, eq(classEnrollments.classId, classes.id))
+        .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
+        .leftJoin(schoolMembers, eq(classes.teacherId, schoolMembers.id))
+        .leftJoin(profiles, eq(schoolMembers.userId, profiles.userId))
         .where(
           and(
             inArray(classEnrollments.studentId, studentIds),
@@ -206,10 +212,13 @@ export const parentsService = {
       if (!acc[r.studentId]) acc[r.studentId] = []
       if (r.classId && r.className) {
         acc[r.studentId].push({
-          classId:   r.classId,
-          className: r.className,
-          room:      r.room,
-          section:   r.section,
+          classId:     r.classId,
+          className:   r.className,
+          room:        r.room,
+          section:     r.section,
+          subjectCode: r.subjectCode ?? null,
+          levelNumber: r.levelNumber ?? null,
+          teacherName: r.teacherName ?? null,
         })
       }
       return acc
