@@ -7,6 +7,7 @@ import { attendanceService } from './attendance.service'
 import type {
   PinnedAttendanceClass, AttendanceClassOption,
   AttendanceStudent, SubmitAttendanceInput, ExistingAttendance,
+  AdminDayOverview,
 } from './attendance.types'
 
 export async function getPinnedAttendanceClassesAction(): Promise<ActionResult<PinnedAttendanceClass[]>> {
@@ -85,5 +86,16 @@ export async function submitAttendanceAction(input: SubmitAttendanceInput): Prom
   } catch (e) {
     console.error('[submitAttendanceAction]', e)
     return err('Impossible de soumettre les présences')
+  }
+}
+
+export async function getAdminDayOverviewAction(date: string): Promise<ActionResult<AdminDayOverview>> {
+  const session = await requireSession()
+  try {
+    const data = await attendanceService.getAdminDayOverview(session.schoolId, date)
+    return ok(data)
+  } catch (e) {
+    console.error('[getAdminDayOverviewAction]', e)
+    return err('Impossible de charger les présences')
   }
 }

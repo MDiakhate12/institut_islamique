@@ -190,7 +190,7 @@ src/
 │   ├── calendar/     ✅
 │   ├── registrations/ ✅ (form builder + soumission publique)
 │   ├── school/       ✅ (paramètres, settings JSONB)
-│   ├── attendance/   ❌
+│   ├── attendance/   🟡 (types+service+actions+hooks — admin + teacher pages, pas encore parent)
 │   ├── exams/        ❌
 │   ├── finance/      ❌
 │   ├── homework/     ❌
@@ -547,11 +547,16 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Seule page devoirs construite (pas encore de `/teacher-portal/profile`, le lien sidebar existe mais 404) |
 | **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment ✅, Paramètres du profil ✅, Devoirs ✅ (vue chronologie/classe, lecteur Coran 6 récitateurs, soumission audio MediaRecorder → Supabase Storage) — Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps restent à construire |
 
+### 🔄 Partiellement construit (module créé, UI admin construite)
+
+| Module | État |
+|---|---|
+| **Attendance** | `/admin-portal/attendance` ✅ (vue jour : aperçu, stats élèves groupées par salle, détail par classe avec toggles par élève) — `/teacher-portal/attendance` existe déjà — portal parent reste à faire |
+
 ### ❌ À construire (aucun fichier de module)
 
 | Module | Pages à créer |
 |---|---|
-| **Attendance** | `/admin-portal/attendance`, `/teacher-portal/attendance` |
 | **Exams** | `/admin-portal/track-exams`, `/teacher-portal/exams` |
 | **Stars** | `/admin-portal/track-stars`, portail enseignant |
 | **Finance** | `/admin-portal/finance/budget`, `/admin-portal/finance/expenses` |

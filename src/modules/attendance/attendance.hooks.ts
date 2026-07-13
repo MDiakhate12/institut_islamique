@@ -5,7 +5,7 @@ import {
   getPinnedAttendanceClassesAction, getAttendanceClassOptionsAction,
   addPinnedAttendanceClassAction, removePinnedAttendanceClassAction,
   getAttendanceStudentsAction, getExistingAttendanceAction,
-  submitAttendanceAction,
+  submitAttendanceAction, getAdminDayOverviewAction,
 } from './attendance.actions'
 import type { SubmitAttendanceInput } from './attendance.types'
 
@@ -14,6 +14,7 @@ export const attKeys = {
   classOptions:  () => ['attendance', 'class-options'] as const,
   students:      (classId: string) => ['attendance', 'students', classId] as const,
   existing:      (classId: string, date: string) => ['attendance', 'existing', classId, date] as const,
+  adminDay:      (date: string) => ['attendance', 'admin-day', date] as const,
 }
 
 export function usePinnedAttendanceClasses() {
@@ -73,6 +74,25 @@ export function useSubmitAttendance() {
   return useMutation({
     mutationFn: (input: SubmitAttendanceInput) => submitAttendanceAction(input),
     onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: attKeys.existing(vars.classId, vars.date) })
+    },
+  })
+}
+
+export function useAdminDayOverview(date: string) {
+  return useQuery({
+    queryKey: attKeys.adminDay(date),
+    queryFn:  () => getAdminDayOverviewAction(date).then(r => r.success ? r.data : null),
+    enabled:  !!date,
+  })
+}
+
+export function useAdminSubmitAttendance() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: SubmitAttendanceInput) => submitAttendanceAction(input),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['attendance', 'admin-day'] })
       qc.invalidateQueries({ queryKey: attKeys.existing(vars.classId, vars.date) })
     },
   })
