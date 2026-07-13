@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import {
   getProfileAction, updateProfileAction, updateLanguageAction,
   changeEmailAction, changePasswordAction, deleteAccountAction,
+  saveGeminiApiKeyAction,
 } from './profile.actions'
 import type { UpdateProfileInput, UpdateLanguageInput, ChangeEmailInput, ChangePasswordInput, DeleteAccountInput } from './profile.schema'
 
@@ -77,5 +78,18 @@ export function useDeleteAccount() {
   return useMutation({
     mutationFn: (input: DeleteAccountInput) => deleteAccountAction(input),
     onError: () => toast.error('Erreur lors de la suppression du compte'),
+  })
+}
+
+export function useSaveGeminiApiKey() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (key: string) => saveGeminiApiKeyAction(key),
+    onSuccess: (result) => {
+      if (!result.success) { toast.error(result.error); return }
+      qc.invalidateQueries({ queryKey: profileKeys.detail() })
+      toast.success('Clé API sauvegardée')
+    },
+    onError: () => toast.error('Erreur lors de la sauvegarde de la clé API'),
   })
 }

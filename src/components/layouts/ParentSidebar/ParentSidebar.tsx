@@ -17,23 +17,24 @@ interface NavItem {
   label: string
   href: string
   icon: React.ComponentType<{ className?: string }>
+  wip?: boolean
 }
 
 const PARENT_NAV: NavItem[] = [
-  { label: 'Mes enfants',             href: '/parent-portal/children',   icon: Users },
-  { label: 'Devoirs',                 href: '/parent-portal/homework',   icon: BookMarked },
-  { label: 'Présences',               href: '/parent-portal/attendance', icon: CalendarCheck },
-  { label: 'Annonces',                href: '/parent-portal/announcements', icon: Megaphone },
-  { label: 'Audio Coran',             href: '/parent-portal/audio',      icon: Music2 },
-  { label: "Demande d'absence",       href: '/parent-portal/absence',    icon: CalendarOff },
-  { label: 'Étoiles & Trophées',      href: '/parent-portal/stars',      icon: Star },
-  { label: 'Calendrier académique',   href: '/parent-portal/calendar',   icon: CalendarDays },
-  { label: 'Catalogue des classes',   href: '/parent-portal/catalog',    icon: Library },
-  { label: 'Voir les notes d\'examen',href: '/parent-portal/exams',      icon: FileText },
-  { label: 'Statut de paiement',      href: '/parent-portal/payments',   icon: CreditCard },
-  { label: 'S\'inscrire maintenant',  href: '/parent-portal/enrollment', icon: Download },
-  { label: 'Emploi du temps',         href: '/parent-portal/schedule',   icon: Clock },
-  { label: 'Paramètres du profil',    href: '/parent-portal/profile',    icon: Settings },
+  { label: 'Mes enfants',              href: '/parent-portal/children',      icon: Users },
+  { label: 'Devoirs',                  href: '/parent-portal/homework',      icon: BookMarked },
+  { label: 'Présences',                href: '/parent-portal/attendance',    icon: CalendarCheck },
+  { label: 'Annonces',                 href: '/parent-portal/announcements', icon: Megaphone, wip: true },
+  { label: 'Audio Coran',              href: '/parent-portal/audio',         icon: Music2 },
+  { label: "Demande d'absence",        href: '/parent-portal/absence',       icon: CalendarOff, wip: true },
+  { label: 'Étoiles & Trophées',       href: '/parent-portal/stars',         icon: Star, wip: true },
+  { label: 'Calendrier académique',    href: '/parent-portal/calendar',      icon: CalendarDays },
+  { label: 'Catalogue des classes',    href: '/parent-portal/catalog',       icon: Library },
+  { label: 'Voir les notes d\'examen', href: '/parent-portal/exams',         icon: FileText, wip: true },
+  { label: 'Statut de paiement',       href: '/parent-portal/payments',      icon: CreditCard, wip: true },
+  { label: 'S\'inscrire maintenant',   href: '/parent-portal/enrollment',    icon: Download },
+  { label: 'Emploi du temps',          href: '/parent-portal/schedule',      icon: Clock, wip: true },
+  { label: 'Paramètres du profil',     href: '/parent-portal/profile',       icon: Settings },
 ]
 
 function getInitials(name: string): string {
@@ -132,6 +133,9 @@ export function ParentSidebar({ session, userFullName, schoolName }: ParentSideb
             >
               <item.icon className="h-3.5 w-3.5 shrink-0" />
               {!collapsed && <span className="truncate flex-1">{item.label}</span>}
+              {!collapsed && item.wip && (
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400/70 shrink-0" />
+              )}
             </Link>
           )
         })}

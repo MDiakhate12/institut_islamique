@@ -544,7 +544,7 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 
 | Module | État |
 |---|---|
-| **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Seule page devoirs construite (pas encore de `/teacher-portal/profile`, le lien sidebar existe mais 404) |
+| **Teacher Portal** | Layout + sidebar + gate d'activation ✅ — Devoirs ✅, Calendrier ✅, Catalogue ✅, Profil ✅ — Présences, Annonces, Audio Coran, Substitutions, Notes d'examen, Remboursements, Emploi du temps restent à construire |
 | **Parent Portal** | Dashboard, sidebar, Mes enfants + liaison OTP, Enrollment ✅, Paramètres du profil ✅, Devoirs ✅ (vue chronologie/classe, lecteur Coran 6 récitateurs, soumission audio MediaRecorder → Supabase Storage) — Présences, Annonces, Audio Coran, Demande d'absence, Étoiles & Trophées, Calendrier, Catalogue des classes, Notes d'examen, Statut de paiement, Emploi du temps restent à construire |
 
 ### 🔄 Partiellement construit (module créé, UI admin construite)

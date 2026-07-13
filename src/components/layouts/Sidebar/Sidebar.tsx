@@ -24,6 +24,7 @@ interface NavItem {
   href: string
   icon: React.ComponentType<{ className?: string }>
   badge?: string
+  wip?: boolean
 }
 
 interface NavSection {
@@ -40,15 +41,15 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Étudiants',                  href: ROUTES.admin.students,           icon: Users },
       { label: 'Enseignants',                href: ROUTES.admin.teachers,           icon: GraduationCap },
       { label: 'Classes',                    href: ROUTES.admin.classes,            icon: BookOpen },
-      { label: 'Suivi des notes d\'examens', href: ROUTES.admin.trackExams,         icon: ClipboardList },
+      { label: 'Suivi des notes d\'examens', href: ROUTES.admin.trackExams,         icon: ClipboardList, wip: true },
       { label: 'Suivi des présences',        href: ROUTES.admin.attendance,         icon: CalendarCheck },
       { label: 'Suivi des devoirs',          href: ROUTES.admin.homework,           icon: BookMarked },
-      { label: 'Suivi des étoiles',          href: ROUTES.admin.trackStars,         icon: Star },
+      { label: 'Suivi des étoiles',          href: ROUTES.admin.trackStars,         icon: Star, wip: true },
       { label: 'Catalogue des classes',      href: ROUTES.admin.classCatalog,       icon: BookCopy },
       { label: 'Calendrier académique',      href: ROUTES.admin.calendar,           icon: CalendarDays },
-      { label: 'Rapports',                   href: ROUTES.admin.reports,            icon: BarChart3 },
-      { label: 'Suivi des livres',           href: ROUTES.admin.bookTracking,       icon: Library },
-      { label: 'Remplacements',              href: ROUTES.admin.substitutions,      icon: ArrowLeftRight },
+      { label: 'Rapports',                   href: ROUTES.admin.reports,            icon: BarChart3, wip: true },
+      { label: 'Suivi des livres',           href: ROUTES.admin.bookTracking,       icon: Library, wip: true },
+      { label: 'Remplacements',              href: ROUTES.admin.substitutions,      icon: ArrowLeftRight, wip: true },
       { label: 'Inscriptions',               href: ROUTES.admin.registrations,      icon: UserPlus },
       { label: 'Formulaires d\'inscription', href: ROUTES.admin.registrationForms,  icon: FileText },
     ],
@@ -57,39 +58,39 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Finance',
     icon: DollarSign,
     items: [
-      { label: 'Budget',   href: ROUTES.admin.budget,   icon: CreditCard },
-      { label: 'Dépenses', href: ROUTES.admin.expenses, icon: Receipt },
+      { label: 'Budget',   href: ROUTES.admin.budget,   icon: CreditCard, wip: true },
+      { label: 'Dépenses', href: ROUTES.admin.expenses, icon: Receipt, wip: true },
     ],
   },
   {
     label: 'Communication',
     icon: MessageCircle,
     items: [
-      { label: 'Notes autocollantes', href: ROUTES.admin.stickyNotes,  icon: StickyNote },
-      { label: 'Envoyer un e-mail',   href: ROUTES.admin.sendEmail,    icon: Mail },
-      { label: 'Parents',             href: ROUTES.admin.parents,      icon: UserSquare2 },
-      { label: 'Annonces',            href: ROUTES.admin.announcements, icon: Megaphone },
-      { label: 'Anniversaires',       href: ROUTES.admin.birthdays,    icon: Cake },
+      { label: 'Notes autocollantes', href: ROUTES.admin.stickyNotes,   icon: StickyNote, wip: true },
+      { label: 'Envoyer un e-mail',   href: ROUTES.admin.sendEmail,     icon: Mail, wip: true },
+      { label: 'Parents',             href: ROUTES.admin.parents,       icon: UserSquare2 },
+      { label: 'Annonces',            href: ROUTES.admin.announcements, icon: Megaphone, wip: true },
+      { label: 'Anniversaires',       href: ROUTES.admin.birthdays,     icon: Cake, wip: true },
     ],
   },
   {
     label: 'TV',
     icon: Monitor,
     items: [
-      { label: 'Classement',        href: ROUTES.admin.rankings, icon: Trophy },
-      { label: 'Application Qaf TV', href: ROUTES.admin.tv,       icon: Tv, badge: 'New' },
+      { label: 'Classement',         href: ROUTES.admin.rankings, icon: Trophy, wip: true },
+      { label: 'Application Qaf TV', href: ROUTES.admin.tv,       icon: Tv, badge: 'New', wip: true },
     ],
   },
   {
     label: 'Paramètres',
     icon: Settings,
     items: [
-      { label: 'Paramètres de l\'école', href: ROUTES.admin.schoolSettings, icon: Settings },
-      { label: 'Autorisations',          href: ROUTES.admin.permissions,    icon: Shield },
-      { label: 'Réinitialiser',          href: ROUTES.admin.startNewYear,   icon: RefreshCw },
-      { label: 'Paramètres du profil',   href: ROUTES.admin.profile,        icon: UserCog },
-      { label: 'Nouveautés',             href: ROUTES.admin.roadmap,        icon: Sparkles },
-      { label: 'Demandes de fonctionnalités', href: ROUTES.admin.roadmap,   icon: Lightbulb },
+      { label: 'Paramètres de l\'école',      href: ROUTES.admin.schoolSettings, icon: Settings },
+      { label: 'Autorisations',               href: ROUTES.admin.permissions,    icon: Shield, wip: true },
+      { label: 'Réinitialiser',               href: ROUTES.admin.startNewYear,   icon: RefreshCw, wip: true },
+      { label: 'Paramètres du profil',        href: ROUTES.admin.profile,        icon: UserCog },
+      { label: 'Nouveautés',                  href: ROUTES.admin.roadmap,        icon: Sparkles, wip: true },
+      { label: 'Demandes de fonctionnalités', href: ROUTES.admin.roadmap,        icon: Lightbulb, wip: true },
     ],
   },
 ]
@@ -257,6 +258,9 @@ export function Sidebar({ session, userFullName, schoolName }: SidebarProps) {
                         <span className="text-[10px] px-1.5 py-0.5 bg-orange-500/80 text-white rounded-full font-bold shrink-0">
                           {item.badge}
                         </span>
+                      )}
+                      {!collapsed && item.wip && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400/70 shrink-0" />
                       )}
                     </Link>
                   )

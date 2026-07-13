@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import {
   User, Phone, Building2, Globe, Mail, KeyRound, IdCard, Smile, ShieldAlert,
-  Trash2, Eye, EyeOff, Plus, Loader2,
+  Trash2, Eye, EyeOff, Plus, Loader2, Coffee, ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import { PORTAL_ROLES } from '@/lib/constants'
 import {
   useProfile, useUpdateProfile, useUpdateLanguage,
   useChangeEmail, useChangePassword, useDeleteAccount,
+  useSaveGeminiApiKey,
 } from '@/modules/profile/profile.hooks'
 import { APP_LANGUAGES } from '@/modules/profile/profile.types'
 import { useChildren, useUnlinkChild } from '@/modules/parents/parents.hooks'
@@ -83,6 +84,7 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
   const changeEmail = useChangeEmail()
   const changePassword = useChangePassword()
   const deleteAccount = useDeleteAccount()
+  const saveGeminiKey = useSaveGeminiApiKey()
   const { data: children } = useChildren()
   const unlinkChild = useUnlinkChild()
 
@@ -96,6 +98,8 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+
+  const [geminiKey, setGeminiKey] = useState(profile.geminiApiKey ?? '')
 
   const [childToUnlink, setChildToUnlink] = useState<{ studentId: string; name: string } | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -141,6 +145,10 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
     unlinkChild.mutate(childToUnlink.studentId, {
       onSettled: () => setChildToUnlink(null),
     })
+  }
+
+  function handleSaveGeminiKey() {
+    saveGeminiKey.mutate(geminiKey)
   }
 
   function handleDeleteAccount() {
@@ -369,8 +377,8 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
               </div>
               {roles.includes('teacher') && (
                 <div className="rounded-lg border border-teal-100 bg-white px-3.5 py-2.5">
-                  <p className="text-xs text-muted-foreground">ID Enseignant</p>
-                  <p className="text-sm font-medium font-mono">{profile.memberId}</p>
+                  <p className="text-xs text-muted-foreground">ID enseignant</p>
+                  <p className="text-sm font-medium font-mono">{profile.memberId.split('-')[0]}</p>
                 </div>
               )}
               {roles.includes('parent') && (
@@ -381,6 +389,51 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
               )}
             </div>
           </div>
+
+          {roles.includes('teacher') && (
+            <div className="rounded-2xl border border-amber-100 bg-amber-50/30 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-amber-100">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+                  <Coffee className="h-4 w-4" />
+                  <span><em>Qahwat Qaf</em> API Key</span>
+                </h3>
+              </div>
+              <div className="p-4 space-y-3">
+                {!profile.geminiApiKey && (
+                  <div className="bg-white rounded-lg border border-amber-100 p-3">
+                    <p className="text-xs font-medium text-amber-900">No API key is saved yet.</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Your key is stored only with your account and is never shared with the school.
+                    </p>
+                  </div>
+                )}
+                <a
+                  href="https://aistudio.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button variant="outline" size="sm" className="w-full gap-1.5">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Open Google AI Studio
+                  </Button>
+                </a>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                    Gemini API Key
+                  </label>
+                  <PasswordField value={geminiKey} onChange={setGeminiKey} placeholder="AIza..." />
+                </div>
+                <Button
+                  onClick={handleSaveGeminiKey}
+                  disabled={saveGeminiKey.isPending}
+                  className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+                >
+                  {saveGeminiKey.isPending ? 'Saving...' : 'Save API Key'}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {roles.includes('parent') && (
             <div className="rounded-2xl border border-[#f0dcc8] bg-[#fdf6f0]/50 overflow-hidden">

@@ -2,12 +2,16 @@ import { db } from '@/db'
 import {
   attendance, attendanceRecords, teacherAttendanceClasses,
   classes, classCatalog, classEnrollments, students, schoolMembers, profiles,
+  parentStudents, schools,
 } from '@/db/schema'
-import { eq, and, or, notInArray, inArray, isNull } from 'drizzle-orm'
+import { DEFAULT_SETTINGS } from '@/db/schema/schools'
+import type { SchoolSettings } from '@/db/schema/schools'
+import { eq, and, or, notInArray, inArray, isNull, gte, lte } from 'drizzle-orm'
 import type {
   PinnedAttendanceClass, AttendanceClassOption,
   AttendanceStudent, SubmitAttendanceInput, AttendanceStatus, ExistingAttendance,
   AdminDayOverview, AdminClassOverview, AdminStudentEntry,
+  ParentAttendanceEntry,
 } from './attendance.types'
 
 export const attendanceService = {
@@ -355,4 +359,169 @@ export const attendanceService = {
       studentEntries,
     }
   },
+
+  // ── Parent: attendance timeline for one child ────────────────────────────
+  async getParentTimeline(
+    schoolId: string,
+    memberId: string,
+    studentId: string,
+  ): Promise<ParentAttendanceEntry[]> {
+    // 1. Verify parent ↔ student link
+    const [link] = await db
+      .select({ studentId: parentStudents.studentId })
+      .from(parentStudents)
+      .where(and(
+        eq(parentStudents.schoolMemberId, memberId),
+        eq(parentStudents.studentId, studentId),
+        eq(parentStudents.schoolId, schoolId),
+      ))
+      .limit(1)
+
+    if (!link) return []
+
+    // 2. School settings for yearStartDate + schoolDays
+    const [school] = await db
+      .select({ settings: schools.settings })
+      .from(schools)
+      .where(eq(schools.id, schoolId))
+      .limit(1)
+
+    const settings: SchoolSettings = { ...DEFAULT_SETTINGS, ...(school?.settings ?? {}) }
+
+    // 3. Student's active class enrollments
+    const enrollRows = await db
+      .select({
+        classId:     classEnrollments.classId,
+        className:   classes.name,
+        catalogCode: classCatalog.code,
+        section:     classes.section,
+      })
+      .from(classEnrollments)
+      .leftJoin(classes, eq(classes.id, classEnrollments.classId))
+      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
+      .where(and(
+        eq(classEnrollments.studentId, studentId),
+        eq(classEnrollments.schoolId, schoolId),
+        isNull(classEnrollments.unenrolledAt),
+      ))
+
+    if (enrollRows.length === 0) return []
+
+    const classIds = enrollRows.map(r => r.classId)
+
+    // 4. Generate expected class dates (school days from yearStart to today)
+    const today = new Date()
+    const expectedDates = generateExpectedDates(settings.yearStartDate, settings.schoolDays, today)
+    if (expectedDates.length === 0) return []
+
+    const dateMin = expectedDates[expectedDates.length - 1]
+    const dateMax = expectedDates[0]
+
+    // 5. Attendance headers in range (with submitter info)
+    const attHeaders = await db
+      .select({
+        id:              attendance.id,
+        classId:         attendance.classId,
+        date:            attendance.date,
+        submittedAt:     attendance.submittedAt,
+        submittedByName: profiles.fullName,
+      })
+      .from(attendance)
+      .leftJoin(schoolMembers, eq(schoolMembers.id, attendance.submittedBy))
+      .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
+      .where(and(
+        eq(attendance.schoolId, schoolId),
+        inArray(attendance.classId, classIds),
+        gte(attendance.date, dateMin),
+        lte(attendance.date, dateMax),
+      ))
+
+    // 6. Records for this student
+    const attIds = attHeaders.map(h => h.id)
+    const recordRows = attIds.length > 0
+      ? await db
+          .select({ attendanceId: attendanceRecords.attendanceId, status: attendanceRecords.status })
+          .from(attendanceRecords)
+          .where(and(
+            inArray(attendanceRecords.attendanceId, attIds),
+            eq(attendanceRecords.studentId, studentId),
+          ))
+      : []
+
+    // 7. Build lookup maps
+    const attByKey = new Map<string, { id: string; submittedAt: Date | null; submittedByName: string | null }>()
+    for (const h of attHeaders) {
+      attByKey.set(`${h.classId}|${h.date}`, {
+        id: h.id,
+        submittedAt: h.submittedAt ?? null,
+        submittedByName: h.submittedByName ?? null,
+      })
+    }
+
+    const statusByAttId = new Map<string, AttendanceStatus>()
+    for (const r of recordRows) {
+      statusByAttId.set(r.attendanceId, r.status as AttendanceStatus)
+    }
+
+    // 8. Merge into timeline (most recent first)
+    const entries: ParentAttendanceEntry[] = []
+    for (const date of expectedDates) {
+      for (const cls of enrollRows) {
+        const att = attByKey.get(`${cls.classId}|${date}`)
+        entries.push({
+          date,
+          classId:         cls.classId,
+          className:       cls.className ?? '',
+          catalogCode:     cls.catalogCode ?? '',
+          section:         cls.section ?? null,
+          status:          att ? (statusByAttId.get(att.id) ?? null) : null,
+          submittedAt:     att?.submittedAt ?? null,
+          submittedByName: att?.submittedByName ?? null,
+        })
+      }
+    }
+
+    return entries
+  },
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+
+function generateExpectedDates(
+  yearStartDate: string | null,
+  schoolDays: string[],
+  today: Date,
+): string[] {
+  const schoolDayNums = new Set(schoolDays.map(d => DAY_NAMES.indexOf(d)).filter(n => n >= 0))
+  if (schoolDayNums.size === 0) return []
+
+  const todayNorm = new Date(today)
+  todayNorm.setHours(0, 0, 0, 0)
+
+  // Fallback: 3 months ago if no yearStartDate
+  const start = yearStartDate
+    ? new Date(yearStartDate)
+    : new Date(todayNorm.getFullYear(), todayNorm.getMonth() - 3, todayNorm.getDate())
+  start.setHours(0, 0, 0, 0)
+
+  // Cap at 1 year back
+  const cap = new Date(todayNorm)
+  cap.setFullYear(cap.getFullYear() - 1)
+  const from = start < cap ? cap : start
+
+  const dates: string[] = []
+  const cursor = new Date(from)
+  while (cursor <= todayNorm) {
+    if (schoolDayNums.has(cursor.getDay())) {
+      const y = cursor.getFullYear()
+      const m = String(cursor.getMonth() + 1).padStart(2, '0')
+      const d = String(cursor.getDate()).padStart(2, '0')
+      dates.push(`${y}-${m}-${d}`)
+    }
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return dates.reverse() // most recent first
 }

@@ -12,6 +12,7 @@ export const profiles = pgTable('profiles', {
   gender: text('gender'),   // 'male' | 'female' | null
   avatarUrl: text('avatar_url'),
   preferredLanguage: text('preferred_language').default('fr'),
+  geminiApiKey:      text('gemini_api_key'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })

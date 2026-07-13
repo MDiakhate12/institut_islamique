@@ -15,6 +15,7 @@ export const profileService = {
         phone:              profiles.phone,
         avatarUrl:          profiles.avatarUrl,
         preferredLanguage:  profiles.preferredLanguage,
+        geminiApiKey:       profiles.geminiApiKey,
         schoolName:         schools.name,
       })
       .from(schoolMembers)
@@ -33,6 +34,7 @@ export const profileService = {
       phone: row.phone ?? null,
       avatarUrl: row.avatarUrl ?? null,
       preferredLanguage: row.preferredLanguage ?? null,
+      geminiApiKey: row.geminiApiKey ?? null,
       schoolName: row.schoolName ?? '',
       roles: (row.roles as PortalRole[]) ?? [],
       memberSince: row.memberSince,
@@ -78,6 +80,13 @@ export const profileService = {
     await db
       .update(profiles)
       .set({ preferredLanguage, updatedAt: new Date() })
+      .where(eq(profiles.userId, userId))
+  },
+
+  async saveGeminiApiKey(userId: string, key: string | null): Promise<void> {
+    await db
+      .update(profiles)
+      .set({ geminiApiKey: key, updatedAt: new Date() })
       .where(eq(profiles.userId, userId))
   },
 }

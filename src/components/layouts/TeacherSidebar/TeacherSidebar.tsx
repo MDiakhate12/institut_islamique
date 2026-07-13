@@ -17,21 +17,22 @@ interface NavItem {
   label: string
   href: string
   icon: React.ComponentType<{ className?: string }>
+  wip?: boolean
 }
 
 const TEACHER_NAV: NavItem[] = [
-  { label: 'Mes classes',               href: '/teacher-portal/classes',       icon: Library },
-  { label: 'Devoirs',                   href: '/teacher-portal/homework',      icon: BookMarked },
-  { label: 'Présences',                 href: '/teacher-portal/attendance',    icon: CalendarCheck },
-  { label: 'Annonces',                  href: '/teacher-portal/announcements', icon: Megaphone },
-  { label: 'Audio Coran',              href: '/teacher-portal/audio',         icon: Music2 },
-  { label: 'Portail remplaçant',        href: '/teacher-portal/substitutions', icon: ArrowLeftRight },
-  { label: 'Calendrier académique',     href: '/teacher-portal/calendar',      icon: CalendarDays },
-  { label: 'Catalogue des classes',     href: '/teacher-portal/catalog',       icon: Library },
-  { label: 'Soumettre les notes d\'examen', href: '/teacher-portal/exams',    icon: FileText },
-  { label: 'Remboursements',            href: '/teacher-portal/refunds',       icon: CreditCard },
-  { label: 'Emploi du temps',           href: '/teacher-portal/schedule',      icon: Clock },
-  { label: 'Paramètres du profil',      href: '/teacher-portal/profile',       icon: Settings },
+  { label: 'Mes classes',                   href: '/teacher-portal/classes',       icon: Library },
+  { label: 'Devoirs',                       href: '/teacher-portal/homework',      icon: BookMarked },
+  { label: 'Présences',                     href: '/teacher-portal/attendance',    icon: CalendarCheck },
+  { label: 'Annonces',                      href: '/teacher-portal/announcements', icon: Megaphone, wip: true },
+  { label: 'Audio Coran',                   href: '/teacher-portal/audio',         icon: Music2 },
+  { label: 'Portail remplaçant',            href: '/teacher-portal/substitutions', icon: ArrowLeftRight, wip: true },
+  { label: 'Calendrier académique',         href: '/teacher-portal/calendar',      icon: CalendarDays },
+  { label: 'Catalogue des classes',         href: '/teacher-portal/catalog',       icon: Library },
+  { label: 'Soumettre les notes d\'examen', href: '/teacher-portal/exams',         icon: FileText, wip: true },
+  { label: 'Remboursements',                href: '/teacher-portal/refunds',       icon: CreditCard, wip: true },
+  { label: 'Emploi du temps',               href: '/teacher-portal/schedule',      icon: Clock, wip: true },
+  { label: 'Paramètres du profil',          href: '/teacher-portal/profile',       icon: Settings },
 ]
 
 function getInitials(name: string): string {
@@ -130,6 +131,9 @@ export function TeacherSidebar({ session, userFullName, schoolName }: TeacherSid
             >
               <item.icon className="h-3.5 w-3.5 shrink-0" />
               {!collapsed && <span className="truncate flex-1">{item.label}</span>}
+              {!collapsed && item.wip && (
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400/70 shrink-0" />
+              )}
             </Link>
           )
         })}

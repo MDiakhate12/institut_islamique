@@ -7,8 +7,9 @@ import { attendanceService } from './attendance.service'
 import type {
   PinnedAttendanceClass, AttendanceClassOption,
   AttendanceStudent, SubmitAttendanceInput, ExistingAttendance,
-  AdminDayOverview,
+  AdminDayOverview, ParentAttendanceEntry,
 } from './attendance.types'
+import { parentsService } from '@/modules/parents/parents.service'
 
 export async function getPinnedAttendanceClassesAction(): Promise<ActionResult<PinnedAttendanceClass[]>> {
   const session = await requireSession()
@@ -96,6 +97,19 @@ export async function getAdminDayOverviewAction(date: string): Promise<ActionRes
     return ok(data)
   } catch (e) {
     console.error('[getAdminDayOverviewAction]', e)
+    return err('Impossible de charger les présences')
+  }
+}
+
+export async function getParentAttendanceAction(studentId: string): Promise<ActionResult<ParentAttendanceEntry[]>> {
+  const session = await requireSession()
+  try {
+    const memberId = await parentsService.getMemberId(session.userId, session.schoolId)
+    if (!memberId) return err('Compte parent introuvable')
+    const data = await attendanceService.getParentTimeline(session.schoolId, memberId, studentId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getParentAttendanceAction]', e)
     return err('Impossible de charger les présences')
   }
 }

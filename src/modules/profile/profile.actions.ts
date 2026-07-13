@@ -136,3 +136,15 @@ export async function deleteAccountAction(input: unknown): Promise<ActionResult<
 
   redirect('/auth/login')
 }
+
+export async function saveGeminiApiKeyAction(key: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  try {
+    await profileService.saveGeminiApiKey(session.userId, key.trim() || null)
+    revalidateProfile()
+    return ok(undefined)
+  } catch (e) {
+    console.error('[saveGeminiApiKeyAction]', e)
+    return err('Impossible de sauvegarder la clé API')
+  }
+}

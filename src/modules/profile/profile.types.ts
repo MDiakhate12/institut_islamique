@@ -8,6 +8,7 @@ export type ProfileData = {
   phone: string | null
   avatarUrl: string | null
   preferredLanguage: string | null
+  geminiApiKey: string | null
   schoolName: string
   roles: PortalRole[]
   memberSince: Date

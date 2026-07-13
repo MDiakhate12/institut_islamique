@@ -6,6 +6,7 @@ import {
   addPinnedAttendanceClassAction, removePinnedAttendanceClassAction,
   getAttendanceStudentsAction, getExistingAttendanceAction,
   submitAttendanceAction, getAdminDayOverviewAction,
+  getParentAttendanceAction,
 } from './attendance.actions'
 import type { SubmitAttendanceInput } from './attendance.types'
 
@@ -15,6 +16,7 @@ export const attKeys = {
   students:      (classId: string) => ['attendance', 'students', classId] as const,
   existing:      (classId: string, date: string) => ['attendance', 'existing', classId, date] as const,
   adminDay:      (date: string) => ['attendance', 'admin-day', date] as const,
+  parentTimeline:(studentId: string) => ['attendance', 'parent-timeline', studentId] as const,
 }
 
 export function usePinnedAttendanceClasses() {
@@ -95,5 +97,19 @@ export function useAdminSubmitAttendance() {
       qc.invalidateQueries({ queryKey: ['attendance', 'admin-day'] })
       qc.invalidateQueries({ queryKey: attKeys.existing(vars.classId, vars.date) })
     },
+  })
+}
+
+export function useParentAttendance(studentId: string | null) {
+  return useQuery({
+    queryKey: attKeys.parentTimeline(studentId ?? ''),
+    queryFn: async () => {
+      if (!studentId) return []
+      const result = await getParentAttendanceAction(studentId)
+      if (!result.success) throw new Error(result.error)
+      return result.data
+    },
+    enabled: !!studentId,
+    staleTime: 60_000,
   })
 }

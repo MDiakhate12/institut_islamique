@@ -37,6 +37,19 @@ export type ExistingAttendance = {
   records: Record<string, AttendanceStatus>
 }
 
+// ── Parent types ─────────────────────────────────────────────────────────────
+
+export type ParentAttendanceEntry = {
+  date: string
+  classId: string
+  className: string
+  catalogCode: string
+  section: string | null
+  status: AttendanceStatus | null      // null = not submitted by teacher
+  submittedAt: Date | null
+  submittedByName: string | null
+}
+
 // ── Admin types ──────────────────────────────────────────────────────────────
 
 export type AdminClassOverview = {
