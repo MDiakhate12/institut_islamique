@@ -21,11 +21,12 @@ export default async function ReenrollChildPage({ params }: Props) {
   const child = children.find(c => c.studentId === studentId)
   if (!child) notFound()
 
-  const registeredStudentIds = await registrationsService.getRegisteredStudentIds(session.schoolId, [studentId])
-  if (registeredStudentIds.size > 0) redirect('/parent-portal/enrollment')
-
   const school = await schoolService.getById(session.schoolId)
   if (!school) notFound()
+
+  const academicYearSetting = school.settings?.academicYear ?? ''
+  const registeredStudentIds = await registrationsService.getRegisteredStudentIds(session.schoolId, [studentId], academicYearSetting)
+  if (registeredStudentIds.size > 0) redirect('/parent-portal/enrollment')
 
   const result = await getPublicRegistrationFormAction(school.slug, 'reenrollment')
   if (!result.success) notFound()

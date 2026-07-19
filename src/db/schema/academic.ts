@@ -31,6 +31,7 @@ export const students = pgTable('students', {
   notes:            text('notes'),
   isActive:         boolean('is_active').notNull().default(true),
   studentCustomId:  text('student_custom_id'),
+  enrollmentYear:   text('enrollment_year'),
   createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   createdBy:        uuid('created_by').references(() => schoolMembers.id),
@@ -83,6 +84,7 @@ export const classEnrollments = pgTable('class_enrollments', {
   classId:      uuid('class_id').notNull().references(() => classes.id, { onDelete: 'cascade' }),
   studentId:    uuid('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
   schoolId:     uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+  paymentPlan:  text('payment_plan').notNull().default('trimestrial'),
   enrolledAt:   timestamp('enrolled_at', { withTimezone: true }).defaultNow().notNull(),
   unenrolledAt: timestamp('unenrolled_at', { withTimezone: true }),
 })

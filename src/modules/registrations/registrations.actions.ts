@@ -12,6 +12,7 @@ import type { FormType, FormItem, RegistrationForm, SystemFieldKey, Registration
 import { db } from '@/db'
 import { schools, guardians } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import type { SchoolSettings } from '@/db/schema/schools'
 
 const PATH = '/admin-portal/registration-forms'
 
@@ -75,12 +76,13 @@ export async function submitRegistrationAction(
   try {
     // 1. Find school by slug
     const [school] = await db
-      .select({ id: schools.id })
+      .select({ id: schools.id, settings: schools.settings })
       .from(schools)
       .where(eq(schools.slug, schoolSlug))
       .limit(1)
 
     if (!school) return err('École introuvable')
+    const academicYear = (school.settings as SchoolSettings | null)?.academicYear ?? ''
 
     // 2. Get the form (to read the field→id mapping)
     const form = await registrationsService.getOrCreateForm(school.id, formType)
@@ -144,7 +146,7 @@ export async function submitRegistrationAction(
     }
 
     // 4. Save registration with proper studentId FK
-    const registration = await registrationsService.submit(school.id, form.id, formData, studentId)
+    const registration = await registrationsService.submit(school.id, form.id, formData, studentId, academicYear)
     return ok({ id: registration.id, studentId })
   } catch (e) {
     console.error('[submitRegistrationAction]', e)

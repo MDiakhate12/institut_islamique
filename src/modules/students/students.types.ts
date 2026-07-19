@@ -15,18 +15,89 @@ export type GuardianSummary = {
   isPrimary: boolean
 }
 
+export type StudentEnrollment = {
+  enrollmentId: string
+  classId: string
+  classCode: string
+  className: string
+  teacherName: string | null
+  paymentPlan: string
+  paidT1: boolean
+  paidT2: boolean
+  paidT3: boolean
+}
+
 export type StudentListItem = Pick<
   Student,
   | 'id' | 'firstName' | 'lastName' | 'gender' | 'birthDate' | 'isActive' | 'createdAt'
-  | 'studentCustomId' | 'notes'
+  | 'studentCustomId' | 'notes' | 'enrollmentYear'
 > & {
-  activeClassName?:  string | null
-  activeClassId?:    string | null
-  academicYear?:     string | null
-  enrollmentId?:     string | null
-  enrolledAt?:       Date | string | null
-  guardians:         GuardianSummary[]
-  paymentT1:         boolean
-  paymentT2:         boolean
-  paymentT3:         boolean
+  enrollments:          StudentEnrollment[]
+  phone:                string | null
+  guardians:            GuardianSummary[]
+  enrolledAt:           Date | string | null
+  attendancePresent:    number
+  attendanceLate:       number
+  attendanceAbsent:     number
+  attendanceExcused:    number
+  lastAttendanceDate:   string | null
+  // Shortcut to first enrollment payment status (backward compat)
+  paymentT1:            boolean
+  paymentT2:            boolean
+  paymentT3:            boolean
+}
+
+export type StudentPayment = {
+  id: string
+  date: string | null
+  academicYear: string | null
+  amountCents: number
+  currency: string
+  period: string
+  method: string
+  status: string
+  parentName: string | null
+  notes: string | null
+}
+
+export type StudentAttendanceDay = {
+  date: string
+  status: 'present' | 'absent' | 'late' | 'excused'
+}
+
+export type StudentHomeworkItem = {
+  id: string
+  date: string
+  classCode: string
+  className: string
+  title: string
+  surahName: string | null
+  surahArabic: string | null
+  starsCount: number | null
+}
+
+export type StudentExamResult = {
+  id: string
+  classCode: string
+  className: string
+  teacherName: string | null
+  trimester: number
+  academicYear: string | null
+  score: number | null
+  eagerness: number | null       // "Caring" dans le bulletin
+  participation: number | null
+  respectTeachers: number | null
+  respectOthers: number | null
+  attendance: number | null
+  bringBooks: number | null
+  coveredContent: string | null
+  generalComments: string | null
+  parentSignature: string | null
+}
+
+export type StudentReportCardData = {
+  schoolName: string
+  examResults: StudentExamResult[]
+  totalStars: number
+  gradedSubmissions: number
 }

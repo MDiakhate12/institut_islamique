@@ -7,21 +7,28 @@ import { EnrollmentSelector } from './EnrollmentSelector'
 export default async function EnrollmentSelectPage() {
   const session = await requireSession()
 
-  const memberId = await parentsService.getMemberId(session.userId, session.schoolId)
+  const [school, memberId] = await Promise.all([
+    schoolService.getById(session.schoolId),
+    parentsService.getMemberId(session.userId, session.schoolId),
+  ])
+
+  const academicYear = school?.settings?.academicYear ?? new Date().getFullYear() + '-' + (new Date().getFullYear() + 1)
+
   const children = memberId
     ? await parentsService.getChildrenWithClasses(memberId, session.schoolId)
     : []
 
-  const [school, registeredStudentIds] = await Promise.all([
-    schoolService.getById(session.schoolId),
-    registrationsService.getRegisteredStudentIds(session.schoolId, children.map(c => c.studentId)),
-  ])
+  const registeredStudentIds = await registrationsService.getRegisteredStudentIds(
+    session.schoolId,
+    children.map(c => c.studentId),
+    academicYear,
+  )
 
   return (
     <EnrollmentSelector
       students={children}
       schoolName={school?.name ?? ''}
-      academicYear={school?.settings?.academicYear ?? '2026-2027'}
+      academicYear={academicYear}
       registeredStudentIds={Array.from(registeredStudentIds)}
     />
   )

@@ -34,7 +34,9 @@ export type SchoolSettings = {
   academicYear: string           // '2025-2026'
   currentTrimester: 1 | 2 | 3
   allowNewRegistrations: boolean
-  examPeriodOpen: boolean        // fallback global (deprecated — now per class)
+  examPeriodT1Open: boolean
+  examPeriodT2Open: boolean
+  examPeriodT3Open: boolean
 
   // ── Calendrier
   yearStartDate: string | null
@@ -73,7 +75,9 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   academicYear:            '2025-2026',
   currentTrimester:        1,
   allowNewRegistrations:   true,
-  examPeriodOpen:          false,
+  examPeriodT1Open:        false,
+  examPeriodT2Open:        false,
+  examPeriodT3Open:        false,
   yearStartDate:           null,
   yearEndDate:             null,
   trimester1StartDate:     null,

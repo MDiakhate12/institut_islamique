@@ -9,9 +9,11 @@ import type { TeacherExamClass, StudentGradeStatus } from '@/modules/exams/exams
 
 interface Props {
   initialClasses: TeacherExamClass[]
-  trimester: number
+  initialTrimester: number
   academicYear: string
-  examPeriodOpen: boolean
+  examPeriodT1Open: boolean
+  examPeriodT2Open: boolean
+  examPeriodT3Open: boolean
 }
 
 const SUBJECT_COLORS: Record<string, string> = {
@@ -128,9 +130,11 @@ function ClassCard({ cls, search, examPeriodOpen }: {
   )
 }
 
-export function ExamsClient({ initialClasses, trimester, academicYear, examPeriodOpen }: Props) {
+export function ExamsClient({ initialClasses, initialTrimester, academicYear, examPeriodT1Open, examPeriodT2Open, examPeriodT3Open }: Props) {
+  const [trimester, setTrimester] = useState(initialTrimester)
   const [search, setSearch] = useState('')
   const { data: classes = initialClasses } = useTeacherExamClasses(trimester)
+  const examPeriodOpen = trimester === 1 ? examPeriodT1Open : trimester === 2 ? examPeriodT2Open : examPeriodT3Open
 
   const filtered = useMemo(() => {
     if (!search) return classes
@@ -152,11 +156,29 @@ export function ExamsClient({ initialClasses, trimester, academicYear, examPerio
         <div className="h-10 w-10 rounded-xl bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center shrink-0">
           <GraduationCap className="h-5 w-5 text-[#c2440f]" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-[#7a4f30]">Noter les étudiants</h1>
-          <p className="text-sm text-muted-foreground">
-            Soumettre les notes semestrielles pour vos étudiants
-          </p>
+          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+            <p className="text-sm text-muted-foreground">
+              {academicYear} — Soumettre les notes semestrielles
+            </p>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3].map(t => (
+                <button
+                  key={t}
+                  onClick={() => { setTrimester(t); setSearch('') }}
+                  className={cn(
+                    'px-2.5 py-0.5 text-xs font-semibold rounded-full transition-colors',
+                    trimester === t
+                      ? 'bg-[#c2440f] text-white'
+                      : 'border border-gray-200 text-gray-600 hover:bg-gray-50',
+                  )}
+                >
+                  T{t}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -191,7 +213,7 @@ export function ExamsClient({ initialClasses, trimester, academicYear, examPerio
           <GraduationCap className="h-12 w-12 text-muted-foreground/30 mb-4" />
           <p className="text-base font-medium text-muted-foreground">Aucune classe assignée</p>
           <p className="text-sm text-muted-foreground/70 mt-1">
-            Vous n&apos;êtes assigné(e) à aucune classe pour le Trimestre {trimester}.
+            Vous n&apos;êtes assigné(e) à aucune classe pour le Trimestre {trimester} {academicYear}.
           </p>
         </div>
       ) : filtered.length === 0 ? (

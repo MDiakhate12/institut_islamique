@@ -189,62 +189,124 @@ function OperationsSection({ school }: { school: School }) {
   const [academicYear, setAcademicYear] = useState(s.academicYear ?? '2025-2026')
   const [trimester, setTrimester]       = useState<1|2|3>(s.currentTrimester ?? 1)
   const [allowReg, setAllowReg]         = useState(s.allowNewRegistrations ?? true)
-  const [examOpen, setExamOpen]         = useState(s.examPeriodOpen ?? false)
+  const [examT1Open, setExamT1Open]     = useState(s.examPeriodT1Open ?? false)
+  const [examT2Open, setExamT2Open]     = useState(s.examPeriodT2Open ?? false)
+  const [examT3Open, setExamT3Open]     = useState(s.examPeriodT3Open ?? false)
 
   const update = useUpdateSchoolSettings()
+
+  const examOpen    = trimester === 1 ? examT1Open : trimester === 2 ? examT2Open : examT3Open
+  const setExamOpen = trimester === 1 ? setExamT1Open : trimester === 2 ? setExamT2Open : setExamT3Open
 
   function save() {
     update.mutate({
       academicYear,
       currentTrimester: trimester,
       allowNewRegistrations: allowReg,
-      examPeriodOpen: examOpen,
+      examPeriodT1Open: examT1Open,
+      examPeriodT2Open: examT2Open,
+      examPeriodT3Open: examT3Open,
     })
   }
 
   return (
     <Section icon={Settings} title="Opérations scolaires">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Année académique</Label>
+      <p className="text-xs text-muted-foreground -mt-2">
+        Définissez l&apos;année académique et le trimestre en cours, puis activez l&apos;inscription et l&apos;accès aux examens.
+      </p>
+
+      {/* Année académique + navigation */}
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">Année académique</Label>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const [s, e] = academicYear.split('-').map(Number)
+              if (s && e) setAcademicYear(`${s - 1}-${e - 1}`)
+            }}
+            className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-[#c2440f] hover:text-[#c2440f] transition-colors text-sm font-bold"
+          >‹</button>
           <Input
             value={academicYear}
             onChange={e => setAcademicYear(e.target.value)}
             placeholder="2025-2026"
-            className="h-9 text-sm"
+            className="h-9 text-sm text-center font-medium flex-1"
           />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Trimestre actuel</Label>
-          <Select
-            value={String(trimester)}
-            onValueChange={v => v && setTrimester(Number(v) as 1|2|3)}
-          >
-            <SelectTrigger className="h-9 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Trimestre 1</SelectItem>
-              <SelectItem value="2">Trimestre 2</SelectItem>
-              <SelectItem value="3">Trimestre 3</SelectItem>
-            </SelectContent>
-          </Select>
+          <button
+            type="button"
+            onClick={() => {
+              const [s, e] = academicYear.split('-').map(Number)
+              if (s && e) setAcademicYear(`${s + 1}-${e + 1}`)
+            }}
+            className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-[#c2440f] hover:text-[#c2440f] transition-colors text-sm font-bold"
+          >›</button>
         </div>
       </div>
 
-      <div className="space-y-3 pt-1">
-        <CheckRow
-          checked={allowReg}
-          onChange={setAllowReg}
-          label="Autoriser les nouvelles inscriptions"
-          sub="Les parents peuvent soumettre des formulaires d'inscription en ligne"
-        />
-        <CheckRow
-          checked={examOpen}
-          onChange={setExamOpen}
-          label="Activer l'affichage des examens et notes"
-          sub="Les enseignants et parents voient les boutons d'examens et de notes dans leurs portails"
-        />
+      {/* Trimestre — 3 boutons toggle */}
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">Trimestre</Label>
+        <div className="flex gap-2">
+          {([1, 2, 3] as const).map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTrimester(t)}
+              className={cn(
+                'flex-1 h-9 rounded-lg border text-sm font-medium transition-colors',
+                trimester === t
+                  ? 'bg-[#c2440f] border-[#c2440f] text-white'
+                  : 'bg-white border-border text-muted-foreground hover:border-[#c2440f] hover:text-[#c2440f]'
+              )}
+            >
+              Trimestre {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Toggles — réagissent au trimestre sélectionné */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        <label className={cn(
+          'flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors',
+          allowReg ? 'border-[#c2440f]/40 bg-[#fdf6f0]' : 'border-border bg-white'
+        )}>
+          <input
+            type="checkbox"
+            checked={allowReg}
+            onChange={e => setAllowReg(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-border accent-[#c2440f]"
+          />
+          <div>
+            <p className="text-sm font-medium leading-snug">
+              Autoriser les nouvelles inscriptions pour {academicYear}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Autoriser les nouvelles inscriptions d&apos;élèves
+            </p>
+          </div>
+        </label>
+
+        <label className={cn(
+          'flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors',
+          examOpen ? 'border-[#c2440f]/40 bg-[#fdf6f0]' : 'border-border bg-white'
+        )}>
+          <input
+            type="checkbox"
+            checked={examOpen}
+            onChange={e => setExamOpen(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-border accent-[#c2440f]"
+          />
+          <div>
+            <p className="text-sm font-medium leading-snug">
+              Ouvrir les examens pour Trimestre {trimester} {academicYear}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Activer l&apos;affichage des examens et notes dans les portails parents et enseignants
+            </p>
+          </div>
+        </label>
       </div>
 
       <SaveBtn loading={update.isPending} onClick={save} />
@@ -1164,65 +1226,48 @@ function LogoSection({ school }: { school: School }) {
 // ── Calendrier ────────────────────────────────────────────────────────────────
 function CalendarSection({ school }: { school: School }) {
   const s = school.settings as SchoolSettings
-  const [dates, setDates] = useState({
-    yearStartDate:       s.yearStartDate ?? '',
-    yearEndDate:         s.yearEndDate ?? '',
-    trimester1StartDate: s.trimester1StartDate ?? '',
-    trimester2StartDate: s.trimester2StartDate ?? '',
-    trimester3StartDate: s.trimester3StartDate ?? '',
-  })
+  // T1 start = year start (unified — yearStartDate kept in sync for backward compat)
+  const [t1, setT1] = useState(s.trimester1StartDate ?? s.yearStartDate ?? '')
+  const [t2, setT2] = useState(s.trimester2StartDate ?? '')
+  const [t3, setT3] = useState(s.trimester3StartDate ?? '')
+  const [yearEnd, setYearEnd] = useState(s.yearEndDate ?? '')
   const update = useUpdateSchoolSettings()
 
   function save() {
     update.mutate({
-      yearStartDate:       dates.yearStartDate || null,
-      yearEndDate:         dates.yearEndDate || null,
-      trimester1StartDate: dates.trimester1StartDate || null,
-      trimester2StartDate: dates.trimester2StartDate || null,
-      trimester3StartDate: dates.trimester3StartDate || null,
+      trimester1StartDate: t1 || null,
+      trimester2StartDate: t2 || null,
+      trimester3StartDate: t3 || null,
+      yearStartDate:       t1 || null, // kept in sync for attendance stats
+      yearEndDate:         yearEnd || null,
     })
   }
 
+  const rows = [
+    { label: 'Date de début : Trimestre 1', value: t1, set: setT1 },
+    { label: 'Date de début : Trimestre 2', value: t2, set: setT2 },
+    { label: 'Date de début : Trimestre 3', value: t3, set: setT3 },
+    { label: "Date de fin de l'année scolaire", value: yearEnd, set: setYearEnd },
+  ]
+
   return (
-    <Section icon={Clock} title="Calendrier académique">
-      <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Début d&apos;année</Label>
+    <Section icon={Clock} title="Calendrier">
+      <p className="text-xs text-muted-foreground -mt-2">
+        Définissez les dates de début de chaque trimestre et la fin d&apos;année.
+      </p>
+      <div className="space-y-2.5">
+        {rows.map(({ label, value, set }) => (
+          <div key={label} className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{label}</Label>
             <Input
               type="date"
-              value={dates.yearStartDate}
-              onChange={e => setDates(d => ({ ...d, yearStartDate: e.target.value }))}
+              value={value}
+              onChange={e => set(e.target.value)}
               className="h-9 text-sm"
             />
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Fin d&apos;année</Label>
-            <Input
-              type="date"
-              value={dates.yearEndDate}
-              onChange={e => setDates(d => ({ ...d, yearEndDate: e.target.value }))}
-              className="h-9 text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground">Débuts de trimestres</Label>
-          {[1, 2, 3].map(t => (
-            <div key={t} className="flex items-center gap-2">
-              <span className="text-xs font-medium w-6 text-[#c2440f]">T{t}</span>
-              <Input
-                type="date"
-                value={dates[`trimester${t}StartDate` as keyof typeof dates]}
-                onChange={e => setDates(d => ({ ...d, [`trimester${t}StartDate`]: e.target.value }))}
-                className="h-9 text-sm flex-1"
-              />
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
-
       <SaveBtn loading={update.isPending} onClick={save} />
     </Section>
   )

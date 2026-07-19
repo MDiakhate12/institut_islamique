@@ -1,20 +1,29 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
-import { useStudents, useDeactivateStudent } from '@/modules/students/students.hooks'
+import {
+  useStudents, useDeactivateStudent, useUpdateStudentNote,
+} from '@/modules/students/students.hooks'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Plus, Download, ArrowUpDown } from 'lucide-react'
+import { Users, Plus, Download, ArrowUpDown, Check, X, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
+import { StudentAttendanceModal } from './StudentAttendanceModal'
+import { StudentPaymentsModal } from './StudentPaymentsModal'
+import { StudentHomeworkModal } from './StudentHomeworkModal'
+import { StudentReportCardModal } from './StudentReportCardModal'
 import type { StudentListItem } from '@/modules/students/students.types'
 
-type GenderFilter = 'all' | 'male' | 'female'
-type ActiveFilter = 'all' | 'active' | 'inactive'
-type SortKey = 'name' | 'birthDate' | null
+type GenderFilter  = 'all' | 'male' | 'female'
+type ActiveFilter  = 'all' | 'active' | 'inactive'
+type SortKey       = 'name' | 'birthDate' | null
+type PayFilter     = 'all' | 'paid' | 'unpaid'
+
+interface ModalState { studentId: string; studentName: string }
 
 function calcAge(birthDate: string | null | undefined): string {
   if (!birthDate) return '—'
@@ -24,22 +33,53 @@ function calcAge(birthDate: string | null | undefined): string {
   return `${Math.floor(totalMonths / 12)}a ${totalMonths % 12}m`
 }
 
+function buildYearOptions(students: StudentListItem[]): string[] {
+  const years = new Set<string>()
+  students.forEach(s => { if (s.enrollmentYear) years.add(s.enrollmentYear) })
+  return Array.from(years).sort().reverse()
+}
+
 export function StudentsClient() {
   const { data: students, isLoading } = useStudents()
-  const { mutate: deactivate } = useDeactivateStudent()
+  const { mutate: deactivate }        = useDeactivateStudent()
+  const { mutate: saveNote }          = useUpdateStudentNote()
 
   const [search, setSearch]             = useState('')
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all')
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all')
+  const [yearFilter, setYearFilter]     = useState('all')
+  const [t1Filter, setT1Filter]         = useState<PayFilter>('all')
+  const [t2Filter, setT2Filter]         = useState<PayFilter>('all')
+  const [t3Filter, setT3Filter]         = useState<PayFilter>('all')
   const [sortKey, setSortKey]           = useState<SortKey>(null)
   const [sortAsc, setSortAsc]           = useState(true)
+
+  // Inline note editing
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [noteValue, setNoteValue]         = useState('')
+  const noteInputRef = useRef<HTMLTextAreaElement | null>(null)
+
+  // Modal states
+  const [reportCardStudent, setReportCardStudent] = useState<StudentListItem | null>(null)
+  const [attendanceModal, setAttendanceModal] = useState<ModalState | null>(null)
+  const [paymentsModal, setPaymentsModal]     = useState<ModalState | null>(null)
+  const [homeworkModal, setHomeworkModal]     = useState<ModalState | null>(null)
+
+  const yearOptions = useMemo(() => buildYearOptions(students ?? []), [students])
 
   const filtered = useMemo(() => {
     if (!students) return []
     let list = students.filter(s => {
       if (genderFilter !== 'all' && s.gender !== genderFilter) return false
       if (activeFilter === 'active'   && !s.isActive) return false
-      if (activeFilter === 'inactive' && s.isActive)  return false
+      if (activeFilter === 'inactive' &&  s.isActive) return false
+      if (yearFilter   !== 'all' && s.enrollmentYear !== yearFilter) return false
+      if (t1Filter === 'paid'   && !s.paymentT1) return false
+      if (t1Filter === 'unpaid' &&  s.paymentT1) return false
+      if (t2Filter === 'paid'   && !s.paymentT2) return false
+      if (t2Filter === 'unpaid' &&  s.paymentT2) return false
+      if (t3Filter === 'paid'   && !s.paymentT3) return false
+      if (t3Filter === 'unpaid' &&  s.paymentT3) return false
       if (search) {
         const q = search.toLowerCase()
         const guardianMatch = s.guardians.some(g =>
@@ -51,6 +91,7 @@ export function StudentsClient() {
           s.firstName.toLowerCase().includes(q) ||
           s.lastName.toLowerCase().includes(q) ||
           (s.studentCustomId ?? '').toLowerCase().includes(q) ||
+          s.enrollments.some(e => e.classCode.toLowerCase().includes(q)) ||
           guardianMatch
         )
       }
@@ -66,7 +107,7 @@ export function StudentsClient() {
       )
     }
     return list
-  }, [students, search, genderFilter, activeFilter, sortKey, sortAsc])
+  }, [students, search, genderFilter, activeFilter, yearFilter, t1Filter, t2Filter, t3Filter, sortKey, sortAsc])
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortAsc(p => !p)
@@ -75,6 +116,27 @@ export function StudentsClient() {
 
   function handleDeactivate(id: string) {
     deactivate(id, { onSuccess: r => { if (!r.success) toast.error(r.error) } })
+  }
+
+  function startEditNote(s: StudentListItem) {
+    setEditingNoteId(s.id)
+    setNoteValue(s.notes ?? '')
+    setTimeout(() => noteInputRef.current?.focus(), 50)
+  }
+
+  function cancelEditNote() {
+    setEditingNoteId(null)
+    setNoteValue('')
+  }
+
+  function saveEditNote(studentId: string) {
+    saveNote({ studentId, note: noteValue }, {
+      onSuccess: r => {
+        if (!r.success) { toast.error(r.error); return }
+        setEditingNoteId(null)
+        setNoteValue('')
+      },
+    })
   }
 
   const total = students?.length ?? 0
@@ -114,7 +176,7 @@ export function StudentsClient() {
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input
           type="text"
-          placeholder="Rechercher des élèves, numéros de téléphone, identifiants, IDs de classe..."
+          placeholder="Rechercher des élèves, parents, téléphones, codes de classe..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 focus:border-[#c2440f]/50"
@@ -123,17 +185,34 @@ export function StudentsClient() {
 
       {/* ── Dropdowns + chips ── */}
       <div className="flex items-center flex-wrap gap-3">
-        <select className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer">
-          <option>Toutes les années</option>
-          <option>2025-2026</option><option>2024-2025</option>
+        {/* Année */}
+        <select
+          value={yearFilter}
+          onChange={e => setYearFilter(e.target.value)}
+          className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer"
+        >
+          <option value="all">Toutes les années</option>
+          {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-        {[1, 2, 3].map(t => (
-          <select key={t} className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer">
-            <option>Trimestre {t} : Tous les statuts</option>
-            <option>Trimestre {t} : Payé</option>
-            <option>Trimestre {t} : Non payé</option>
+
+        {/* T1/T2/T3 filters */}
+        {([
+          { label: 'Trimestre 1', val: t1Filter, set: setT1Filter },
+          { label: 'Trimestre 2', val: t2Filter, set: setT2Filter },
+          { label: 'Trimestre 3', val: t3Filter, set: setT3Filter },
+        ] as const).map(({ label, val, set }) => (
+          <select
+            key={label}
+            value={val}
+            onChange={e => set(e.target.value as PayFilter)}
+            className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer"
+          >
+            <option value="all">{label} : Tous</option>
+            <option value="paid">{label} : Payé</option>
+            <option value="unpaid">{label} : Non payé</option>
           </select>
         ))}
+
         {/* Chips genre */}
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">Genre :</span>
@@ -142,6 +221,7 @@ export function StudentsClient() {
           <button onClick={() => setGenderFilter(genderFilter === 'female' ? 'all' : 'female')} title="Filles"
             className={cn('h-5 w-5 rounded-full border-2 transition-all', genderFilter === 'female' ? 'bg-pink-400 border-pink-400' : 'border-pink-400 bg-white')} />
         </div>
+
         {/* Chips inscrit */}
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">Inscrit :</span>
@@ -150,9 +230,6 @@ export function StudentsClient() {
           <button onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')} title="Non inscrits"
             className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'inactive' ? 'bg-red-400 border-red-400' : 'border-red-400 bg-white')} />
         </div>
-        <select className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer">
-          <option>Âge</option>
-        </select>
       </div>
 
       {/* ── Tableau ── */}
@@ -182,34 +259,84 @@ export function StudentsClient() {
                   <th className="px-3 py-3 text-left">Étoiles</th>
                   <th className="px-3 py-3 text-left">Trophée</th>
                   <SortTh label="Date de naissance" onClick={() => toggleSort('birthDate')} />
-                  <th className="px-3 py-3 text-left min-w-[160px]">Nom du parent 1</th>
-                  <th className="px-3 py-3 text-left min-w-[160px]">Nom du parent 2</th>
+                  <th className="px-3 py-3 text-left min-w-[160px]">Parent 1</th>
+                  <th className="px-3 py-3 text-left min-w-[130px]">Parent 2</th>
+                  <th className="px-3 py-3 text-left min-w-[120px]">Téléphone</th>
                   <th className="px-3 py-3 text-left">Nb. classes</th>
-                  <th className="px-3 py-3 text-left min-w-[100px]">Classes</th>
-                  <th className="px-3 py-3 text-left">Trimestre 1</th>
-                  <th className="px-3 py-3 text-left">Trimestre 2</th>
-                  <th className="px-3 py-3 text-left">Trimestre 3</th>
+                  <th className="px-3 py-3 text-left min-w-[120px]">Classes</th>
+                  <th className="px-3 py-3 text-left">T1</th>
+                  <th className="px-3 py-3 text-left">T2</th>
+                  <th className="px-3 py-3 text-left">T3</th>
                   <th className="px-3 py-3 text-left">Statut</th>
-                  <th className="px-3 py-3 text-left">Présent</th>
-                  <th className="px-3 py-3 text-left">En retard</th>
-                  <th className="px-3 py-3 text-left">Absent</th>
-                  <th className="px-3 py-3 text-left">Excusé</th>
-                  <th className="px-3 py-3 text-left min-w-[110px]">Année d&apos;inscription</th>
-                  <th className="px-3 py-3 text-left min-w-[110px]">Date d&apos;adhésion</th>
+                  <th className="px-3 py-3 text-center">Présent</th>
+                  <th className="px-3 py-3 text-center">Retard</th>
+                  <th className="px-3 py-3 text-center">Absent</th>
+                  <th className="px-3 py-3 text-center">Excusé</th>
+                  <th className="px-3 py-3 text-left min-w-[110px]">Année inscrit.</th>
+                  <th className="px-3 py-3 text-left min-w-[110px]">Date adhésion</th>
                   <th className="px-3 py-3 text-left min-w-[120px]">Dernière présence</th>
-                  <th className="px-3 py-3 text-left min-w-[130px]">Numéro d&apos;urgence</th>
-                  <th className="px-3 py-3 text-left min-w-[180px]">Commentaire</th>
-                  <th className="px-3 py-3 text-left min-w-[280px]">Actions</th>
+                  <th className="px-3 py-3 text-left min-w-[130px]">N° urgence</th>
+                  <th className="px-3 py-3 text-left min-w-[200px]">Commentaire</th>
+                  <th className="px-3 py-3 text-left min-w-[300px]">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((s, i) => (
-                  <StudentRow key={s.id} student={s} index={i} onDeactivate={handleDeactivate} />
+                  <StudentRow
+                    key={s.id}
+                    student={s}
+                    index={i}
+                    onDeactivate={handleDeactivate}
+                    editingNoteId={editingNoteId}
+                    noteValue={noteValue}
+                    noteInputRef={noteInputRef}
+                    onStartEditNote={startEditNote}
+                    onCancelEditNote={cancelEditNote}
+                    onSaveEditNote={saveEditNote}
+                    onNoteChange={setNoteValue}
+                    onOpenReportCard={() => setReportCardStudent(s)}
+                    onOpenAttendance={() => setAttendanceModal({ studentId: s.id, studentName: `${s.firstName} ${s.lastName}` })}
+                    onOpenPayments={() => setPaymentsModal({ studentId: s.id, studentName: `${s.firstName} ${s.lastName}` })}
+                    onOpenHomework={() => setHomeworkModal({ studentId: s.id, studentName: `${s.firstName} ${s.lastName}` })}
+                  />
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+      )}
+
+      {/* ── Modals ── */}
+      {reportCardStudent && (
+        <StudentReportCardModal
+          open
+          onOpenChange={v => { if (!v) setReportCardStudent(null) }}
+          student={reportCardStudent}
+        />
+      )}
+      {attendanceModal && (
+        <StudentAttendanceModal
+          open
+          onOpenChange={v => { if (!v) setAttendanceModal(null) }}
+          studentId={attendanceModal.studentId}
+          studentName={attendanceModal.studentName}
+        />
+      )}
+      {paymentsModal && (
+        <StudentPaymentsModal
+          open
+          onOpenChange={v => { if (!v) setPaymentsModal(null) }}
+          studentId={paymentsModal.studentId}
+          studentName={paymentsModal.studentName}
+        />
+      )}
+      {homeworkModal && (
+        <StudentHomeworkModal
+          open
+          onOpenChange={v => { if (!v) setHomeworkModal(null) }}
+          studentId={homeworkModal.studentId}
+          studentName={homeworkModal.studentName}
+        />
       )}
     </div>
   )
@@ -238,19 +365,34 @@ function PaymentBadge({ paid }: { paid: boolean }) {
   )
 }
 
-function StudentRow({ student: s, index, onDeactivate }: {
+function StudentRow({
+  student: s, index, onDeactivate,
+  editingNoteId, noteValue, noteInputRef,
+  onStartEditNote, onCancelEditNote, onSaveEditNote, onNoteChange,
+  onOpenReportCard, onOpenAttendance, onOpenPayments, onOpenHomework,
+}: {
   student: StudentListItem
   index: number
   onDeactivate: (id: string) => void
+  editingNoteId: string | null
+  noteValue: string
+  noteInputRef: React.RefObject<HTMLTextAreaElement | null>
+  onStartEditNote: (s: StudentListItem) => void
+  onCancelEditNote: () => void
+  onSaveEditNote: (id: string) => void
+  onNoteChange: (v: string) => void
+  onOpenReportCard: () => void
+  onOpenAttendance: () => void
+  onOpenPayments: () => void
+  onOpenHomework: () => void
 }) {
   const father = s.guardians.find(g => g.relationship === 'father' || g.isPrimary)
   const mother = s.guardians.find(g => g.relationship === 'mother') ?? s.guardians.find(g => !g.isPrimary)
-
-  const emergencyPhone = father?.emergencyPhone
-    ?? s.guardians.find(g => g.emergencyPhone)?.emergencyPhone
+  const emergencyPhone = father?.emergencyPhone ?? s.guardians.find(g => g.emergencyPhone)?.emergencyPhone
+  const isEditingNote = editingNoteId === s.id
 
   return (
-    <tr className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors">
+    <tr className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-top">
       <td className="px-3 py-3 text-muted-foreground text-xs">{index + 1}.</td>
 
       {/* Nom + ID */}
@@ -284,38 +426,48 @@ function StudentRow({ student: s, index, onDeactivate }: {
         ) : <span className="text-muted-foreground">—</span>}
       </td>
 
-      {/* Nom du parent 1 (père) */}
+      {/* Parent 1 (père) */}
       <td className="px-3 py-3">
         {father ? (
           <div>
             <p className="font-medium text-xs">{father.firstName} {father.lastName}</p>
-            {father.email && <p className="text-xs text-muted-foreground">{father.email}</p>}
-            {father.phone && <p className="text-xs text-muted-foreground">{father.phone}</p>}
+            {father.email && <p className="text-xs text-muted-foreground truncate max-w-36">{father.email}</p>}
           </div>
         ) : <span className="text-muted-foreground text-xs italic">—</span>}
       </td>
 
-      {/* Nom du parent 2 (mère) */}
+      {/* Parent 2 (mère) */}
       <td className="px-3 py-3">
         {mother ? (
           <div>
             <p className="font-medium text-xs">{mother.firstName} {mother.lastName}</p>
-            {mother.email && <p className="text-xs text-muted-foreground">{mother.email}</p>}
+            {mother.email && <p className="text-xs text-muted-foreground truncate max-w-32">{mother.email}</p>}
           </div>
         ) : <span className="text-muted-foreground text-xs italic">—</span>}
       </td>
 
-      {/* Nb classes */}
-      <td className="px-3 py-3 text-center">
-        <span className="font-medium">{s.activeClassId ? '1' : '0'}</span>
-        <span className="text-xs text-muted-foreground ml-1">classe</span>
+      {/* Téléphone */}
+      <td className="px-3 py-3 text-xs text-muted-foreground">
+        {s.phone ?? '—'}
       </td>
 
-      {/* Classe */}
+      {/* Nb classes */}
+      <td className="px-3 py-3 text-center">
+        <span className="font-medium">{s.enrollments.length}</span>
+        <span className="text-xs text-muted-foreground ml-1">classe{s.enrollments.length !== 1 ? 's' : ''}</span>
+      </td>
+
+      {/* Classes (codes) */}
       <td className="px-3 py-3">
-        {s.activeClassName
-          ? <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">{s.activeClassName}</span>
-          : <span className="text-muted-foreground text-xs italic">Aucune classe</span>}
+        {s.enrollments.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {s.enrollments.map(e => (
+              <span key={e.enrollmentId} className="inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#7a4f30] text-white">
+                {e.classCode || e.className}
+              </span>
+            ))}
+          </div>
+        ) : <span className="text-muted-foreground text-xs italic">Aucune</span>}
       </td>
 
       {/* Paiements T1/T2/T3 */}
@@ -333,22 +485,22 @@ function StudentRow({ student: s, index, onDeactivate }: {
         </span>
       </td>
 
-      {/* Présences (placeholder) */}
+      {/* Présences — données réelles */}
       <td className="px-3 py-3 text-center">
-        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-semibold">0</span>
+        <AttBadge value={s.attendancePresent} color="blue" />
       </td>
       <td className="px-3 py-3 text-center">
-        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-orange-100 text-orange-700 text-[11px] font-semibold">0</span>
+        <AttBadge value={s.attendanceLate} color="orange" />
       </td>
       <td className="px-3 py-3 text-center">
-        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-100 text-red-700 text-[11px] font-semibold">0</span>
+        <AttBadge value={s.attendanceAbsent} color="red" />
       </td>
       <td className="px-3 py-3 text-center">
-        <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-purple-100 text-purple-700 text-[11px] font-semibold">0</span>
+        <AttBadge value={s.attendanceExcused} color="purple" />
       </td>
 
       {/* Année inscription */}
-      <td className="px-3 py-3 text-xs">{s.academicYear ?? '—'}</td>
+      <td className="px-3 py-3 text-xs">{s.enrollmentYear ?? '—'}</td>
 
       {/* Date adhésion */}
       <td className="px-3 py-3 text-xs text-muted-foreground">
@@ -357,35 +509,88 @@ function StudentRow({ student: s, index, onDeactivate }: {
           : new Date(s.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
       </td>
 
-      {/* Dernière présence */}
-      <td className="px-3 py-3 text-xs text-muted-foreground">Jamais</td>
-
-      {/* Numéro d'urgence */}
+      {/* Dernière présence — données réelles */}
       <td className="px-3 py-3 text-xs text-muted-foreground">
-        {emergencyPhone ?? 'Non renseigné'}
+        {s.lastAttendanceDate
+          ? new Date(s.lastAttendanceDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+          : 'Jamais'}
       </td>
 
-      {/* Notes / Commentaire */}
-      <td className="px-3 py-3">
-        <label className="flex items-start gap-1.5 cursor-pointer">
-          <input type="checkbox" className="mt-0.5 h-3.5 w-3.5 rounded border-border" readOnly checked={false} />
-          <span className="text-xs text-muted-foreground">
-            {s.notes ?? 'Cliquer pour ajouter un commentaire'}
-          </span>
-        </label>
+      {/* Numéro urgence */}
+      <td className="px-3 py-3 text-xs text-muted-foreground">
+        {emergencyPhone ?? '—'}
+      </td>
+
+      {/* Commentaire inline éditable */}
+      <td className="px-3 py-3 min-w-[200px]">
+        {isEditingNote ? (
+          <div className="flex flex-col gap-1">
+            <textarea
+              ref={noteInputRef}
+              value={noteValue}
+              onChange={e => onNoteChange(e.target.value)}
+              rows={2}
+              className="w-full text-xs border border-[#c2440f]/50 rounded px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+            />
+            <div className="flex gap-1">
+              <button
+                onClick={() => onSaveEditNote(s.id)}
+                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs bg-[#c2440f] text-white hover:bg-[#a33a0d]"
+              >
+                <Check className="w-3 h-3" /> Sauvegarder
+              </button>
+              <button
+                onClick={onCancelEditNote}
+                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600 hover:bg-gray-200"
+              >
+                <X className="w-3 h-3" /> Annuler
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => onStartEditNote(s)}
+            className="flex items-start gap-1.5 group text-left w-full"
+          >
+            <Pencil className="w-3 h-3 text-muted-foreground mt-0.5 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" />
+            <span className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              {s.notes ?? 'Cliquer pour ajouter un commentaire'}
+            </span>
+          </button>
+        )}
       </td>
 
       {/* Actions */}
       <td className="px-3 py-3">
-        <div className="flex items-center gap-1">
-          <ActionBtn label="Bulletin de notes" color="blue"   />
-          <ActionBtn label="Présences de l'élève" color="orange" />
-          <ActionBtn label="Paiements"          color="green" />
-          <ActionBtn label="Devoirs"            color="purple" />
+        <div className="flex items-center gap-1 flex-wrap">
+          <button
+            onClick={onOpenReportCard}
+            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
+          >
+            Bulletin
+          </button>
+          <button
+            onClick={onOpenAttendance}
+            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-colors"
+          >
+            Présences
+          </button>
+          <button
+            onClick={onOpenPayments}
+            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-green-50 border-green-200 text-green-700 hover:bg-green-100 transition-colors"
+          >
+            Paiements
+          </button>
+          <button
+            onClick={onOpenHomework}
+            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors"
+          >
+            Devoirs
+          </button>
           <StudentFormDialog
             student={s}
             trigger={
-              <button className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors ml-0.5">
+              <button className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors">
                 <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M4 16l-.5 4 4-.5 9.293-9.293-3.536-3.536L4 16z" />
                 </svg>
@@ -398,17 +603,17 @@ function StudentRow({ student: s, index, onDeactivate }: {
   )
 }
 
-function ActionBtn({ label, color }: { label: string; color: 'blue' | 'green' | 'orange' | 'purple' }) {
+function AttBadge({ value, color }: { value: number; color: 'blue' | 'orange' | 'red' | 'purple' }) {
   const cls = {
-    blue:   'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
-    green:  'bg-green-50 border-green-200 text-green-700 hover:bg-green-100',
-    orange: 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100',
-    purple: 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100',
+    blue:   'bg-blue-100 text-blue-700',
+    orange: 'bg-orange-100 text-orange-700',
+    red:    'bg-red-100 text-red-700',
+    purple: 'bg-purple-100 text-purple-700',
   }[color]
   return (
-    <button className={cn('inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium transition-colors', cls)}>
-      {label}
-    </button>
+    <span className={cn('inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full text-[11px] font-semibold', cls)}>
+      {value}
+    </span>
   )
 }
 

@@ -7,14 +7,17 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useAdminExamClasses, useAdminExamStudents } from '@/modules/exams/exams.hooks'
 import type { AdminExamClassProgress, AdminExamStudentProgress } from '@/modules/exams/exams.types'
 
 interface Props {
   initialClasses: AdminExamClassProgress[]
   initialStudents: AdminExamStudentProgress[]
-  trimester: number
+  initialTrimester: number
   academicYear: string
-  examPeriodOpen: boolean
+  examPeriodT1Open: boolean
+  examPeriodT2Open: boolean
+  examPeriodT3Open: boolean
   schoolName: string
 }
 
@@ -268,12 +271,19 @@ Jazakom allahu khayrn`
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export function TrackExamsClient({
-  initialClasses, initialStudents, trimester, academicYear, examPeriodOpen, schoolName,
+  initialClasses, initialStudents, initialTrimester, academicYear,
+  examPeriodT1Open, examPeriodT2Open, examPeriodT3Open, schoolName,
 }: Props) {
+  const [trimester, setTrimester] = useState(initialTrimester)
   const [activeTab, setActiveTab] = useState<ViewTab>('class')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('name-az')
   const [showEmail, setShowEmail] = useState(false)
+
+  const { data: classes = initialClasses } = useAdminExamClasses(trimester)
+  const { data: students = initialStudents } = useAdminExamStudents(trimester)
+
+  const examPeriodOpen = trimester === 1 ? examPeriodT1Open : trimester === 2 ? examPeriodT2Open : examPeriodT3Open
 
   const TABS: { key: ViewTab; label: string }[] = [
     { key: 'class', label: 'Par classe' },
@@ -283,22 +293,22 @@ export function TrackExamsClient({
   ]
 
   const totalStudents = useMemo(() => {
-    const ids = new Set(initialStudents.map(s => s.studentId))
+    const ids = new Set(students.map(s => s.studentId))
     return ids.size
-  }, [initialStudents])
+  }, [students])
 
   const filteredClasses = useMemo(() => {
-    if (!search) return initialClasses
+    if (!search) return classes
     const q = search.toLowerCase()
-    return initialClasses.filter(c =>
+    return classes.filter(c =>
       c.className.toLowerCase().includes(q) ||
       (c.teacherName ?? '').toLowerCase().includes(q) ||
       (c.catalogCode ?? '').toLowerCase().includes(q)
     )
-  }, [initialClasses, search])
+  }, [classes, search])
 
   const filteredStudents = useMemo(() => {
-    let list = [...initialStudents]
+    let list = [...students]
     if (search) {
       const q = search.toLowerCase()
       list = list.filter(s =>
@@ -315,14 +325,14 @@ export function TrackExamsClient({
       case 'score-desc': list.sort((a, b) => (b.averageScore ?? -1) - (a.averageScore ?? -1)); break
     }
     return list
-  }, [initialStudents, search, sort])
+  }, [students, search, sort])
 
   const isClassTab = activeTab === 'class' || activeTab === 'completion' || activeTab === 'type'
   const displayedClasses = isClassTab ? filteredClasses : []
   const displayedStudents = activeTab === 'student' ? filteredStudents : []
 
   const subtitleCount = isClassTab
-    ? `${initialClasses.length} Classe${initialClasses.length !== 1 ? 's' : ''}`
+    ? `${classes.length} Classe${classes.length !== 1 ? 's' : ''}`
     : `${totalStudents} Élève${totalStudents !== 1 ? 's' : ''}`
 
   return (
@@ -349,11 +359,29 @@ export function TrackExamsClient({
 
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="space-y-2">
           <h1 className="text-2xl font-bold text-[#7a4f30]">Suivre les notes d&apos;examen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Suivi de Trimestre {trimester} {academicYear} • {subtitleCount}
-          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <p className="text-sm text-muted-foreground">
+              {academicYear} • {subtitleCount}
+            </p>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3].map(t => (
+                <button
+                  key={t}
+                  onClick={() => { setTrimester(t); setSearch('') }}
+                  className={cn(
+                    'px-3 py-1 text-xs font-semibold rounded-full transition-colors',
+                    trimester === t
+                      ? 'bg-[#c2440f] text-white'
+                      : 'border border-gray-200 text-gray-600 hover:bg-gray-50',
+                  )}
+                >
+                  T{t}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -453,7 +481,7 @@ export function TrackExamsClient({
       {/* Email dialog */}
       {showEmail && (
         <EmailReportDialog
-          classes={initialClasses}
+          classes={classes}
           schoolName={schoolName}
           trimester={trimester}
           academicYear={academicYear}

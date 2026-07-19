@@ -91,14 +91,18 @@ export const registrationsService = {
 
   // ── Registrations (submissions) ─────────────────────────────────────────────
 
-  /** IDs of students (among the given list) who already have a registration on file. */
-  async getRegisteredStudentIds(schoolId: string, studentIds: string[]): Promise<Set<string>> {
+  /** IDs of students (among the given list) who already have a registration for this academic year. */
+  async getRegisteredStudentIds(schoolId: string, studentIds: string[], academicYear: string): Promise<Set<string>> {
     if (studentIds.length === 0) return new Set()
 
     const rows = await db
       .select({ studentId: registrations.studentId })
       .from(registrations)
-      .where(and(eq(registrations.schoolId, schoolId), inArray(registrations.studentId, studentIds)))
+      .where(and(
+        eq(registrations.schoolId, schoolId),
+        eq(registrations.academicYear, academicYear),
+        inArray(registrations.studentId, studentIds),
+      ))
 
     return new Set(rows.map(r => r.studentId).filter((id): id is string => !!id))
   },
@@ -245,10 +249,11 @@ export const registrationsService = {
     formId: string | null,
     formData: Record<string, unknown>,
     studentId?: string,
+    academicYear?: string,
   ): Promise<Registration> {
     const [row] = await db
       .insert(registrations)
-      .values({ schoolId, formId, formData, status: 'pending', studentId: studentId ?? null })
+      .values({ schoolId, formId, formData, status: 'pending', studentId: studentId ?? null, academicYear: academicYear ?? '' })
       .returning()
 
     return {

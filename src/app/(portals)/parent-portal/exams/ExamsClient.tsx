@@ -8,7 +8,7 @@ import type { ParentChildExamData, ParentExamGrade } from '@/modules/exams/exams
 
 interface Props {
   initialChildren: ParentChildExamData[]
-  trimester: number
+  initialTrimester: number
   academicYear: string
   parentName: string
 }
@@ -147,7 +147,8 @@ function ChildGrades({ child, parentName }: { child: ParentChildExamData; parent
   )
 }
 
-export function ExamsClient({ initialChildren, trimester, academicYear, parentName }: Props) {
+export function ExamsClient({ initialChildren, initialTrimester, academicYear, parentName }: Props) {
+  const [trimester, setTrimester] = useState(initialTrimester)
   const { data: children = initialChildren } = useParentChildrenGrades(trimester)
   const [activeId, setActiveId] = useState(initialChildren[0]?.studentId ?? '')
 
@@ -160,13 +161,31 @@ export function ExamsClient({ initialChildren, trimester, academicYear, parentNa
         <div className="h-10 w-10 rounded-xl bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center shrink-0">
           <GraduationCap className="h-5 w-5 text-[#c2440f]" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-[#7a4f30]">
             Bulletins scolaires
           </h1>
-          <p className="text-sm text-muted-foreground">
-            (Trimestre {trimester} {academicYear}) — Consulter les notes semestrielles et fournir une signature
-          </p>
+          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+            <p className="text-sm text-muted-foreground">
+              {academicYear} — Consulter les notes et signer
+            </p>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTrimester(t)}
+                  className={cn(
+                    'px-2.5 py-0.5 text-xs font-semibold rounded-full transition-colors',
+                    trimester === t
+                      ? 'bg-[#c2440f] text-white'
+                      : 'border border-gray-200 text-gray-600 hover:bg-gray-50',
+                  )}
+                >
+                  T{t}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -9,7 +9,7 @@ export function exportStudentsToExcel(students: StudentListItem[]) {
     'Date de naissance': s.birthDate
       ? new Date(s.birthDate).toLocaleDateString('fr-FR')
       : '',
-    'Classe': s.activeClassName ?? '',
+    'Classe': s.enrollments.map(e => e.classCode || e.className).join(', '),
     'Statut': s.isActive ? 'Actif' : 'Inactif',
   }))
 

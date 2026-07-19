@@ -6,18 +6,23 @@ import { ExamsClient } from './ExamsClient'
 export default async function TeacherExamsPage() {
   const session = await requireSession()
   const school = await schoolService.getById(session.schoolId)
-  const trimester = school?.settings?.currentTrimester ?? 1
-  const examPeriodOpen = school?.settings?.examPeriodOpen ?? false
+  const initialTrimester = school?.settings?.currentTrimester ?? 1
+  const s = school?.settings
+  const examPeriodT1Open = s?.examPeriodT1Open ?? false
+  const examPeriodT2Open = s?.examPeriodT2Open ?? false
+  const examPeriodT3Open = s?.examPeriodT3Open ?? false
   const academicYear = school?.settings?.academicYear ?? ''
 
-  const classes = await examsService.getTeacherClasses(session.memberId, session.schoolId, trimester)
+  const classes = await examsService.getTeacherClasses(session.memberId, session.schoolId, initialTrimester)
 
   return (
     <ExamsClient
       initialClasses={classes}
-      trimester={trimester}
+      initialTrimester={initialTrimester}
       academicYear={academicYear}
-      examPeriodOpen={examPeriodOpen}
+      examPeriodT1Open={examPeriodT1Open}
+      examPeriodT2Open={examPeriodT2Open}
+      examPeriodT3Open={examPeriodT3Open}
     />
   )
 }

@@ -71,6 +71,7 @@ export const registrations = pgTable('registrations', {
   formId:                uuid('form_id').references(() => registrationForms.id),
   studentId:             uuid('student_id').references(() => students.id),
   submittedByMemberId:   uuid('submitted_by_member_id').references(() => schoolMembers.id),
+  academicYear:          text('academic_year').notNull().default(''),
   formData:              jsonb('form_data').notNull().default({}),
   status:                registrationStatusEnum('status').notNull().default('pending'),
   submittedAt:           timestamp('submitted_at', { withTimezone: true }).defaultNow().notNull(),

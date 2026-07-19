@@ -6,7 +6,10 @@ import { createStudentSchema, updateStudentSchema } from './students.schema'
 import { requireSession } from '@/lib/auth/session'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
-import type { Student, StudentListItem } from './students.types'
+import type {
+  Student, StudentListItem, StudentPayment,
+  StudentAttendanceDay, StudentHomeworkItem, StudentReportCardData,
+} from './students.types'
 import { ROUTES } from '@/lib/constants'
 
 export async function getStudentsAction(): Promise<ActionResult<StudentListItem[]>> {
@@ -32,16 +35,12 @@ export async function getStudentAction(studentId: string): Promise<ActionResult<
   }
 }
 
-export async function createStudentAction(
-  input: unknown
-): Promise<ActionResult<Student>> {
+export async function createStudentAction(input: unknown): Promise<ActionResult<Student>> {
   const session = await requireSession()
   if (!session.roles.includes('admin')) return unauthorized()
 
   const parsed = createStudentSchema.safeParse(input)
-  if (!parsed.success) {
-    return err(parsed.error.issues[0].message)
-  }
+  if (!parsed.success) return err(parsed.error.issues[0].message)
 
   try {
     const student = await studentsService.create(session.schoolId, parsed.data)
@@ -61,9 +60,7 @@ export async function updateStudentAction(
   if (!session.roles.includes('admin')) return unauthorized()
 
   const parsed = updateStudentSchema.safeParse(input)
-  if (!parsed.success) {
-    return err(parsed.error.issues[0].message)
-  }
+  if (!parsed.success) return err(parsed.error.issues[0].message)
 
   try {
     const student = await studentsService.update(session.schoolId, studentId, parsed.data)
@@ -76,9 +73,7 @@ export async function updateStudentAction(
   }
 }
 
-export async function deactivateStudentAction(
-  studentId: string
-): Promise<ActionResult<void>> {
+export async function deactivateStudentAction(studentId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
   if (!session.roles.includes('admin')) return unauthorized()
 
@@ -92,9 +87,7 @@ export async function deactivateStudentAction(
   }
 }
 
-export async function deleteStudentAction(
-  studentId: string
-): Promise<ActionResult<void>> {
+export async function deleteStudentAction(studentId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
   if (!session.roles.includes('admin')) return unauthorized()
 
@@ -105,5 +98,87 @@ export async function deleteStudentAction(
   } catch (e) {
     console.error('[deleteStudentAction]', e)
     return err("Impossible de supprimer l'élève.")
+  }
+}
+
+export async function updateStudentNoteAction(
+  studentId: string,
+  note: string
+): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return unauthorized()
+
+  try {
+    await studentsService.updateNote(session.schoolId, studentId, note)
+    revalidatePath(ROUTES.admin.students)
+    return ok(undefined)
+  } catch (e) {
+    console.error('[updateStudentNoteAction]', e)
+    return err('Impossible de sauvegarder le commentaire.')
+  }
+}
+
+export async function getStudentPaymentsAction(
+  studentId: string
+): Promise<ActionResult<StudentPayment[]>> {
+  const session = await requireSession()
+  try {
+    const data = await studentsService.getStudentPayments(session.schoolId, studentId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getStudentPaymentsAction]', e)
+    return err('Impossible de charger les paiements.')
+  }
+}
+
+export async function getStudentAttendanceCalendarAction(
+  studentId: string
+): Promise<ActionResult<StudentAttendanceDay[]>> {
+  const session = await requireSession()
+  try {
+    const data = await studentsService.getStudentAttendanceCalendar(session.schoolId, studentId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getStudentAttendanceCalendarAction]', e)
+    return err('Impossible de charger les présences.')
+  }
+}
+
+export async function getStudentHomeworkAction(
+  studentId: string
+): Promise<ActionResult<StudentHomeworkItem[]>> {
+  const session = await requireSession()
+  try {
+    const data = await studentsService.getStudentHomework(session.schoolId, studentId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getStudentHomeworkAction]', e)
+    return err('Impossible de charger les devoirs.')
+  }
+}
+
+export async function getActiveClassesAction(): Promise<ActionResult<{
+  id: string; classCode: string; name: string; teacherName: string | null
+}[]>> {
+  const session = await requireSession()
+  try {
+    const data = await studentsService.getActiveClasses(session.schoolId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getActiveClassesAction]', e)
+    return err('Impossible de charger les classes.')
+  }
+}
+
+export async function getStudentReportCardAction(
+  studentId: string
+): Promise<ActionResult<StudentReportCardData>> {
+  const session = await requireSession()
+  try {
+    const data = await studentsService.getStudentReportCard(session.schoolId, studentId)
+    return ok(data)
+  } catch (e) {
+    console.error('[getStudentReportCardAction]', e)
+    return err('Impossible de charger le bulletin.')
   }
 }

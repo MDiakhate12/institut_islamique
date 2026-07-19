@@ -7,8 +7,32 @@ import {
   submitExamResultAction,
   getParentChildrenGradesAction,
   signExamGradeAction,
+  getAdminExamClassesAction,
+  getAdminExamStudentsAction,
 } from './exams.actions'
 import type { SubmitExamInput } from './exams.schema'
+
+export function useAdminExamClasses(trimester: number) {
+  return useQuery({
+    queryKey: ['admin-exam-classes', trimester],
+    queryFn: async () => {
+      const r = await getAdminExamClassesAction(trimester)
+      return r.success ? r.data : []
+    },
+    staleTime: 30_000,
+  })
+}
+
+export function useAdminExamStudents(trimester: number) {
+  return useQuery({
+    queryKey: ['admin-exam-students', trimester],
+    queryFn: async () => {
+      const r = await getAdminExamStudentsAction(trimester)
+      return r.success ? r.data : []
+    },
+    staleTime: 30_000,
+  })
+}
 
 export function useTeacherExamClasses(trimester: number) {
   return useQuery({
