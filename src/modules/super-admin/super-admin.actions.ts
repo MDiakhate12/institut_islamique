@@ -1,0 +1,156 @@
+'use server'
+
+import { Resend } from 'resend'
+import { superAdminService } from './super-admin.service'
+import { createSchoolSchema, updateSchoolBasicSchema } from './super-admin.schema'
+import { ok, err } from '@/lib/result'
+import type { ActionResult } from '@/lib/result'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+function buildInviteEmail(opts: {
+  schoolName: string
+  adminName:  string
+  inviteUrl:  string
+}): string {
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#fdf6f0;font-family:Arial,sans-serif;">
+  <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#7a4f30,#c2440f);padding:36px 40px;text-align:center;">
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Application de gestion scolaire islamique</p>
+    </div>
+    <div style="padding:40px;">
+      <p style="color:#5c3820;font-size:16px;margin:0 0 16px;">Assalamo Alykom ${opts.adminName},</p>
+      <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 24px;">
+        Vous avez été invité(e) en tant qu'<strong>administrateur</strong> de l'école
+        <strong>${opts.schoolName}</strong> sur Qaf School.
+      </p>
+      <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 32px;">
+        Cliquez sur le bouton ci-dessous pour créer votre compte et accéder à votre portail d'administration.
+      </p>
+      <div style="text-align:center;margin-bottom:32px;">
+        <a href="${opts.inviteUrl}" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+          Activer mon compte →
+        </a>
+      </div>
+      <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
+        Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br>
+        <a href="${opts.inviteUrl}" style="color:#c2440f;word-break:break-all;">${opts.inviteUrl}</a>
+      </p>
+    </div>
+    <div style="background:#fdf6f0;padding:20px 40px;text-align:center;">
+      <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
+    </div>
+  </div>
+</body>
+</html>`
+}
+
+export async function createSchoolAction(raw: unknown): Promise<ActionResult<{
+  schoolId: string
+  schoolName: string
+  inviteUrl: string
+  emailSent: boolean
+}>> {
+  const parsed = createSchoolSchema.safeParse(raw)
+  if (!parsed.success) return err(parsed.error.issues[0].message)
+
+  const { data } = parsed
+
+  try {
+    const { school } = await superAdminService.createSchoolWithAdmin(data)
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+    const inviteUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${school.id}&email=${encodeURIComponent(data.adminEmail)}`
+
+    let emailSent = false
+    try {
+      await resend.emails.send({
+        from:    'Qaf School <onboarding@resend.dev>',
+        to:      data.adminEmail,
+        subject: `Invitation : Administrateur de ${data.schoolName}`,
+        html:    buildInviteEmail({ schoolName: data.schoolName, adminName: data.adminName, inviteUrl }),
+      })
+      emailSent = true
+    } catch (emailErr) {
+      // Email failure doesn't cancel school creation — URL is shown in UI
+      console.warn('[createSchoolAction] Resend error:', emailErr)
+    }
+
+    return ok({ schoolId: school.id, schoolName: school.name, inviteUrl, emailSent })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Erreur inconnue'
+    if (msg.includes('duplicate') || msg.includes('unique')) {
+      return err('Ce slug est déjà utilisé. Choisissez un slug différent.')
+    }
+    return err(msg)
+  }
+}
+
+export async function getAllSchoolsAction(): Promise<ActionResult<Awaited<ReturnType<typeof superAdminService.getAllSchools>>>> {
+  try {
+    const data = await superAdminService.getAllSchools()
+    return ok(data)
+  } catch {
+    return err('Erreur lors du chargement des écoles')
+  }
+}
+
+export async function resendInviteAction(schoolId: string): Promise<ActionResult<{ emailSent: boolean; inviteUrl: string }>> {
+  try {
+    const pendingEmail = await superAdminService.getPendingAdminEmail(schoolId)
+    if (!pendingEmail) return err('Aucun administrateur en attente pour cette école.')
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+    const inviteUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${schoolId}&email=${encodeURIComponent(pendingEmail)}`
+
+    let emailSent = false
+    try {
+      await resend.emails.send({
+        from:    'Qaf School <onboarding@resend.dev>',
+        to:      pendingEmail,
+        subject: 'Invitation : Administrateur Qaf School',
+        html:    buildInviteEmail({ schoolName: '', adminName: 'Administrateur', inviteUrl }),
+      })
+      emailSent = true
+    } catch (emailErr) {
+      console.warn('[resendInviteAction] Resend error:', emailErr)
+    }
+
+    return ok({ emailSent, inviteUrl })
+  } catch (e) {
+    return err(e instanceof Error ? e.message : 'Erreur inconnue')
+  }
+}
+
+export async function deleteSchoolAction(schoolId: string): Promise<ActionResult<void>> {
+  try {
+    await superAdminService.deleteSchool(schoolId)
+    return ok(undefined)
+  } catch (e) {
+    return err(e instanceof Error ? e.message : 'Erreur lors de la suppression')
+  }
+}
+
+export async function updateSchoolAction(
+  schoolId: string,
+  raw: unknown,
+): Promise<ActionResult<void>> {
+  const parsed = updateSchoolBasicSchema.safeParse(raw)
+  if (!parsed.success) return err(parsed.error.issues[0].message)
+
+  try {
+    await superAdminService.updateSchoolBasic(schoolId, parsed.data)
+    return ok(undefined)
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Erreur inconnue'
+    if (msg.includes('duplicate') || msg.includes('unique')) {
+      return err('Ce slug est déjà utilisé.')
+    }
+    return err(msg)
+  }
+}
