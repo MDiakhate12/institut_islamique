@@ -4,7 +4,16 @@ import { asc } from 'drizzle-orm'
 import { SignupForm } from './SignupForm'
 import Link from 'next/link'
 
-export default async function SignupPage() {
+interface Props {
+  searchParams: Promise<{ invite?: string; schoolId?: string; email?: string }>
+}
+
+export default async function SignupPage({ searchParams }: Props) {
+  const params = await searchParams
+  const isAdminInvite = params.invite === 'admin'
+  const prefilledSchoolId = params.schoolId ?? ''
+  const prefilledEmail = params.email ? decodeURIComponent(params.email) : ''
+
   const schoolList = await db
     .select({ id: schools.id, name: schools.name })
     .from(schools)
@@ -20,7 +29,12 @@ export default async function SignupPage() {
         <div className="bg-white rounded-xl shadow-sm border border-border p-8">
           <h2 className="text-xl font-semibold text-foreground mb-1">Créer un compte</h2>
           <p className="text-sm text-muted-foreground mb-6">Rejoignez Qaf School App</p>
-          <SignupForm schools={schoolList} />
+          <SignupForm
+            schools={schoolList}
+            isAdminInvite={isAdminInvite}
+            prefilledSchoolId={prefilledSchoolId}
+            prefilledEmail={prefilledEmail}
+          />
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Déjà un compte ?{' '}
             <Link href="/auth/login" className="text-[#c2440f] hover:underline font-medium">

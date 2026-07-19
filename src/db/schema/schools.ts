@@ -29,6 +29,9 @@ export type StaffMember = {
 }
 
 export type SchoolSettings = {
+  // ── Onboarding
+  onboardingCompleted?: boolean  // true once first admin completes setup wizard
+
   // ── Opérations scolaires
   schoolDays: string[]           // ['sunday', 'monday', ...]
   academicYear: string           // '2025-2026'

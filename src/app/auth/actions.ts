@@ -54,6 +54,7 @@ export async function signUpAction(input: {
   phone: string
   isParent: boolean
   isTeacher: boolean
+  isAdmin: boolean
   password: string
 }): Promise<{ error?: string; needsConfirmation?: boolean } | void> {
   const supabase = await createClient()
@@ -77,6 +78,35 @@ export async function signUpAction(input: {
       set: { fullName: input.fullName, phone: input.phone },
     })
 
+  // ── Flow admin invité ────────────────────────────────────────────
+  if (input.isAdmin) {
+    const [pendingRecord] = await db
+      .select({ id: schoolMembers.id })
+      .from(schoolMembers)
+      .where(
+        and(
+          eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
+          eq(schoolMembers.userId, NIL_UUID),
+          eq(schoolMembers.isPending, true),
+        )
+      )
+      .limit(1)
+
+    if (!pendingRecord) {
+      return { error: "Aucune invitation administrateur trouvée pour cet email. Contactez l'équipe Qaf." }
+    }
+
+    await db
+      .update(schoolMembers)
+      .set({ userId, isPending: false, pendingEmail: null })
+      .where(eq(schoolMembers.id, pendingRecord.id))
+
+    if (!data.session) return { needsConfirmation: true }
+    revalidatePath('/', 'layout')
+    redirect('/admin-portal')
+  }
+
+  // ── Flows parent / enseignant ────────────────────────────────────
   const roles: string[] = []
   if (input.isParent) roles.push('parent')
   if (input.isTeacher) roles.push('teacher')

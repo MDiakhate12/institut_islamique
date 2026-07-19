@@ -10,25 +10,26 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CheckCircle, Mail } from 'lucide-react'
+import { CheckCircle, Mail, Shield } from 'lucide-react'
 
 const signupSchema = z
   .object({
-    fullName:       z.string().min(2, 'Nom requis'),
-    email:          z.string().email('Email invalide'),
-    schoolId:       z.string().min(1, 'Veuillez sélectionner une école'),
-    phone:          z.string().min(8, 'Numéro de téléphone requis'),
-    isParent:       z.boolean(),
-    isTeacher:      z.boolean(),
-    password:       z.string().min(8, 'Minimum 8 caractères'),
+    fullName:        z.string().min(2, 'Nom requis'),
+    email:           z.string().email('Email invalide'),
+    schoolId:        z.string().min(1, 'Veuillez sélectionner une école'),
+    phone:           z.string().min(8, 'Numéro de téléphone requis'),
+    isParent:        z.boolean(),
+    isTeacher:       z.boolean(),
+    isAdmin:         z.boolean(),
+    password:        z.string().min(8, 'Minimum 8 caractères'),
     confirmPassword: z.string(),
-    acceptedTerms:  z.boolean().refine(v => v === true, { message: 'Vous devez accepter les conditions' }),
+    acceptedTerms:   z.boolean().refine(v => v === true, { message: 'Vous devez accepter les conditions' }),
   })
   .refine(d => d.password === d.confirmPassword, {
     message: 'Les mots de passe ne correspondent pas',
     path: ['confirmPassword'],
   })
-  .refine(d => d.isParent || d.isTeacher, {
+  .refine(d => d.isAdmin || d.isParent || d.isTeacher, {
     message: 'Sélectionnez au moins un rôle',
     path: ['isParent'],
   })
@@ -36,18 +37,21 @@ const signupSchema = z
 type SignupInput = z.infer<typeof signupSchema>
 
 interface Props {
-  schools: { id: string; name: string }[]
+  schools:          { id: string; name: string }[]
+  isAdminInvite?:   boolean
+  prefilledEmail?:  string
+  prefilledSchoolId?: string
 }
 
-export function SignupForm({ schools }: Props) {
+export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = '', prefilledSchoolId = '' }: Props) {
   const [isPending, startTransition] = useTransition()
   const [confirmed, setConfirmed] = useState(false)
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      fullName: '', email: '', schoolId: '', phone: '',
-      isParent: true, isTeacher: false,
+      fullName: '', email: prefilledEmail, schoolId: prefilledSchoolId, phone: '',
+      isParent: !isAdminInvite, isTeacher: false, isAdmin: isAdminInvite,
       password: '', confirmPassword: '', acceptedTerms: false,
     },
   })
@@ -55,13 +59,14 @@ export function SignupForm({ schools }: Props) {
   function onSubmit(data: SignupInput) {
     startTransition(async () => {
       const result = await signUpAction({
-        fullName:   data.fullName,
-        email:      data.email,
-        schoolId:   data.schoolId,
-        phone:      data.phone,
-        isParent:   data.isParent,
-        isTeacher:  data.isTeacher,
-        password:   data.password,
+        fullName:  data.fullName,
+        email:     data.email,
+        schoolId:  data.schoolId,
+        phone:     data.phone,
+        isParent:  data.isParent,
+        isTeacher: data.isTeacher,
+        isAdmin:   data.isAdmin,
+        password:  data.password,
       })
       if (result?.error) {
         toast.error(result.error)
@@ -91,6 +96,18 @@ export function SignupForm({ schools }: Props) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
+        {/* Badge admin invite */}
+        {isAdminInvite && (
+          <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">Invitation administrateur</p>
+              <p className="text-xs text-amber-700">Vous avez été invité(e) à gérer cette école.</p>
+            </div>
+          </div>
+        )}
+
         {/* Nom complet */}
         <FormField
           control={form.control}
@@ -160,8 +177,8 @@ export function SignupForm({ schools }: Props) {
           )}
         />
 
-        {/* Rôles */}
-        <div className="space-y-2">
+        {/* Rôles — masqués en mode admin invite */}
+        {!isAdminInvite && <div className="space-y-2">
           <FormLabel>Je suis *</FormLabel>
           <div className="flex gap-4">
             <FormField
@@ -200,7 +217,7 @@ export function SignupForm({ schools }: Props) {
               {form.formState.errors.isParent.message}
             </p>
           )}
-        </div>
+        </div>}
 
         {/* Mot de passe */}
         <FormField

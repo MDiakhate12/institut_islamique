@@ -2,6 +2,8 @@ import { requireSession } from '@/lib/auth/session'
 import { db } from '@/db'
 import { profiles, schools } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { redirect } from 'next/navigation'
+import { DEFAULT_SETTINGS } from '@/db/schema/schools'
 import Link from 'next/link'
 import {
   Users, GraduationCap, BookOpen, ClipboardList, CalendarCheck,
@@ -92,9 +94,15 @@ export default async function AdminDashboardPage() {
   const session = await requireSession()
 
   const [schoolResult, profileResult] = await Promise.all([
-    db.select({ name: schools.name }).from(schools).where(eq(schools.id, session.schoolId)).limit(1),
+    db.select({ name: schools.name, settings: schools.settings }).from(schools).where(eq(schools.id, session.schoolId)).limit(1),
     db.select({ fullName: profiles.fullName }).from(profiles).where(eq(profiles.userId, session.userId)).limit(1),
   ])
+
+  // Redirect to onboarding wizard if not yet completed
+  const settings = { ...DEFAULT_SETTINGS, ...(schoolResult[0]?.settings ?? {}) }
+  if (session.roles.includes('admin') && !settings.onboardingCompleted) {
+    redirect('/admin-portal/onboarding')
+  }
 
   const schoolName  = schoolResult[0]?.name ?? null
   const userFullName = profileResult[0]?.fullName ?? null

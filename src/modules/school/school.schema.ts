@@ -44,6 +44,7 @@ export const quickLinkSchema = z.object({
 })
 
 export const updateSchoolSettingsSchema = z.object({
+  onboardingCompleted:    z.boolean().optional(),
   schoolDays:             z.array(z.string()).optional(),
   academicYear:           z.string().optional(),
   currentTrimester:       z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
