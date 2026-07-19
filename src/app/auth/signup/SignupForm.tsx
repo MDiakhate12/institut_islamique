@@ -148,7 +148,9 @@ export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = ''
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner votre école" />
+                    <SelectValue placeholder="Sélectionner votre école">
+                      {(v: string) => schools.find(s => s.id === v)?.name ?? v}
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
