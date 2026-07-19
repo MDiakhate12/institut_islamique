@@ -401,7 +401,9 @@ function IdentitySection({ school }: { school: School }) {
               onValueChange={v => v && setValue('defaultLanguage', v)}
             >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue />
+                <SelectValue>
+                  {(v: string) => LANGUAGES.find(l => l.value === v)?.label ?? v}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {LANGUAGES.map(l => (
@@ -417,7 +419,9 @@ function IdentitySection({ school }: { school: School }) {
               onValueChange={v => v && setValue('timezone', v)}
             >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue />
+                <SelectValue>
+                  {(v: string) => TIMEZONES.find(t => t.value === v)?.label ?? v}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {TIMEZONES.map(t => (

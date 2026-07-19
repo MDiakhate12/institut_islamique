@@ -3,7 +3,6 @@ import { z } from 'zod'
 export const createSchoolSchema = z.object({
   schoolName:  z.string().min(2, 'Nom de l\'école requis'),
   schoolSlug:  z.string().min(2).regex(/^[a-z0-9-]+$/, 'Slug : minuscules, chiffres et tirets uniquement'),
-  adminName:   z.string().min(2, 'Nom de l\'admin requis'),
   adminEmail:  z.string().email('Email invalide'),
 })
 

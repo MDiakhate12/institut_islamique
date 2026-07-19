@@ -162,7 +162,9 @@ export function TeacherDetailClient({ teacher, classCount }: TeacherDetailClient
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner" />
+                          <SelectValue placeholder="Sélectionner">
+                            {(v: string) => v === 'volunteer' ? 'Bénévole' : v === 'paid' ? 'Payé' : v}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

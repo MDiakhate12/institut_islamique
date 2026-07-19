@@ -169,7 +169,12 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
                 onValueChange={handleSurahSelect}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choisir une sourate" />
+                  <SelectValue placeholder="Choisir une sourate">
+                    {(v: string) => {
+                      const surah = SURAHS.find(s => s.number.toString() === v)
+                      return surah ? `${surah.name} — ${surah.arabic}` : (v || 'Choisir une sourate')
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="max-h-72 overflow-y-auto">
                   {SURAHS.map(s => (

@@ -1,16 +1,23 @@
 'use server'
 
 import { Resend } from 'resend'
+import { headers } from 'next/headers'
 import { superAdminService } from './super-admin.service'
 import { createSchoolSchema, updateSchoolBasicSchema } from './super-admin.schema'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 
+async function getAppUrl(): Promise<string> {
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'
+  const proto = h.get('x-forwarded-proto') ?? 'http'
+  return `${proto}://${host}`
+}
+
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 function buildInviteEmail(opts: {
   schoolName: string
-  adminName:  string
   inviteUrl:  string
 }): string {
   return `
@@ -24,7 +31,7 @@ function buildInviteEmail(opts: {
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Application de gestion scolaire islamique</p>
     </div>
     <div style="padding:40px;">
-      <p style="color:#5c3820;font-size:16px;margin:0 0 16px;">Assalamo Alykom ${opts.adminName},</p>
+      <p style="color:#5c3820;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
       <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 24px;">
         Vous avez été invité(e) en tant qu'<strong>administrateur</strong> de l'école
         <strong>${opts.schoolName}</strong> sur Qaf School.
@@ -64,7 +71,7 @@ export async function createSchoolAction(raw: unknown): Promise<ActionResult<{
   try {
     const { school } = await superAdminService.createSchoolWithAdmin(data)
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+    const appUrl = await getAppUrl()
     const inviteUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${school.id}&email=${encodeURIComponent(data.adminEmail)}`
 
     let emailSent = false
@@ -73,7 +80,7 @@ export async function createSchoolAction(raw: unknown): Promise<ActionResult<{
         from:    'Qaf School <onboarding@resend.dev>',
         to:      data.adminEmail,
         subject: `Invitation : Administrateur de ${data.schoolName}`,
-        html:    buildInviteEmail({ schoolName: data.schoolName, adminName: data.adminName, inviteUrl }),
+        html:    buildInviteEmail({ schoolName: data.schoolName, inviteUrl }),
       })
       emailSent = true
     } catch (emailErr) {
@@ -105,7 +112,7 @@ export async function resendInviteAction(schoolId: string): Promise<ActionResult
     const pendingEmail = await superAdminService.getPendingAdminEmail(schoolId)
     if (!pendingEmail) return err('Aucun administrateur en attente pour cette école.')
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+    const appUrl = await getAppUrl()
     const inviteUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${schoolId}&email=${encodeURIComponent(pendingEmail)}`
 
     let emailSent = false
@@ -114,7 +121,7 @@ export async function resendInviteAction(schoolId: string): Promise<ActionResult
         from:    'Qaf School <onboarding@resend.dev>',
         to:      pendingEmail,
         subject: 'Invitation : Administrateur Qaf School',
-        html:    buildInviteEmail({ schoolName: '', adminName: 'Administrateur', inviteUrl }),
+        html:    buildInviteEmail({ schoolName: '', inviteUrl }),
       })
       emailSent = true
     } catch (emailErr) {

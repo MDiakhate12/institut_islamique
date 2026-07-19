@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { createSchoolSchema, type CreateSchoolInput } from '@/modules/super-admin/super-admin.schema'
 import { createSchoolAction } from '@/modules/super-admin/super-admin.actions'
 import { toast } from 'sonner'
-import { School, Mail, User, Hash, CheckCircle, ArrowLeft, Copy } from 'lucide-react'
+import { School, Mail, Hash, CheckCircle, ArrowLeft, Copy } from 'lucide-react'
 import Link from 'next/link'
 
 export function NewSchoolClient() {
@@ -15,7 +15,7 @@ export function NewSchoolClient() {
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<CreateSchoolInput>({
     resolver: zodResolver(createSchoolSchema),
-    defaultValues: { schoolName: '', schoolSlug: '', adminName: '', adminEmail: '' },
+    defaultValues: { schoolName: '', schoolSlug: '', adminEmail: '' },
   })
 
   const schoolName = watch('schoolName')
@@ -155,18 +155,8 @@ export function NewSchoolClient() {
         {/* Section admin */}
         <div className="space-y-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <User className="h-3.5 w-3.5" /> Premier administrateur
+            <Mail className="h-3.5 w-3.5" /> Email du premier administrateur
           </p>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Nom complet *</label>
-            <input
-              {...register('adminName')}
-              placeholder="Abdeslam Ouili"
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
-            />
-            {errors.adminName && <p className="text-xs text-red-500">{errors.adminName.message}</p>}
-          </div>
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
@@ -180,6 +170,7 @@ export function NewSchoolClient() {
               className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
             />
             {errors.adminEmail && <p className="text-xs text-red-500">{errors.adminEmail.message}</p>}
+            <p className="text-xs text-gray-400">L'admin renseignera son nom lors de la création de son compte.</p>
           </div>
         </div>
 

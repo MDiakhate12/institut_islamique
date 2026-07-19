@@ -171,7 +171,9 @@ export function TeacherInviteForm({ onSuccess, onCancel }: TeacherInviteFormProp
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un type" />
+                    <SelectValue placeholder="Sélectionner un type">
+                      {(v: string) => v === 'volunteer' ? 'Bénévole' : v === 'paid' ? 'Payé' : v}
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
