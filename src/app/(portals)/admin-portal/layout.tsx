@@ -12,11 +12,16 @@ export default async function AdminPortalLayout({ children }: { children: React.
     db.select({ fullName: profiles.fullName }).from(profiles).where(eq(profiles.userId, session.userId)).limit(1),
   ])
 
+  const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS ?? '')
+    .split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+  const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(session.email.toLowerCase())
+
   return (
     <PortalLayout
       session={session}
       schoolName={schoolResult[0]?.name}
       userFullName={profileResult[0]?.fullName ?? null}
+      isSuperAdmin={isSuperAdmin}
     >
       {children}
     </PortalLayout>

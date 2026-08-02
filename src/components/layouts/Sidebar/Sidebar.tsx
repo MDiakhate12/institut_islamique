@@ -103,9 +103,10 @@ interface SidebarProps {
   session: Session
   userFullName?: string | null
   schoolName?: string | null
+  isSuperAdmin?: boolean
 }
 
-export function Sidebar({ session, userFullName, schoolName }: SidebarProps) {
+export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -272,6 +273,20 @@ export function Sidebar({ session, userFullName, schoolName }: SidebarProps) {
       </nav>
 
       {/* Autres portails (si rôles cumulés) */}
+      {!collapsed && isSuperAdmin && (
+        <div className="px-3 pb-2 shrink-0">
+          <Link
+            href="/super-admin"
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg
+                       border border-white/30 bg-white/10
+                       text-white text-xs font-medium hover:bg-white/20 transition-colors"
+          >
+            <Shield className="h-3.5 w-3.5 shrink-0" />
+            Super Admin
+          </Link>
+        </div>
+      )}
+
       {!collapsed && (hasParentRole || hasTeacherRole) && (
         <div className="px-3 pb-2 shrink-0 space-y-1.5">
           {hasParentRole && (

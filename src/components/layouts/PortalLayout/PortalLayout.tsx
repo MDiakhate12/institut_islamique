@@ -7,13 +7,14 @@ interface PortalLayoutProps {
   session: Session
   schoolName?: string
   userFullName?: string | null
+  isSuperAdmin?: boolean
 }
 
-export function PortalLayout({ children, session, schoolName, userFullName }: PortalLayoutProps) {
+export function PortalLayout({ children, session, schoolName, userFullName, isSuperAdmin }: PortalLayoutProps) {
   return (
     // Pas d'overflow-hidden ici → le bouton collapse de la sidebar peut déborder
     <div className="flex h-[100dvh]">
-      <Sidebar session={session} userFullName={userFullName} schoolName={schoolName} />
+      <Sidebar session={session} userFullName={userFullName} schoolName={schoolName} isSuperAdmin={isSuperAdmin} />
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         <TopBar session={session} schoolName={schoolName} userFullName={userFullName} />
         {/* bg-[#FFF8F0] = fond crème warm des pages intérieures */}
