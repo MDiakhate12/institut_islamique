@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import {
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MessageCircle, Send } from 'lucide-react'
+import { sendSupportEmailAction } from '@/modules/school/school.actions'
 
 interface SupportForm {
   name: string
@@ -20,18 +21,18 @@ interface SupportForm {
 
 export function ContactSupportDialog() {
   const [open, setOpen] = useState(false)
-  const [sending, setSending] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<SupportForm>()
 
   async function onSubmit(data: SupportForm) {
-    setSending(true)
-    // TODO: implement actual support email via Resend
-    await new Promise(r => setTimeout(r, 800))
-    setSending(false)
-    toast.success('Message envoyé ! Nous vous répondrons dans les 24h.')
-    reset()
-    setOpen(false)
+    startTransition(async () => {
+      const result = await sendSupportEmailAction(data)
+      if (!result.success) { toast.error(result.error); return }
+      toast.success('Message envoyé ! Nous vous répondrons dans les 24h.')
+      reset()
+      setOpen(false)
+    })
   }
 
   return (
@@ -117,11 +118,11 @@ export function ContactSupportDialog() {
             <Button
               type="submit"
               size="sm"
-              disabled={sending}
+              disabled={isPending}
               className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5"
             >
               <Send className="h-3.5 w-3.5" />
-              {sending ? 'Envoi...' : 'Envoyer'}
+              {isPending ? 'Envoi...' : 'Envoyer'}
             </Button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import { db } from '@/db'
 import { announcements, schoolMembers, profiles } from '@/db/schema'
-import { eq, and, or, desc } from 'drizzle-orm'
+import { eq, and, or, desc, ne } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import type { Announcement } from './announcements.types'
 import type { CreateAnnouncementInput, UpdateAnnouncementInput } from './announcements.schema'
 import type { AnnouncementAudience } from '@/lib/constants'
@@ -127,5 +128,30 @@ export const announcementsService = {
     await db
       .delete(announcements)
       .where(and(eq(announcements.id, id), eq(announcements.schoolId, schoolId)))
+  },
+
+  async getEmailsByAudience(schoolId: string, audience: AnnouncementAudience): Promise<string[]> {
+    const NIL_UUID = '00000000-0000-0000-0000-000000000000'
+
+    // Filtre sur portal_roles selon l'audience
+    const roleFilter = audience === 'parents'
+      ? sql`'parent' = ANY(${schoolMembers.portalRoles})`
+      : audience === 'teachers'
+        ? sql`'teacher' = ANY(${schoolMembers.portalRoles})`
+        : audience === 'admins'
+          ? sql`'admin' = ANY(${schoolMembers.portalRoles})`
+          : sql`true` // 'everyone'
+
+    const rows = await db.execute(sql`
+      SELECT au.email
+      FROM school_members sm
+      JOIN auth.users au ON au.id = sm.user_id
+      WHERE sm.school_id = ${schoolId}
+        AND sm.is_pending = false
+        AND sm.user_id != ${NIL_UUID}::uuid
+        AND ${roleFilter}
+    `)
+
+    return (rows as unknown as { email: string }[]).map(r => r.email).filter(Boolean)
   },
 }

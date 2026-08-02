@@ -9,6 +9,7 @@ import type { ActionResult } from '@/lib/result'
 import type { School } from './school.types'
 import type { UpdateSchoolSettingsInput } from './school.schema'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email'
 
 // READ
 export async function getSchoolAction(): Promise<ActionResult<School>> {
@@ -94,5 +95,44 @@ export async function uploadSchoolLogoAction(
   } catch (e) {
     console.error('[uploadSchoolLogoAction]', e)
     return err('Impossible de téléverser le logo')
+  }
+}
+
+export async function sendSupportEmailAction(input: {
+  name: string
+  email: string
+  subject: string
+  message: string
+}): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  try {
+    const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;padding:32px;background:#f9fafb;">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;border:1px solid #e5e7eb;">
+    <h2 style="color:#c2440f;margin:0 0 20px;">Support Qaf School</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <tr><td style="padding:6px 0;color:#6b7280;width:100px;">Nom</td><td style="padding:6px 0;font-weight:600;">${input.name}</td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;">${input.email}</td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">École</td><td style="padding:6px 0;">${session.schoolId}</td></tr>
+      <tr><td style="padding:6px 0;color:#6b7280;">Sujet</td><td style="padding:6px 0;font-weight:600;">${input.subject}</td></tr>
+    </table>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;" />
+    <p style="font-size:15px;line-height:1.7;color:#374151;white-space:pre-wrap;">${input.message}</p>
+  </div>
+</body>
+</html>`
+
+    await sendEmail({
+      to: process.env.SMTP_USER ?? '',
+      subject: `[Support Qaf] ${input.subject}`,
+      html,
+    })
+    return ok(undefined)
+  } catch (e) {
+    console.error('[sendSupportEmailAction]', e)
+    return err("Impossible d'envoyer le message")
   }
 }

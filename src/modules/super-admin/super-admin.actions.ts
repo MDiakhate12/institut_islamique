@@ -1,7 +1,7 @@
 'use server'
 
-import nodemailer from 'nodemailer'
 import { headers } from 'next/headers'
+import { sendEmail } from '@/lib/email'
 import { superAdminService } from './super-admin.service'
 import { createSchoolSchema, updateSchoolBasicSchema } from './super-admin.schema'
 import { ok, err } from '@/lib/result'
@@ -14,17 +14,6 @@ async function getAppUrl(): Promise<string> {
   return `${proto}://${host}`
 }
 
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  })
-}
 
 function buildInviteEmail(opts: { schoolName: string; inviteUrl: string }): string {
   return `
@@ -65,18 +54,11 @@ function buildInviteEmail(opts: { schoolName: string; inviteUrl: string }): stri
 }
 
 async function sendInviteEmail(to: string, schoolName: string, inviteUrl: string): Promise<boolean> {
-  try {
-    await createTransporter().sendMail({
-      from: `Qaf School <${process.env.SMTP_USER}>`,
-      to,
-      subject: `Invitation : Administrateur de ${schoolName}`,
-      html: buildInviteEmail({ schoolName, inviteUrl }),
-    })
-    return true
-  } catch (e) {
-    console.warn('[sendInviteEmail] SMTP error:', e)
-    return false
-  }
+  return sendEmail({
+    to,
+    subject: `Invitation : Administrateur de ${schoolName}`,
+    html: buildInviteEmail({ schoolName, inviteUrl }),
+  })
 }
 
 export async function createSchoolAction(raw: unknown): Promise<ActionResult<{
