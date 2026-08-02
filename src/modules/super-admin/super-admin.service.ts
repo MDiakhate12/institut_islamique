@@ -95,6 +95,15 @@ export const superAdminService = {
       .where(eq(schools.id, schoolId))
   },
 
+  async getSchoolName(schoolId: string): Promise<string | null> {
+    const [row] = await db
+      .select({ name: schools.name })
+      .from(schools)
+      .where(eq(schools.id, schoolId))
+      .limit(1)
+    return row?.name ?? null
+  },
+
   async getPendingAdminEmail(schoolId: string): Promise<string | null> {
     const [row] = await db
       .select({ pendingEmail: schoolMembers.pendingEmail })

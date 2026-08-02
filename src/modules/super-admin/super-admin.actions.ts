@@ -1,6 +1,6 @@
 'use server'
 
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 import { headers } from 'next/headers'
 import { superAdminService } from './super-admin.service'
 import { createSchoolSchema, updateSchoolBasicSchema } from './super-admin.schema'
@@ -14,12 +14,19 @@ async function getAppUrl(): Promise<string> {
   return `${proto}://${host}`
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function createTransporter() {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  })
+}
 
-function buildInviteEmail(opts: {
-  schoolName: string
-  inviteUrl:  string
-}): string {
+function buildInviteEmail(opts: { schoolName: string; inviteUrl: string }): string {
   return `
 <!DOCTYPE html>
 <html lang="fr">
@@ -57,6 +64,21 @@ function buildInviteEmail(opts: {
 </html>`
 }
 
+async function sendInviteEmail(to: string, schoolName: string, inviteUrl: string): Promise<boolean> {
+  try {
+    await createTransporter().sendMail({
+      from: `Qaf School <${process.env.SMTP_USER}>`,
+      to,
+      subject: `Invitation : Administrateur de ${schoolName}`,
+      html: buildInviteEmail({ schoolName, inviteUrl }),
+    })
+    return true
+  } catch (e) {
+    console.warn('[sendInviteEmail] SMTP error:', e)
+    return false
+  }
+}
+
 export async function createSchoolAction(raw: unknown): Promise<ActionResult<{
   schoolId: string
   schoolName: string
@@ -74,19 +96,7 @@ export async function createSchoolAction(raw: unknown): Promise<ActionResult<{
     const appUrl = await getAppUrl()
     const inviteUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${school.id}&email=${encodeURIComponent(data.adminEmail)}`
 
-    let emailSent = false
-    try {
-      await resend.emails.send({
-        from:    'Qaf School <onboarding@resend.dev>',
-        to:      data.adminEmail,
-        subject: `Invitation : Administrateur de ${data.schoolName}`,
-        html:    buildInviteEmail({ schoolName: data.schoolName, inviteUrl }),
-      })
-      emailSent = true
-    } catch (emailErr) {
-      // Email failure doesn't cancel school creation — URL is shown in UI
-      console.warn('[createSchoolAction] Resend error:', emailErr)
-    }
+    const emailSent = await sendInviteEmail(data.adminEmail, data.schoolName, inviteUrl)
 
     return ok({ schoolId: school.id, schoolName: school.name, inviteUrl, emailSent })
   } catch (e: unknown) {
@@ -109,24 +119,17 @@ export async function getAllSchoolsAction(): Promise<ActionResult<Awaited<Return
 
 export async function resendInviteAction(schoolId: string): Promise<ActionResult<{ emailSent: boolean; inviteUrl: string }>> {
   try {
-    const pendingEmail = await superAdminService.getPendingAdminEmail(schoolId)
+    const [pendingEmail, schoolName] = await Promise.all([
+      superAdminService.getPendingAdminEmail(schoolId),
+      superAdminService.getSchoolName(schoolId),
+    ])
+
     if (!pendingEmail) return err('Aucun administrateur en attente pour cette école.')
 
     const appUrl = await getAppUrl()
     const inviteUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${schoolId}&email=${encodeURIComponent(pendingEmail)}`
 
-    let emailSent = false
-    try {
-      await resend.emails.send({
-        from:    'Qaf School <onboarding@resend.dev>',
-        to:      pendingEmail,
-        subject: 'Invitation : Administrateur Qaf School',
-        html:    buildInviteEmail({ schoolName: '', inviteUrl }),
-      })
-      emailSent = true
-    } catch (emailErr) {
-      console.warn('[resendInviteAction] Resend error:', emailErr)
-    }
+    const emailSent = await sendInviteEmail(pendingEmail, schoolName ?? '', inviteUrl)
 
     return ok({ emailSent, inviteUrl })
   } catch (e) {
