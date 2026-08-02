@@ -30,7 +30,7 @@ const TEACHER_NAV: NavItem[] = [
   { label: 'Calendrier académique',         href: '/teacher-portal/calendar',      icon: CalendarDays },
   { label: 'Catalogue des classes',         href: '/teacher-portal/catalog',       icon: Library },
   { label: 'Soumettre les notes d\'examen', href: '/teacher-portal/exams',         icon: FileText },
-  { label: 'Remboursements',                href: '/teacher-portal/refunds',       icon: CreditCard, wip: true },
+  { label: 'Remboursements',                href: '/teacher-portal/refunds',       icon: CreditCard },
   { label: 'Emploi du temps',               href: '/teacher-portal/schedule',      icon: Clock, wip: true },
   { label: 'Paramètres du profil',          href: '/teacher-portal/profile',       icon: Settings },
 ]

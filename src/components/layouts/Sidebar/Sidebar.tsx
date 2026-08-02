@@ -58,8 +58,8 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Finance',
     icon: DollarSign,
     items: [
-      { label: 'Budget',   href: ROUTES.admin.budget,   icon: CreditCard, wip: true },
-      { label: 'Dépenses', href: ROUTES.admin.expenses, icon: Receipt, wip: true },
+      { label: 'Budget',   href: ROUTES.admin.budget,   icon: CreditCard },
+      { label: 'Dépenses', href: ROUTES.admin.expenses, icon: Receipt },
     ],
   },
   {

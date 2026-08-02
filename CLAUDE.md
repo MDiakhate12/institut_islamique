@@ -547,6 +547,19 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 
 ---
 
+### 7.13 Finance — `payments`/`expenses`/`wage_entries`, un seul flux admin+enseignant+parent
+
+Trois modules (`src/modules/payments/`, `src/modules/expenses/`, `src/modules/wages/`) alimentent 4 pages sur 3 portails, tous branchés sur les tables Drizzle `payments`/`expenses`/`wage_entries` (`src/db/schema/finance.ts`).
+
+- **`payments.source`** (`'admin' | 'parent'`) distingue un paiement saisi par l'admin (`Budget` → statut par défaut `verified`) d'un paiement auto-déclaré par un parent (`/parent-portal/payments` → "Marquer comme payé", statut forcé `pending`). Côté Budget, une ligne `source='parent' AND status='pending'` affiche "En attente de vérification" + actions rapides Vérifier/Rejeter au lieu de Modifier/Supprimer, et fait apparaître une 4ᵉ KPI card conditionnelle. `payments.parentName` est un champ texte libre (saisi par l'admin ou auto-rempli avec le nom du parent soumetteur) — ne pas le confondre avec `guardians`.
+- Le formulaire de paiement (admin et parent) permet de sélectionner **plusieurs étudiants** (`StudentMultiSelect`, `src/components/shared/StudentMultiSelect/`) : une ligne `payments` est insérée **par étudiant sélectionné**, pas une ligne partagée.
+- `wage_entries` (nouvelle table, aucun équivalent avant ce chantier) modélise la feuille de temps des enseignants payés : `hourlyRateCents` est un instantané de `school.settings.teacherHourlyRate` au moment de la saisie, éditable ensuite par l'admin (recalcule `amountCents`). Un admin peut saisir les heures de n'importe quel enseignant (`WageFormDialog`, sélecteur Enseignant) ; un enseignant ne peut saisir que les siennes (`LogMyHoursDialog`, `teacher-portal/refunds`, pas de sélecteur).
+- `ExpenseFormDialog` (`src/components/shared/ExpenseFormDialog/`) est partagé entre `/admin-portal/finance/expenses` ("Nouvelle dépense") et `/teacher-portal/refunds` ("Nouveau remboursement") — même pattern "un composant, plusieurs consommateurs" que §7.4/§7.12. Upload de reçu (JPG/PNG/PDF) en base64 côté client → Server Action → bucket Supabase Storage public `expense-receipts`.
+- L'onglet "Paiements" de Dépenses est un placeholder statique (pas de vraie intégration Stripe) — décision assumée, la référence elle-même ne l'a pas connecté.
+- Les libellés (méthode/catégorie/période) vivent dans `src/modules/payments/payments.labels.ts`, partagés entre Budget (admin) et Statut de paiement (parent) — ne pas les redéfinir localement dans un composant.
+
+---
+
 ## 8. État d'avancement des modules
 
 ### ✅ Complètement construit (tous portails concernés)
@@ -575,20 +588,19 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 | **Teacher Classes** | `/teacher-portal/classes` (MyClassesClient — mes classes avec devoirs/présences) |
 | **Children** | `/parent-portal/children` (cartes par matière, badge subjectCode/level, Présence/Devoirs, Voir le programme) |
 | **Exams** | `/admin-portal/track-exams` (4 tabs, search, sort, email rapport, bandeau période) + `/teacher-portal/exams` (liste classes/élèves, star rating form) + `/parent-portal/exams` (bulletins read-only + signature parent) |
+| **Finance** | `/admin-portal/finance/budget` (paiements, KPI, rappels impayés) + `/admin-portal/finance/expenses` (3 onglets Remboursements/Salaires/Paiements) + `/teacher-portal/refunds` (auto-soumission remboursements + heures) + `/parent-portal/payments` (statut par trimestre + auto-déclaration "Marquer comme payé") — voir §7.13 |
 
 ### ❌ ComingSoon (stub page existe, UI à construire, module backend absent)
 
 | Module | Pages concernées |
 |---|---|
 | **Stars** | `/admin-portal/track-stars`, `/parent-portal/stars` |
-| **Finance** | `/admin-portal/finance/budget`, `/admin-portal/finance/expenses`, `/parent-portal/payments` |
 | **Communication** | `/admin-portal/communication/send-email` |
 | **Substitutions** | `/admin-portal/substitutions`, `/teacher-portal/substitutions` |
 | **Book Tracking** | `/admin-portal/book-tracking` |
 | **Reports** | `/admin-portal/reports` |
 | **Absence** | `/parent-portal/absence` |
 | **Schedule** | `/teacher-portal/schedule`, `/parent-portal/schedule` |
-| **Refunds** | `/teacher-portal/refunds` |
 | **Sticky Notes** | `/admin-portal/sticky-notes` |
 | **Birthdays** | `/admin-portal/birthdays` |
 | **Start New Year** | `/admin-portal/start-new-year` |

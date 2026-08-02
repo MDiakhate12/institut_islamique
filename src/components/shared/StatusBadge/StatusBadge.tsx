@@ -7,6 +7,7 @@ type StatusVariant =
   | 'admin' | 'teacher' | 'parent'
   | 'volunteer' | 'paid'
   | 'open' | 'completed'
+  | 'approved'
 
 const VARIANTS: Record<StatusVariant, { label: string; className: string }> = {
   active:   { label: 'Actif',       className: 'bg-green-100 text-green-700' },
@@ -23,6 +24,7 @@ const VARIANTS: Record<StatusVariant, { label: string; className: string }> = {
   paid:     { label: 'Payé',        className: 'bg-green-100 text-green-700' },
   open:     { label: 'Ouvert',      className: 'bg-blue-100 text-blue-700' },
   completed:{ label: 'Terminé',     className: 'bg-green-100 text-green-700' },
+  approved: { label: 'Approuvé',    className: 'bg-blue-100 text-blue-700' },
 }
 
 interface StatusBadgeProps {
