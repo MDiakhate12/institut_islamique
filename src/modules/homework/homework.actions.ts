@@ -8,6 +8,7 @@ import { homeworkService } from './homework.service'
 import { createHomeworkSchema, updateHomeworkSchema } from './homework.schema'
 import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem, AdminHomeworkOverview } from './homework.types'
 import { createClient } from '@/lib/supabase/server'
+import { sendEmail, getParentEmailsForClass } from '@/lib/email'
 
 const path = '/teacher-portal/homework'
 
@@ -77,6 +78,43 @@ export async function createHomeworkAction(input: unknown): Promise<ActionResult
   try {
     const item = await homeworkService.create(session.schoolId, session.memberId, parsed.data)
     revalidatePath(path)
+
+    const surahLabel = item.surahName ? `${item.surahName}${item.surahArabic ? ` — ${item.surahArabic}` : ''}` : null
+    const description = item.description || surahLabel || 'Nouveau devoir'
+    getParentEmailsForClass(parsed.data.classId).then(emails =>
+      Promise.allSettled(emails.map(to => sendEmail({
+        to,
+        subject: 'Nouveau devoir — Qaf School',
+        html: `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#fdf6f0;font-family:Arial,sans-serif;">
+  <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#7a4f30,#c2440f);padding:36px 40px;text-align:center;">
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Nouveau devoir assigné</p>
+    </div>
+    <div style="padding:40px;">
+      <p style="color:#5c3820;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
+      <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
+        Un nouveau devoir a été assigné à votre enfant :
+      </p>
+      <div style="background:#fdf6f0;border-left:4px solid #c2440f;padding:16px 20px;border-radius:0 8px 8px 0;margin-bottom:24px;">
+        <p style="margin:0;font-size:15px;font-weight:bold;color:#1f2937;">${description}</p>
+      </div>
+      <div style="text-align:center;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/parent-portal/homework" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+          Voir les devoirs →
+        </a>
+      </div>
+    </div>
+    <div style="background:#fdf6f0;padding:20px 40px;text-align:center;">
+      <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
+    </div>
+  </div>
+</body></html>`,
+      })))
+    ).catch(() => {})
+
     return ok(item)
   } catch (e) {
     console.error('[createHomeworkAction]', e)
