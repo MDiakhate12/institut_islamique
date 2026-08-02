@@ -82,11 +82,16 @@ export async function createSchoolAction(raw: unknown): Promise<ActionResult<{
 
     return ok({ schoolId: school.id, schoolName: school.name, inviteUrl, emailSent })
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Erreur inconnue'
-    if (msg.includes('duplicate') || msg.includes('unique')) {
+    const allText = [
+      e instanceof Error ? e.message : '',
+      e instanceof Error && e.cause instanceof Error ? e.cause.message : '',
+      JSON.stringify((e as Record<string, unknown>)?.cause ?? ''),
+    ].join(' ')
+    if (allText.includes('unique') || allText.includes('duplicate') || allText.includes('23505')) {
       return err('Ce slug est déjà utilisé. Choisissez un slug différent.')
     }
-    return err(msg)
+    console.error('[createSchoolAction]', e)
+    return err("Erreur lors de la création de l'école")
   }
 }
 
@@ -139,10 +144,15 @@ export async function updateSchoolAction(
     await superAdminService.updateSchoolBasic(schoolId, parsed.data)
     return ok(undefined)
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'Erreur inconnue'
-    if (msg.includes('duplicate') || msg.includes('unique')) {
+    const allText = [
+      e instanceof Error ? e.message : '',
+      e instanceof Error && e.cause instanceof Error ? e.cause.message : '',
+      JSON.stringify((e as Record<string, unknown>)?.cause ?? ''),
+    ].join(' ')
+    if (allText.includes('unique') || allText.includes('duplicate') || allText.includes('23505')) {
       return err('Ce slug est déjà utilisé.')
     }
-    return err(msg)
+    console.error('[updateSchoolAction]', e)
+    return err("Erreur lors de la mise à jour de l'école")
   }
 }
