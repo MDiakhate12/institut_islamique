@@ -28,7 +28,7 @@ function cleanPhone(phone: string) {
 function getStudentEmails(s: StudentParentInfo): { email: string; label: string }[] {
   return s.guardians
     .filter(g => !!g.email)
-    .map(g => ({ email: g.email!, label: g.firstName }))
+    .map(g => ({ email: g.email!, label: g.firstName ?? '' }))
 }
 
 function getPrimaryPhone(s: StudentParentInfo): string | null {
@@ -309,7 +309,7 @@ export function ParentsClient({
         s.guardians.some(g =>
           (g.phone ?? '').toLowerCase().includes(q) ||
           (g.email ?? '').toLowerCase().includes(q) ||
-          g.firstName.toLowerCase().includes(q)
+          (g.firstName ?? '').toLowerCase().includes(q)
         ),
       )
     }

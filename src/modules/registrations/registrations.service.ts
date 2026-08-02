@@ -155,7 +155,7 @@ export const registrationsService = {
 
     const studentIds = rows.map(r => r.studentId).filter((id): id is string => !!id)
 
-    type GuardianRow = { studentId: string; firstName: string; lastName: string; email: string | null; phone: string | null }
+    type GuardianRow = { studentId: string; firstName: string | null; lastName: string; email: string | null; phone: string | null }
 
     const guardianRows = studentIds.length > 0
       ? await db

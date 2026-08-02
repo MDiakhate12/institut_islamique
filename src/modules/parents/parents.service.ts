@@ -137,20 +137,54 @@ export const parentsService = {
     const existing = await db
       .select({ studentId: parentStudents.studentId })
       .from(parentStudents)
-      .where(
-        and(
-          eq(parentStudents.schoolMemberId, schoolMemberId),
-          eq(parentStudents.schoolId, schoolId),
-        )
-      )
+      .where(and(
+        eq(parentStudents.schoolMemberId, schoolMemberId),
+        eq(parentStudents.schoolId, schoolId),
+      ))
 
     const existingIds = new Set(existing.map(r => r.studentId))
     const toInsert = studentIds.filter(id => !existingIds.has(id))
     if (toInsert.length === 0) return
 
-    await db.insert(parentStudents).values(
-      toInsert.map(studentId => ({ schoolMemberId, studentId, schoolId }))
-    )
+    // Récupère le téléphone du membre pour matcher les guardians
+    const [memberRow] = await db
+      .select({ phone: profiles.phone })
+      .from(schoolMembers)
+      .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
+      .where(eq(schoolMembers.id, schoolMemberId))
+      .limit(1)
+
+    await db.transaction(async (tx) => {
+      // 1. Créer les liens d'accès portail
+      await tx.insert(parentStudents).values(
+        toInsert.map(studentId => ({ schoolMemberId, studentId, schoolId }))
+      )
+
+      // 2. Mettre à jour guardians.linkedMemberId là où le téléphone correspond
+      if (memberRow?.phone) {
+        const normalize = (p: string) => p.replace(/\D/g, '').slice(-9)
+        const normalizedPhone = normalize(memberRow.phone)
+
+        const candidateGuardians = await tx
+          .select({ id: guardians.id, phone: guardians.phone })
+          .from(guardians)
+          .where(and(
+            inArray(guardians.studentId, toInsert),
+            eq(guardians.schoolId, schoolId),
+            isNull(guardians.linkedMemberId),
+          ))
+
+        const matchingIds = candidateGuardians
+          .filter(g => g.phone && normalize(g.phone) === normalizedPhone)
+          .map(g => g.id)
+
+        if (matchingIds.length > 0) {
+          await tx.update(guardians)
+            .set({ linkedMemberId: schoolMemberId, updatedAt: new Date() })
+            .where(inArray(guardians.id, matchingIds))
+        }
+      }
+    })
   },
 
   async getChildrenWithClasses(

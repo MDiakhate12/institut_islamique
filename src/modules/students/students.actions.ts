@@ -230,17 +230,30 @@ export async function importStudentsAction(
     }
 
     try {
+      const guardiansToCreate = []
+      if (row.parentPhone || row.parentName1 || row.email1) {
+        guardiansToCreate.push({
+          relationship: 'father' as const,
+          name:  row.parentName1 || undefined,
+          phone: row.parentPhone || undefined,
+          email: row.email1      || undefined,
+        })
+      }
+      if (row.parentName2 || row.email2) {
+        guardiansToCreate.push({
+          relationship: 'mother' as const,
+          name:  row.parentName2 || undefined,
+          email: row.email2      || undefined,
+        })
+      }
+
       await studentsService.create(session.schoolId, {
         firstName,
         lastName,
         gender,
-        isActive:    true,
-        birthDate:   row.birthDate   || undefined,
-        parentPhone: row.parentPhone || undefined,
-        parentName1: row.parentName1 || undefined,
-        parentName2: row.parentName2 || undefined,
-        email1:      row.email1      || undefined,
-        email2:      row.email2      || undefined,
+        isActive:   true,
+        birthDate:  row.birthDate || undefined,
+        guardians:  guardiansToCreate.length ? guardiansToCreate : undefined,
       })
       created++
     } catch (e) {

@@ -85,7 +85,7 @@ export function StudentsClient() {
         const guardianMatch = s.guardians.some(g =>
           (g.phone ?? '').includes(q) ||
           (g.email ?? '').toLowerCase().includes(q) ||
-          g.firstName.toLowerCase().includes(q)
+          (g.firstName ?? '').toLowerCase().includes(q)
         )
         return (
           s.firstName.toLowerCase().includes(q) ||
@@ -430,7 +430,7 @@ function StudentRow({
       <td className="px-3 py-3">
         {father ? (
           <div>
-            <p className="font-medium text-xs">{father.firstName} {father.lastName}</p>
+            <p className="font-medium text-xs">{father.linkedMemberName ?? father.firstName} {father.lastName}</p>
             {father.email && <p className="text-xs text-muted-foreground truncate max-w-36">{father.email}</p>}
           </div>
         ) : <span className="text-muted-foreground text-xs italic">—</span>}
@@ -440,7 +440,7 @@ function StudentRow({
       <td className="px-3 py-3">
         {mother ? (
           <div>
-            <p className="font-medium text-xs">{mother.firstName} {mother.lastName}</p>
+            <p className="font-medium text-xs">{mother.linkedMemberName ?? mother.firstName} {mother.lastName}</p>
             {mother.email && <p className="text-xs text-muted-foreground truncate max-w-32">{mother.email}</p>}
           </div>
         ) : <span className="text-muted-foreground text-xs italic">—</span>}

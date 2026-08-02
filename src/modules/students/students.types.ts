@@ -7,12 +7,20 @@ export type NewStudent = InferInsertModel<typeof students>
 export type GuardianSummary = {
   id: string
   relationship: string
-  firstName: string
+  firstName: string | null
   lastName: string
   email: string | null
   phone: string | null
   emergencyPhone: string | null
   isPrimary: boolean
+  linkedMemberId: string | null
+  linkedMemberName: string | null
+}
+
+export function guardianDisplayName(g: GuardianSummary): string {
+  if (g.linkedMemberName) return g.linkedMemberName
+  if (g.firstName) return `${g.firstName} ${g.lastName}`.trim()
+  return 'Nom non renseigné'
 }
 
 export type StudentEnrollment = {

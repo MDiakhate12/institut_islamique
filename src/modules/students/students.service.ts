@@ -46,20 +46,24 @@ export const studentsService = {
         .where(eq(students.schoolId, schoolId))
         .orderBy(desc(students.createdAt)),
 
-      // 2. Guardians
+      // 2. Guardians — JOIN profiles pour le nom réel quand compte lié
       db
         .select({
-          id:             guardians.id,
-          studentId:      guardians.studentId,
-          relationship:   guardians.relationship,
-          firstName:      guardians.firstName,
-          lastName:       guardians.lastName,
-          email:          guardians.email,
-          phone:          guardians.phone,
-          emergencyPhone: guardians.emergencyPhone,
-          isPrimary:      guardians.isPrimary,
+          id:               guardians.id,
+          studentId:        guardians.studentId,
+          relationship:     guardians.relationship,
+          firstName:        guardians.firstName,
+          lastName:         guardians.lastName,
+          email:            guardians.email,
+          phone:            guardians.phone,
+          emergencyPhone:   guardians.emergencyPhone,
+          isPrimary:        guardians.isPrimary,
+          linkedMemberId:   guardians.linkedMemberId,
+          linkedMemberName: profiles.fullName,
         })
         .from(guardians)
+        .leftJoin(schoolMembers, eq(schoolMembers.id, guardians.linkedMemberId))
+        .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
         .where(eq(guardians.schoolId, schoolId)),
 
       // 3. Active enrollments with class + catalog + teacher
@@ -231,32 +235,21 @@ export const studentsService = {
       })
       .returning()
 
-    // Father guardian
-    if (data.parentPhone?.trim() || data.parentName1?.trim() || data.email1?.trim()) {
-      await db.insert(guardians).values({
-        schoolId,
-        studentId:      student.id,
-        firstName:      data.parentName1?.trim() || 'Parent',
-        lastName:       '',
-        relationship:   'father',
-        phone:          data.parentPhone?.trim()   || null,
-        email:          data.email1?.trim()        || null,
-        emergencyPhone: data.emergencyPhone?.trim() || null,
-        isPrimary:      true,
-      })
-    }
-
-    // Mother guardian
-    if (data.parentName2?.trim()) {
-      await db.insert(guardians).values({
-        schoolId,
-        studentId:    student.id,
-        firstName:    data.parentName2.trim(),
-        lastName:     '',
-        relationship: 'mother',
-        email:        data.email2?.trim() || null,
-        isPrimary:    false,
-      })
+    // Guardians array
+    if (data.guardians?.length) {
+      for (const [i, g] of data.guardians.entries()) {
+        await db.insert(guardians).values({
+          schoolId,
+          studentId:      student.id,
+          relationship:   g.relationship,
+          firstName:      g.name?.trim() || null,
+          lastName:       '',
+          phone:          g.phone?.trim()          || null,
+          email:          g.email?.trim()          || null,
+          emergencyPhone: g.emergencyPhone?.trim() || null,
+          isPrimary:      i === 0,
+        })
+      }
     }
 
     // Enroll in classes if provided
@@ -293,9 +286,9 @@ export const studentsService = {
 
   async update(schoolId: string, studentId: string, data: UpdateStudentInput): Promise<Student> {
     const {
-      parentPhone, parentName1, parentName2, email1, email2,
-      emergencyPhone, enrollmentYear,
+      enrollmentYear,
       classIdsToAdd, classIdsToRemove, paymentUpdates,
+      guardians: guardiansData,
       ...studentData
     } = data
 
@@ -306,41 +299,33 @@ export const studentsService = {
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
       .returning()
 
-    // Update guardian (father)
-    if (parentPhone !== undefined || parentName1 !== undefined || email1 !== undefined || emergencyPhone !== undefined) {
-      const existingGuardians = await db.select().from(guardians).where(eq(guardians.studentId, studentId))
-      const father = existingGuardians.find(g => g.relationship === 'father' || g.isPrimary) ?? null
-      const patch: Record<string, unknown> = { updatedAt: new Date() }
-      if (parentName1   !== undefined) patch.firstName      = parentName1   || 'Parent'
-      if (parentPhone   !== undefined) patch.phone          = parentPhone.trim() || null
-      if (email1        !== undefined) patch.email          = email1        || null
-      if (emergencyPhone !== undefined) patch.emergencyPhone = emergencyPhone || null
-
-      if (father) {
-        await db.update(guardians).set(patch).where(eq(guardians.id, father.id))
-      } else {
-        await db.insert(guardians).values({
-          schoolId, studentId,
-          relationship: 'father', firstName: parentName1 || 'Parent', lastName: '',
-          isPrimary: true,
-          phone: parentPhone?.trim() || null,
-          email: email1 || null,
-          emergencyPhone: emergencyPhone || null,
-        })
-      }
-
-      // Update mother
-      if (parentName2 !== undefined || email2 !== undefined) {
-        const mother = existingGuardians.find(g => g.relationship === 'mother') ?? null
-        const mPatch: Record<string, unknown> = { updatedAt: new Date() }
-        if (parentName2 !== undefined) mPatch.firstName = parentName2 || ''
-        if (email2 !== undefined) mPatch.email = email2 || null
-        if (mother) {
-          await db.update(guardians).set(mPatch).where(eq(guardians.id, mother.id))
-        } else if (parentName2) {
+    // Guardian CRUD — ne jamais toucher aux guardians liés (linkedMemberId non null)
+    if (guardiansData !== undefined) {
+      for (const g of guardiansData) {
+        if (g._delete && g.id) {
+          await db.delete(guardians)
+            .where(and(eq(guardians.id, g.id), eq(guardians.studentId, studentId), isNull(guardians.linkedMemberId)))
+        } else if (g.id) {
+          await db.update(guardians)
+            .set({
+              relationship:   g.relationship,
+              firstName:      g.name?.trim() || null,
+              phone:          g.phone?.trim()          || null,
+              email:          g.email?.trim()          || null,
+              emergencyPhone: g.emergencyPhone?.trim() || null,
+              updatedAt:      new Date(),
+            })
+            .where(and(eq(guardians.id, g.id), eq(guardians.studentId, studentId), isNull(guardians.linkedMemberId)))
+        } else {
           await db.insert(guardians).values({
-            schoolId, studentId, relationship: 'mother',
-            firstName: parentName2, lastName: '', isPrimary: false, email: email2 || null,
+            schoolId, studentId,
+            relationship:   g.relationship,
+            firstName:      g.name?.trim() || null,
+            lastName:       '',
+            phone:          g.phone?.trim()          || null,
+            email:          g.email?.trim()          || null,
+            emergencyPhone: g.emergencyPhone?.trim() || null,
+            isPrimary:      false,
           })
         }
       }

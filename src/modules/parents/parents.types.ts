@@ -1,7 +1,7 @@
 export type Guardian = {
   id: string
   relationship: string
-  firstName: string
+  firstName: string | null
   lastName: string
   email: string | null
   phone: string | null
