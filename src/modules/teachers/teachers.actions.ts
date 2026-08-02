@@ -142,3 +142,68 @@ export async function activateTeacherAction(code: string): Promise<ActionResult<
   revalidatePath('/teacher-portal', 'layout')
   redirect('/teacher-portal/homework')
 }
+
+// ── Bulk import from Excel ────────────────────────────────────────────────────
+
+interface ImportTeacherRow {
+  fullName: string
+  email: string
+  teacherType: string
+  phone?: string
+}
+
+export async function importTeachersAction(
+  rows: ImportTeacherRow[]
+): Promise<ActionResult<{ created: number; errors: { row: number; message: string }[] }>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return unauthorized()
+
+  const errors: { row: number; message: string }[] = []
+  let created = 0
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNum = i + 2
+
+    const fullName    = row.fullName?.trim()
+    const email       = row.email?.trim().toLowerCase()
+    const typeRaw     = row.teacherType?.trim().toLowerCase()
+
+    if (!fullName) { errors.push({ row: rowNum, message: 'Nom complet manquant' }); continue }
+    if (!email || !email.includes('@')) { errors.push({ row: rowNum, message: `Email invalide: "${row.email}"` }); continue }
+
+    const teacherType: 'volunteer' | 'paid' | null =
+      typeRaw.startsWith('bén') || typeRaw.startsWith('ben') || typeRaw === 'b' || typeRaw === 'volunteer'
+        ? 'volunteer'
+      : typeRaw.startsWith('pay') || typeRaw === 'p' || typeRaw === 'paid'
+        ? 'paid'
+      : null
+
+    if (!teacherType) {
+      errors.push({ row: rowNum, message: `Type invalide: "${row.teacherType}". Utilisez Bénévole ou Payé` })
+      continue
+    }
+
+    try {
+      await teachersService.invite(
+        session.schoolId,
+        { fullName, email, teacherType, phone: row.phone || undefined },
+        session.userId,
+      )
+      created++
+    } catch (e) {
+      const allText = [
+        e instanceof Error ? e.message : '',
+        e instanceof Error && e.cause instanceof Error ? e.cause.message : '',
+      ].join(' ')
+      if (allText.includes('unique') || allText.includes('23505')) {
+        errors.push({ row: rowNum, message: `Un compte existe déjà pour ${email}` })
+      } else {
+        errors.push({ row: rowNum, message: e instanceof Error ? e.message : 'Erreur inconnue' })
+      }
+    }
+  }
+
+  revalidatePath(ROUTES.admin.teachers)
+  return ok({ created, errors })
+}

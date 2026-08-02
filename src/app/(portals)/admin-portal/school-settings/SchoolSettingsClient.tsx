@@ -12,6 +12,7 @@ import {
 import type { School, SchoolSettings, TvRule, ClassPeriod, QuickLink, StaffMember } from '@/modules/school/school.types'
 import type { UpdateSchoolInfoInput } from '@/modules/school/school.schema'
 import { ContactSupportDialog } from './ContactSupportDialog'
+import { ImportExcelDialog } from './ImportExcelDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -1078,8 +1079,14 @@ function TvRulesSection({ school }: { school: School }) {
 
 // ── 11. Import section ────────────────────────────────────────────────────────
 function ImportSection() {
+  const [studentsOpen, setStudentsOpen] = useState(false)
+  const [teachersOpen, setTeachersOpen] = useState(false)
+
   return (
     <Section icon={FileSpreadsheet} title="Import en masse">
+      <ImportExcelDialog open={studentsOpen} onOpenChange={setStudentsOpen} type="students" />
+      <ImportExcelDialog open={teachersOpen} onOpenChange={setTeachersOpen} type="teachers" />
+
       <div className="space-y-4">
         {/* Élèves */}
         <div className="rounded-lg border border-border p-4 space-y-3">
@@ -1097,18 +1104,10 @@ function ImportSection() {
               size="sm"
               variant="outline"
               className="gap-1.5 text-xs"
-              onClick={() => toast.info('Téléchargement du modèle bientôt disponible')}
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5" />
-              Télécharger le modèle
-            </Button>
-            <Button
-              size="sm"
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5 text-xs"
-              onClick={() => toast.info("L'import par fichier sera disponible prochainement")}
+              onClick={() => setStudentsOpen(true)}
             >
               <Upload className="h-3.5 w-3.5" />
-              Importer
+              Importer des élèves
             </Button>
           </div>
         </div>
@@ -1129,18 +1128,10 @@ function ImportSection() {
               size="sm"
               variant="outline"
               className="gap-1.5 text-xs"
-              onClick={() => toast.info('Téléchargement du modèle bientôt disponible')}
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5" />
-              Télécharger le modèle
-            </Button>
-            <Button
-              size="sm"
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5 text-xs"
-              onClick={() => toast.info("L'import par fichier sera disponible prochainement")}
+              onClick={() => setTeachersOpen(true)}
             >
               <Upload className="h-3.5 w-3.5" />
-              Importer
+              Importer des enseignants
             </Button>
           </div>
         </div>

@@ -182,3 +182,80 @@ export async function getStudentReportCardAction(
     return err('Impossible de charger le bulletin.')
   }
 }
+
+// ── Bulk import from Excel ────────────────────────────────────────────────────
+
+interface ImportStudentRow {
+  firstName: string
+  lastName: string
+  gender: string
+  birthDate?: string
+  parentPhone?: string
+  parentName1?: string
+  parentName2?: string
+  email1?: string
+  email2?: string
+}
+
+export async function importStudentsAction(
+  rows: ImportStudentRow[]
+): Promise<ActionResult<{ created: number; errors: { row: number; message: string }[] }>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return unauthorized()
+
+  const errors: { row: number; message: string }[] = []
+  let created = 0
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNum = i + 2
+
+    const firstName = row.firstName?.trim()
+    const lastName  = row.lastName?.trim()
+    const genderRaw = row.gender?.trim().toLowerCase()
+
+    if (!firstName) { errors.push({ row: rowNum, message: 'Prénom manquant' }); continue }
+    if (!lastName)  { errors.push({ row: rowNum, message: 'Nom manquant' }); continue }
+
+    const gender: 'male' | 'female' | null =
+      genderRaw.startsWith('garç') || genderRaw.startsWith('garc') || genderRaw === 'g' || genderRaw === 'm' || genderRaw === 'male'
+        ? 'male'
+      : genderRaw.startsWith('fill') || genderRaw === 'f' || genderRaw === 'female'
+        ? 'female'
+      : null
+
+    if (!gender) {
+      errors.push({ row: rowNum, message: `Genre invalide: "${row.gender}". Utilisez Garçon ou Fille` })
+      continue
+    }
+
+    try {
+      await studentsService.create(session.schoolId, {
+        firstName,
+        lastName,
+        gender,
+        isActive:    true,
+        birthDate:   row.birthDate   || undefined,
+        parentPhone: row.parentPhone || undefined,
+        parentName1: row.parentName1 || undefined,
+        parentName2: row.parentName2 || undefined,
+        email1:      row.email1      || undefined,
+        email2:      row.email2      || undefined,
+      })
+      created++
+    } catch (e) {
+      const allText = [
+        e instanceof Error ? e.message : '',
+        e instanceof Error && e.cause instanceof Error ? e.cause.message : '',
+      ].join(' ')
+      if (allText.includes('unique') || allText.includes('23505')) {
+        errors.push({ row: rowNum, message: `Doublon détecté pour ${firstName} ${lastName}` })
+      } else {
+        errors.push({ row: rowNum, message: e instanceof Error ? e.message : 'Erreur inconnue' })
+      }
+    }
+  }
+
+  revalidatePath(ROUTES.admin.students)
+  return ok({ created, errors })
+}
