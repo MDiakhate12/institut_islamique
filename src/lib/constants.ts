@@ -25,6 +25,28 @@ export type PaymentPeriod = (typeof PAYMENT_PERIODS)[number]
 export const EXPENSE_STATUSES = ['pending', 'approved', 'paid', 'rejected'] as const
 export type ExpenseStatus = (typeof EXPENSE_STATUSES)[number]
 
+export const WAGE_STATUSES = ['pending', 'approved', 'rejected', 'paid'] as const
+export type WageStatus = (typeof WAGE_STATUSES)[number]
+
+export const EXPENSE_CATEGORIES = [
+  'supplies', 'books', 'food', 'salaries', 'school_event', 'software', 'gifts', 'other',
+] as const
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]
+
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  supplies: 'Fournitures',
+  books: 'Livres',
+  food: 'Nourriture',
+  salaries: 'Salaires',
+  school_event: 'Événement scolaire',
+  software: 'Logiciel',
+  gifts: 'Cadeaux',
+  other: 'Autre',
+}
+
+export const PAYMENT_SOURCES = ['admin', 'parent'] as const
+export type PaymentSource = (typeof PAYMENT_SOURCES)[number]
+
 export const SUBSTITUTION_STATUSES = ['open', 'active', 'completed'] as const
 export type SubstitutionStatus = (typeof SUBSTITUTION_STATUSES)[number]
 
@@ -88,6 +110,7 @@ export const ROUTES = {
     attendance: '/teacher-portal/attendance',
     homework: '/teacher-portal/homework',
     exams: '/teacher-portal/exams',
+    refunds: '/teacher-portal/refunds',
     profile: '/teacher-portal/profile',
   },
   parent: {

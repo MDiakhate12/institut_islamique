@@ -1,7 +1,9 @@
 import { requireSession } from '@/lib/auth/session'
-import { ComingSoon } from '@/components/shared/ComingSoon'
+import { RefundsClient } from './RefundsClient'
+
+export const metadata = { title: 'Mes remboursements — Qaf School' }
 
 export default async function TeacherRefundsPage() {
   await requireSession()
-  return <ComingSoon title="Remboursements" />
+  return <RefundsClient />
 }

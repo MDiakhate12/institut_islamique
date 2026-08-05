@@ -31,7 +31,7 @@ const PARENT_NAV: NavItem[] = [
   { label: 'Calendrier académique',    href: '/parent-portal/calendar',      icon: CalendarDays },
   { label: 'Catalogue des classes',    href: '/parent-portal/catalog',       icon: Library },
   { label: 'Voir les notes d\'examen', href: '/parent-portal/exams',         icon: FileText },
-  { label: 'Statut de paiement',       href: '/parent-portal/payments',      icon: CreditCard, wip: true },
+  { label: 'Statut de paiement',       href: '/parent-portal/payments',      icon: CreditCard },
   { label: 'S\'inscrire maintenant',   href: '/parent-portal/enrollment',    icon: Download },
   { label: 'Emploi du temps',          href: '/parent-portal/schedule',      icon: Clock, wip: true },
   { label: 'Paramètres du profil',     href: '/parent-portal/profile',       icon: Settings },
