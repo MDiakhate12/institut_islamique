@@ -304,8 +304,10 @@ function SchoolSettingsForm({ school }: { school: School }) {
           <ContactSupportDialog />
         </div>
 
-        {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
+        {/* Two-column layout — la colonne droite est bien plus courte que la gauche (13 sections
+            vs 3) ; sans stretch+sticky elle s'arrête net et laisse un grand vide crème avant la
+            barre de sauvegarde collée en bas. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-stretch">
           {/* ── Left column ── */}
           <div className="space-y-5">
             <OperationsSection />
@@ -323,8 +325,11 @@ function SchoolSettingsForm({ school }: { school: School }) {
             <DangerZoneSection />
           </div>
 
-          {/* ── Right column ── */}
-          <div className="space-y-5">
+          {/* ── Right column — reste visible pendant que la gauche défile plus loin ──
+              La cellule de grille est étirée (items-stretch) à la hauteur de la colonne
+              gauche ; sticky ancre alors le contenu (top-aligné) en haut de cette cellule
+              tant que son bas n'a pas rejoint la colonne gauche. */}
+          <div className="space-y-5 lg:sticky lg:top-6">
             <LogoSection school={school} />
             <CalendarSection />
             <FinancialSection />
