@@ -37,16 +37,14 @@ export function ContactSupportDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 text-muted-foreground"
-        >
-          <MessageCircle className="h-3.5 w-3.5" />
-          Contacter le support
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground">
+            <MessageCircle className="h-3.5 w-3.5" />
+            Contacter le support
+          </Button>
+        }
+      />
 
       <DialogContent className="w-[calc(100%-2rem)] max-w-md">
         <DialogHeader>

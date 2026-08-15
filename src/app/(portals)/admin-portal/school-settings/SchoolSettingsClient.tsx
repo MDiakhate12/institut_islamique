@@ -27,7 +27,11 @@ import {
   Save, Plus, Trash2, Upload, GripVertical, Phone, Mail, Globe,
   Share2, MapPin, Clock, BookOpen, Link, Tv2, Users,
   FileSpreadsheet, Settings, AlertTriangle, MessageCircle,
+  Check, HelpCircle, CreditCard,
 } from 'lucide-react'
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { nanoid } from 'nanoid'
 
@@ -43,6 +47,21 @@ const DAYS = [
 ]
 
 const PAYMENT_MODES = ['Cash', 'Check', 'PayPal', 'Venmo', 'No Fees']
+
+const MONTHS = [
+  { key: 'january',   label: 'janvier' },
+  { key: 'february',  label: 'février' },
+  { key: 'march',      label: 'mars' },
+  { key: 'april',      label: 'avril' },
+  { key: 'may',        label: 'mai' },
+  { key: 'june',       label: 'juin' },
+  { key: 'july',       label: 'juillet' },
+  { key: 'august',     label: 'août' },
+  { key: 'september',  label: 'septembre' },
+  { key: 'october',    label: 'octobre' },
+  { key: 'november',   label: 'novembre' },
+  { key: 'december',   label: 'décembre' },
+]
 
 const LANGUAGES = [
   { value: 'fr', label: 'Français' },
@@ -1269,6 +1288,37 @@ function CalendarSection({ school }: { school: School }) {
 }
 
 // ── Finances ──────────────────────────────────────────────────────────────────
+function PeriodToggleCard({
+  checked, onChange, label,
+}: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  label: string
+}) {
+  return (
+    <label
+      className={cn(
+        'flex items-start gap-2.5 rounded-xl border-2 p-3.5 cursor-pointer transition-colors',
+        checked ? 'border-green-500/40 bg-green-50' : 'border-border bg-white'
+      )}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        className="sr-only"
+      />
+      <span className={cn(
+        'mt-0.5 h-4 w-4 rounded flex items-center justify-center shrink-0',
+        checked ? 'bg-green-600' : 'border border-border'
+      )}>
+        {checked && <Check className="h-3 w-3 text-white" />}
+      </span>
+      <span className="text-sm font-medium leading-snug">{label}</span>
+    </label>
+  )
+}
+
 function FinancialSection({ school }: { school: School }) {
   const s = school.settings as SchoolSettings
   const [hourlyRate, setHourlyRate]         = useState(String(s.teacherHourlyRate ?? 0))
@@ -1279,7 +1329,14 @@ function FinancialSection({ school }: { school: School }) {
   const [newMode, setNewMode]               = useState('')
   const [financialOptions, setFinancialOptions] = useState<string[]>(s.financialOptions ?? [])
   const [newOption, setNewOption]           = useState('')
+  const [showTrimesters, setShowTrimesters] = useState(s.paymentPeriodShowTrimesters ?? true)
+  const [showAnnually, setShowAnnually]     = useState(s.paymentPeriodShowAnnually ?? true)
+  const [showMonthly, setShowMonthly]       = useState(s.paymentPeriodShowMonthly ?? true)
+  const [showCantAfford, setShowCantAfford] = useState(s.paymentPeriodShowCantAfford ?? true)
+  const [paymentMonths, setPaymentMonths]   = useState<string[]>(s.paymentMonths ?? [])
   const update = useUpdateSchoolSettings()
+  const newModeRef = useRef<HTMLInputElement>(null)
+  const newOptionRef = useRef<HTMLInputElement>(null)
 
   function addMode() {
     const t = newMode.trim()
@@ -1304,94 +1361,94 @@ function FinancialSection({ school }: { school: School }) {
     setFinancialOptions(prev => prev.filter(o => o !== opt))
   }
 
+  function toggleMonth(key: string) {
+    setPaymentMonths(prev => prev.includes(key) ? prev.filter(m => m !== key) : [...prev, key])
+  }
+
   function save() {
     update.mutate({
       teacherHourlyRate:  parseFloat(hourlyRate) || 0,
       paymentInfoUrl,
       paymentModes,
       financialOptions,
+      paymentPeriodShowTrimesters: showTrimesters,
+      paymentPeriodShowAnnually:   showAnnually,
+      paymentPeriodShowMonthly:    showMonthly,
+      paymentPeriodShowCantAfford: showCantAfford,
+      paymentMonths,
     })
   }
 
   return (
     <Section icon={Settings} title="Paramètres financiers">
+      <p className="text-xs text-muted-foreground -mt-2">
+        Configurez les modes de paiement et les options financières de votre école.
+      </p>
+
       <div className="space-y-5">
 
-        {/* Taux horaire */}
-        <div className="space-y-1">
-          <p className="text-xs text-muted-foreground leading-snug">
-            Taux horaire par défaut pour les enseignants payés (€). Un taux individuel peut être défini pour chaque enseignant depuis la page Enseignants et aura la priorité. Mettre à 0 pour désactiver.
-          </p>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">€</span>
-            <Input
-              type="number"
-              min="0"
-              step="0.5"
-              value={hourlyRate}
-              onChange={e => setHourlyRate(e.target.value)}
-              placeholder="0.00"
-              className="h-9 text-sm pl-7"
-            />
-          </div>
-        </div>
-
-        {/* URL infos paiement */}
-        <div className="space-y-1">
-          <Label className="text-xs font-medium text-muted-foreground">Lien d&apos;informations de paiement</Label>
-          <Input
-            value={paymentInfoUrl}
-            onChange={e => setPaymentInfoUrl(e.target.value)}
-            placeholder="https://..."
-            className="h-9 text-sm"
-          />
-        </div>
-
-        {/* Modes de paiement — list with drag handles */}
+        {/* Options de période de paiement */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium text-muted-foreground">Modes de paiement</Label>
-            <button
-              type="button"
-              onClick={() => setNewMode('')}
-              className="text-xs text-[#c2440f] hover:underline font-medium"
-              title="Ajouter un mode"
-            >
-              + Ajouter un mode
-            </button>
-          </div>
-          <div className="space-y-1.5">
-            {paymentModes.map(mode => (
-              <div key={mode} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border bg-white">
-                <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-                <span className="flex-1 text-sm">{mode}</span>
-                <button
-                  type="button"
-                  onClick={() => removeMode(mode)}
-                  className="text-muted-foreground hover:text-red-600 transition-colors text-base leading-none"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          {/* Inline add new mode */}
-          <div className="flex gap-2">
-            <Input
-              value={newMode}
-              onChange={e => setNewMode(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addMode()}
-              placeholder="Nouveau mode de paiement..."
-              className="h-8 text-sm flex-1"
+          <Label className="text-xs font-medium text-muted-foreground">Options de période de paiement</Label>
+          <p className="text-xs text-muted-foreground">
+            Choisissez les options de période de paiement qui apparaissent lors de l&apos;enregistrement d&apos;un paiement. Les trimestres sont affichés par défaut.
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            <PeriodToggleCard
+              checked={showTrimesters}
+              onChange={setShowTrimesters}
+              label="Afficher les trimestres (ex. Trimestre 1, Trimestre 2)"
             />
-            <Button
-              size="sm"
-              onClick={addMode}
-              disabled={!newMode.trim()}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white h-8 px-2.5"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
+            <PeriodToggleCard
+              checked={showAnnually}
+              onChange={setShowAnnually}
+              label="Afficher Annuellement"
+            />
+            <PeriodToggleCard
+              checked={showMonthly}
+              onChange={setShowMonthly}
+              label="Afficher Mensuel"
+            />
+            <PeriodToggleCard
+              checked={showCantAfford}
+              onChange={setShowCantAfford}
+              label='Afficher "Je ne peux vraiment pas me le permettre"'
+            />
+          </div>
+        </div>
+
+        {/* Mois de paiement */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Label className="text-xs font-medium text-muted-foreground">Mois de paiement</Label>
+            <Popover>
+              <PopoverTrigger
+                aria-label="Comment fonctionnent les paiements mensuels"
+                className="text-muted-foreground hover:text-[#c2440f] transition-colors"
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+              </PopoverTrigger>
+              <PopoverContent>
+                Les paiements mensuels sont dus chaque mois sélectionné ci-dessous. Un mois non sélectionné n&apos;apparaîtra jamais comme impayé.
+              </PopoverContent>
+            </Popover>
+            <span className="text-xs text-muted-foreground">Comment fonctionnent les paiements mensuels</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Mois du calendrier pour lesquels les frais de scolarité sont facturés (par ex. exclut juillet/août pour les vacances d&apos;été). Utilisé pour déterminer quels mois s&apos;affichent comme impayés pour les paiements mensuels. Par défaut, les 12 mois si aucun n&apos;est sélectionné.
+          </p>
+          <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+            {MONTHS.map(m => (
+              <label key={m.key} className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={paymentMonths.includes(m.key)}
+                  onChange={() => toggleMonth(m.key)}
+                  className="h-4 w-4 rounded border-border accent-[#c2440f]"
+                />
+                {m.label}
+              </label>
+            ))}
           </div>
         </div>
 
@@ -1402,7 +1459,7 @@ function FinancialSection({ school }: { school: School }) {
             <button
               type="button"
               className="text-xs text-[#c2440f] hover:underline font-medium"
-              onClick={() => {}}
+              onClick={() => newOptionRef.current?.focus()}
               title="Ajouter une option"
             >
               + Ajouter une option
@@ -1428,6 +1485,7 @@ function FinancialSection({ school }: { school: School }) {
           </div>
           <div className="flex gap-2">
             <Input
+              ref={newOptionRef}
               value={newOption}
               onChange={e => setNewOption(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addOption()}
@@ -1443,6 +1501,104 @@ function FinancialSection({ school }: { school: School }) {
               <Plus className="h-3.5 w-3.5" />
             </Button>
           </div>
+        </div>
+
+        {/* URL infos paiement */}
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-muted-foreground">Lien d&apos;informations de paiement</Label>
+          <Input
+            value={paymentInfoUrl}
+            onChange={e => setPaymentInfoUrl(e.target.value)}
+            placeholder="https://..."
+            className="h-9 text-sm"
+          />
+        </div>
+
+        {/* Modes de paiement — list with drag handles */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-medium text-muted-foreground">Modes de paiement</Label>
+            <button
+              type="button"
+              onClick={() => newModeRef.current?.focus()}
+              className="text-xs text-[#c2440f] hover:underline font-medium"
+              title="Ajouter un mode"
+            >
+              + Ajouter un mode
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            {paymentModes.map(mode => (
+              <div key={mode} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border bg-white">
+                <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                <span className="flex-1 text-sm">{mode}</span>
+                <button
+                  type="button"
+                  onClick={() => removeMode(mode)}
+                  className="text-muted-foreground hover:text-red-600 transition-colors text-base leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          {/* Inline add new mode */}
+          <div className="flex gap-2">
+            <Input
+              ref={newModeRef}
+              value={newMode}
+              onChange={e => setNewMode(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addMode()}
+              placeholder="Nouveau mode de paiement..."
+              className="h-8 text-sm flex-1"
+            />
+            <Button
+              size="sm"
+              onClick={addMode}
+              disabled={!newMode.trim()}
+              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white h-8 px-2.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Taux horaire */}
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-muted-foreground">Taux horaire de l&apos;enseignant (Salaires)</Label>
+          <p className="text-xs text-muted-foreground leading-snug">
+            Taux horaire par défaut pour tous les enseignants rémunérés. Un taux individuel peut être défini pour chaque enseignant depuis la page Enseignants et aura la priorité. Mettre à 0 pour désactiver.
+          </p>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">€</span>
+            <Input
+              type="number"
+              min="0"
+              step="0.5"
+              value={hourlyRate}
+              onChange={e => setHourlyRate(e.target.value)}
+              placeholder="0.00"
+              className="h-9 text-sm pl-7"
+            />
+          </div>
+        </div>
+
+        {/* Stripe — non connecté (placeholder, comme l'onglet Paiements de Dépenses) */}
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="h-9 w-9 rounded-full bg-white border border-amber-200 flex items-center justify-center shrink-0">
+              <CreditCard className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Stripe — Aucun compte connecté</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Connectez Stripe pour accepter les paiements numériques des parents (scolarité, frais, dons).
+              </p>
+            </div>
+          </div>
+          <Button disabled className="bg-indigo-600 text-white gap-2 opacity-60 cursor-not-allowed">
+            <CreditCard className="h-4 w-4" /> Connecter Stripe
+          </Button>
         </div>
       </div>
 
