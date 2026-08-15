@@ -47,7 +47,7 @@ export const paymentsService = {
         SELECT sm.id AS member_id, au.email
         FROM school_members sm
         LEFT JOIN auth.users au ON au.id = sm.user_id
-        WHERE sm.id = ANY(${parentMemberIds})
+        WHERE sm.id IN (${sql.join(parentMemberIds.map(id => sql`${id}`), sql`, `)})
       `)
       emailByMember = new Map(
         (emailRows as unknown as { member_id: string; email: string | null }[])
