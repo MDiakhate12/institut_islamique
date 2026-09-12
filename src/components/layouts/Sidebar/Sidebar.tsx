@@ -243,9 +243,10 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
                       href={item.href}
                       title={collapsed ? item.label : undefined}
                       className={cn(
-                        'w-full flex items-center gap-2.5 rounded-lg mx-1 px-3 py-2 text-sm transition-colors',
+                        'w-full flex items-center gap-2.5 rounded-lg mx-1 py-2 text-sm transition-colors',
                         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50',
-                        collapsed ? 'justify-center mx-1 w-[calc(100%-8px)]' : '',
+                        // Indenté par rapport à l'icône du groupe parent — pas sur la même verticale
+                        collapsed ? 'justify-center mx-1 w-[calc(100%-8px)] px-3' : 'pl-8 pr-3',
                         active
                           ? 'bg-white/20 text-white font-semibold'
                           : 'text-white/75 hover:bg-white/10 hover:text-white'

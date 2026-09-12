@@ -145,3 +145,12 @@
     @apply font-sans;
   }
 }
+
+/* Utilisé sur la nav de la Sidebar pour un scroll interne discret (pas de barre visible) */
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
