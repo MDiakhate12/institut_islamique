@@ -264,9 +264,10 @@ function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
           trigger={
             <button
               type="button"
-              className="p-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground text-xs font-medium"
             >
               <Pencil className="h-3.5 w-3.5" />
+              Modifier
             </button>
           }
         />

@@ -230,9 +230,10 @@ function CatalogCard({
                   <button
                     type="button"
                     title="Modifier les infos de la classe"
-                    className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-1.5 px-2 py-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors text-xs font-medium"
                   >
                     <Pencil className="h-3.5 w-3.5" />
+                    Modifier
                   </button>
                 }
               />

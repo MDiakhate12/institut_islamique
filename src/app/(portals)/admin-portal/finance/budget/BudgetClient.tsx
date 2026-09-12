@@ -267,11 +267,11 @@ export function BudgetClient() {
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            title="Modifier"
                             onClick={() => setEditing(p)}
-                            className="p-1.5 rounded hover:bg-gray-100 text-[#c2440f]"
+                            className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-[#c2440f] text-xs font-medium"
                           >
                             <Pencil className="h-4 w-4" />
+                            Modifier
                           </button>
                           <button
                             type="button"

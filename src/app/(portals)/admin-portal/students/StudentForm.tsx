@@ -476,9 +476,10 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
                             <button
                               type="button"
                               onClick={() => setGuardianFormMode(g._tempId)}
-                              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                              className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium"
                             >
                               <Pencil className="w-3.5 h-3.5" />
+                              Modifier
                             </button>
                             <button
                               type="button"
