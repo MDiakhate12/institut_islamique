@@ -11,6 +11,7 @@ interface Props {
 export default async function SignupPage({ searchParams }: Props) {
   const params = await searchParams
   const isAdminInvite = params.invite === 'admin'
+  const isTeacherInvite = params.invite === 'teacher'
   const prefilledSchoolId = params.schoolId ?? ''
   const prefilledEmail = params.email ? decodeURIComponent(params.email) : ''
 
@@ -32,6 +33,7 @@ export default async function SignupPage({ searchParams }: Props) {
           <SignupForm
             schools={schoolList}
             isAdminInvite={isAdminInvite}
+            isTeacherInvite={isTeacherInvite}
             prefilledSchoolId={prefilledSchoolId}
             prefilledEmail={prefilledEmail}
           />

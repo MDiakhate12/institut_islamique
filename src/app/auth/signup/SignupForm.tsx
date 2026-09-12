@@ -39,19 +39,23 @@ type SignupInput = z.infer<typeof signupSchema>
 interface Props {
   schools:          { id: string; name: string }[]
   isAdminInvite?:   boolean
+  isTeacherInvite?: boolean
   prefilledEmail?:  string
   prefilledSchoolId?: string
 }
 
-export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = '', prefilledSchoolId = '' }: Props) {
+export function SignupForm({
+  schools, isAdminInvite = false, isTeacherInvite = false, prefilledEmail = '', prefilledSchoolId = '',
+}: Props) {
   const [isPending, startTransition] = useTransition()
   const [confirmed, setConfirmed] = useState(false)
+  const hideRoleChoice = isAdminInvite || isTeacherInvite
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       fullName: '', email: prefilledEmail, schoolId: prefilledSchoolId, phone: '',
-      isParent: !isAdminInvite, isTeacher: false, isAdmin: isAdminInvite,
+      isParent: !hideRoleChoice, isTeacher: isTeacherInvite, isAdmin: isAdminInvite,
       password: '', confirmPassword: '', acceptedTerms: false,
     },
   })
@@ -104,6 +108,17 @@ export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = ''
             <div>
               <p className="text-sm font-semibold text-amber-800">Invitation administrateur</p>
               <p className="text-xs text-amber-700">Vous avez été invité(e) à gérer cette école.</p>
+            </div>
+          </div>
+        )}
+        {isTeacherInvite && (
+          <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">Invitation enseignant</p>
+              <p className="text-xs text-amber-700">
+                Vous avez été invité(e) à rejoindre cette école en tant qu&apos;enseignant.
+              </p>
             </div>
           </div>
         )}
@@ -179,8 +194,8 @@ export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = ''
           )}
         />
 
-        {/* Rôles — masqués en mode admin invite */}
-        {!isAdminInvite && <div className="space-y-2">
+        {/* Rôles — masqués en mode invitation (admin ou enseignant) */}
+        {!hideRoleChoice && <div className="space-y-2">
           <FormLabel>Je suis *</FormLabel>
           <div className="flex gap-4">
             <FormField
