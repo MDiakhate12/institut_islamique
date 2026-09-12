@@ -175,6 +175,13 @@ export const DEFAULT_NEW_STUDENT_SCHEMA: FormItem[] = [
     content: '<p>Avant d\'envoyer le formulaire, veuillez vous assurer que vous avez examiné et accepté les règlements énoncés sur <a href="https://example.com">https://example.com</a></p><ul><li>Politique de l\'école</li><li>Libération de responsabilité</li><li>Règles de la classe</li></ul>',
   },
   {
+    kind: 'info_block',
+    id: 'ib-reglement-interieur',
+    style: 'info',
+    title: 'Règlement intérieur',
+    content: '<p>Merci de prendre connaissance du règlement intérieur de l\'école avant de finaliser votre inscription.</p>',
+  },
+  {
     kind: 'section',
     id: 'section-payment',
     title: 'Paiement, Parrainage et Accord de Politique',
@@ -187,6 +194,7 @@ export const DEFAULT_NEW_STUDENT_SCHEMA: FormItem[] = [
       { kind: 'custom_field', id: 'cf-photo-consent', label: 'Le personnel de l\'école peut prendre et utiliser les photographies et vidéos de mon enfant publiquement dans les publications imprimées, les publications en ligne, les présentations, le site web de l\'école et les réseaux sociaux, sur le bulletin d\'information (entre les enseignants et les parents). Je comprends également qu\'aucun droit d\'auteur, frais ou autre rémunération ne m\'est dû en raison de cet usage.', type: 'checkbox', required: false },
       { kind: 'custom_field', id: 'cf-comments',      label: 'Questions ou Commentaires', type: 'textarea', required: false, placeholder: 'Entrez toute question ou commentaire que vous avez…' },
       { kind: 'custom_field', id: 'cf-acknowledge',   label: "J'acknowledge que j'ai lu et accepte les politiques et les directives ci-dessus", type: 'checkbox', required: true,  note: "Avant d'envoyer le formulaire, veuillez vous assurer que vous avez examiné et accepté les règlements énoncés sur le site web de l'école." },
+      { kind: 'custom_field', id: 'cf-reglement-acknowledge', label: "J'ai lu et j'accepte le règlement intérieur de l'école", type: 'checkbox', required: true },
     ],
   },
 ]
@@ -227,6 +235,13 @@ export const DEFAULT_REENROLLMENT_SCHEMA: FormItem[] = [
     content: '<p>Avant d\'envoyer le formulaire, veuillez vous assurer que vous avez examiné et accepté les règlements.</p><ul><li>Politique de l\'école</li><li>Libération de responsabilité</li><li>Règles de la classe</li></ul>',
   },
   {
+    kind: 'info_block',
+    id: 'ib-reglement-interieur',
+    style: 'info',
+    title: 'Règlement intérieur',
+    content: '<p>Merci de prendre connaissance du règlement intérieur de l\'école avant de finaliser votre réinscription.</p>',
+  },
+  {
     kind: 'section',
     id: 'section-payment',
     title: 'Paiement, Parrainage et Accord de Politique',
@@ -240,6 +255,7 @@ export const DEFAULT_REENROLLMENT_SCHEMA: FormItem[] = [
       { kind: 'custom_field', id: 'cf-photo-consent', label: 'Le personnel de l\'école peut prendre et utiliser les photographies et vidéos de mon enfant publiquement.', type: 'checkbox', required: false },
       { kind: 'custom_field', id: 'cf-comments',      label: 'Questions ou Commentaires', type: 'textarea', required: false, placeholder: 'Entrez toute question ou commentaire que vous avez…' },
       { kind: 'custom_field', id: 'cf-acknowledge',   label: "J'acknowledge que j'ai lu et accepte les politiques et les directives ci-dessus", type: 'checkbox', required: true },
+      { kind: 'custom_field', id: 'cf-reglement-acknowledge', label: "J'ai lu et j'accepte le règlement intérieur de l'école", type: 'checkbox', required: true },
     ],
   },
 ]
