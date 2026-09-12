@@ -58,9 +58,13 @@ const RELATIONSHIP_COLORS: Record<string, string> = {
   other:    'bg-gray-500',
 }
 
-function buildYearOptions(): string[] {
+function buildYearOptions(currentValue?: string | null): string[] {
   const y = new Date().getFullYear()
-  return [`${y - 1}-${y}`, `${y}-${y + 1}`, `${y + 1}-${y + 2}`]
+  const options = [`${y - 1}-${y}`, `${y}-${y + 1}`, `${y + 1}-${y + 2}`]
+  if (currentValue && !options.includes(currentValue)) {
+    options.unshift(currentValue)
+  }
+  return options
 }
 
 function guardianToLocal(g: GuardianSummary): LocalGuardian {
@@ -208,7 +212,7 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
   const [deletedGuardianIds, setDeletedGuardianIds] = useState<string[]>([])
   const [guardianFormMode, setGuardianFormMode] = useState<'closed' | 'add' | string>('closed') // string = editing id (_tempId)
 
-  const yearOptions = buildYearOptions()
+  const yearOptions = buildYearOptions(student?.enrollmentYear)
 
   const form = useForm<CreateStudentInput>({
     resolver: zodResolver(createStudentSchema),
