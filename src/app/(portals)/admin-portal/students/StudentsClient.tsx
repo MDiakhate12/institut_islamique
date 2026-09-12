@@ -352,7 +352,7 @@ function SortTh({ label, onClick }: { label: string; onClick: () => void }) {
   )
 }
 
-function PaymentBadge({ paid }: { paid: boolean }) {
+function PaymentBadge({ paid, annual }: { paid: boolean; annual?: boolean }) {
   return (
     <span className={cn(
       'inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium',
@@ -360,7 +360,7 @@ function PaymentBadge({ paid }: { paid: boolean }) {
         ? 'bg-green-100 text-green-700 border border-green-200'
         : 'bg-red-50 text-red-600 border border-red-200'
     )}>
-      {paid ? 'Payé' : 'Non payé'}
+      {paid ? (annual ? 'Payé (Annuel)' : 'Payé') : 'Non payé'}
     </span>
   )
 }
@@ -471,9 +471,9 @@ function StudentRow({
       </td>
 
       {/* Paiements T1/T2/T3 */}
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT1} /></td>
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT2} /></td>
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT3} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT1} annual={s.paymentAnnual} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT2} annual={s.paymentAnnual} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT3} annual={s.paymentAnnual} /></td>
 
       {/* Statut */}
       <td className="px-3 py-3">

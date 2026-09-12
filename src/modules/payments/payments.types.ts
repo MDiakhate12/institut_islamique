@@ -44,6 +44,8 @@ export type ChildPaymentStatus = {
   t1: 'paid' | 'pending' | 'unpaid'
   t2: 'paid' | 'pending' | 'unpaid'
   t3: 'paid' | 'pending' | 'unpaid'
+  // true si les 3 sont payés via un seul paiement annuel (affichage distinct de 3 paiements séparés)
+  isAnnual: boolean
 }
 
 export type UnpaidParent = {

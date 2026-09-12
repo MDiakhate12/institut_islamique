@@ -53,6 +53,8 @@ export type StudentListItem = Pick<
   paymentT1:            boolean
   paymentT2:            boolean
   paymentT3:            boolean
+  // true si les 3 sont payés via un seul paiement annuel (affichage distinct de 3 paiements séparés)
+  paymentAnnual:        boolean
 }
 
 export type StudentPayment = {

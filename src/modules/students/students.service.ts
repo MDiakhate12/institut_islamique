@@ -206,6 +206,7 @@ export const studentsService = {
         paymentT1: paidT1,
         paymentT2: paidT2,
         paymentT3: paidT3,
+        paymentAnnual: annually,
       }
     })
   },
