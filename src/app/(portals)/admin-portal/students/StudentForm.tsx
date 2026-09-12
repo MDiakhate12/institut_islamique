@@ -10,14 +10,21 @@ import { createStudentAction, updateStudentAction, deleteStudentAction } from '@
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
+} from '@/components/ui/sheet'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, X, Pencil, CheckCircle, UserRound } from 'lucide-react'
+import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { StudentListItem, GuardianSummary } from '@/modules/students/students.types'
-import { guardianDisplayName } from '@/modules/students/students.types'
+import { guardianDisplayName, calcAge } from '@/modules/students/students.types'
 import { studentsKeys } from '@/modules/students/students.hooks'
 import { AddClassDialog } from './AddClassDialog'
+import { StudentPaymentsModal } from './StudentPaymentsModal'
+import { StudentAttendanceModal } from './StudentAttendanceModal'
+import { StudentHomeworkModal } from './StudentHomeworkModal'
+import { StudentReportCardModal } from './StudentReportCardModal'
 
 // ── Types locaux ──────────────────────────────────────────────────────────────
 
@@ -186,11 +193,25 @@ interface Props {
   student?: StudentListItem
   trigger?: React.ReactElement
   onSuccess?: () => void
+  // Contrôle externe optionnel — permet d'ouvrir le panel depuis un clic de ligne
+  // en plus (ou à la place) du trigger
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
-  const [open, setOpen]         = useState(false)
+export function StudentFormDialog({
+  student, trigger, onSuccess, open: controlledOpen, onOpenChange: setControlledOpen,
+}: Props) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open  = controlledOpen ?? internalOpen
+  const setOpen = setControlledOpen ?? setInternalOpen
   const [addClassOpen, setAddClassOpen] = useState(false)
+  const [swappingClassId, setSwappingClassId] = useState<string | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [attendanceOpen, setAttendanceOpen] = useState(false)
+  const [homeworkOpen, setHomeworkOpen]     = useState(false)
+  const [reportCardOpen, setReportCardOpen] = useState(false)
+  const [paymentsOpen, setPaymentsOpen]     = useState(false)
   const isEditing = !!student
   const queryClient = useQueryClient()
   const [isPending, startTransition] = useTransition()
@@ -228,6 +249,7 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
   })
 
   const isActive = form.watch('isActive')
+  const birthDate = form.watch('birthDate')
 
   function resetAndClose() {
     form.reset()
@@ -324,13 +346,14 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
     })
   }
 
-  function handleDelete() {
+  function confirmDelete() {
     if (!student) return
     startDelete(async () => {
       const result = await deleteStudentAction(student.id)
       if (!result.success) { toast.error(result.error); return }
       queryClient.invalidateQueries({ queryKey: studentsKeys.lists() })
       toast.success('Élève supprimé')
+      setDeleteConfirmOpen(false)
       resetAndClose()
       onSuccess?.()
     })
@@ -341,26 +364,90 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
     ? localGuardians.find(g => g._tempId === guardianFormMode)
     : undefined
 
+  const lastAttendanceLabel = student?.lastAttendanceDate
+    ? new Date(student.lastAttendanceDate).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })
+    : 'Jamais'
+
   return (
     <>
-      <Dialog open={open} onOpenChange={v => { if (!v) resetAndClose(); else setOpen(true) }}>
-        <DialogTrigger render={
-          trigger ?? (
-            <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
-              <Plus className="h-4 w-4" />
-              Créer un nouvel élève
-            </Button>
-          )
-        } />
+      <Sheet open={open} onOpenChange={v => { if (!v) resetAndClose(); else setOpen(true) }}>
+        {(trigger || !isEditing) && (
+          <SheetTrigger render={
+            trigger ?? (
+              <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+                <Plus className="h-4 w-4" />
+                Créer un nouvel élève
+              </Button>
+            )
+          } />
+        )}
 
-        <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">
+        <SheetContent className="w-full data-[side=right]:sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle className="text-lg font-semibold">
               {isEditing ? "Modifier l'élève" : 'Ajouter un nouvel élève'}
-            </DialogTitle>
-          </DialogHeader>
+            </SheetTitle>
+            {isEditing && (
+              <p className="text-sm text-muted-foreground">
+                {student.firstName} {student.lastName} — Dernière présence : {lastAttendanceLabel}
+              </p>
+            )}
+          </SheetHeader>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+          {isEditing && (
+            <>
+              {/* Badges de présence */}
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  Présent : {student.attendancePresent}
+                </span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                  En retard : {student.attendanceLate}
+                </span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                  Absent : {student.attendanceAbsent}
+                </span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                  Excusé : {student.attendanceExcused}
+                </span>
+              </div>
+
+              {/* Actions rapides */}
+              <div className="grid grid-cols-4 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReportCardOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded text-xs border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAttendanceOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded text-xs border font-medium bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-colors"
+                >
+                  Présences
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentsOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded text-xs border font-medium bg-green-50 border-green-200 text-green-700 hover:bg-green-100 transition-colors"
+                >
+                  Paiements
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHomeworkOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded text-xs border font-medium bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors"
+                >
+                  Devoirs
+                </button>
+              </div>
+            </>
+          )}
+
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 pt-2">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1 -mr-1">
 
             {/* Prénom / Nom */}
             <div className="grid grid-cols-2 gap-3">
@@ -403,11 +490,22 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
               </div>
             </div>
 
+            {isEditing && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">ID Élève</label>
+                <Input value={student.studentCustomId ?? '—'} readOnly className="bg-muted/30 text-muted-foreground" />
+              </div>
+            )}
+
             {/* Toggle inscrit */}
             <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 border border-border">
-              <span className="text-sm text-muted-foreground">L&apos;élève est actuellement inscrit et actif</span>
+              <span className="text-sm text-muted-foreground">
+                {isActive ? "L'élève est actuellement inscrit et actif" : "L'élève est actuellement inactif"}
+              </span>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-emerald-600">Inscrit</span>
+                <span className={cn('text-sm font-medium', isActive ? 'text-emerald-600' : 'text-gray-400')}>
+                  {isActive ? 'Inscrit' : 'Inactif'}
+                </span>
                 <button
                   type="button"
                   onClick={() => form.setValue('isActive', !isActive)}
@@ -554,13 +652,24 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
                           </span>
                           <span className="text-sm font-medium text-gray-700 truncate max-w-48">{e.name}</span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => removeClass(e.id, e.isNew ?? false)}
-                          className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            title="Changer de classe"
+                            onClick={() => { setSwappingClassId(e.id); setAddClassOpen(true) }}
+                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                          >
+                            <ArrowLeftRight className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Retirer de cette classe"
+                            onClick={() => removeClass(e.id, e.isNew ?? false)}
+                            className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">Paiement :</span>
@@ -590,6 +699,9 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
             <div>
               <label className="text-sm font-medium mb-1 block">Date de naissance</label>
               <Input type="date" {...form.register('birthDate')} />
+              {birthDate && (
+                <p className="text-xs text-muted-foreground mt-1">Âge : {calcAge(birthDate)}</p>
+              )}
             </div>
 
             {/* Commentaire */}
@@ -603,11 +715,18 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
               />
             </div>
 
-            {/* Boutons */}
-            <div className={cn('flex items-center gap-2 pt-2', isEditing ? 'justify-between' : 'justify-end')}>
+            {isEditing && (
+              <p className="text-xs text-muted-foreground">
+                Inscrit le : {new Date(student.createdAt).toLocaleDateString('fr-FR', { dateStyle: 'medium' })}
+              </p>
+            )}
+          </div>
+
+            {/* Boutons — toujours visibles, hors de la zone de défilement */}
+            <div className={cn('flex items-center gap-2 pt-3 mt-1 border-t border-border shrink-0', isEditing ? 'justify-between' : 'justify-end')}>
               {isEditing && (
-                <Button type="button" variant="destructive" size="sm" disabled={isDeleting} onClick={handleDelete}>
-                  {isDeleting ? 'Suppression...' : "Supprimer l'élève"}
+                <Button type="button" variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)}>
+                  Supprimer l&apos;élève
                 </Button>
               )}
               <div className="flex gap-2">
@@ -620,25 +739,88 @@ export function StudentFormDialog({ student, trigger, onSuccess }: Props) {
                   disabled={isPending}
                   className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-36"
                 >
-                  {isPending ? 'Enregistrement...' : isEditing ? 'Enregistrer' : "Créer l'élève"}
+                  {isPending ? 'Enregistrement...' : isEditing ? 'Enregistrer les modifications' : "Créer l'élève"}
                 </Button>
               </div>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       <AddClassDialog
         open={addClassOpen}
-        onOpenChange={setAddClassOpen}
-        excludeClassIds={excludedIds}
+        onOpenChange={v => { setAddClassOpen(v); if (!v) setSwappingClassId(null) }}
+        excludeClassIds={swappingClassId ? excludedIds.filter(id => id !== swappingClassId) : excludedIds}
         onAdd={cls => {
+          if (swappingClassId) {
+            removeClass(swappingClassId, localEnrollments.find(e => e.id === swappingClassId)?.isNew ?? false)
+            setSwappingClassId(null)
+          }
           setLocalEnrollments(prev => [
             ...prev,
             { id: cls.id, classCode: cls.classCode, name: cls.name, teacherName: cls.teacherName, paidT1: false, paidT2: false, paidT3: false, isNew: true },
           ])
         }}
       />
+
+      {isEditing && (
+        <>
+          <StudentAttendanceModal
+            open={attendanceOpen}
+            onOpenChange={setAttendanceOpen}
+            studentId={student.id}
+            studentName={`${student.firstName} ${student.lastName}`}
+          />
+          <StudentHomeworkModal
+            open={homeworkOpen}
+            onOpenChange={setHomeworkOpen}
+            studentId={student.id}
+            studentName={`${student.firstName} ${student.lastName}`}
+          />
+          <StudentReportCardModal
+            open={reportCardOpen}
+            onOpenChange={setReportCardOpen}
+            student={student}
+          />
+          <StudentPaymentsModal
+            open={paymentsOpen}
+            onOpenChange={setPaymentsOpen}
+            studentId={student.id}
+            studentName={`${student.firstName} ${student.lastName}`}
+          />
+
+          <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Êtes-vous sûr ?</DialogTitle>
+              </DialogHeader>
+              <div className="text-sm space-y-3">
+                <p>
+                  Cette action supprimera définitivement le dossier de{' '}
+                  <strong>{student.firstName} {student.lastName}</strong> et :
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                  <li>Les informations tuteurs liées à cet élève</li>
+                  <li>Tous les devoirs soumis</li>
+                  <li>Tous les relevés de notes</li>
+                </ul>
+                <p className="text-muted-foreground">
+                  Remarque : l&apos;historique des présences et les relevés de paiement seront conservés (anonymisés).
+                </p>
+                <p className="font-medium text-destructive">Cette action est irréversible.</p>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setDeleteConfirmOpen(false)}>
+                  Annuler
+                </Button>
+                <Button type="button" variant="destructive" size="sm" disabled={isDeleting} onClick={confirmDelete}>
+                  {isDeleting ? 'Suppression...' : 'Supprimer'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
     </>
   )
 }

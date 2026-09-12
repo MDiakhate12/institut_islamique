@@ -148,6 +148,7 @@ export const studentsService = {
 
     type StatAcc = Record<string, { present: number; late: number; absent: number; excused: number }>
     const attendanceStats = attendanceStatRows.reduce<StatAcc>((acc, row) => {
+      if (!row.studentId) return acc
       if (!acc[row.studentId]) acc[row.studentId] = { present: 0, late: 0, absent: 0, excused: 0 }
       const s = row.status as 'present' | 'late' | 'absent' | 'excused'
       acc[row.studentId][s] = Number(row.cnt)
@@ -155,6 +156,7 @@ export const studentsService = {
     }, {})
 
     const lastByStudent = lastAttendanceRows.reduce<Record<string, string | null>>((acc, r) => {
+      if (!r.studentId) return acc
       acc[r.studentId] = r.lastDate ?? null
       return acc
     }, {})

@@ -23,6 +23,14 @@ export function guardianDisplayName(g: GuardianSummary): string {
   return 'Nom non renseigné'
 }
 
+export function calcAge(birthDate: string | null | undefined): string {
+  if (!birthDate) return '—'
+  const birth = new Date(birthDate)
+  const now = new Date()
+  const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+  return `${Math.floor(totalMonths / 12)}a ${totalMonths % 12}m`
+}
+
 export type StudentEnrollment = {
   enrollmentId: string
   classId: string

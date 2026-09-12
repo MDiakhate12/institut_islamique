@@ -14,7 +14,8 @@ export const wageStatusEnum = pgEnum('wage_status', ['pending', 'approved', 'rej
 export const payments = pgTable('payments', {
   id:                uuid('id').primaryKey().defaultRandom(),
   schoolId:          uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
-  studentId:         uuid('student_id').references(() => students.id),
+  // Conservé (studentId annulé) si l'élève est supprimé — parentName (texte libre) permet un affichage dégradé
+  studentId:         uuid('student_id').references(() => students.id, { onDelete: 'set null' }),
   classEnrollmentId: uuid('class_enrollment_id').references(() => classEnrollments.id),
   amount:            integer('amount').notNull(),
   currency:          text('currency').notNull().default('EUR'),

@@ -17,6 +17,7 @@ import { StudentPaymentsModal } from './StudentPaymentsModal'
 import { StudentHomeworkModal } from './StudentHomeworkModal'
 import { StudentReportCardModal } from './StudentReportCardModal'
 import type { StudentListItem } from '@/modules/students/students.types'
+import { calcAge } from '@/modules/students/students.types'
 
 type GenderFilter  = 'all' | 'male' | 'female'
 type ActiveFilter  = 'all' | 'active' | 'inactive'
@@ -24,14 +25,6 @@ type SortKey       = 'name' | 'birthDate' | null
 type PayFilter     = 'all' | 'paid' | 'unpaid'
 
 interface ModalState { studentId: string; studentName: string }
-
-function calcAge(birthDate: string | null | undefined): string {
-  if (!birthDate) return '—'
-  const birth = new Date(birthDate)
-  const now = new Date()
-  const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
-  return `${Math.floor(totalMonths / 12)}a ${totalMonths % 12}m`
-}
 
 function buildYearOptions(students: StudentListItem[]): string[] {
   const years = new Set<string>()
@@ -254,8 +247,7 @@ export function StudentsClient() {
             <table className="w-full text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
-                  <th className="px-3 py-3 text-left w-8">#</th>
-                  <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} />
+                  <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} className="sticky left-0 z-10 bg-[#fefbf6] border-r border-border" />
                   <th className="px-3 py-3 text-left">Étoiles</th>
                   <th className="px-3 py-3 text-left">Trophée</th>
                   <SortTh label="Date de naissance" onClick={() => toggleSort('birthDate')} />
@@ -342,9 +334,9 @@ export function StudentsClient() {
   )
 }
 
-function SortTh({ label, onClick }: { label: string; onClick: () => void }) {
+function SortTh({ label, onClick, className }: { label: string; onClick: () => void; className?: string }) {
   return (
-    <th className="px-3 py-3 text-left font-semibold min-w-[180px]">
+    <th className={cn('px-3 py-3 text-left font-semibold min-w-[180px]', className)}>
       <button onClick={onClick} className="flex items-center gap-1 hover:text-foreground transition-colors uppercase tracking-wide text-xs">
         {label} <ArrowUpDown className="h-3 w-3" />
       </button>
@@ -390,14 +382,17 @@ function StudentRow({
   const mother = s.guardians.find(g => g.relationship === 'mother') ?? s.guardians.find(g => !g.isPrimary)
   const emergencyPhone = father?.emergencyPhone ?? s.guardians.find(g => g.emergencyPhone)?.emergencyPhone
   const isEditingNote = editingNoteId === s.id
+  const [editOpen, setEditOpen] = useState(false)
 
   return (
-    <tr className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-top">
-      <td className="px-3 py-3 text-muted-foreground text-xs">{index + 1}.</td>
-
-      {/* Nom + ID */}
-      <td className="px-3 py-3">
+    <tr
+      onClick={() => setEditOpen(true)}
+      className="group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-top cursor-pointer"
+    >
+      {/* Nom + ID — figé au scroll horizontal */}
+      <td className="px-3 py-3 sticky left-0 z-10 bg-white group-hover:bg-[#fdfbf8] border-r border-border/50">
         <div className="flex items-start gap-2">
+          <span className="text-muted-foreground text-xs mt-0.5 shrink-0">{index + 1}.</span>
           <div className={cn('mt-1.5 h-2 w-2 rounded-full shrink-0', s.isActive ? 'bg-blue-500' : 'bg-gray-300')} />
           <div>
             <p className="font-semibold text-foreground">{s.lastName} {s.firstName}</p>
@@ -522,7 +517,7 @@ function StudentRow({
       </td>
 
       {/* Commentaire inline éditable */}
-      <td className="px-3 py-3 min-w-[200px]">
+      <td className="px-3 py-3 min-w-[200px]" onClick={e => e.stopPropagation()}>
         {isEditingNote ? (
           <div className="flex flex-col gap-1">
             <textarea
@@ -561,7 +556,7 @@ function StudentRow({
       </td>
 
       {/* Actions */}
-      <td className="px-3 py-3">
+      <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-1 flex-wrap">
           <button
             onClick={onOpenReportCard}
@@ -589,6 +584,8 @@ function StudentRow({
           </button>
           <StudentFormDialog
             student={s}
+            open={editOpen}
+            onOpenChange={setEditOpen}
             trigger={
               <button className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors">
                 <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
