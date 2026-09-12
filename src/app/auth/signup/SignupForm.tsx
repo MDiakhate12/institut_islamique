@@ -61,6 +61,10 @@ export function SignupForm({
     },
   })
 
+  const password = form.watch('password')
+  const confirmPassword = form.watch('confirmPassword')
+  const passwordsMatch = password.length > 0 && password === confirmPassword
+
   function onSubmit(data: SignupInput) {
     startTransition(async () => {
       const result = await signUpAction({
@@ -267,9 +271,20 @@ export function SignupForm({
             <FormItem>
               <FormLabel>Confirmer le mot de passe *</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  {...field}
+                  className={cn(passwordsMatch && 'border-green-500 focus-visible:ring-green-500/30')}
+                />
               </FormControl>
-              <FormMessage />
+              {passwordsMatch ? (
+                <p className="flex items-center gap-1.5 text-sm font-medium text-green-600">
+                  <CheckCircle className="h-3.5 w-3.5" /> Les mots de passe correspondent
+                </p>
+              ) : (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />
