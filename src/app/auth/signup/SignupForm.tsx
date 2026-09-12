@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CheckCircle, Mail, Shield } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const signupSchema = z
   .object({
@@ -197,35 +198,43 @@ export function SignupForm({
         {/* Rôles — masqués en mode invitation (admin ou enseignant) */}
         {!hideRoleChoice && <div className="space-y-2">
           <FormLabel>Je suis *</FormLabel>
-          <div className="flex gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
               name="isParent"
               render={({ field }) => (
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={field.onChange}
-                    className="h-4 w-4 accent-[#c2440f] cursor-pointer"
-                  />
-                  <span className="text-sm font-medium">Parent</span>
-                </label>
+                <button
+                  type="button"
+                  onClick={() => field.onChange(!field.value)}
+                  className={cn(
+                    'flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
+                    field.value
+                      ? 'border-[#c2440f] bg-[#c2440f]/5 text-[#c2440f]'
+                      : 'border-border text-muted-foreground hover:border-[#c2440f]/40'
+                  )}
+                >
+                  {field.value && <CheckCircle className="h-4 w-4" />}
+                  Inscription parent
+                </button>
               )}
             />
             <FormField
               control={form.control}
               name="isTeacher"
               render={({ field }) => (
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={field.onChange}
-                    className="h-4 w-4 accent-[#c2440f] cursor-pointer"
-                  />
-                  <span className="text-sm font-medium">Enseignant</span>
-                </label>
+                <button
+                  type="button"
+                  onClick={() => field.onChange(!field.value)}
+                  className={cn(
+                    'flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
+                    field.value
+                      ? 'border-[#c2440f] bg-[#c2440f]/5 text-[#c2440f]'
+                      : 'border-border text-muted-foreground hover:border-[#c2440f]/40'
+                  )}
+                >
+                  {field.value && <CheckCircle className="h-4 w-4" />}
+                  Inscription enseignant
+                </button>
               )}
             />
           </div>
