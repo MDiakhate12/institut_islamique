@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# --- agent context: secrets / local settings never tracked ---
+.mcp.json
+.vscode/mcp.json
+.claude/settings.local.json

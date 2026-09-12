@@ -105,9 +105,7 @@ Sous-rôles admin (exclusifs) :
 | Déploiement | **Vercel** | |
 
 ### Supabase Drizzle — connexion DB
-```
-postgresql://postgres:2qZWrDUaQrHYzZRL@db.nlsltdzoqustykrldaxh.supabase.co:5432/postgres
-```
+Configurée via la variable d'environnement `DATABASE_URL` dans `.env.local` (jamais commitée dans un fichier suivi par git — voir `.claude/rules/secrets-handling.md`).
 Scripts disponibles : `db:push`, `db:migrate`, `db:studio`, `db:generate`
 
 ---
