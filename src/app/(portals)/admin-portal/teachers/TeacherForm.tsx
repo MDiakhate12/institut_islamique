@@ -218,7 +218,11 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
               <div>
                 <p className="text-sm font-medium">Statut d&apos;inscription</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  L&apos;enseignant est actuellement inscrit et actif
+                  {isActive
+                    ? "L'enseignant est actuellement inscrit et actif"
+                    : teacher?.isPending
+                      ? "L'enseignant n'a pas encore activé son compte"
+                      : "L'enseignant est actuellement inactif"}
                 </p>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
