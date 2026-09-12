@@ -1,8 +1,14 @@
 'use client'
 
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { useStudentPayments } from '@/modules/students/students.hooks'
-import { Loader2 } from 'lucide-react'
+import { useStudentPayments, studentsKeys } from '@/modules/students/students.hooks'
+import { useDeletePayment } from '@/modules/payments/payments.hooks'
+import { PaymentFormDialog } from '../finance/budget/PaymentFormDialog'
+import type { EditablePayment } from '@/modules/payments/payments.types'
+import type { StudentPayment } from '@/modules/students/students.types'
+import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
 const PERIOD_LABELS: Record<string, string> = {
   annually:    'Annuel',
@@ -44,8 +50,28 @@ interface Props {
   studentName: string
 }
 
+function toEditablePayment(p: StudentPayment): EditablePayment {
+  return {
+    id: p.id,
+    studentId: p.studentId,
+    parentName: p.parentName,
+    amount: p.amountCents,
+    category: p.category,
+    period: p.period,
+    method: p.method,
+    financialOption: p.financialOption,
+    status: p.status,
+    date: p.date,
+    notes: p.notes,
+  }
+}
+
 export function StudentPaymentsModal({ open, onOpenChange, studentId, studentName }: Props) {
   const { data, isLoading } = useStudentPayments(studentId, open)
+  const deletePayment = useDeletePayment()
+  const [editing, setEditing] = useState<EditablePayment | null>(null)
+  const queryClient = useQueryClient()
+  const refreshStudentPayments = () => queryClient.invalidateQueries({ queryKey: studentsKeys.payments(studentId) })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,7 +94,8 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
                   <th className="text-left py-2 pr-4">Mode</th>
                   <th className="text-right py-2 pr-4">Montant</th>
                   <th className="text-left py-2 pr-4">Statut</th>
-                  <th className="text-left py-2">Parent</th>
+                  <th className="text-left py-2 pr-4">Parent</th>
+                  <th className="text-right py-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -91,13 +118,35 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
                         {STATUS_LABELS[p.status] ?? p.status}
                       </span>
                     </td>
-                    <td className="py-2 text-gray-600">{p.parentName ?? '—'}</td>
+                    <td className="py-2 pr-4 text-gray-600">{p.parentName ?? '—'}</td>
+                    <td className="py-2">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          title="Modifier"
+                          onClick={() => setEditing(toEditablePayment(p))}
+                          className="p-1.5 rounded hover:bg-gray-100 text-[#c2440f]"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Supprimer"
+                          onClick={() => deletePayment.mutate(p.id, { onSuccess: refreshStudentPayments })}
+                          className="p-1.5 rounded hover:bg-red-100 text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
+
+        <PaymentFormDialog editing={editing} onClose={() => { setEditing(null); refreshStudentPayments() }} />
       </DialogContent>
     </Dialog>
   )

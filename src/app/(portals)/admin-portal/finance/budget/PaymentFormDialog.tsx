@@ -18,7 +18,7 @@ import { useStudents } from '@/modules/students/students.hooks'
 import { useSchool } from '@/modules/school/school.hooks'
 import { useCreatePayment, useUpdatePayment } from '@/modules/payments/payments.hooks'
 import { createPaymentSchema, type CreatePaymentInput } from '@/modules/payments/payments.schema'
-import type { PaymentListItem } from '@/modules/payments/payments.types'
+import type { EditablePayment } from '@/modules/payments/payments.types'
 import {
   PAYMENT_CATEGORY_LABELS, PAYMENT_PERIOD_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS,
 } from '@/modules/payments/payments.labels'
@@ -37,7 +37,7 @@ const DEFAULT_VALUES: CreatePaymentInput = {
 }
 
 interface Props {
-  editing?: PaymentListItem | null
+  editing?: EditablePayment | null
   onClose?: () => void
 }
 

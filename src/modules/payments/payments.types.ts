@@ -33,6 +33,22 @@ export type PaymentListItem = {
   notes: string | null
 }
 
+// Champs minimum requis par PaymentFormDialog pour pré-remplir l'édition — PaymentListItem
+// et StudentPayment (via un objet construit côté client) le satisfont tous les deux.
+export type EditablePayment = {
+  id: string
+  studentId: string | null
+  parentName: string | null
+  amount: number
+  category: string
+  period: string
+  method: string
+  financialOption: string | null
+  status: string
+  date: string | null
+  notes: string | null
+}
+
 export type PaymentKpis = {
   totalRevenue: number
   pendingVerification: number

@@ -59,12 +59,15 @@ export type StudentListItem = Pick<
 
 export type StudentPayment = {
   id: string
+  studentId: string
   date: string | null
   academicYear: string | null
   amountCents: number
   currency: string
+  category: string
   period: string
   method: string
+  financialOption: string | null
   status: string
   parentName: string | null
   notes: string | null
