@@ -58,6 +58,11 @@ export type SchoolSettings = {
   paymentInfoUrl: string         // lien infos paiement
   paymentModes: string[]         // ['Venmo', 'Cash', 'Check', 'PayPal', 'No Fees']
   financialOptions: string[]     // ['No, thank you!', 'Supply 100% waived', ...]
+  paymentPeriodShowTrimesters: boolean  // afficher les options Trimestre 1/2/3 au paiement
+  paymentPeriodShowAnnually: boolean    // afficher l'option Annuellement au paiement
+  paymentPeriodShowMonthly: boolean     // afficher l'option Mensuel au paiement
+  paymentPeriodShowCantAfford: boolean  // afficher l'option "Je ne peux vraiment pas me le permettre"
+  paymentMonths: string[]        // mois facturés pour les paiements mensuels ; vide = les 12 mois
 
   // ── Soumissions
   allowTeacherExpenses: boolean  // enseignants peuvent demander remboursements
@@ -92,7 +97,18 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   teacherHourlyRate:       0,
   paymentInfoUrl:          '',
   paymentModes:            ['Cash', 'Check', 'PayPal', 'Venmo', 'No Fees'],
-  financialOptions:        [],
+  financialOptions:        [
+    'No, thank you!',
+    'Supply 100% waived',
+    'Tuition 100% waived',
+    'Tuition and Supply fees 50% waived',
+    'Tuition and Supply fees 100% waived',
+  ],
+  paymentPeriodShowTrimesters: true,
+  paymentPeriodShowAnnually:   true,
+  paymentPeriodShowMonthly:    true,
+  paymentPeriodShowCantAfford: true,
+  paymentMonths:               [],
   allowTeacherExpenses:    true,
   requireQuranRecording:   false,
   tvRules:                 [],
