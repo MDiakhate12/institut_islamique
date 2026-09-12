@@ -18,6 +18,8 @@ export type Teacher = {
   phone: string | null
   gender: string | null
   avatarUrl: string | null
+  documentUrl: string | null
+  documentName: string | null
   // Depuis auth.users (email)
   email: string
 }

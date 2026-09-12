@@ -31,6 +31,8 @@ export const schoolMembers = pgTable('school_members', {
   fullName: text('full_name'),
   phone: text('phone'),
   gender: text('gender'),   // 'male' | 'female' | null
+  documentUrl: text('document_url'),
+  documentName: text('document_name'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   createdBy: uuid('created_by'),
 })

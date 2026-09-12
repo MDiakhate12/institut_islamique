@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { teachersService } from './teachers.service'
-import { inviteTeacherSchema, updateTeacherSchema } from './teachers.schema'
+import { inviteTeacherSchema, updateTeacherSchema, uploadTeacherDocumentSchema } from './teachers.schema'
 import { requireSession } from '@/lib/auth/session'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
@@ -13,6 +13,7 @@ import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { sendEmail } from '@/lib/email'
+import { createClient } from '@/lib/supabase/server'
 
 async function sendTeacherInviteEmail(email: string, memberId: string, schoolId: string): Promise<void> {
   const signupUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/auth/signup?invite=teacher&schoolId=${schoolId}&email=${encodeURIComponent(email)}`
@@ -129,6 +130,52 @@ export async function removeTeacherAction(memberId: string): Promise<ActionResul
   } catch (e) {
     console.error('[removeTeacherAction]', e)
     return err("Impossible de retirer cet enseignant.")
+  }
+}
+
+export async function uploadTeacherDocumentAction(
+  memberId: string,
+  input: unknown
+): Promise<ActionResult<{ documentUrl: string; documentName: string }>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return unauthorized()
+
+  const parsed = uploadTeacherDocumentSchema.safeParse(input)
+  if (!parsed.success) return err(parsed.error.issues[0].message)
+
+  try {
+    const supabase = await createClient()
+    const bytes = Buffer.from(parsed.data.base64, 'base64')
+    const filePath = `${session.schoolId}/${memberId}/${Date.now()}-${parsed.data.fileName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('teacher-documents')
+      .upload(filePath, bytes, { contentType: parsed.data.mimeType, upsert: true })
+
+    if (uploadError) return err('Impossible de téléverser le document')
+
+    const { data: { publicUrl } } = supabase.storage.from('teacher-documents').getPublicUrl(filePath)
+
+    await teachersService.setDocument(session.schoolId, memberId, publicUrl, parsed.data.fileName)
+    revalidatePath(ROUTES.admin.teachers)
+    return ok({ documentUrl: publicUrl, documentName: parsed.data.fileName })
+  } catch (e) {
+    console.error('[uploadTeacherDocumentAction]', e)
+    return err('Impossible de téléverser le document')
+  }
+}
+
+export async function removeTeacherDocumentAction(memberId: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return unauthorized()
+
+  try {
+    await teachersService.removeDocument(session.schoolId, memberId)
+    revalidatePath(ROUTES.admin.teachers)
+    return ok(undefined)
+  } catch (e) {
+    console.error('[removeTeacherDocumentAction]', e)
+    return err('Impossible de supprimer le document')
   }
 }
 
