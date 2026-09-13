@@ -8,7 +8,7 @@ import {
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Plus, Download, ArrowUpDown, Check, X, Pencil } from 'lucide-react'
+import { Users, Plus, Download, ArrowUpDown, Check, X, Pencil, ReceiptText, CalendarDays, ClipboardList, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
@@ -557,40 +557,38 @@ function StudentRow({
 
       {/* Actions */}
       <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={onOpenReportCard}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-white border-[#8B4429] text-[#8B4429] hover:bg-[#8B4429]/5 transition-colors"
           >
-            Bulletin
+            <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
           </button>
           <button
             onClick={onOpenAttendance}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-white border-[#D17A47] text-[#D17A47] hover:bg-[#D17A47]/5 transition-colors"
           >
-            Présences
+            <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences de l&apos;élève
           </button>
           <button
             onClick={onOpenPayments}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-green-50 border-green-200 text-green-700 hover:bg-green-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-white border-[#008236] text-[#008236] hover:bg-[#008236]/5 transition-colors"
           >
-            Paiements
+            <ClipboardList className="h-3.5 w-3.5 shrink-0" /> Paiements
           </button>
           <button
             onClick={onOpenHomework}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-white border-[#8200DA] text-[#8200DA] hover:bg-[#8200DA]/5 transition-colors"
           >
-            Devoirs
+            <BookOpen className="h-3.5 w-3.5 shrink-0" /> Devoirs
           </button>
           <StudentFormDialog
             student={s}
             open={editOpen}
             onOpenChange={setEditOpen}
             trigger={
-              <button className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors">
-                <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M4 16l-.5 4 4-.5 9.293-9.293-3.536-3.536L4 16z" />
-                </svg>
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#1447E6] text-white hover:bg-[#1447E6]/90 transition-colors">
+                <Pencil className="h-3.5 w-3.5 shrink-0" /> Modifier l&apos;élève
               </button>
             }
           />
