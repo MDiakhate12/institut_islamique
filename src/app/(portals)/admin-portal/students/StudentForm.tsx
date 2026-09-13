@@ -782,7 +782,7 @@ export function StudentFormDialog({
           </div>
 
             {/* Boutons — toujours visibles, hors de la zone de défilement */}
-            <div className={cn('flex items-center gap-2 pt-3 mt-1 border-t border-border shrink-0', isEditing ? 'justify-between' : 'justify-end')}>
+            <div className={cn('flex items-center gap-2 pt-3 pb-4 mt-1 border-t border-border shrink-0', isEditing ? 'justify-between' : 'justify-end')}>
               {isEditing && (
                 <Button type="button" variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)}>
                   Supprimer l&apos;élève
