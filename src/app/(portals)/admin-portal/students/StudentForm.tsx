@@ -15,7 +15,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText } from 'lucide-react'
+import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText, CalendarDays, ClipboardList, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { StudentListItem, GuardianSummary } from '@/modules/students/students.types'
 import { guardianDisplayName, calcAge } from '@/modules/students/students.types'
@@ -33,6 +33,8 @@ interface ClassRow {
   classCode: string
   name: string
   teacherName: string | null
+  room: string | null
+  section: string | null
   paidT1: boolean
   paidT2: boolean
   paidT3: boolean
@@ -64,6 +66,11 @@ const RELATIONSHIP_COLORS: Record<string, string> = {
   guardian: 'bg-[#7a4f30]',
   other:    'bg-gray-500',
 }
+
+const SELECT_CLASS = 'w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30'
+// Même gabarit que SELECT_CLASS (h-auto, px-3, py-2, rounded-md) pour aligner
+// visuellement les <Input> (h-8 par défaut) sur la taille des <select> natifs
+const INPUT_SIZE_CLASS = 'h-auto rounded-md px-3 py-2 text-sm'
 
 function buildYearOptions(currentValue?: string | null): string[] {
   const y = new Date().getFullYear()
@@ -123,7 +130,7 @@ function GuardianForm({ initial, onSave, onCancel }: GuardianFormProps) {
           <select
             value={form.relationship}
             onChange={e => setForm(f => ({ ...f, relationship: e.target.value as LocalGuardian['relationship'] }))}
-            className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+            className={SELECT_CLASS}
           >
             <option value="father">Père</option>
             <option value="mother">Mère</option>
@@ -221,7 +228,8 @@ export function StudentFormDialog({
   const [localEnrollments, setLocalEnrollments] = useState<ClassRow[]>(() =>
     (student?.enrollments ?? []).map(e => ({
       id: e.classId, classCode: e.classCode, name: e.className,
-      teacherName: e.teacherName, paidT1: e.paidT1, paidT2: e.paidT2, paidT3: e.paidT3,
+      teacherName: e.teacherName, room: e.room, section: e.section,
+      paidT1: e.paidT1, paidT2: e.paidT2, paidT3: e.paidT3,
     }))
   )
   const [removedClassIds, setRemovedClassIds] = useState<string[]>([])
@@ -255,7 +263,8 @@ export function StudentFormDialog({
     form.reset()
     setLocalEnrollments((student?.enrollments ?? []).map(e => ({
       id: e.classId, classCode: e.classCode, name: e.className,
-      teacherName: e.teacherName, paidT1: e.paidT1, paidT2: e.paidT2, paidT3: e.paidT3,
+      teacherName: e.teacherName, room: e.room, section: e.section,
+      paidT1: e.paidT1, paidT2: e.paidT2, paidT3: e.paidT3,
     })))
     setRemovedClassIds([])
     setLocalGuardians((student?.guardians ?? []).map(guardianToLocal))
@@ -283,8 +292,15 @@ export function StudentFormDialog({
 
   // ── Class handlers ────────────────────────────────────────────────────────
 
-  function toggleClassPayment(classId: string, field: 'paidT1' | 'paidT2' | 'paidT3') {
-    setLocalEnrollments(prev => prev.map(e => e.id === classId ? { ...e, [field]: !e[field] } : e))
+  // Le paiement n'est plus géré par classe : un badge global par trimestre
+  // (payé = toutes les classes de l'élève sont marquées payées pour ce trimestre)
+  function isTrimesterPaid(field: 'paidT1' | 'paidT2' | 'paidT3') {
+    return localEnrollments.length > 0 && localEnrollments.every(e => e[field])
+  }
+
+  function toggleGlobalPayment(field: 'paidT1' | 'paidT2' | 'paidT3') {
+    const next = !isTrimesterPaid(field)
+    setLocalEnrollments(prev => prev.map(e => ({ ...e, [field]: next })))
   }
 
   function removeClass(classId: string, isNew: boolean) {
@@ -388,14 +404,15 @@ export function StudentFormDialog({
               {isEditing ? "Modifier l'élève" : 'Ajouter un nouvel élève'}
             </SheetTitle>
             {isEditing && (
-              <p className="text-sm text-muted-foreground">
-                {student.firstName} {student.lastName} — Dernière présence : {lastAttendanceLabel}
-              </p>
+              <>
+                <p className="text-base font-medium text-foreground">{student.firstName} {student.lastName}</p>
+                <p className="text-sm text-muted-foreground">Dernière présence : {lastAttendanceLabel}</p>
+              </>
             )}
           </SheetHeader>
 
           {isEditing && (
-            <>
+            <div className="px-4 space-y-3">
               {/* Badges de présence */}
               <div className="flex flex-wrap gap-2">
                 <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -413,59 +430,80 @@ export function StudentFormDialog({
               </div>
 
               {/* Actions rapides */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAttendanceOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-colors"
+                >
+                  <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentsOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-green-50 border-green-200 text-green-700 hover:bg-green-100 transition-colors"
+                >
+                  <ClipboardList className="h-3.5 w-3.5 shrink-0" /> Paiements
+                </button>
                 <button
                   type="button"
                   onClick={() => setReportCardOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded text-xs border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
                 >
                   <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAttendanceOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded text-xs border font-medium bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-colors"
-                >
-                  Présences
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentsOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded text-xs border font-medium bg-green-50 border-green-200 text-green-700 hover:bg-green-100 transition-colors"
-                >
-                  Paiements
-                </button>
-                <button
-                  type="button"
                   onClick={() => setHomeworkOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded text-xs border font-medium bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors"
                 >
-                  Devoirs
+                  <BookOpen className="h-3.5 w-3.5 shrink-0" /> Devoirs
                 </button>
               </div>
-            </>
+            </div>
           )}
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 pt-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 pt-2 px-4">
           <div className="flex-1 overflow-y-auto space-y-4 pr-1 -mr-1">
 
             {/* Prénom / Nom */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium mb-1 block">Prénom *</label>
-                <Input placeholder="Prénom" {...form.register('firstName')} />
+                <Input placeholder="Prénom" className={INPUT_SIZE_CLASS} {...form.register('firstName')} />
                 {form.formState.errors.firstName && (
                   <p className="text-xs text-destructive mt-1">{form.formState.errors.firstName.message}</p>
                 )}
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Nom de famille *</label>
-                <Input placeholder="Nom" {...form.register('lastName')} />
+                <Input placeholder="Nom" className={INPUT_SIZE_CLASS} {...form.register('lastName')} />
                 {form.formState.errors.lastName && (
                   <p className="text-xs text-destructive mt-1">{form.formState.errors.lastName.message}</p>
                 )}
               </div>
             </div>
+
+            {isEditing && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Téléphone</label>
+                  <Input
+                    value={student.phone ?? '—'}
+                    readOnly
+                    className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">ID Élève</label>
+                  <Input
+                    value={student.studentCustomId ?? '—'}
+                    readOnly
+                    className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Genre + Année d'inscription */}
             <div className="grid grid-cols-2 gap-3">
@@ -473,7 +511,7 @@ export function StudentFormDialog({
                 <label className="text-sm font-medium mb-1 block">Genre</label>
                 <select
                   {...form.register('gender')}
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+                  className={SELECT_CLASS}
                 >
                   <option value="male">Masculin</option>
                   <option value="female">Féminin</option>
@@ -483,19 +521,12 @@ export function StudentFormDialog({
                 <label className="text-sm font-medium mb-1 block">Année d&apos;inscription</label>
                 <select
                   {...form.register('enrollmentYear')}
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+                  className={SELECT_CLASS}
                 >
                   {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
             </div>
-
-            {isEditing && (
-              <div>
-                <label className="text-sm font-medium mb-1 block">ID Élève</label>
-                <Input value={student.studentCustomId ?? '—'} readOnly className="bg-muted/30 text-muted-foreground" />
-              </div>
-            )}
 
             {/* Toggle inscrit */}
             <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 border border-border">
@@ -538,8 +569,9 @@ export function StudentFormDialog({
               </div>
 
               {/* Liste des tuteurs existants */}
+              <div className="grid grid-cols-2 gap-2">
               {localGuardians.map(g => (
-                <div key={g._tempId}>
+                <div key={g._tempId} className={guardianFormMode === g._tempId ? 'col-span-2' : ''}>
                   {guardianFormMode === g._tempId ? (
                     <GuardianForm
                       initial={g}
@@ -548,7 +580,7 @@ export function StudentFormDialog({
                     />
                   ) : (
                     <div className={cn(
-                      'border rounded-lg p-3 space-y-1',
+                      'h-full border rounded-lg p-3 space-y-1',
                       g.linkedMemberId ? 'border-green-200 bg-green-50/30' : 'border-border'
                     )}>
                       <div className="flex items-center justify-between">
@@ -606,6 +638,7 @@ export function StudentFormDialog({
                   )}
                 </div>
               ))}
+              </div>
 
               {/* Formulaire d'ajout */}
               {guardianFormMode === 'add' && (
@@ -644,15 +677,15 @@ export function StudentFormDialog({
               ) : (
                 <div className="space-y-3">
                   {localEnrollments.map(e => (
-                    <div key={e.id} className="border border-border rounded-lg p-3 space-y-2">
+                    <div key={e.id} className="border border-border rounded-lg p-3 space-y-1">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold bg-[#7a4f30] text-white px-2 py-0.5 rounded">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs font-bold bg-[#7a4f30] text-white px-2 py-0.5 rounded shrink-0">
                             {e.classCode || '—'}
                           </span>
-                          <span className="text-sm font-medium text-gray-700 truncate max-w-48">{e.name}</span>
+                          <span className="text-sm font-medium text-gray-700 truncate">{e.name}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 shrink-0">
                           <button
                             type="button"
                             title="Changer de classe"
@@ -671,29 +704,42 @@ export function StudentFormDialog({
                           </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">Paiement :</span>
-                        {(['paidT1', 'paidT2', 'paidT3'] as const).map((field, idx) => (
-                          <button
-                            key={field}
-                            type="button"
-                            onClick={() => toggleClassPayment(e.id, field)}
-                            className={cn(
-                              'px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors',
-                              e[field]
-                                ? 'bg-green-50 border-green-300 text-green-700'
-                                : 'bg-white border-gray-300 text-gray-500 hover:border-[#c2440f] hover:text-[#c2440f]'
-                            )}
-                          >
-                            T{idx + 1}
-                          </button>
-                        ))}
-                      </div>
+                      {e.teacherName && (
+                        <p className="text-xs text-muted-foreground">Enseignant : {e.teacherName}</p>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Paiements */}
+            {isEditing && (
+              <div>
+                <p className="text-sm font-semibold mb-1.5">Paiements</p>
+                <div className="flex flex-wrap gap-2">
+                  {(['paidT1', 'paidT2', 'paidT3'] as const).map((field, idx) => {
+                    const paid = isTrimesterPaid(field)
+                    return (
+                      <button
+                        key={field}
+                        type="button"
+                        disabled={localEnrollments.length === 0}
+                        onClick={() => toggleGlobalPayment(field)}
+                        className={cn(
+                          'inline-flex px-2.5 py-1 rounded-full text-xs font-medium border transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+                          paid
+                            ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200'
+                            : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                        )}
+                      >
+                        T{idx + 1} : {paid ? 'Payé' : 'Non payé'}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Date de naissance */}
             <div>
@@ -758,7 +804,10 @@ export function StudentFormDialog({
           }
           setLocalEnrollments(prev => [
             ...prev,
-            { id: cls.id, classCode: cls.classCode, name: cls.name, teacherName: cls.teacherName, paidT1: false, paidT2: false, paidT3: false, isNew: true },
+            {
+              id: cls.id, classCode: cls.classCode, name: cls.name, teacherName: cls.teacherName,
+              room: cls.room, section: cls.section, paidT1: false, paidT2: false, paidT3: false, isNew: true,
+            },
           ])
         }}
       />
