@@ -44,8 +44,11 @@ export async function createCatalogClassAction(
     return ok(row)
   } catch (e: unknown) {
     console.error('[createCatalogClassAction]', e)
-    const msg = (e as Error)?.message ?? ''
-    if (msg.includes('unique')) return err('Ce code de classe existe déjà')
+    const allText = [
+      e instanceof Error ? e.message : '',
+      e instanceof Error && e.cause instanceof Error ? e.cause.message : '',
+    ].join(' ')
+    if (allText.includes('unique') || allText.includes('23505')) return err('Ce code de classe existe déjà')
     return err('Impossible de créer la classe')
   }
 }

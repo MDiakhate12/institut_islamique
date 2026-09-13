@@ -47,6 +47,19 @@ function FieldRenderer({
     <p className="text-xs text-muted-foreground mb-1.5">{note}</p>
   ) : null
 
+  // System fields whose value is computed by the app — shown, never editable
+  if (field.kind === 'system_field' && field.readOnly) {
+    return (
+      <div>
+        {labelEl}
+        {noteEl}
+        <div className={cn(inputClass, 'bg-muted/40 text-muted-foreground cursor-not-allowed select-none')}>
+          {(value as string) ?? ''}
+        </div>
+      </div>
+    )
+  }
+
   if (type === 'text' || type === 'email' || type === 'tel') {
     return (
       <div>
@@ -540,7 +553,18 @@ export function PublicRegistrationForm({
   successHref,
 }: PublicRegistrationFormProps) {
   const router = useRouter()
-  const [formData, setFormData] = useState<Record<string, unknown>>(initialFormData ?? {})
+  const [formData, setFormData] = useState<Record<string, unknown>>(() => {
+    const seeded: Record<string, unknown> = { ...(initialFormData ?? {}) }
+    for (const item of schema) {
+      if (item.kind !== 'section') continue
+      for (const field of item.fields) {
+        if (field.kind === 'system_field' && field.fieldKey === 'academicYear' && seeded[field.id] === undefined) {
+          seeded[field.id] = academicYear
+        }
+      }
+    }
+    return seeded
+  })
   const [isPending, startTransition] = useTransition()
 
   function handleFieldChange(key: string, value: unknown) {

@@ -137,11 +137,19 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
               </div>
             ) : (
               pinnedClasses.map(cls => (
-                <button
+                <div
                   key={cls.pinnedId}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedClassId(cls.classId)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setSelectedClassId(cls.classId)
+                    }
+                  }}
                   className={cn(
-                    'w-full text-left rounded-xl border p-3 transition-all group',
+                    'w-full text-left rounded-xl border p-3 transition-all group cursor-pointer',
                     selectedClassId === cls.classId
                       ? 'border-orange-300 bg-white shadow-sm'
                       : 'border-gray-200 bg-white hover:border-orange-200 hover:shadow-sm',
@@ -178,7 +186,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
                       </button>
                     </div>
                   </div>
-                </button>
+                </div>
               ))
             )}
           </div>

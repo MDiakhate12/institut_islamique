@@ -165,20 +165,31 @@ export function SignupForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>École *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              {hideRoleChoice ? (
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner votre école">
-                      {(v: string) => schools.find(s => s.id === v)?.name ?? v}
-                    </SelectValue>
-                  </SelectTrigger>
+                  <Input
+                    readOnly
+                    disabled
+                    value={schools.find(s => s.id === field.value)?.name ?? ''}
+                    className="bg-gray-50 text-gray-700"
+                  />
                 </FormControl>
-                <SelectContent>
-                  {schools.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              ) : (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner votre école">
+                        {(v: string) => schools.find(s => s.id === v)?.name ?? v}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {schools.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <FormMessage />
             </FormItem>
           )}

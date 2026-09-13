@@ -206,7 +206,7 @@ function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
                 ? 'text-emerald-700 bg-emerald-50 border-emerald-300'
                 : 'text-blue-700 bg-blue-50 border-blue-300'
             )}>
-              {isVolunteer ? 'Volunteer' : '$Paid'}
+              {isVolunteer ? 'Bénévole' : 'Payé'}
             </span>
           )}
           <span className={cn(
