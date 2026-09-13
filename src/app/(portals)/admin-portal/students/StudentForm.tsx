@@ -67,10 +67,12 @@ const RELATIONSHIP_COLORS: Record<string, string> = {
   other:    'bg-gray-500',
 }
 
-const SELECT_CLASS = 'w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30'
-// Même gabarit que SELECT_CLASS (h-auto, px-3, py-2, rounded-md) pour aligner
-// visuellement les <Input> (h-8 par défaut) sur la taille des <select> natifs
-const INPUT_SIZE_CLASS = 'h-auto rounded-md px-3 py-2 text-sm'
+const SELECT_CLASS = 'h-10 w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30'
+// Même gabarit que SELECT_CLASS pour aligner les <Input> (h-8 par défaut) sur
+// la taille des <select> natifs — une hauteur explicite est nécessaire car un
+// <select> et un <input> avec le même padding/font-size ne rendent pas à la
+// même hauteur (métriques par défaut du navigateur pour chaque élément)
+const INPUT_SIZE_CLASS = 'h-10 rounded-md px-3 py-2 text-sm'
 
 function buildYearOptions(currentValue?: string | null): string[] {
   const y = new Date().getFullYear()
@@ -473,7 +475,7 @@ export function StudentFormDialog({
           )}
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 pt-2 px-4">
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1 -mr-1">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1 -mr-1 pb-4">
 
             {/* Prénom / Nom */}
             <div className="grid grid-cols-2 gap-3">
