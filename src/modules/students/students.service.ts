@@ -75,6 +75,8 @@ export const studentsService = {
           classCode:    classCatalog.code,
           className:    classes.name,
           teacherName:  profiles.fullName,
+          room:         classes.room,
+          section:      classes.section,
           paymentPlan:  classEnrollments.paymentPlan,
           enrolledAt:   classEnrollments.enrolledAt,
         })
@@ -175,6 +177,8 @@ export const studentsService = {
         classCode:    e.classCode ?? '',
         className:    e.className,
         teacherName:  e.teacherName ?? null,
+        room:         e.room ?? null,
+        section:      e.section ?? null,
         paymentPlan:  e.paymentPlan ?? 'trimestrial',
         paidT1,
         paidT2,
@@ -339,7 +343,10 @@ export const studentsService = {
       for (const classId of classIdsToAdd) {
         await db.insert(classEnrollments)
           .values({ schoolId, studentId, classId })
-          .onConflictDoNothing()
+          .onConflictDoNothing({
+            target: [classEnrollments.studentId, classEnrollments.classId],
+            where:  isNull(classEnrollments.unenrolledAt),
+          })
       }
     }
 
@@ -530,6 +537,7 @@ export const studentsService = {
         classCode:   classCatalog.code,
         name:        classes.name,
         teacherName: profiles.fullName,
+        room:        classes.room,
         section:     classes.section,
       })
       .from(classes)
@@ -543,6 +551,8 @@ export const studentsService = {
       classCode:   r.classCode ?? '',
       name:        r.name,
       teacherName: r.teacherName ?? null,
+      room:        r.room ?? null,
+      section:     r.section ?? null,
     }))
   },
 
