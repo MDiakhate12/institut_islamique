@@ -23,12 +23,22 @@ export function guardianDisplayName(g: GuardianSummary): string {
   return 'Nom non renseigné'
 }
 
+export function calcAge(birthDate: string | null | undefined): string {
+  if (!birthDate) return '—'
+  const birth = new Date(birthDate)
+  const now = new Date()
+  const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+  return `${Math.floor(totalMonths / 12)}a ${totalMonths % 12}m`
+}
+
 export type StudentEnrollment = {
   enrollmentId: string
   classId: string
   classCode: string
   className: string
   teacherName: string | null
+  room: string | null
+  section: string | null
   paymentPlan: string
   paidT1: boolean
   paidT2: boolean
@@ -53,16 +63,21 @@ export type StudentListItem = Pick<
   paymentT1:            boolean
   paymentT2:            boolean
   paymentT3:            boolean
+  // true si les 3 sont payés via un seul paiement annuel (affichage distinct de 3 paiements séparés)
+  paymentAnnual:        boolean
 }
 
 export type StudentPayment = {
   id: string
+  studentId: string
   date: string | null
   academicYear: string | null
   amountCents: number
   currency: string
+  category: string
   period: string
   method: string
+  financialOption: string | null
   status: string
   parentName: string | null
   notes: string | null

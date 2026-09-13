@@ -265,6 +265,7 @@ export const attendanceService = {
 
     const recordsByAtt = new Map<string, Map<string, AttendanceStatus>>()
     for (const r of recordRows) {
+      if (!r.studentId) continue
       if (!recordsByAtt.has(r.attendanceId)) recordsByAtt.set(r.attendanceId, new Map())
       recordsByAtt.get(r.attendanceId)!.set(r.studentId, r.status as AttendanceStatus)
     }

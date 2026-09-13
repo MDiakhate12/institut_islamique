@@ -18,10 +18,12 @@ export const teachersService = {
         isPending: schoolMembers.isPending,
         pendingEmail: schoolMembers.pendingEmail,
         createdAt: schoolMembers.createdAt,
-        fullName: profiles.fullName,
-        phone: profiles.phone,
-        gender: profiles.gender,
+        fullName: sql<string | null>`coalesce(${profiles.fullName}, ${schoolMembers.fullName})`,
+        phone: sql<string | null>`coalesce(${profiles.phone}, ${schoolMembers.phone})`,
+        gender: sql<string | null>`coalesce(${profiles.gender}, ${schoolMembers.gender})`,
         avatarUrl: profiles.avatarUrl,
+        documentUrl: schoolMembers.documentUrl,
+        documentName: schoolMembers.documentName,
       })
       .from(schoolMembers)
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
@@ -80,10 +82,12 @@ export const teachersService = {
         isPending: schoolMembers.isPending,
         pendingEmail: schoolMembers.pendingEmail,
         createdAt: schoolMembers.createdAt,
-        fullName: profiles.fullName,
-        phone: profiles.phone,
-        gender: profiles.gender,
+        fullName: sql<string | null>`coalesce(${profiles.fullName}, ${schoolMembers.fullName})`,
+        phone: sql<string | null>`coalesce(${profiles.phone}, ${schoolMembers.phone})`,
+        gender: sql<string | null>`coalesce(${profiles.gender}, ${schoolMembers.gender})`,
         avatarUrl: profiles.avatarUrl,
+        documentUrl: schoolMembers.documentUrl,
+        documentName: schoolMembers.documentName,
       })
       .from(schoolMembers)
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
@@ -118,12 +122,13 @@ export const teachersService = {
         teacherType: data.teacherType,
         isPending: true,
         pendingEmail: data.email.toLowerCase(),
+        fullName: data.fullName,
+        phone: data.phone ?? null,
+        gender: data.gender ?? null,
         createdBy: invitedBy,
       })
       .returning()
 
-    // Store name/phone in a pseudo-profile keyed by NIL_UUID — or just return as-is
-    // Profile will be created when the teacher actually signs up
     return {
       id: member.id,
       userId: NIL_UUID,
@@ -135,6 +140,8 @@ export const teachersService = {
       phone: data.phone ?? null,
       gender: data.gender ?? null,
       avatarUrl: null,
+      documentUrl: null,
+      documentName: null,
       email: data.email,
     }
   },
@@ -151,6 +158,12 @@ export const teachersService = {
     const memberUpdate: Record<string, unknown> = {}
     if (data.teacherType !== undefined) memberUpdate.teacherType = data.teacherType
     if (data.isActive !== undefined) memberUpdate.isPending = !data.isActive
+    // Tant que le compte réel (profiles) n'existe pas, school_members reste la source de vérité
+    if (member.userId === NIL_UUID) {
+      if (data.fullName !== undefined) memberUpdate.fullName = data.fullName
+      if (data.phone !== undefined) memberUpdate.phone = data.phone
+      if (data.gender !== undefined) memberUpdate.gender = data.gender
+    }
     if (Object.keys(memberUpdate).length > 0) {
       await db
         .update(schoolMembers)
@@ -158,7 +171,7 @@ export const teachersService = {
         .where(eq(schoolMembers.id, memberId))
     }
 
-    // Only update profile if the teacher has a real auth account
+    // Une fois le compte réel activé, c'est profiles qui fait foi
     if (member.userId !== NIL_UUID) {
       await db
         .update(profiles)
@@ -175,6 +188,20 @@ export const teachersService = {
   async removeFromSchool(schoolId: string, memberId: string): Promise<void> {
     await db
       .delete(schoolMembers)
+      .where(and(eq(schoolMembers.id, memberId), eq(schoolMembers.schoolId, schoolId)))
+  },
+
+  async setDocument(schoolId: string, memberId: string, documentUrl: string, documentName: string): Promise<void> {
+    await db
+      .update(schoolMembers)
+      .set({ documentUrl, documentName })
+      .where(and(eq(schoolMembers.id, memberId), eq(schoolMembers.schoolId, schoolId)))
+  },
+
+  async removeDocument(schoolId: string, memberId: string): Promise<void> {
+    await db
+      .update(schoolMembers)
+      .set({ documentUrl: null, documentName: null })
       .where(and(eq(schoolMembers.id, memberId), eq(schoolMembers.schoolId, schoolId)))
   },
 }

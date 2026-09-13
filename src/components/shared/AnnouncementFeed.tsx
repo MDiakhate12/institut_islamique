@@ -49,8 +49,9 @@ function AnnouncementCard({ announcement: a, onEdit, onDelete }: CardProps) {
           {isAdmin && (
             <>
               <button onClick={() => onEdit?.(a)}
-                className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors">
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors text-xs font-medium">
                 <Pencil className="h-3.5 w-3.5" />
+                Modifier
               </button>
               <button onClick={() => onDelete?.(a)}
                 className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors">

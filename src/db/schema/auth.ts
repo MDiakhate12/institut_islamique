@@ -27,6 +27,12 @@ export const schoolMembers = pgTable('school_members', {
   teacherType: teacherTypeEnum('teacher_type'),   // null si pas enseignant
   isPending: boolean('is_pending').notNull().default(false),
   pendingEmail: text('pending_email'),
+  // Renseignés par l'admin à l'invitation, tant que le compte réel (profiles) n'existe pas encore
+  fullName: text('full_name'),
+  phone: text('phone'),
+  gender: text('gender'),   // 'male' | 'female' | null
+  documentUrl: text('document_url'),
+  documentName: text('document_name'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   createdBy: uuid('created_by'),
 })

@@ -75,6 +75,8 @@ export const studentsService = {
           classCode:    classCatalog.code,
           className:    classes.name,
           teacherName:  profiles.fullName,
+          room:         classes.room,
+          section:      classes.section,
           paymentPlan:  classEnrollments.paymentPlan,
           enrolledAt:   classEnrollments.enrolledAt,
         })
@@ -148,6 +150,7 @@ export const studentsService = {
 
     type StatAcc = Record<string, { present: number; late: number; absent: number; excused: number }>
     const attendanceStats = attendanceStatRows.reduce<StatAcc>((acc, row) => {
+      if (!row.studentId) return acc
       if (!acc[row.studentId]) acc[row.studentId] = { present: 0, late: 0, absent: 0, excused: 0 }
       const s = row.status as 'present' | 'late' | 'absent' | 'excused'
       acc[row.studentId][s] = Number(row.cnt)
@@ -155,6 +158,7 @@ export const studentsService = {
     }, {})
 
     const lastByStudent = lastAttendanceRows.reduce<Record<string, string | null>>((acc, r) => {
+      if (!r.studentId) return acc
       acc[r.studentId] = r.lastDate ?? null
       return acc
     }, {})
@@ -173,6 +177,8 @@ export const studentsService = {
         classCode:    e.classCode ?? '',
         className:    e.className,
         teacherName:  e.teacherName ?? null,
+        room:         e.room ?? null,
+        section:      e.section ?? null,
         paymentPlan:  e.paymentPlan ?? 'trimestrial',
         paidT1,
         paidT2,
@@ -206,6 +212,7 @@ export const studentsService = {
         paymentT1: paidT1,
         paymentT2: paidT2,
         paymentT3: paidT3,
+        paymentAnnual: annually,
       }
     })
   },
@@ -336,7 +343,10 @@ export const studentsService = {
       for (const classId of classIdsToAdd) {
         await db.insert(classEnrollments)
           .values({ schoolId, studentId, classId })
-          .onConflictDoNothing()
+          .onConflictDoNothing({
+            target: [classEnrollments.studentId, classEnrollments.classId],
+            where:  isNull(classEnrollments.unenrolledAt),
+          })
       }
     }
 
@@ -418,8 +428,10 @@ export const studentsService = {
         date:       payments.paymentDate,
         amount:     payments.amount,
         currency:   payments.currency,
+        category:   payments.category,
         period:     payments.period,
         method:     payments.method,
+        financialOption: payments.financialOption,
         status:     payments.status,
         notes:      payments.notes,
         guardianFn: guardians.firstName,
@@ -435,12 +447,15 @@ export const studentsService = {
 
     return rows.map(r => ({
       id:         r.id,
+      studentId,
       date:       r.date,
       academicYear: null,
       amountCents: r.amount,
       currency:   r.currency,
+      category:   r.category,
       period:     r.period,
       method:     r.method,
+      financialOption: r.financialOption,
       status:     r.status,
       parentName: r.guardianLn || r.guardianFn || null,
       notes:      r.notes,
@@ -522,6 +537,7 @@ export const studentsService = {
         classCode:   classCatalog.code,
         name:        classes.name,
         teacherName: profiles.fullName,
+        room:        classes.room,
         section:     classes.section,
       })
       .from(classes)
@@ -535,6 +551,8 @@ export const studentsService = {
       classCode:   r.classCode ?? '',
       name:        r.name,
       teacherName: r.teacherName ?? null,
+      room:        r.room ?? null,
+      section:     r.section ?? null,
     }))
   },
 

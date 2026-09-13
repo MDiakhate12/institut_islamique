@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CheckCircle, Mail, Shield } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const signupSchema = z
   .object({
@@ -39,22 +40,30 @@ type SignupInput = z.infer<typeof signupSchema>
 interface Props {
   schools:          { id: string; name: string }[]
   isAdminInvite?:   boolean
+  isTeacherInvite?: boolean
   prefilledEmail?:  string
   prefilledSchoolId?: string
 }
 
-export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = '', prefilledSchoolId = '' }: Props) {
+export function SignupForm({
+  schools, isAdminInvite = false, isTeacherInvite = false, prefilledEmail = '', prefilledSchoolId = '',
+}: Props) {
   const [isPending, startTransition] = useTransition()
   const [confirmed, setConfirmed] = useState(false)
+  const hideRoleChoice = isAdminInvite || isTeacherInvite
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       fullName: '', email: prefilledEmail, schoolId: prefilledSchoolId, phone: '',
-      isParent: !isAdminInvite, isTeacher: false, isAdmin: isAdminInvite,
+      isParent: !hideRoleChoice, isTeacher: isTeacherInvite, isAdmin: isAdminInvite,
       password: '', confirmPassword: '', acceptedTerms: false,
     },
   })
+
+  const password = form.watch('password')
+  const confirmPassword = form.watch('confirmPassword')
+  const passwordsMatch = password.length > 0 && password === confirmPassword
 
   function onSubmit(data: SignupInput) {
     startTransition(async () => {
@@ -104,6 +113,17 @@ export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = ''
             <div>
               <p className="text-sm font-semibold text-amber-800">Invitation administrateur</p>
               <p className="text-xs text-amber-700">Vous avez été invité(e) à gérer cette école.</p>
+            </div>
+          </div>
+        )}
+        {isTeacherInvite && (
+          <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">Invitation enseignant</p>
+              <p className="text-xs text-amber-700">
+                Vous avez été invité(e) à rejoindre cette école en tant qu&apos;enseignant.
+              </p>
             </div>
           </div>
         )}
@@ -179,38 +199,46 @@ export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = ''
           )}
         />
 
-        {/* Rôles — masqués en mode admin invite */}
-        {!isAdminInvite && <div className="space-y-2">
+        {/* Rôles — masqués en mode invitation (admin ou enseignant) */}
+        {!hideRoleChoice && <div className="space-y-2">
           <FormLabel>Je suis *</FormLabel>
-          <div className="flex gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <FormField
               control={form.control}
               name="isParent"
               render={({ field }) => (
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={field.onChange}
-                    className="h-4 w-4 accent-[#c2440f] cursor-pointer"
-                  />
-                  <span className="text-sm font-medium">Parent</span>
-                </label>
+                <button
+                  type="button"
+                  onClick={() => field.onChange(!field.value)}
+                  className={cn(
+                    'flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
+                    field.value
+                      ? 'border-[#c2440f] bg-[#c2440f]/5 text-[#c2440f]'
+                      : 'border-border text-muted-foreground hover:border-[#c2440f]/40'
+                  )}
+                >
+                  {field.value && <CheckCircle className="h-4 w-4" />}
+                  Inscription parent
+                </button>
               )}
             />
             <FormField
               control={form.control}
               name="isTeacher"
               render={({ field }) => (
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={field.onChange}
-                    className="h-4 w-4 accent-[#c2440f] cursor-pointer"
-                  />
-                  <span className="text-sm font-medium">Enseignant</span>
-                </label>
+                <button
+                  type="button"
+                  onClick={() => field.onChange(!field.value)}
+                  className={cn(
+                    'flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
+                    field.value
+                      ? 'border-[#c2440f] bg-[#c2440f]/5 text-[#c2440f]'
+                      : 'border-border text-muted-foreground hover:border-[#c2440f]/40'
+                  )}
+                >
+                  {field.value && <CheckCircle className="h-4 w-4" />}
+                  Inscription enseignant
+                </button>
               )}
             />
           </div>
@@ -243,9 +271,20 @@ export function SignupForm({ schools, isAdminInvite = false, prefilledEmail = ''
             <FormItem>
               <FormLabel>Confirmer le mot de passe *</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  {...field}
+                  className={cn(passwordsMatch && 'border-green-500 focus-visible:ring-green-500/30')}
+                />
               </FormControl>
-              <FormMessage />
+              {passwordsMatch ? (
+                <p className="flex items-center gap-1.5 text-sm font-medium text-green-600">
+                  <CheckCircle className="h-3.5 w-3.5" /> Les mots de passe correspondent
+                </p>
+              ) : (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />

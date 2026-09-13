@@ -204,6 +204,7 @@ export const paymentsService = {
         t1: statusFor(entries, 'trimester_1'),
         t2: statusFor(entries, 'trimester_2'),
         t3: statusFor(entries, 'trimester_3'),
+        isAnnual: entries.some(e => e.period === 'annually' && e.status === 'verified'),
       }
     })
   },

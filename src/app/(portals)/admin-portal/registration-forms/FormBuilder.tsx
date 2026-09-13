@@ -692,7 +692,7 @@ function SectionBlock({
             className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          {!section.isSystem && onDelete && (
+          {onDelete && (
             <button type="button" onClick={onDelete}
               className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors">
               <Trash2 className="h-3.5 w-3.5" />
@@ -847,7 +847,7 @@ function InfoBlockRow({
             className="p-1 rounded hover:bg-white/60 text-muted-foreground hover:text-foreground transition-colors">
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          {!block.isSystem && onDelete && (
+          {onDelete && (
             <button type="button" onClick={onDelete}
               className="p-1 rounded hover:bg-white/60 text-muted-foreground hover:text-red-600 transition-colors">
               <Trash2 className="h-3.5 w-3.5" />
@@ -936,7 +936,7 @@ export function FormBuilder({ items, formType, onChange, classes = [] }: FormBui
                     classes={classes}
                     onUpdateFields={(fields) => updateSection(item.id, fields)}
                     onEdit={() => setEditingSection(item)}
-                    onDelete={!item.isSystem ? () => deleteItem(item.id) : undefined}
+                    onDelete={() => deleteItem(item.id)}
                   />
                 )
               }
@@ -945,7 +945,7 @@ export function FormBuilder({ items, formType, onChange, classes = [] }: FormBui
                   key={item.id}
                   block={item}
                   onEdit={() => setEditingInfoBlock(item)}
-                  onDelete={!item.isSystem ? () => deleteItem(item.id) : undefined}
+                  onDelete={() => deleteItem(item.id)}
                 />
               )
             })}

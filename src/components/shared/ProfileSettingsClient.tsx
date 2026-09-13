@@ -516,7 +516,7 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setChildToUnlink(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setChildToUnlink(null)}>Annuler</Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
               disabled={unlinkChild.isPending}

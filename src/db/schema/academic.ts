@@ -1,6 +1,7 @@
 import {
-  pgTable, uuid, text, boolean, timestamp, date, pgEnum, primaryKey,
+  pgTable, uuid, text, boolean, timestamp, date, pgEnum, primaryKey, uniqueIndex,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 import { schools } from './schools'
 import { schoolMembers } from './auth'
 
@@ -87,4 +88,11 @@ export const classEnrollments = pgTable('class_enrollments', {
   paymentPlan:  text('payment_plan').notNull().default('trimestrial'),
   enrolledAt:   timestamp('enrolled_at', { withTimezone: true }).defaultNow().notNull(),
   unenrolledAt: timestamp('unenrolled_at', { withTimezone: true }),
-})
+}, (t) => [
+  // Un élève ne peut avoir qu'une seule inscription ACTIVE par classe
+  // (le désenrollement est un soft-delete via unenrolledAt, donc l'historique
+  // peut légitimement contenir plusieurs lignes student+class dans le temps)
+  uniqueIndex('class_enrollments_student_class_active_idx')
+    .on(t.studentId, t.classId)
+    .where(sql`${t.unenrolledAt} IS NULL`),
+])

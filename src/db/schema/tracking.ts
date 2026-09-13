@@ -23,7 +23,8 @@ export const attendance = pgTable('attendance', {
 export const attendanceRecords = pgTable('attendance_records', {
   id: uuid('id').primaryKey().defaultRandom(),
   attendanceId: uuid('attendance_id').notNull().references(() => attendance.id, { onDelete: 'cascade' }),
-  studentId: uuid('student_id').notNull().references(() => students.id, { onDelete: 'cascade' }),
+  // Nullable : conservé (anonymisé) si l'élève est supprimé, pour préserver l'historique agrégé
+  studentId: uuid('student_id').references(() => students.id, { onDelete: 'set null' }),
   status: attendanceStatusEnum('status').notNull().default('present'),
   note: text('note'),
 })

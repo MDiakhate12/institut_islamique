@@ -16,5 +16,12 @@ export const updateTeacherSchema = z.object({
   isActive:    z.boolean().optional(),   // mappe sur !isPending
 })
 
+export const uploadTeacherDocumentSchema = z.object({
+  base64:   z.string().min(1),
+  mimeType: z.string().min(1),
+  fileName: z.string().min(1),
+})
+
 export type InviteTeacherInput = z.infer<typeof inviteTeacherSchema>
 export type UpdateTeacherInput = z.infer<typeof updateTeacherSchema>
+export type UploadTeacherDocumentInput = z.infer<typeof uploadTeacherDocumentSchema>

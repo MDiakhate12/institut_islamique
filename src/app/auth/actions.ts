@@ -9,6 +9,20 @@ import { and, eq } from 'drizzle-orm'
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
+function translateAuthError(message: string): string {
+  if (message.includes('already registered') || message.includes('already been registered')) {
+    return 'Un compte existe déjà avec cet email'
+  }
+  const passwordLength = message.match(/Password should be at least (\d+) characters/)
+  if (passwordLength) {
+    return `Le mot de passe doit contenir au moins ${passwordLength[1]} caractères`
+  }
+  if (message.includes('Unable to validate email address') || message.includes('invalid format')) {
+    return 'Adresse email invalide'
+  }
+  return "Une erreur est survenue lors de l'inscription. Veuillez réessayer."
+}
+
 export async function signInAction(email: string, password: string) {
   const supabase = await createClient()
   const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -65,7 +79,7 @@ export async function signUpAction(input: {
     options: { data: { full_name: input.fullName } },
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: translateAuthError(error.message) }
 
   const userId = data.user?.id
   if (!userId) return { error: 'Erreur lors de la création du compte.' }

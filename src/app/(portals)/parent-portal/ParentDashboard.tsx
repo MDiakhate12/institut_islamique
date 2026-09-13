@@ -27,7 +27,7 @@ const FEATURE_CARDS: FeatureCard[] = [
   { label: 'Calendrier académique', description: 'Voir les événements scolaires et jours fériés', href: '/parent-portal/calendar', icon: CalendarDays, bg: '#f3e5f5' },
   { label: 'Voir les notes d\'examen', description: 'Voir les résultats de votre enfant',  href: '/parent-portal/exams',         icon: FileText,    bg: '#fce4ec' },
   { label: 'Emploi du temps',       description: 'Voir les horaires',                       href: '/parent-portal/schedule',      icon: Clock,       bg: '#eceff1' },
-  { label: 'S\'inscrire maintenant','description': 'Inscription de l\'année prochaine',    href: '/parent-portal/enrollment',    icon: Download,    bg: '#fbe9e7' },
+  { label: 'Inscrire mon enfant','description': 'Inscription de l\'année prochaine',    href: '/parent-portal/enrollment',    icon: Download,    bg: '#fbe9e7' },
 ]
 
 interface Props {
@@ -70,7 +70,7 @@ export function ParentDashboard({ userFullName }: Props) {
                        text-sm font-medium hover:bg-orange-50 transition-colors"
           >
             <Download className="h-4 w-4" />
-            S'inscrire maintenant
+            Inscrire mon enfant
           </Link>
         </div>
         {/* Icône décorative */}

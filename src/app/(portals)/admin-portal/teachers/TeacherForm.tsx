@@ -1,22 +1,36 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { inviteTeacherSchema, updateTeacherSchema } from '@/modules/teachers/teachers.schema'
 import type { InviteTeacherInput, UpdateTeacherInput } from '@/modules/teachers/teachers.schema'
-import { inviteTeacherAction, updateTeacherAction, removeTeacherAction } from '@/modules/teachers/teachers.actions'
+import {
+  inviteTeacherAction, updateTeacherAction, removeTeacherAction,
+  uploadTeacherDocumentAction, removeTeacherDocumentAction,
+} from '@/modules/teachers/teachers.actions'
 import { teachersKeys } from '@/modules/teachers/teachers.hooks'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog'
-import { Plus, Upload } from 'lucide-react'
+import { Plus, Upload, FileText, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Teacher } from '@/modules/teachers/teachers.types'
+
+const MAX_DOCUMENT_SIZE = 2 * 1024 * 1024 // 2MB
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve((reader.result as string).split(',')[1])
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
 
 interface TeacherFormProps {
   teacher?: Teacher
@@ -36,6 +50,43 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
     teacher ? teacher.teacherType === 'volunteer' : true
   )
   const [isActive, setIsActive] = useState(teacher ? !teacher.isPending : true)
+  const [teacherDoc, setTeacherDoc] = useState<{ url: string; name: string } | null>(
+    teacher?.documentUrl ? { url: teacher.documentUrl, name: teacher.documentName ?? 'Document' } : null
+  )
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false)
+  const documentInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleDocumentChange(file: File | null) {
+    if (!file || !teacher) return
+    if (file.size > MAX_DOCUMENT_SIZE) {
+      toast.error('Le fichier dépasse la taille maximale de 2 Mo')
+      return
+    }
+    setIsUploadingDoc(true)
+    try {
+      const base64 = await fileToBase64(file)
+      const result = await uploadTeacherDocumentAction(teacher.id, {
+        base64, mimeType: file.type, fileName: file.name,
+      })
+      if (!result.success) { toast.error(result.error); return }
+      setTeacherDoc({ url: result.data.documentUrl, name: result.data.documentName })
+      queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
+      toast.success('Document téléversé avec succès')
+    } finally {
+      setIsUploadingDoc(false)
+    }
+  }
+
+  function handleRemoveDocument() {
+    if (!teacher) return
+    startTransition(async () => {
+      const result = await removeTeacherDocumentAction(teacher.id)
+      if (!result.success) { toast.error(result.error); return }
+      setTeacherDoc(null)
+      queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
+      toast.success('Document supprimé')
+    })
+  }
 
   const createForm = useForm<InviteTeacherInput>({
     resolver: zodResolver(inviteTeacherSchema),
@@ -218,7 +269,11 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
               <div>
                 <p className="text-sm font-medium">Statut d&apos;inscription</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  L&apos;enseignant est actuellement inscrit et actif
+                  {isActive
+                    ? "L'enseignant est actuellement inscrit et actif"
+                    : teacher?.isPending
+                      ? "L'enseignant n'a pas encore activé son compte"
+                      : "L'enseignant est actuellement inactif"}
                 </p>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
@@ -255,17 +310,58 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
             </div>
           )}
 
-          {/* Attachments */}
-          <div className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-muted/20 border border-border">
-            <div>
-              <p className="text-sm font-medium">Attachments</p>
-              <p className="text-xs text-muted-foreground mt-0.5">0 document(s) - max 2MB each</p>
+          {/* Pièce jointe (edit uniquement — nécessite un enseignant déjà créé) */}
+          {isEditing && (
+            <div className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-muted/20 border border-border">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Pièce jointe</p>
+                {teacherDoc ? (
+                  <a
+                    href={teacherDoc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-[#c2440f] hover:underline mt-0.5 truncate"
+                  >
+                    <FileText className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{teacherDoc.name}</span>
+                  </a>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5">Aucun document - max 2 Mo</p>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {teacherDoc && (
+                  <button
+                    type="button"
+                    title="Supprimer le document"
+                    onClick={handleRemoveDocument}
+                    className="p-1.5 rounded hover:bg-red-100 text-red-600"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={isUploadingDoc}
+                  onClick={() => documentInputRef.current?.click()}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  {isUploadingDoc ? 'Envoi...' : teacherDoc ? 'Remplacer' : 'Upload'}
+                </Button>
+                <input
+                  ref={documentInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  disabled={isUploadingDoc}
+                  onChange={e => { handleDocumentChange(e.target.files?.[0] ?? null); e.target.value = '' }}
+                />
+              </div>
             </div>
-            <Button type="button" variant="outline" size="sm" className="gap-1.5">
-              <Upload className="h-3.5 w-3.5" />
-              Upload
-            </Button>
-          </div>
+          )}
 
           {/* Note (create uniquement) */}
           {!isEditing && (

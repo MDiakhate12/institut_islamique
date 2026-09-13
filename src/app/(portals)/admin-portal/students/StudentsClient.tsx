@@ -8,7 +8,7 @@ import {
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Plus, Download, ArrowUpDown, Check, X, Pencil } from 'lucide-react'
+import { Users, Plus, Download, ArrowUpDown, Check, X, Pencil, ReceiptText, CalendarDays, ClipboardList, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
@@ -17,6 +17,7 @@ import { StudentPaymentsModal } from './StudentPaymentsModal'
 import { StudentHomeworkModal } from './StudentHomeworkModal'
 import { StudentReportCardModal } from './StudentReportCardModal'
 import type { StudentListItem } from '@/modules/students/students.types'
+import { calcAge } from '@/modules/students/students.types'
 
 type GenderFilter  = 'all' | 'male' | 'female'
 type ActiveFilter  = 'all' | 'active' | 'inactive'
@@ -24,14 +25,6 @@ type SortKey       = 'name' | 'birthDate' | null
 type PayFilter     = 'all' | 'paid' | 'unpaid'
 
 interface ModalState { studentId: string; studentName: string }
-
-function calcAge(birthDate: string | null | undefined): string {
-  if (!birthDate) return '—'
-  const birth = new Date(birthDate)
-  const now = new Date()
-  const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
-  return `${Math.floor(totalMonths / 12)}a ${totalMonths % 12}m`
-}
 
 function buildYearOptions(students: StudentListItem[]): string[] {
   const years = new Set<string>()
@@ -254,8 +247,7 @@ export function StudentsClient() {
             <table className="w-full text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
-                  <th className="px-3 py-3 text-left w-8">#</th>
-                  <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} />
+                  <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} className="sticky left-0 z-10 bg-[#fefbf6] border-r border-border" />
                   <th className="px-3 py-3 text-left">Étoiles</th>
                   <th className="px-3 py-3 text-left">Trophée</th>
                   <SortTh label="Date de naissance" onClick={() => toggleSort('birthDate')} />
@@ -342,9 +334,9 @@ export function StudentsClient() {
   )
 }
 
-function SortTh({ label, onClick }: { label: string; onClick: () => void }) {
+function SortTh({ label, onClick, className }: { label: string; onClick: () => void; className?: string }) {
   return (
-    <th className="px-3 py-3 text-left font-semibold min-w-[180px]">
+    <th className={cn('px-3 py-3 text-left font-semibold min-w-[180px]', className)}>
       <button onClick={onClick} className="flex items-center gap-1 hover:text-foreground transition-colors uppercase tracking-wide text-xs">
         {label} <ArrowUpDown className="h-3 w-3" />
       </button>
@@ -352,7 +344,7 @@ function SortTh({ label, onClick }: { label: string; onClick: () => void }) {
   )
 }
 
-function PaymentBadge({ paid }: { paid: boolean }) {
+function PaymentBadge({ paid, annual }: { paid: boolean; annual?: boolean }) {
   return (
     <span className={cn(
       'inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium',
@@ -360,7 +352,7 @@ function PaymentBadge({ paid }: { paid: boolean }) {
         ? 'bg-green-100 text-green-700 border border-green-200'
         : 'bg-red-50 text-red-600 border border-red-200'
     )}>
-      {paid ? 'Payé' : 'Non payé'}
+      {paid ? (annual ? 'Payé (Annuel)' : 'Payé') : 'Non payé'}
     </span>
   )
 }
@@ -390,14 +382,17 @@ function StudentRow({
   const mother = s.guardians.find(g => g.relationship === 'mother') ?? s.guardians.find(g => !g.isPrimary)
   const emergencyPhone = father?.emergencyPhone ?? s.guardians.find(g => g.emergencyPhone)?.emergencyPhone
   const isEditingNote = editingNoteId === s.id
+  const [editOpen, setEditOpen] = useState(false)
 
   return (
-    <tr className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-top">
-      <td className="px-3 py-3 text-muted-foreground text-xs">{index + 1}.</td>
-
-      {/* Nom + ID */}
-      <td className="px-3 py-3">
+    <tr
+      onClick={() => setEditOpen(true)}
+      className="group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-top cursor-pointer"
+    >
+      {/* Nom + ID — figé au scroll horizontal */}
+      <td className="px-3 py-3 sticky left-0 z-10 bg-white group-hover:bg-[#fdfbf8] border-r border-border/50">
         <div className="flex items-start gap-2">
+          <span className="text-muted-foreground text-xs mt-0.5 shrink-0">{index + 1}.</span>
           <div className={cn('mt-1.5 h-2 w-2 rounded-full shrink-0', s.isActive ? 'bg-blue-500' : 'bg-gray-300')} />
           <div>
             <p className="font-semibold text-foreground">{s.lastName} {s.firstName}</p>
@@ -471,9 +466,9 @@ function StudentRow({
       </td>
 
       {/* Paiements T1/T2/T3 */}
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT1} /></td>
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT2} /></td>
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT3} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT1} annual={s.paymentAnnual} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT2} annual={s.paymentAnnual} /></td>
+      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT3} annual={s.paymentAnnual} /></td>
 
       {/* Statut */}
       <td className="px-3 py-3">
@@ -522,7 +517,7 @@ function StudentRow({
       </td>
 
       {/* Commentaire inline éditable */}
-      <td className="px-3 py-3 min-w-[200px]">
+      <td className="px-3 py-3 min-w-[200px]" onClick={e => e.stopPropagation()}>
         {isEditingNote ? (
           <div className="flex flex-col gap-1">
             <textarea
@@ -561,39 +556,39 @@ function StudentRow({
       </td>
 
       {/* Actions */}
-      <td className="px-3 py-3">
-        <div className="flex items-center gap-1 flex-wrap">
+      <td className="px-3 py-3 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5">
           <button
             onClick={onOpenReportCard}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#8B4429] text-[#8B4429] hover:bg-[#8B4429] hover:text-white transition-colors"
           >
-            Bulletin
+            <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
           </button>
           <button
             onClick={onOpenAttendance}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#D17A47] text-[#D17A47] hover:bg-[#D17A47] hover:text-white transition-colors"
           >
-            Présences
+            <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences de l&apos;élève
           </button>
           <button
             onClick={onOpenPayments}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-green-50 border-green-200 text-green-700 hover:bg-green-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#008236] text-[#008236] hover:bg-[#008236] hover:text-white transition-colors"
           >
-            Paiements
+            <ClipboardList className="h-3.5 w-3.5 shrink-0" /> Paiements
           </button>
           <button
             onClick={onOpenHomework}
-            className="inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#8200DA] text-[#8200DA] hover:bg-[#8200DA] hover:text-white transition-colors"
           >
-            Devoirs
+            <BookOpen className="h-3.5 w-3.5 shrink-0" /> Devoirs
           </button>
           <StudentFormDialog
             student={s}
+            open={editOpen}
+            onOpenChange={setEditOpen}
             trigger={
-              <button className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-muted transition-colors">
-                <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M4 16l-.5 4 4-.5 9.293-9.293-3.536-3.536L4 16z" />
-                </svg>
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#1447E6] text-[#1447E6] hover:bg-[#1447E6] hover:text-white transition-colors">
+                <Pencil className="h-3.5 w-3.5 shrink-0" /> Modifier l&apos;élève
               </button>
             }
           />

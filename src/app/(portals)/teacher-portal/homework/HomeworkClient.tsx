@@ -394,7 +394,7 @@ function HomeworkCard({ number, isNewest, homework: hw, onEdit, onDelete, onGrad
           <span className="text-sm font-bold text-gray-500">#{number}</span>
           <div className="flex items-center gap-1.5 text-sm text-gray-500">
             <span>📅</span>
-            Assigned: {dateLabel}
+            Assigné le : {dateLabel}
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -409,7 +409,7 @@ function HomeworkCard({ number, isNewest, homework: hw, onEdit, onDelete, onGrad
             )}
           >
             <Star className="w-3 h-3" />
-            {isNewest ? 'Grade' : 'View'}
+            {isNewest ? 'Noter' : 'Voir'}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 transition-colors focus:outline-none">
@@ -418,12 +418,12 @@ function HomeworkCard({ number, isNewest, homework: hw, onEdit, onDelete, onGrad
             <DropdownMenuContent align="end" side="bottom" className="w-36">
               <DropdownMenuItem onClick={onEdit} className="cursor-pointer gap-2">
                 <Pencil className="w-3.5 h-3.5" />
-                Edit
+                Modifier
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onClick={onDelete} className="cursor-pointer gap-2">
                 <Trash2 className="w-3.5 h-3.5" />
-                Delete
+                Supprimer
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -489,7 +489,7 @@ function HomeworkCard({ number, isNewest, homework: hw, onEdit, onDelete, onGrad
             rel="noopener noreferrer"
             className="text-xs text-blue-600 hover:text-blue-700 font-medium"
           >
-            View
+            Voir
           </a>
         </div>
       )}
