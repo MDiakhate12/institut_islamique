@@ -556,29 +556,29 @@ function StudentRow({
       </td>
 
       {/* Actions */}
-      <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-1.5 flex-wrap">
+      <td className="px-3 py-3 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5">
           <button
             onClick={onOpenReportCard}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-white border-[#8B4429] text-[#8B4429] hover:bg-[#8B4429]/5 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#8B4429] text-[#8B4429] hover:bg-[#8B4429] hover:text-white transition-colors"
           >
             <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
           </button>
           <button
             onClick={onOpenAttendance}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-white border-[#D17A47] text-[#D17A47] hover:bg-[#D17A47]/5 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#D17A47] text-[#D17A47] hover:bg-[#D17A47] hover:text-white transition-colors"
           >
             <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences de l&apos;élève
           </button>
           <button
             onClick={onOpenPayments}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-white border-[#008236] text-[#008236] hover:bg-[#008236]/5 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#008236] text-[#008236] hover:bg-[#008236] hover:text-white transition-colors"
           >
             <ClipboardList className="h-3.5 w-3.5 shrink-0" /> Paiements
           </button>
           <button
             onClick={onOpenHomework}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-white border-[#8200DA] text-[#8200DA] hover:bg-[#8200DA]/5 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#8200DA] text-[#8200DA] hover:bg-[#8200DA] hover:text-white transition-colors"
           >
             <BookOpen className="h-3.5 w-3.5 shrink-0" /> Devoirs
           </button>
@@ -587,7 +587,7 @@ function StudentRow({
             open={editOpen}
             onOpenChange={setEditOpen}
             trigger={
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#1447E6] text-white hover:bg-[#1447E6]/90 transition-colors">
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#1447E6] text-[#1447E6] hover:bg-[#1447E6] hover:text-white transition-colors">
                 <Pencil className="h-3.5 w-3.5 shrink-0" /> Modifier l&apos;élève
               </button>
             }
