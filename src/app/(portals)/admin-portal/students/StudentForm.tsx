@@ -99,13 +99,18 @@ function guardianToLocal(g: GuardianSummary): LocalGuardian {
 
 interface GuardianFormProps {
   initial?: LocalGuardian
+  // Relations des AUTRES tuteurs déjà enregistrés — empêche un 2e Père/Mère
+  existingRelationships: string[]
   onSave: (g: LocalGuardian) => void
   onCancel: () => void
 }
 
-function GuardianForm({ initial, onSave, onCancel }: GuardianFormProps) {
+function GuardianForm({ initial, existingRelationships, onSave, onCancel }: GuardianFormProps) {
   const [form, setForm] = useState<Omit<LocalGuardian, '_tempId' | 'id' | 'linkedMemberId' | 'linkedMemberName'>>({
-    relationship:   initial?.relationship   ?? 'father',
+    relationship: initial?.relationship ?? (
+      !existingRelationships.includes('father') ? 'father' :
+      !existingRelationships.includes('mother') ? 'mother' : 'guardian'
+    ),
     name:           initial?.name           ?? '',
     phone:          initial?.phone          ?? '',
     email:          initial?.email          ?? '',
@@ -132,8 +137,8 @@ function GuardianForm({ initial, onSave, onCancel }: GuardianFormProps) {
             onChange={e => setForm(f => ({ ...f, relationship: e.target.value as LocalGuardian['relationship'] }))}
             className={SELECT_CLASS}
           >
-            <option value="father">Père</option>
-            <option value="mother">Mère</option>
+            <option value="father" disabled={existingRelationships.includes('father')}>Père</option>
+            <option value="mother" disabled={existingRelationships.includes('mother')}>Mère</option>
             <option value="guardian">Tuteur légal</option>
             <option value="other">Autre</option>
           </select>
@@ -141,6 +146,7 @@ function GuardianForm({ initial, onSave, onCancel }: GuardianFormProps) {
         <div>
           <label className="text-xs font-medium mb-1 block">Nom <span className="text-muted-foreground font-normal">(optionnel)</span></label>
           <Input
+            className={INPUT_SIZE_CLASS}
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="Nom complet du tuteur"
@@ -149,6 +155,7 @@ function GuardianForm({ initial, onSave, onCancel }: GuardianFormProps) {
         <div>
           <label className="text-xs font-medium mb-1 block">Téléphone <span className="text-muted-foreground font-normal">(pour l'OTP)</span></label>
           <Input
+            className={INPUT_SIZE_CLASS}
             type="tel"
             value={form.phone}
             onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
@@ -158,6 +165,7 @@ function GuardianForm({ initial, onSave, onCancel }: GuardianFormProps) {
         <div>
           <label className="text-xs font-medium mb-1 block">Email <span className="text-muted-foreground font-normal">(optionnel)</span></label>
           <Input
+            className={INPUT_SIZE_CLASS}
             type="email"
             value={form.email}
             onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
@@ -167,6 +175,7 @@ function GuardianForm({ initial, onSave, onCancel }: GuardianFormProps) {
         <div className="col-span-2">
           <label className="text-xs font-medium mb-1 block">Téléphone d'urgence <span className="text-muted-foreground font-normal">(optionnel)</span></label>
           <Input
+            className={INPUT_SIZE_CLASS}
             type="tel"
             value={form.emergencyPhone}
             onChange={e => setForm(f => ({ ...f, emergencyPhone: e.target.value }))}
@@ -575,6 +584,7 @@ export function StudentFormDialog({
                   {guardianFormMode === g._tempId ? (
                     <GuardianForm
                       initial={g}
+                      existingRelationships={localGuardians.filter(x => x._tempId !== g._tempId).map(x => x.relationship)}
                       onSave={updateGuardian}
                       onCancel={() => setGuardianFormMode('closed')}
                     />
@@ -643,6 +653,7 @@ export function StudentFormDialog({
               {/* Formulaire d'ajout */}
               {guardianFormMode === 'add' && (
                 <GuardianForm
+                  existingRelationships={localGuardians.map(x => x.relationship)}
                   onSave={addGuardian}
                   onCancel={() => setGuardianFormMode('closed')}
                 />
