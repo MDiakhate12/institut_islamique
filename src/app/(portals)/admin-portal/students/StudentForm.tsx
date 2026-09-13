@@ -430,32 +430,32 @@ export function StudentFormDialog({
               </div>
 
               {/* Actions rapides */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setAttendanceOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#D17A47] text-[#D17A47] hover:bg-[#D17A47] hover:text-white transition-colors"
                 >
                   <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences
                 </button>
                 <button
                   type="button"
                   onClick={() => setPaymentsOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-green-50 border-green-200 text-green-700 hover:bg-green-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#008236] text-[#008236] hover:bg-[#008236] hover:text-white transition-colors"
                 >
                   <ClipboardList className="h-3.5 w-3.5 shrink-0" /> Paiements
                 </button>
                 <button
                   type="button"
                   onClick={() => setReportCardOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#8B4429] text-[#8B4429] hover:bg-[#8B4429] hover:text-white transition-colors"
                 >
                   <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
                 </button>
                 <button
                   type="button"
                   onClick={() => setHomeworkOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#8200DA] text-[#8200DA] hover:bg-[#8200DA] hover:text-white transition-colors"
                 >
                   <BookOpen className="h-3.5 w-3.5 shrink-0" /> Devoirs
                 </button>
