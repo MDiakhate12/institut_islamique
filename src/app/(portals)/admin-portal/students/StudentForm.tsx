@@ -436,7 +436,7 @@ export function StudentFormDialog({
                   onClick={() => setAttendanceOpen(true)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#D17A47] text-[#D17A47] hover:bg-[#D17A47] hover:text-white transition-colors"
                 >
-                  <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences
+                  <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences de l&apos;élève
                 </button>
                 <button
                   type="button"
