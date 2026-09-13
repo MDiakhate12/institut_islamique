@@ -129,6 +129,13 @@ export async function removeTeacherAction(memberId: string): Promise<ActionResul
     return ok(undefined)
   } catch (e) {
     console.error('[removeTeacherAction]', e)
+    const allText = [
+      e instanceof Error ? e.message : '',
+      e instanceof Error && e.cause instanceof Error ? e.cause.message : '',
+    ].join(' ')
+    if (allText.includes('classes_teacher_id') || allText.includes('classes_assistant_teacher_id')) {
+      return err("Impossible de retirer cet enseignant : il est encore assigné à une ou plusieurs classes. Retirez-le d'abord de ces classes.")
+    }
     return err("Impossible de retirer cet enseignant.")
   }
 }

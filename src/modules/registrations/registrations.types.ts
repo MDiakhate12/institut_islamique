@@ -11,6 +11,7 @@ export type SystemFieldKey =
   | 'primaryPhone' | 'secondaryPhone'
   | 'schoolGrade' | 'regularSchool'
   | 'paymentFrequency' | 'financialAid' | 'sponsorship'
+  | 'academicYear'
 
 export type SystemField = {
   kind: 'system_field'
@@ -22,6 +23,8 @@ export type SystemField = {
   placeholder?: string
   note?: string
   options?: string[]
+  /** Value is system-computed and shown to the user as non-editable (e.g. academicYear). */
+  readOnly?: boolean
 }
 
 export type CustomField = {
@@ -142,23 +145,8 @@ export const DEFAULT_NEW_STUDENT_SCHEMA: FormItem[] = [
       { kind: 'system_field', id: 'sf-primary-phone',   fieldKey: 'primaryPhone',   label: 'Téléphone principal',           type: 'tel',   required: true,  note: "Ce numéro sera utilisé pour accéder au portail de votre étudiant(e) sur l'application de l'école !" },
       { kind: 'system_field', id: 'sf-secondary-phone', fieldKey: 'secondaryPhone', label: 'Téléphone secondaire (Optionnel)', type: 'tel', required: false },
       { kind: 'system_field', id: 'sf-school-grade',    fieldKey: 'schoolGrade',    label: 'Niveau scolaire actuel',        type: 'select', required: true },
-      { kind: 'system_field', id: 'sf-regular-school',  fieldKey: 'regularSchool',  label: "Nom de l'école régulière actuelle", type: 'text', required: true },
+      { kind: 'system_field', id: 'sf-academic-year',   fieldKey: 'academicYear',   label: "Année d'inscription",           type: 'text', required: false, readOnly: true },
     ],
-  },
-  {
-    kind: 'info_block',
-    id: 'ib-class-warning',
-    style: 'warning',
-    isSystem: true,
-    content: '<p>Veuillez vérifier les prérequis du cours avant de choisir une classe !</p><p>Le parent est entièrement responsable du choix de la classe appropriée pour son étudiant.</p><p>Une demande de changement ultérieure devra être discutée avec la direction de l\'école.</p>',
-  },
-  {
-    kind: 'section',
-    id: 'section-class-selection',
-    title: 'Sélection de la classe',
-    isSystem: true,
-    systemKey: 'class_selection',
-    fields: [],
   },
   {
     kind: 'info_block',
@@ -189,7 +177,6 @@ export const DEFAULT_NEW_STUDENT_SCHEMA: FormItem[] = [
     systemKey: 'payment',
     fields: [
       { kind: 'system_field', id: 'sf-payment-freq',  fieldKey: 'paymentFrequency', label: 'Préférez-vous payer les frais semestriellement ou annuellement ?', type: 'radio',    required: true,  options: ['Annuellement', 'Semestriellement'] },
-      { kind: 'system_field', id: 'sf-financial-aid', fieldKey: 'financialAid',     label: "Si vous avez besoin d'une aide financière, quelle est la meilleure option pour vous ?", type: 'select', required: false },
       { kind: 'system_field', id: 'sf-sponsorship',   fieldKey: 'sponsorship',      label: 'Aimeriez-vous parrainer les frais de scolarité et/ou de fournitures d\'un étudiant ?', type: 'radio', required: false, options: ['Non, merci.', 'Oui, bien sûr. Nous vous contacterons pour l\'organiser.'], note: "Parrainage : certains de nos étudiants bénéficient d'une exemption de leurs frais de scolarité et/ou de fournitures. Par conséquent, parrainer un étudiant serait très utile." },
       { kind: 'custom_field', id: 'cf-photo-consent', label: 'Le personnel de l\'école peut prendre et utiliser les photographies et vidéos de mon enfant publiquement dans les publications imprimées, les publications en ligne, les présentations, le site web de l\'école et les réseaux sociaux, sur le bulletin d\'information (entre les enseignants et les parents). Je comprends également qu\'aucun droit d\'auteur, frais ou autre rémunération ne m\'est dû en raison de cet usage.', type: 'checkbox', required: false },
       { kind: 'custom_field', id: 'cf-comments',      label: 'Questions ou Commentaires', type: 'textarea', required: false, placeholder: 'Entrez toute question ou commentaire que vous avez…' },
@@ -209,16 +196,8 @@ export const DEFAULT_REENROLLMENT_SCHEMA: FormItem[] = [
     systemKey: 'student_info',
     fields: [
       { kind: 'system_field', id: 'sf-school-grade',   fieldKey: 'schoolGrade',   label: 'Niveau scolaire actuel',            type: 'select', required: true },
-      { kind: 'system_field', id: 'sf-regular-school', fieldKey: 'regularSchool', label: "Nom de l'école régulière actuelle", type: 'text',   required: true },
+      { kind: 'system_field', id: 'sf-academic-year',  fieldKey: 'academicYear',  label: "Année d'inscription",               type: 'text', required: false, readOnly: true },
     ],
-  },
-  {
-    kind: 'section',
-    id: 'section-class-selection',
-    title: 'Sélection de la classe',
-    isSystem: true,
-    systemKey: 'class_selection',
-    fields: [],
   },
   {
     kind: 'info_block',
@@ -249,7 +228,6 @@ export const DEFAULT_REENROLLMENT_SCHEMA: FormItem[] = [
     systemKey: 'payment',
     fields: [
       { kind: 'system_field', id: 'sf-payment-freq',  fieldKey: 'paymentFrequency', label: 'Préférez-vous payer les frais semestriellement ou annuellement ?', type: 'radio',    required: true, options: ['Annuellement', 'Semestriellement'] },
-      { kind: 'system_field', id: 'sf-financial-aid', fieldKey: 'financialAid',     label: "Si vous avez besoin d'une aide financière, quelle est la meilleure option pour vous ?", type: 'select', required: false },
       { kind: 'system_field', id: 'sf-sponsorship',   fieldKey: 'sponsorship',      label: 'Aimeriez-vous parrainer les frais de scolarité et/ou de fournitures d\'un étudiant ?', type: 'radio', required: false, options: ['Non, merci.', 'Oui, bien sûr. Nous vous contacterons pour l\'organiser.'] },
       { kind: 'custom_field', id: 'cf-rating',        label: "Comment évaluez-vous l'école l'année dernière ?", type: 'rating', required: false },
       { kind: 'custom_field', id: 'cf-photo-consent', label: 'Le personnel de l\'école peut prendre et utiliser les photographies et vidéos de mon enfant publiquement.', type: 'checkbox', required: false },

@@ -155,7 +155,7 @@ export function NewSchoolClient() {
         {/* Section admin */}
         <div className="space-y-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <Mail className="h-3.5 w-3.5" /> Email du premier administrateur
+            <Mail className="h-3.5 w-3.5" /> Informations du premier administrateur
           </p>
 
           <div className="space-y-1.5">

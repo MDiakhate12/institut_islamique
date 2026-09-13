@@ -25,6 +25,7 @@ interface Props {
   scheduledClass?: ClassWithDetails
   catalogClasses?: CatalogClassWithNext[]
   teachers?: TeacherListItem[]
+  rooms?: string[]
   trigger?: React.ReactNode
   onSuccess?: () => void
 }
@@ -33,6 +34,7 @@ export function ClassFormDialog({
   scheduledClass,
   catalogClasses = [],
   teachers = [],
+  rooms = [],
   trigger,
   onSuccess,
 }: Props) {
@@ -64,6 +66,15 @@ export function ClassFormDialog({
   const filteredCatalog = catalogClasses.filter(c =>
     !subjectFilter || c.subjectCode === subjectFilter
   )
+
+  const teacherId = form.watch('teacherId')
+  const assistantTeacherId = form.watch('assistantTeacherId')
+
+  // Room options — configured rooms, plus the class's current room if it's since been removed from settings
+  const currentRoom = scheduledClass?.room
+  const roomOptions = currentRoom && !rooms.includes(currentRoom)
+    ? [...rooms, currentRoom]
+    : rooms
 
   function onSubmit(data: CreateClassInput) {
     startTransition(async () => {
@@ -165,7 +176,15 @@ export function ClassFormDialog({
             </div>
             <div>
               <label className="text-sm font-medium mb-1.5 block">Salle de classe</label>
-              <Input placeholder="ex. Room 1" {...form.register('room')} />
+              <select
+                {...form.register('room')}
+                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+              >
+                <option value="">Aucune</option>
+                {roomOptions.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -174,12 +193,12 @@ export function ClassFormDialog({
             <div>
               <label className="text-sm font-medium mb-1.5 block">Enseignant principal</label>
               <select
-                value={form.watch('teacherId') ?? ''}
+                value={teacherId ?? ''}
                 onChange={e => form.setValue('teacherId', e.target.value || null)}
                 className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
               >
                 <option value="">Aucun</option>
-                {teachers.map(t => (
+                {teachers.filter(t => t.id !== assistantTeacherId).map(t => (
                   <option key={t.id} value={t.id}>{t.fullName ?? t.email}</option>
                 ))}
               </select>
@@ -190,12 +209,12 @@ export function ClassFormDialog({
                 <span className="ml-1 text-xs font-normal text-muted-foreground">(optionnel)</span>
               </label>
               <select
-                value={form.watch('assistantTeacherId') ?? ''}
+                value={assistantTeacherId ?? ''}
                 onChange={e => form.setValue('assistantTeacherId', e.target.value || null)}
                 className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
               >
                 <option value="">Aucun</option>
-                {teachers.map(t => (
+                {teachers.filter(t => t.id !== teacherId).map(t => (
                   <option key={t.id} value={t.id}>{t.fullName ?? t.email}</option>
                 ))}
               </select>

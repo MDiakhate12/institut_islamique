@@ -20,6 +20,9 @@ function translateAuthError(message: string): string {
   if (message.includes('Unable to validate email address') || message.includes('invalid format')) {
     return 'Adresse email invalide'
   }
+  if (message.includes('email rate limit exceeded') || message.includes('rate limit')) {
+    return "Trop de tentatives d'inscription. Veuillez réessayer dans quelques minutes."
+  }
   return "Une erreur est survenue lors de l'inscription. Veuillez réessayer."
 }
 
@@ -79,7 +82,10 @@ export async function signUpAction(input: {
     options: { data: { full_name: input.fullName } },
   })
 
-  if (error) return { error: translateAuthError(error.message) }
+  if (error) {
+    console.error('[signUpAction] supabase.auth.signUp error:', error.message)
+    return { error: translateAuthError(error.message) }
+  }
 
   const userId = data.user?.id
   if (!userId) return { error: 'Erreur lors de la création du compte.' }
@@ -99,6 +105,7 @@ export async function signUpAction(input: {
       .from(schoolMembers)
       .where(
         and(
+          eq(schoolMembers.schoolId, input.schoolId),
           eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
           eq(schoolMembers.userId, NIL_UUID),
           eq(schoolMembers.isPending, true),
@@ -107,7 +114,7 @@ export async function signUpAction(input: {
       .limit(1)
 
     if (!pendingRecord) {
-      return { error: "Aucune invitation administrateur trouvée pour cet email. Contactez l'équipe Qaf." }
+      return { error: "Aucune invitation administrateur trouvée pour cet email et cette école. Contactez l'équipe Qaf." }
     }
 
     await db

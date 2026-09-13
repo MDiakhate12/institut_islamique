@@ -71,6 +71,23 @@ function FieldTypePreview({ field }: { field: FormField }) {
     )
   }
 
+  // Read-only system fields — value is computed by the app, never editable by the parent.
+  if (field.kind === 'system_field' && field.readOnly) {
+    return (
+      <div className="mt-1.5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 max-w-md">
+        <Settings className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="min-w-0">
+          <p className="text-xs text-blue-700">
+            Valeur automatique (année scolaire actuelle) — non modifiable par le parent
+          </p>
+          <Link href="/admin-portal/school-settings" className="text-xs text-blue-600 underline hover:text-blue-800">
+            Configurer l&apos;année scolaire
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   // System selects whose options come from school settings, not this field's own
   // `options` array — editing them here would do nothing, so point to settings instead.
   if (field.kind === 'system_field' && (field.fieldKey === 'schoolGrade' || field.fieldKey === 'financialAid')) {

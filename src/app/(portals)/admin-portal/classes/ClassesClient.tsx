@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useClasses } from '@/modules/classes/classes.hooks'
 import { useCatalogClasses } from '@/modules/classes/classes.hooks'
 import { useTeachers } from '@/modules/teachers/teachers.hooks'
+import { useSchool } from '@/modules/school/school.hooks'
 import { getSubjectColor, SUBJECT_LABELS } from '@/modules/classes/classes.types'
 import type { ClassWithDetails } from '@/modules/classes/classes.types'
 import { ClassFormDialog } from './ClassForm'
@@ -82,6 +83,8 @@ export function ClassesClient() {
   const { data: classes, isLoading } = useClasses()
   const { data: catalogClasses } = useCatalogClasses()
   const { data: teachers } = useTeachers()
+  const { data: school } = useSchool()
+  const configuredRooms = school?.settings?.rooms ?? []
 
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<string>('')
@@ -166,6 +169,7 @@ export function ClassesClient() {
           <ClassFormDialog
             catalogClasses={catalogClasses ?? []}
             teachers={teachers ?? []}
+            rooms={configuredRooms}
             trigger={
               <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
                 <Plus className="h-4 w-4" />
@@ -296,6 +300,7 @@ export function ClassesClient() {
                       allClasses={classes ?? []}
                       catalogClasses={catalogClasses ?? []}
                       teachers={teachers ?? []}
+                      rooms={configuredRooms}
                       onEditStudents={() => setStudentsClass(c)}
                       onViewSyllabus={() => setSyllabusClass(c)}
                     />
@@ -335,6 +340,7 @@ function ClassCard({
   allClasses,
   catalogClasses,
   teachers,
+  rooms,
   onEditStudents,
   onViewSyllabus,
 }: {
@@ -342,6 +348,7 @@ function ClassCard({
   allClasses: ClassWithDetails[]
   catalogClasses: import('@/modules/classes/classes.types').CatalogClassWithNext[]
   teachers: import('@/modules/teachers/teachers.types').TeacherListItem[]
+  rooms: string[]
   onEditStudents: () => void
   onViewSyllabus: () => void
 }) {
@@ -418,6 +425,7 @@ function ClassCard({
           scheduledClass={c}
           catalogClasses={catalogClasses}
           teachers={teachers}
+          rooms={rooms}
           trigger={
             <button
               type="button"
