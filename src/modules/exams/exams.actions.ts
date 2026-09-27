@@ -5,7 +5,7 @@ import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { examsService } from './exams.service'
 import { submitExamSchema, signGradeSchema } from './exams.schema'
-import { sendEmail, getAdminEmails } from '@/lib/email'
+import { sendEmail, getAdminEmails, getAppUrl } from '@/lib/email'
 import type {
   TeacherExamClass, ExamResult, GradeFormStudent,
   AdminExamClassProgress, AdminExamStudentProgress,
@@ -63,6 +63,7 @@ export async function submitExamResultAction(
   if (!parsed.success) return err(parsed.error.issues[0].message)
   try {
     await examsService.submitExamResult(session.schoolId, session.memberId, parsed.data)
+    const appUrl = await getAppUrl()
     getAdminEmails(session.schoolId).then(emails =>
       Promise.allSettled(emails.map(to => sendEmail({
         to,
@@ -81,7 +82,7 @@ export async function submitExamResultAction(
         Un enseignant vient de soumettre des notes d'examen pour le <strong>Trimestre ${parsed.data.trimester}</strong>. Consultez le suivi des examens pour les détails.
       </p>
       <div style="text-align:center;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/admin-portal/track-exams" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+        <a href="${appUrl}/admin-portal/track-exams" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
           Voir les examens →
         </a>
       </div>

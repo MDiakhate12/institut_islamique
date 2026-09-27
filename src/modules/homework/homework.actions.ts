@@ -8,7 +8,7 @@ import { homeworkService } from './homework.service'
 import { createHomeworkSchema, updateHomeworkSchema } from './homework.schema'
 import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem, AdminHomeworkOverview } from './homework.types'
 import { createClient } from '@/lib/supabase/server'
-import { sendEmail, getParentEmailsForClass } from '@/lib/email'
+import { sendEmail, getParentEmailsForClass, getAppUrl } from '@/lib/email'
 
 const path = '/teacher-portal/homework'
 
@@ -81,6 +81,7 @@ export async function createHomeworkAction(input: unknown): Promise<ActionResult
 
     const surahLabel = item.surahName ? `${item.surahName}${item.surahArabic ? ` — ${item.surahArabic}` : ''}` : null
     const description = item.description || surahLabel || 'Nouveau devoir'
+    const appUrl = await getAppUrl()
     getParentEmailsForClass(parsed.data.classId).then(emails =>
       Promise.allSettled(emails.map(to => sendEmail({
         to,
@@ -102,7 +103,7 @@ export async function createHomeworkAction(input: unknown): Promise<ActionResult
         <p style="margin:0;font-size:15px;font-weight:bold;color:#1f2937;">${description}</p>
       </div>
       <div style="text-align:center;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/parent-portal/homework" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+        <a href="${appUrl}/parent-portal/homework" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
           Voir les devoirs →
         </a>
       </div>

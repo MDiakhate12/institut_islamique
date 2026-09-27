@@ -12,11 +12,12 @@ import { ROUTES } from '@/lib/constants'
 import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, getAppUrl } from '@/lib/email'
 import { createClient } from '@/lib/supabase/server'
 
 async function sendTeacherInviteEmail(email: string, memberId: string, schoolId: string): Promise<void> {
-  const signupUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/auth/signup?invite=teacher&schoolId=${schoolId}&email=${encodeURIComponent(email)}`
+  const appUrl = await getAppUrl()
+  const signupUrl = `${appUrl}/auth/signup?invite=teacher&schoolId=${schoolId}&email=${encodeURIComponent(email)}`
   await sendEmail({
     to: email,
     subject: 'Vous êtes invité(e) à rejoindre Qaf School',
@@ -203,6 +204,7 @@ export async function activateTeacherAction(code: string): Promise<ActionResult<
     .set({ isPending: false, pendingEmail: null })
     .where(eq(schoolMembers.id, session.memberId))
 
+  const appUrl = await getAppUrl()
   void sendEmail({
     to: session.email,
     subject: 'Votre compte Qaf School est activé',
@@ -220,7 +222,7 @@ export async function activateTeacherAction(code: string): Promise<ActionResult<
         Votre compte enseignant sur <strong>Qaf School</strong> est maintenant activé. Vous avez accès complet au portail enseignant : devoirs, présences, audio Coran et plus encore.
       </p>
       <div style="text-align:center;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/teacher-portal/homework" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+        <a href="${appUrl}/teacher-portal/homework" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
           Accéder au portail →
         </a>
       </div>

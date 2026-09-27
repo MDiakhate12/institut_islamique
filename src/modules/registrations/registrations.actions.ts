@@ -13,7 +13,7 @@ import { db } from '@/db'
 import { schools, guardians } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import type { SchoolSettings } from '@/db/schema/schools'
-import { sendEmail, getAdminEmails } from '@/lib/email'
+import { sendEmail, getAdminEmails, getAppUrl } from '@/lib/email'
 
 const PATH = '/admin-portal/registration-forms'
 
@@ -152,6 +152,7 @@ export async function submitRegistrationAction(
     const studentFirstName = get('firstName')?.trim() ?? ''
     const studentLastName  = get('lastName')?.trim()  ?? ''
     const studentName = [studentFirstName, studentLastName].filter(Boolean).join(' ') || 'un élève'
+    const appUrl = await getAppUrl()
     getAdminEmails(school.id).then(emails =>
       Promise.allSettled(emails.map(to => sendEmail({
         to,
@@ -170,7 +171,7 @@ export async function submitRegistrationAction(
         Une nouvelle inscription a été soumise pour <strong>${studentName}</strong> (${formType === 'new_student' ? 'nouvel élève' : 'réinscription'}). Elle est en attente de validation.
       </p>
       <div style="text-align:center;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/admin-portal/registrations" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+        <a href="${appUrl}/admin-portal/registrations" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
           Voir les inscriptions →
         </a>
       </div>

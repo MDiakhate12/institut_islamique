@@ -9,7 +9,7 @@ import type { AdminSubRole } from '@/lib/constants'
 import { permissionsService } from './permissions.service'
 import type { PermissionMember, SearchResult } from './permissions.types'
 import { z } from 'zod'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, getAppUrl } from '@/lib/email'
 
 export async function getPermissionsByRoleAction(
   role: AdminSubRole,
@@ -66,6 +66,7 @@ export async function grantRoleAction(
   try {
     await permissionsService.grantRole(session.schoolId, email, role)
     revalidatePath('/admin-portal/permissions')
+    const appUrl = await getAppUrl()
     void sendEmail({
       to: email,
       subject: `Qaf School — Rôle ${ROLE_LABELS[role] ?? role} accordé`,
@@ -83,7 +84,7 @@ export async function grantRoleAction(
         Le rôle <strong>${ROLE_LABELS[role] ?? role}</strong> vous a été accordé sur <strong>Qaf School</strong>. Vous pouvez maintenant accéder au portail d'administration avec ce niveau d'accès.
       </p>
       <div style="text-align:center;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/admin-portal" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+        <a href="${appUrl}/admin-portal" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
           Accéder au portail →
         </a>
       </div>
