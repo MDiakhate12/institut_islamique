@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CheckCircle, Mail, Shield } from 'lucide-react'
+import { CheckCircle, Eye, EyeOff, Mail, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const signupSchema = z
@@ -50,6 +50,8 @@ export function SignupForm({
 }: Props) {
   const [isPending, startTransition] = useTransition()
   const [confirmed, setConfirmed] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const hideRoleChoice = isAdminInvite || isTeacherInvite
 
   const form = useForm<SignupInput>({
@@ -268,7 +270,17 @@ export function SignupForm({
             <FormItem>
               <FormLabel>Mot de passe *</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <div className="relative">
+                  <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...field} className="pr-10" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -282,12 +294,22 @@ export function SignupForm({
             <FormItem>
               <FormLabel>Confirmer le mot de passe *</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  {...field}
-                  className={cn(passwordsMatch && 'border-green-500 focus-visible:ring-green-500/30')}
-                />
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    {...field}
+                    className={cn('pr-10', passwordsMatch && 'border-green-500 focus-visible:ring-green-500/30')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(v => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </FormControl>
               {passwordsMatch ? (
                 <p className="flex items-center gap-1.5 text-sm font-medium text-green-600">
