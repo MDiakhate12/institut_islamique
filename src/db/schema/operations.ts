@@ -98,6 +98,18 @@ export const otpCodes = pgTable('otp_codes', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+export const notifications = pgTable('notifications', {
+  id:                uuid('id').primaryKey().defaultRandom(),
+  schoolId:          uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
+  recipientMemberId: uuid('recipient_member_id').notNull().references(() => schoolMembers.id, { onDelete: 'cascade' }),
+  type:              text('type').notNull(),
+  title:             text('title').notNull(),
+  body:              text('body'),
+  link:              text('link'),
+  readAt:            timestamp('read_at', { withTimezone: true }),
+  createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 export const stickyNotes = pgTable('sticky_notes', {
   id:        uuid('id').primaryKey().defaultRandom(),
   schoolId:  uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),

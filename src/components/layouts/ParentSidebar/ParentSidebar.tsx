@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/auth/session'
 import { UserProfileDialog } from '../Sidebar/UserProfileDialog'
+import { NotificationBell } from '@/components/shared/NotificationBell'
 
 interface NavItem {
   label: string
@@ -157,6 +158,9 @@ export function ParentSidebar({ session, userFullName, schoolName }: ParentSideb
 
       {/* User block */}
       <div className="shrink-0 border-t border-white/20">
+        <div className={cn('flex px-3 pt-2', collapsed ? 'justify-center' : 'justify-end')}>
+          <NotificationBell />
+        </div>
         {!collapsed ? (
           <UserProfileDialog session={session} userFullName={userFullName} schoolName={schoolName} profileHref="/parent-portal/profile">
             <div className="flex items-center gap-2.5 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer w-full">

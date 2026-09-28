@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import type { Session } from '@/lib/auth/session'
 import { UserProfileDialog } from './UserProfileDialog'
+import { NotificationBell } from '@/components/shared/NotificationBell'
 
 interface NavItem {
   label: string
@@ -315,6 +316,11 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
 
       {/* ── Bas de sidebar : user + home ── */}
       <div className="shrink-0 border-t border-white/20">
+
+        {/* Cloche notifications */}
+        <div className={cn('flex px-3 pt-2', collapsed ? 'justify-center' : 'justify-end')}>
+          <NotificationBell />
+        </div>
 
         {/* User block — cliquable → ouvre le dialog profil */}
         {!collapsed && (

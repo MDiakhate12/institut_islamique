@@ -13,6 +13,7 @@ import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { sendEmail, getAppUrl } from '@/lib/email'
+import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 import { createClient } from '@/lib/supabase/server'
 
 async function sendTeacherInviteEmail(email: string, memberId: string, schoolId: string): Promise<void> {
@@ -254,6 +255,15 @@ export async function activateTeacherAction(code: string): Promise<ActionResult<
   </div>
 </body></html>`,
   }).catch(() => {})
+
+  void createNotificationInternal({
+    schoolId: session.schoolId,
+    recipientMemberId: session.memberId,
+    type: 'account_activated',
+    title: 'Compte enseignant activé',
+    body: 'Votre compte est maintenant actif. Bienvenue sur le portail enseignant !',
+    link: '/teacher-portal',
+  })
 
   revalidatePath('/teacher-portal', 'layout')
   redirect('/teacher-portal/homework')

@@ -10,6 +10,10 @@ import { permissionsService } from './permissions.service'
 import type { PermissionMember, SearchResult } from './permissions.types'
 import { z } from 'zod'
 import { sendEmail, getAppUrl } from '@/lib/email'
+import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
+import { db } from '@/db'
+import { schoolMembers } from '@/db/schema'
+import { and, eq, sql as drizzleSql } from 'drizzle-orm'
 
 export async function getPermissionsByRoleAction(
   role: AdminSubRole,
@@ -100,6 +104,35 @@ export async function grantRoleAction(
   </div>
 </body></html>`,
     }).catch(() => {})
+
+    // In-app notification for existing users (pending users have no account yet)
+    if (userExists) {
+      void (async () => {
+        try {
+          const normalizedEmail = email.toLowerCase().trim()
+          const rows = await db.execute(drizzleSql`SELECT id FROM auth.users WHERE email = ${normalizedEmail} LIMIT 1`)
+          const authUserId = (rows as unknown as { id: string }[])[0]?.id ?? null
+          if (authUserId) {
+            const [member] = await db
+              .select({ id: schoolMembers.id })
+              .from(schoolMembers)
+              .where(and(eq(schoolMembers.schoolId, session.schoolId), eq(schoolMembers.userId, authUserId)))
+              .limit(1)
+            if (member) {
+              await createNotificationInternal({
+                schoolId: session.schoolId,
+                recipientMemberId: member.id,
+                type: 'role_granted',
+                title: `Rôle ${ROLE_LABELS[role] ?? role} accordé`,
+                body: `Vous êtes maintenant ${ROLE_LABELS[role] ?? role} sur le portail d'administration.`,
+                link: '/admin-portal',
+              })
+            }
+          }
+        } catch {}
+      })()
+    }
+
     return ok(undefined)
   } catch (e) {
     return err('Erreur lors de l\'attribution du rôle')
@@ -113,6 +146,14 @@ export async function revokeRoleAction(
   if (!session.roles.includes('admin')) return err('Non autorisé')
   if (!memberId) return err('Identifiant membre manquant')
   try {
+    void createNotificationInternal({
+      schoolId: session.schoolId,
+      recipientMemberId: memberId,
+      type: 'role_revoked',
+      title: 'Accès administrateur retiré',
+      body: "Votre accès au portail d'administration a été révoqué.",
+      link: undefined,
+    })
     await permissionsService.revokeRole(memberId, session.schoolId)
     revalidatePath('/admin-portal/permissions')
     return ok(undefined)
