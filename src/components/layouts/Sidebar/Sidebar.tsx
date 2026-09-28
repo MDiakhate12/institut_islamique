@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   Users, GraduationCap, BookOpen, ClipboardList, CalendarCheck,
   BookMarked, Star, BookCopy, CalendarDays, BarChart3, Library,
@@ -118,13 +118,24 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
     Paramètres: false,
   })
   const [search, setSearch] = useState('')
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const navRef = useRef<HTMLElement | null>(null)
 
   const displayName = userFullName || session.email.split('@')[0]
   const hasParentRole = session.roles.includes('parent')
   const hasTeacherRole = session.roles.includes('teacher')
 
   function toggleSection(label: string) {
+    const isOpening = !expandedSections[label]
     setExpandedSections(prev => ({ ...prev, [label]: !prev[label] }))
+    if (isOpening) {
+      setTimeout(() => {
+        const el = sectionRefs.current[label]
+        if (el && navRef.current) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }
+      }, 50)
+    }
   }
 
   function isActive(href: string) {
@@ -208,9 +219,9 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
       )}
 
       {/* ── Navigation (scrollable) ── */}
-      <nav className="flex-1 overflow-y-auto py-2 scrollbar-hide">
+      <nav ref={navRef} className="flex-1 overflow-y-auto py-2 scrollbar-hide">
         {filteredSections.map(section => (
-          <div key={section.label}>
+          <div key={section.label} ref={el => { sectionRefs.current[section.label] = el }}>
             {/* Section header */}
             <button
               onClick={() => !collapsed && toggleSection(section.label)}
