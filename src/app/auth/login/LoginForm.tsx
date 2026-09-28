@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
+import Link from 'next/link'
 import { signInAction } from '../actions'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -75,6 +76,14 @@ export function LoginForm() {
             </FormItem>
           )}
         />
+        <div className="flex justify-end">
+          <Link
+            href="/auth/forgot-password"
+            className="text-sm text-[#2d6a4f] hover:underline"
+          >
+            Mot de passe oublié ?
+          </Link>
+        </div>
         <Button
           type="submit"
           disabled={isPending}

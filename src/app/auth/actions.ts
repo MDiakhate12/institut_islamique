@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { profiles, schoolMembers } from '@/db/schema'
 import { and, eq, or } from 'drizzle-orm'
+import { getAppUrl } from '@/lib/email'
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
@@ -62,6 +63,33 @@ export async function signOutAction() {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/auth/login')
+}
+
+export async function forgotPasswordAction(email: string): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const appUrl = await getAppUrl()
+  const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), {
+    redirectTo: `${appUrl}/auth/callback?next=/auth/reset-password`,
+  })
+  if (error) {
+    if (error.message.includes('rate limit') || error.message.includes('over_email_send_rate_limit')) {
+      return { error: 'Trop de demandes. Veuillez réessayer dans quelques minutes.' }
+    }
+    return { error: 'Une erreur est survenue. Vérifiez votre adresse email.' }
+  }
+  return { success: true }
+}
+
+export async function resetPasswordAction(password: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase.auth.updateUser({ password })
+  if (error) {
+    if (error.message.includes('same password')) {
+      return { error: 'Le nouveau mot de passe doit être différent de l\'ancien.' }
+    }
+    return { error: 'Une erreur est survenue. Veuillez réessayer.' }
+  }
+  return {}
 }
 
 export async function signUpAction(input: {
