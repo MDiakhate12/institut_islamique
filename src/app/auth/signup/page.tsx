@@ -1,6 +1,6 @@
 import { db } from '@/db'
-import { schools } from '@/db/schema'
-import { asc } from 'drizzle-orm'
+import { schools, schoolMembers } from '@/db/schema'
+import { asc, and, eq } from 'drizzle-orm'
 import { SignupForm } from './SignupForm'
 import Link from 'next/link'
 
@@ -20,6 +20,22 @@ export default async function SignupPage({ searchParams }: Props) {
     .from(schools)
     .orderBy(asc(schools.name))
 
+  // For teacher invites, fetch admin-registered name and phone from school_members
+  let prefilledFullName = ''
+  let prefilledPhone = ''
+  if (isTeacherInvite && prefilledEmail && prefilledSchoolId) {
+    const [member] = await db
+      .select({ fullName: schoolMembers.fullName, phone: schoolMembers.phone })
+      .from(schoolMembers)
+      .where(and(
+        eq(schoolMembers.schoolId, prefilledSchoolId),
+        eq(schoolMembers.pendingEmail, prefilledEmail),
+      ))
+      .limit(1)
+    prefilledFullName = member?.fullName ?? ''
+    prefilledPhone = member?.phone ?? ''
+  }
+
   return (
     <div className="min-h-screen bg-[#f4f9f3] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -36,6 +52,8 @@ export default async function SignupPage({ searchParams }: Props) {
             isTeacherInvite={isTeacherInvite}
             prefilledSchoolId={prefilledSchoolId}
             prefilledEmail={prefilledEmail}
+            prefilledFullName={prefilledFullName}
+            prefilledPhone={prefilledPhone}
           />
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Déjà un compte ?{' '}

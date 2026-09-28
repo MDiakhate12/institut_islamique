@@ -38,26 +38,32 @@ const signupSchema = z
 type SignupInput = z.infer<typeof signupSchema>
 
 interface Props {
-  schools:          { id: string; name: string }[]
-  isAdminInvite?:   boolean
-  isTeacherInvite?: boolean
-  prefilledEmail?:  string
+  schools:            { id: string; name: string }[]
+  isAdminInvite?:     boolean
+  isTeacherInvite?:   boolean
+  prefilledEmail?:    string
   prefilledSchoolId?: string
+  prefilledFullName?: string
+  prefilledPhone?:    string
 }
 
 export function SignupForm({
-  schools, isAdminInvite = false, isTeacherInvite = false, prefilledEmail = '', prefilledSchoolId = '',
+  schools, isAdminInvite = false, isTeacherInvite = false,
+  prefilledEmail = '', prefilledSchoolId = '',
+  prefilledFullName = '', prefilledPhone = '',
 }: Props) {
   const [isPending, startTransition] = useTransition()
   const [confirmed, setConfirmed] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const hideRoleChoice = isAdminInvite || isTeacherInvite
+  const isInvite = isAdminInvite || isTeacherInvite
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      fullName: '', email: prefilledEmail, schoolId: prefilledSchoolId, phone: '',
+      fullName: prefilledFullName, email: prefilledEmail, schoolId: prefilledSchoolId,
+      phone: prefilledPhone,
       isParent: !hideRoleChoice, isTeacher: isTeacherInvite, isAdmin: isAdminInvite,
       password: '', confirmPassword: '', acceptedTerms: false,
     },
@@ -153,8 +159,20 @@ export function SignupForm({
             <FormItem>
               <FormLabel>E-mail *</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="votre@email.com" {...field} />
+                <Input
+                  type="email"
+                  placeholder="votre@email.com"
+                  {...field}
+                  readOnly={isInvite}
+                  disabled={isInvite}
+                  className={isInvite ? 'bg-gray-50 text-gray-700 cursor-not-allowed' : ''}
+                />
               </FormControl>
+              {isInvite && (
+                <p className="text-xs text-muted-foreground">
+                  Adresse enregistrée par l'administrateur — non modifiable.
+                </p>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -205,8 +223,20 @@ export function SignupForm({
             <FormItem>
               <FormLabel>Numéro de téléphone *</FormLabel>
               <FormControl>
-                <Input type="tel" placeholder="0X XX XX XX XX" {...field} />
+                <Input
+                  type="tel"
+                  placeholder="0X XX XX XX XX"
+                  {...field}
+                  readOnly={isTeacherInvite && !!prefilledPhone}
+                  disabled={isTeacherInvite && !!prefilledPhone}
+                  className={isTeacherInvite && prefilledPhone ? 'bg-gray-50 text-gray-700 cursor-not-allowed' : ''}
+                />
               </FormControl>
+              {isTeacherInvite && prefilledPhone && (
+                <p className="text-xs text-muted-foreground">
+                  Numéro enregistré par l'administrateur — non modifiable.
+                </p>
+              )}
               <FormMessage />
             </FormItem>
           )}
