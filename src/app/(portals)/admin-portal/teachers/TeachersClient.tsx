@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import { useTeachers } from '@/modules/teachers/teachers.hooks'
 import { TeacherFormDialog } from './TeacherForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Download, Search, Mail, Phone, Pencil, Copy, BookOpen } from 'lucide-react'
+import { Download, Search, Mail, Phone, Pencil, Copy, BookOpen, Send } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportTeachersToExcel } from './teachers.excel'
+import { resendTeacherInvitationAction } from '@/modules/teachers/teachers.actions'
+import { toast } from 'sonner'
 import type { TeacherListItem } from '@/modules/teachers/teachers.types'
 import type { Teacher } from '@/modules/teachers/teachers.types'
 
@@ -181,6 +183,34 @@ function CircleChip({ color, active, onClick, title }: {
   )
 }
 
+// ── ResendInviteButton ───────────────────────────────────────────────────────
+function ResendInviteButton({ memberId, email }: { memberId: string; email: string }) {
+  const [isPending, startTransition] = useTransition()
+
+  function handleResend() {
+    startTransition(async () => {
+      const result = await resendTeacherInvitationAction(memberId)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(`Invitation renvoyée à ${email}`)
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleResend}
+      disabled={isPending}
+      className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-orange-50 transition-colors text-orange-600 hover:text-orange-700 text-xs font-medium disabled:opacity-50"
+    >
+      <Send className="h-3.5 w-3.5" />
+      {isPending ? 'Envoi...' : 'Renvoyer l\'invitation'}
+    </button>
+  )
+}
+
 // ── TeacherCard ─────────────────────────────────────────────────────────────
 function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
   const isActive   = !teacher.isPending
@@ -257,20 +287,23 @@ function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
         )}
       </div>
 
-      {/* Row 5: Edit button */}
-      <div className="flex justify-end pt-1 border-t border-border/50">
-        <TeacherFormDialog
-          teacher={teacher as unknown as Teacher}
-          trigger={
-            <button
-              type="button"
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground text-xs font-medium"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Modifier
-            </button>
-          }
-        />
+      {/* Row 5: Actions */}
+      <div className="flex items-center justify-between pt-1 border-t border-border/50">
+        {!isActive && <ResendInviteButton memberId={teacher.id} email={teacher.email} />}
+        <div className={cn('flex justify-end', isActive && 'flex-1')}>
+          <TeacherFormDialog
+            teacher={teacher as unknown as Teacher}
+            trigger={
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground text-xs font-medium"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Modifier
+              </button>
+            }
+          />
+        </div>
       </div>
     </div>
   )

@@ -99,6 +99,27 @@ export async function inviteTeacherAction(input: unknown): Promise<ActionResult<
   }
 }
 
+export async function resendTeacherInvitationAction(memberId: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return unauthorized()
+
+  const [member] = await db
+    .select({ id: schoolMembers.id, pendingEmail: schoolMembers.pendingEmail, isPending: schoolMembers.isPending, schoolId: schoolMembers.schoolId })
+    .from(schoolMembers)
+    .where(eq(schoolMembers.id, memberId))
+    .limit(1)
+
+  if (!member || member.schoolId !== session.schoolId) return err('Enseignant introuvable')
+  if (!member.isPending || !member.pendingEmail) return err('Ce compte est déjà activé')
+
+  try {
+    await sendTeacherInviteEmail(member.pendingEmail, member.id, member.schoolId)
+    return ok(undefined)
+  } catch {
+    return err("Erreur lors de l'envoi. Réessayez.")
+  }
+}
+
 export async function updateTeacherAction(
   memberId: string,
   input: unknown
