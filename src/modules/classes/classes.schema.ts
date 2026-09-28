@@ -20,6 +20,7 @@ export type UpdateCatalogClassInput = z.infer<typeof updateCatalogClassSchema>
 
 export const createClassSchema = z.object({
   catalogClassId:     z.string().uuid('Sélectionner un numéro de classe'),
+  customName:         z.string().optional(),
   section:            z.string().optional(),
   room:               z.string().optional(),
   teacherId:          z.string().uuid().optional().nullable(),

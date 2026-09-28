@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -54,6 +54,7 @@ export function ClassFormDialog({
     resolver: zodResolver(createClassSchema),
     defaultValues: {
       catalogClassId:     scheduledClass?.catalogClassId ?? '',
+      customName:         scheduledClass?.name           ?? '',
       section:            scheduledClass?.section        ?? '',
       room:               scheduledClass?.room           ?? '',
       teacherId:          scheduledClass?.teacherId      ?? null,
@@ -61,6 +62,15 @@ export function ClassFormDialog({
       academicYear:       scheduledClass?.academicYear   ?? CURRENT_YEAR,
     },
   })
+
+  // Auto-populate name when catalog selection changes (skip on first render)
+  const catalogClassId = form.watch('catalogClassId')
+  const isFirstRender = useRef(true)
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
+    const selected = catalogClasses.find(c => c.id === catalogClassId)
+    if (selected) form.setValue('customName', selected.name, { shouldDirty: true })
+  }, [catalogClassId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Catalog classes filtered by selected subject
   const filteredCatalog = catalogClasses.filter(c =>
@@ -105,7 +115,7 @@ export function ClassFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) isFirstRender.current = true }}>
       <DialogTrigger>{trigger}</DialogTrigger>
 
       <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
@@ -115,7 +125,7 @@ export function ClassFormDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1" onReset={() => { isFirstRender.current = true }}>
 
           {/* Type de classe */}
           <div>
@@ -166,6 +176,18 @@ export function ClassFormDialog({
             {form.formState.errors.catalogClassId && (
               <p className="text-xs text-destructive mt-1">{form.formState.errors.catalogClassId.message}</p>
             )}
+          </div>
+
+          {/* Nom personnalisé */}
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">
+              Nom de la classe
+              <span className="ml-1 text-xs font-normal text-muted-foreground">(pré-rempli depuis le catalogue, modifiable)</span>
+            </label>
+            <Input
+              placeholder="ex. Coran Débutants"
+              {...form.register('customName')}
+            />
           </div>
 
           {/* Section + Salle */}

@@ -231,7 +231,7 @@ export const scheduledClassesService = {
         catalogClassId:     data.catalogClassId,
         teacherId:          data.teacherId    ?? null,
         assistantTeacherId: data.assistantTeacherId ?? null,
-        name:               catalogRow?.name ?? 'Classe',
+        name:               data.customName?.trim() || catalogRow?.name || 'Classe',
         room:               data.room    || null,
         section:            data.section || null,
         academicYear:       data.academicYear,
@@ -253,9 +253,10 @@ export const scheduledClassesService = {
           .from(classCatalog)
           .where(eq(classCatalog.id, data.catalogClassId))
           .limit(1)
-        if (catalogRow) updateData.name = catalogRow.name
+        if (catalogRow) updateData.name = data.customName?.trim() || catalogRow.name
       }
     }
+    if (data.customName !== undefined) updateData.name = data.customName.trim() || updateData.name
     if (data.section            !== undefined) updateData.section            = data.section            || null
     if (data.room               !== undefined) updateData.room               = data.room               || null
     if (data.teacherId          !== undefined) updateData.teacherId          = data.teacherId          ?? null
