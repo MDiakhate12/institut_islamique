@@ -98,10 +98,11 @@ export const permissionsService = {
     schoolId: string,
     email: string,
     role: AdminSubRole,
-  ): Promise<void> {
+  ): Promise<{ userExists: boolean }> {
     const normalizedEmail = email.toLowerCase().trim()
-    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-    const authUser = users.find(u => (u.email ?? '').toLowerCase() === normalizedEmail)
+    const rows = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${normalizedEmail} LIMIT 1`)
+    const authUserId = (rows as unknown as { id: string }[])[0]?.id ?? null
+    const authUser = authUserId ? { id: authUserId } : null
 
     if (authUser) {
       // User exists — check for existing school_members record
@@ -133,6 +134,7 @@ export const permissionsService = {
           isPending: false,
         })
       }
+      return { userExists: true }
     } else {
       // User doesn't exist — create pending record
       await db.insert(schoolMembers).values({
@@ -143,6 +145,7 @@ export const permissionsService = {
         isPending: true,
         pendingEmail: normalizedEmail,
       })
+      return { userExists: false }
     }
   },
 

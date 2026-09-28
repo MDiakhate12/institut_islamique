@@ -64,12 +64,19 @@ export async function grantRoleAction(
     manager: 'Gestionnaire',
   }
   try {
-    await permissionsService.grantRole(session.schoolId, email, role)
+    const { userExists } = await permissionsService.grantRole(session.schoolId, email, role)
     revalidatePath('/admin-portal/permissions')
     const appUrl = await getAppUrl()
+    const ctaUrl = userExists
+      ? `${appUrl}/admin-portal`
+      : `${appUrl}/auth/signup?invite=admin&schoolId=${session.schoolId}&email=${encodeURIComponent(email)}`
+    const ctaLabel = userExists ? 'Accéder au portail →' : 'Créer mon compte →'
+    const bodyText = userExists
+      ? `Le rôle <strong>${ROLE_LABELS[role] ?? role}</strong> vous a été accordé sur <strong>Qaf School</strong>. Vous pouvez maintenant accéder au portail d'administration avec ce niveau d'accès.`
+      : `Vous avez été invité(e) à rejoindre <strong>Qaf School</strong> en tant que <strong>${ROLE_LABELS[role] ?? role}</strong>. Créez votre compte pour accéder au portail d'administration.`
     void sendEmail({
       to: email,
-      subject: `Qaf School — Rôle ${ROLE_LABELS[role] ?? role} accordé`,
+      subject: `Qaf School — Invitation ${ROLE_LABELS[role] ?? role}`,
       html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#fdf6f0;font-family:Arial,sans-serif;">
@@ -80,12 +87,10 @@ export async function grantRoleAction(
     </div>
     <div style="padding:40px;">
       <p style="color:#5c3820;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
-      <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
-        Le rôle <strong>${ROLE_LABELS[role] ?? role}</strong> vous a été accordé sur <strong>Qaf School</strong>. Vous pouvez maintenant accéder au portail d'administration avec ce niveau d'accès.
-      </p>
+      <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">${bodyText}</p>
       <div style="text-align:center;">
-        <a href="${appUrl}/admin-portal" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
-          Accéder au portail →
+        <a href="${ctaUrl}" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+          ${ctaLabel}
         </a>
       </div>
     </div>

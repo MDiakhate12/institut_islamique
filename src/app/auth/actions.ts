@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { profiles, schoolMembers } from '@/db/schema'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, or } from 'drizzle-orm'
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
@@ -101,14 +101,20 @@ export async function signUpAction(input: {
   // ── Flow admin invité ────────────────────────────────────────────
   if (input.isAdmin) {
     const [pendingRecord] = await db
-      .select({ id: schoolMembers.id })
+      .select({ id: schoolMembers.id, isPending: schoolMembers.isPending })
       .from(schoolMembers)
       .where(
         and(
           eq(schoolMembers.schoolId, input.schoolId),
-          eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
-          eq(schoolMembers.userId, NIL_UUID),
-          eq(schoolMembers.isPending, true),
+          or(
+            // Pre-trigger: still NIL_UUID with pending email
+            and(
+              eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
+              eq(schoolMembers.userId, NIL_UUID),
+            ),
+            // Post-trigger: trigger already linked the user
+            eq(schoolMembers.userId, userId),
+          ),
         )
       )
       .limit(1)
@@ -141,8 +147,12 @@ export async function signUpAction(input: {
       .where(
         and(
           eq(schoolMembers.schoolId, input.schoolId),
-          eq(schoolMembers.userId, NIL_UUID),
-          eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
+          or(
+            // Pre-trigger: still NIL_UUID with pending email
+            and(eq(schoolMembers.userId, NIL_UUID), eq(schoolMembers.pendingEmail, input.email.toLowerCase())),
+            // Post-trigger: trigger already linked the user
+            eq(schoolMembers.userId, userId),
+          ),
         )
       )
       .limit(1)
