@@ -29,9 +29,9 @@ async function sendTeacherInviteEmail(
   const stepOneBlock = hasAccount
     ? /* already has account — go straight to portal */
       `<div style="background:#f4f9f3;border:2px solid #2d6a4f;border-radius:12px;padding:24px;margin-bottom:20px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:28px;height:28px;background:#2d6a4f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;color:#fff;flex-shrink:0;">1</div>
-          <p style="margin:0;font-size:15px;font-weight:700;color:#1e4535;">Connectez-vous à votre compte</p>
+        <div style="margin-bottom:12px;">
+          <div style="width:28px;height:28px;background:#2d6a4f;border-radius:50%;display:inline-block;line-height:28px;text-align:center;font-weight:bold;font-size:14px;color:#fff;vertical-align:middle;">1</div>
+          <p style="margin:0;font-size:15px;font-weight:700;color:#1e4535;display:inline-block;vertical-align:middle;margin-left:10px;">Connectez-vous à votre compte</p>
         </div>
         <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">Vous avez déjà un compte Qaf School. Connectez-vous directement au portail enseignant.</p>
         <div style="text-align:center;">
@@ -42,9 +42,9 @@ async function sendTeacherInviteEmail(
       </div>`
     : /* no account yet — create one */
       `<div style="background:#f4f9f3;border:2px solid #2d6a4f;border-radius:12px;padding:24px;margin-bottom:20px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:28px;height:28px;background:#2d6a4f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;color:#fff;flex-shrink:0;">1</div>
-          <p style="margin:0;font-size:15px;font-weight:700;color:#1e4535;">Créez votre compte</p>
+        <div style="margin-bottom:12px;">
+          <div style="width:28px;height:28px;background:#2d6a4f;border-radius:50%;display:inline-block;line-height:28px;text-align:center;font-weight:bold;font-size:14px;color:#fff;vertical-align:middle;">1</div>
+          <p style="margin:0;font-size:15px;font-weight:700;color:#1e4535;display:inline-block;vertical-align:middle;margin-left:10px;">Créez votre compte</p>
         </div>
         <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">Vous n'avez pas encore de compte. Cliquez ci-dessous pour en créer un avec votre adresse <strong>${email}</strong>.</p>
         <div style="text-align:center;">
@@ -75,9 +75,9 @@ async function sendTeacherInviteEmail(
       ${stepOneBlock}
 
       <div style="background:#fffbeb;border:2px solid #d97706;border-radius:12px;padding:24px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div style="width:28px;height:28px;background:#d97706;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;color:#fff;flex-shrink:0;">2</div>
-          <p style="margin:0;font-size:15px;font-weight:700;color:#92400e;">Entrez votre code d'activation</p>
+        <div style="margin-bottom:12px;">
+          <div style="width:28px;height:28px;background:#d97706;border-radius:50%;display:inline-block;line-height:28px;text-align:center;font-weight:bold;font-size:14px;color:#fff;vertical-align:middle;">2</div>
+          <p style="margin:0;font-size:15px;font-weight:700;color:#92400e;display:inline-block;vertical-align:middle;margin-left:10px;">Entrez votre code d'activation</p>
         </div>
         <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">
           Une fois connecté(e), le portail vous demandera un <strong>code d'identifiant enseignant</strong>.
