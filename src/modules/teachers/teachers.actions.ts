@@ -255,6 +255,17 @@ export async function removeTeacherDocumentAction(memberId: string): Promise<Act
   }
 }
 
+export async function requestActivationCodeAction(): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!session.isPending) return err('Votre compte est déjà activé')
+  try {
+    await sendTeacherInviteEmail(session.email, session.memberId, session.schoolId, true)
+    return ok(undefined)
+  } catch {
+    return err("Erreur lors de l'envoi. Réessayez.")
+  }
+}
+
 export async function activateTeacherAction(code: string): Promise<ActionResult<void>> {
   const session = await requireSession()
 

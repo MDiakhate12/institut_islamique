@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Shield, Mail } from 'lucide-react'
+import { Shield, Mail, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { activateTeacherAction } from '@/modules/teachers/teachers.actions'
+import { activateTeacherAction, requestActivationCodeAction } from '@/modules/teachers/teachers.actions'
 
 interface Props {
   adminEmails: string[]
@@ -14,6 +14,20 @@ interface Props {
 export function TeacherActivationGate({ adminEmails }: Props) {
   const [code, setCode] = useState('')
   const [isPending, startTransition] = useTransition()
+  const [isSending, startSendTransition] = useTransition()
+  const [codeSent, setCodeSent] = useState(false)
+
+  function handleRequestCode() {
+    startSendTransition(async () => {
+      const result = await requestActivationCodeAction()
+      if (!result.success) {
+        toast.error(result.error)
+      } else {
+        setCodeSent(true)
+        toast.success('Code envoyé ! Vérifiez votre boîte mail.')
+      }
+    })
+  }
 
   function handleActivate() {
     if (!code.trim()) return
@@ -67,24 +81,46 @@ export function TeacherActivationGate({ adminEmails }: Props) {
               {isPending ? 'Vérification…' : 'Vérifier l\'identité →'}
             </Button>
 
+            {/* Request code by email */}
+            <div className="rounded-lg bg-[#f4f9f3] border border-[#cde6c8] p-4 space-y-3">
+              <div className="flex items-center gap-2 text-[#1e4535]">
+                <Mail className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-semibold">Recevoir mon code par email</span>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Vous n'avez pas encore reçu votre code d'activation ? Demandez un renvoi directement sur votre adresse email.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRequestCode}
+                disabled={isSending || codeSent}
+                className="w-full border-[#2d6a4f] text-[#2d6a4f] hover:bg-[#2d6a4f] hover:text-white gap-2 transition-colors"
+              >
+                <Send className="h-3.5 w-3.5" />
+                {isSending ? 'Envoi en cours…' : codeSent ? 'Code envoyé ✓' : 'Renvoyer mon code d\'activation'}
+              </Button>
+            </div>
+
             {/* Admin contacts */}
             {adminEmails.length > 0 && (
               <div className="rounded-lg bg-amber-50 border border-amber-100 p-4 space-y-2">
                 <div className="flex items-center gap-2 text-amber-800">
                   <Mail className="h-4 w-4 shrink-0" />
-                  <span className="text-xs font-semibold">Besoin d'aide ?</span>
+                  <span className="text-xs font-semibold">Contacter un administrateur</span>
                 </div>
                 <p className="text-xs text-amber-700">
-                  Contactez les administrateurs de votre école pour obtenir votre code :
+                  Vous pouvez aussi contacter directement les administrateurs de votre école :
                 </p>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {adminEmails.map(email => (
-                    <span
+                    <a
                       key={email}
-                      className="px-2.5 py-1 bg-white border border-amber-200 rounded-full text-xs text-amber-800 font-medium"
+                      href={`mailto:${email}`}
+                      className="px-2.5 py-1 bg-white border border-amber-200 rounded-full text-xs text-amber-800 font-medium hover:bg-amber-100 transition-colors"
                     >
                       {email}
-                    </span>
+                    </a>
                   ))}
                 </div>
               </div>
