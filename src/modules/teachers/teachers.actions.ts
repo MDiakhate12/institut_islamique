@@ -16,9 +16,44 @@ import { sendEmail, getAppUrl } from '@/lib/email'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 import { createClient } from '@/lib/supabase/server'
 
-async function sendTeacherInviteEmail(email: string, memberId: string, schoolId: string): Promise<void> {
+async function sendTeacherInviteEmail(
+  email: string,
+  memberId: string,
+  schoolId: string,
+  hasAccount = false,
+): Promise<void> {
   const appUrl = await getAppUrl()
   const signupUrl = `${appUrl}/auth/signup?invite=teacher&schoolId=${schoolId}&email=${encodeURIComponent(email)}`
+  const portalUrl = `${appUrl}/teacher-portal`
+
+  const stepOneBlock = hasAccount
+    ? /* already has account — go straight to portal */
+      `<div style="background:#f4f9f3;border:2px solid #2d6a4f;border-radius:12px;padding:24px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:28px;height:28px;background:#2d6a4f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;color:#fff;flex-shrink:0;">1</div>
+          <p style="margin:0;font-size:15px;font-weight:700;color:#1e4535;">Connectez-vous à votre compte</p>
+        </div>
+        <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">Vous avez déjà un compte Qaf School. Connectez-vous directement au portail enseignant.</p>
+        <div style="text-align:center;">
+          <a href="${portalUrl}" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:14px;font-weight:bold;padding:12px 28px;border-radius:10px;text-decoration:none;">
+            Accéder au portail enseignant →
+          </a>
+        </div>
+      </div>`
+    : /* no account yet — create one */
+      `<div style="background:#f4f9f3;border:2px solid #2d6a4f;border-radius:12px;padding:24px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:28px;height:28px;background:#2d6a4f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;color:#fff;flex-shrink:0;">1</div>
+          <p style="margin:0;font-size:15px;font-weight:700;color:#1e4535;">Créez votre compte</p>
+        </div>
+        <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">Vous n'avez pas encore de compte. Cliquez ci-dessous pour en créer un avec votre adresse <strong>${email}</strong>.</p>
+        <div style="text-align:center;">
+          <a href="${signupUrl}" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:14px;font-weight:bold;padding:12px 28px;border-radius:10px;text-decoration:none;">
+            Créer mon compte →
+          </a>
+        </div>
+      </div>`
+
   await sendEmail({
     to: email,
     subject: 'Vous êtes invité(e) à rejoindre Qaf School',
@@ -26,26 +61,35 @@ async function sendTeacherInviteEmail(email: string, memberId: string, schoolId:
 <html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-    <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#1e4535,#2d6a4f);padding:36px 40px;text-align:center;">
       <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
-      <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Portail Enseignant</p>
+      <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Portail Enseignant — Invitation</p>
     </div>
-    <div style="padding:40px;">
-      <p style="color:#1e4535;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
-      <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
+    <div style="padding:36px 40px;">
+      <p style="color:#1e4535;font-size:16px;margin:0 0 8px;font-weight:600;">Assalamo Alykom,</p>
+      <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 28px;">
         Vous avez été invité(e) à rejoindre <strong>Qaf School</strong> en tant qu'enseignant(e).
-        Créez votre compte en cliquant sur le bouton ci-dessous, puis entrez le code d'activation
-        indiqué plus bas dans le portail enseignant.
+        Suivez les deux étapes ci-dessous pour accéder à votre portail.
       </p>
-      <div style="text-align:center;margin-bottom:24px;">
-        <a href="${signupUrl}" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
-          Créer mon compte →
-        </a>
+
+      ${stepOneBlock}
+
+      <div style="background:#fffbeb;border:2px solid #d97706;border-radius:12px;padding:24px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:28px;height:28px;background:#d97706;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;color:#fff;flex-shrink:0;">2</div>
+          <p style="margin:0;font-size:15px;font-weight:700;color:#92400e;">Entrez votre code d'activation</p>
+        </div>
+        <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">
+          Une fois connecté(e), le portail vous demandera un <strong>code d'identifiant enseignant</strong>.
+          Copiez-collez le code ci-dessous :
+        </p>
+        <div style="background:#ffffff;border:1px solid #d97706;border-radius:8px;padding:14px 18px;text-align:center;margin-bottom:12px;">
+          <p style="margin:0;font-family:monospace;font-size:13px;font-weight:700;color:#1e4535;word-break:break-all;letter-spacing:0.5px;">${memberId}</p>
+        </div>
+        <p style="color:#92400e;font-size:12px;margin:0;line-height:1.5;">
+          ⚠️ Ce code est personnel et confidentiel. Ne le partagez pas.
+        </p>
       </div>
-      <p style="color:#374151;font-size:14px;margin:0 0 4px;">Code d'activation :</p>
-      <p style="color:#1e4535;font-size:16px;font-weight:bold;font-family:monospace;background:#f4f9f3;padding:12px 16px;border-radius:8px;margin:0;">
-        ${memberId}
-      </p>
     </div>
     <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
       <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
@@ -104,8 +148,9 @@ export async function resendTeacherInvitationAction(memberId: string): Promise<A
   const session = await requireSession()
   if (!session.roles.includes('admin')) return unauthorized()
 
+  const NIL_UUID = '00000000-0000-0000-0000-000000000000'
   const [member] = await db
-    .select({ id: schoolMembers.id, pendingEmail: schoolMembers.pendingEmail, isPending: schoolMembers.isPending, schoolId: schoolMembers.schoolId })
+    .select({ id: schoolMembers.id, userId: schoolMembers.userId, pendingEmail: schoolMembers.pendingEmail, isPending: schoolMembers.isPending, schoolId: schoolMembers.schoolId })
     .from(schoolMembers)
     .where(eq(schoolMembers.id, memberId))
     .limit(1)
@@ -114,7 +159,8 @@ export async function resendTeacherInvitationAction(memberId: string): Promise<A
   if (!member.isPending || !member.pendingEmail) return err('Ce compte est déjà activé')
 
   try {
-    await sendTeacherInviteEmail(member.pendingEmail, member.id, member.schoolId)
+    const hasAccount = member.userId !== NIL_UUID
+    await sendTeacherInviteEmail(member.pendingEmail, member.id, member.schoolId, hasAccount)
     return ok(undefined)
   } catch {
     return err("Erreur lors de l'envoi. Réessayez.")
