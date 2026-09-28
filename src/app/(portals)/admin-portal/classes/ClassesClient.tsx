@@ -34,7 +34,7 @@ function renderCurriculum(text: string) {
 
     if (line.startsWith('## ')) {
       elements.push(
-        <h2 key={i} className="text-sm font-semibold text-[#c2440f] mt-4 mb-1 first:mt-0">
+        <h2 key={i} className="text-sm font-semibold text-[#2d6a4f] mt-4 mb-1 first:mt-0">
           {line.slice(3)}
         </h2>
       )
@@ -171,7 +171,7 @@ export function ClassesClient() {
             teachers={teachers ?? []}
             rooms={configuredRooms}
             trigger={
-              <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+              <Button size="sm" className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
                 <Plus className="h-4 w-4" />
                 Créer une nouvelle offre de classe
               </Button>
@@ -197,7 +197,7 @@ export function ClassesClient() {
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="h-9 border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 text-muted-foreground"
+          className="h-9 border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 text-muted-foreground"
         >
           <option value="">Tous les types</option>
           {subjectOptions.map(code => (
@@ -211,7 +211,7 @@ export function ClassesClient() {
         <select
           value={filterTeacher}
           onChange={e => setFilterTeacher(e.target.value)}
-          className="h-9 border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 text-muted-foreground"
+          className="h-9 border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 text-muted-foreground"
         >
           <option value="">Tous les enseignants</option>
           {teacherOptions.map(t => (
@@ -223,7 +223,7 @@ export function ClassesClient() {
         <select
           value={filterRoom}
           onChange={e => setFilterRoom(e.target.value)}
-          className="h-9 border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 text-muted-foreground"
+          className="h-9 border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 text-muted-foreground"
         >
           <option value="">Toutes les salles</option>
           {roomOptions.map(r => (
@@ -457,7 +457,7 @@ function SyllabusDialog({
       <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-[#c2440f]" />
+            <BookOpen className="h-4 w-4 text-[#2d6a4f]" />
             {scheduledClass.name} — Syllabus
           </DialogTitle>
         </DialogHeader>

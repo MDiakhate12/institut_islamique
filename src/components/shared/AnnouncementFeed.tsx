@@ -41,8 +41,8 @@ function AnnouncementCard({ announcement: a, onEdit, onDelete }: CardProps) {
       {/* Card header */}
       <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3">
         <div className="flex items-center gap-2 min-w-0">
-          <Megaphone className="h-4 w-4 text-[#c2440f] shrink-0" />
-          <h3 className="font-semibold text-[#7a4f30] truncate">{a.title}</h3>
+          <Megaphone className="h-4 w-4 text-[#2d6a4f] shrink-0" />
+          <h3 className="font-semibold text-[#2d6a4f] truncate">{a.title}</h3>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <AudienceBadge audience={a.audience} />
@@ -86,7 +86,7 @@ function AnnouncementCard({ announcement: a, onEdit, onDelete }: CardProps) {
         className={cn(
           'px-5 pb-5 text-sm text-gray-800 leading-relaxed',
           '[&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4',
-          '[&_a]:text-[#c2440f] [&_a]:underline',
+          '[&_a]:text-[#2d6a4f] [&_a]:underline',
           '[&_strong]:font-semibold',
           '[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2',
           '[&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-1',

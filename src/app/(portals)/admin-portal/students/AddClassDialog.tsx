@@ -82,13 +82,13 @@ export function AddClassDialog({ open, onOpenChange, excludeClassIds, onAdd }: P
                 className={cn(
                   'w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors',
                   selected?.id === cls.id
-                    ? 'border-[#c2440f] bg-orange-50'
+                    ? 'border-[#2d6a4f] bg-orange-50'
                     : 'border-gray-200 hover:bg-gray-50'
                 )}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold bg-[#7a4f30] text-white px-2 py-0.5 rounded">
+                    <span className="text-xs font-bold bg-[#2d6a4f] text-white px-2 py-0.5 rounded">
                       {cls.classCode || '—'}
                     </span>
                   </div>
@@ -98,7 +98,7 @@ export function AddClassDialog({ open, onOpenChange, excludeClassIds, onAdd }: P
                   )}
                 </div>
                 {selected?.id === cls.id && (
-                  <Check className="w-4 h-4 text-[#c2440f] shrink-0" />
+                  <Check className="w-4 h-4 text-[#2d6a4f] shrink-0" />
                 )}
               </button>
             ))}
@@ -110,7 +110,7 @@ export function AddClassDialog({ open, onOpenChange, excludeClassIds, onAdd }: P
           <Button
             disabled={!selected}
             onClick={handleConfirm}
-            style={{ backgroundColor: '#c2440f' }}
+            style={{ backgroundColor: '#2d6a4f' }}
             className="text-white hover:opacity-90"
           >
             Ajouter

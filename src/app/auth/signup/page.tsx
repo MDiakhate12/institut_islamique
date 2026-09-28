@@ -21,10 +21,10 @@ export default async function SignupPage({ searchParams }: Props) {
     .orderBy(asc(schools.name))
 
   return (
-    <div className="min-h-screen bg-[#fdf6f0] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f4f9f3] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#5c3820]">Qaf School</h1>
+          <h1 className="text-3xl font-bold text-[#1e4535]">Qaf School</h1>
           <p className="text-muted-foreground mt-2">Application de gestion scolaire islamique</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-border p-8">
@@ -39,7 +39,7 @@ export default async function SignupPage({ searchParams }: Props) {
           />
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Déjà un compte ?{' '}
-            <Link href="/auth/login" className="text-[#c2440f] hover:underline font-medium">
+            <Link href="/auth/login" className="text-[#2d6a4f] hover:underline font-medium">
               Se connecter
             </Link>
           </p>

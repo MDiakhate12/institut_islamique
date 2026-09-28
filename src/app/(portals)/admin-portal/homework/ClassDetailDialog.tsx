@@ -38,7 +38,7 @@ export function ClassDetailDialog({ cls, date, onClose }: Props) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <BookOpen className="h-5 w-5 text-[#c2440f]" />
+            <BookOpen className="h-5 w-5 text-[#2d6a4f]" />
             {cls.classCode ? `${cls.classCode}: ${cls.className}` : cls.className}
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -93,7 +93,7 @@ export function ClassDetailDialog({ cls, date, onClose }: Props) {
               {hw.surahName && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Sourate :</p>
-                  <p className="text-lg font-bold text-[#c2440f]">
+                  <p className="text-lg font-bold text-[#2d6a4f]">
                     {hw.surahName}{hw.surahArabic ? ` – ${hw.surahArabic}` : ''}
                   </p>
                   {hw.isFullSurah && (
@@ -135,7 +135,7 @@ export function ClassDetailDialog({ cls, date, onClose }: Props) {
               {hw.description && (
                 <div>
                   <p className="text-xs text-muted-foreground">Notes supplémentaires :</p>
-                  <p className="text-sm text-[#c2440f] mt-0.5 font-medium">{hw.description}</p>
+                  <p className="text-sm text-[#2d6a4f] mt-0.5 font-medium">{hw.description}</p>
                 </div>
               )}
 
@@ -143,11 +143,11 @@ export function ClassDetailDialog({ cls, date, onClose }: Props) {
               <div className="grid grid-cols-2 gap-2 text-sm pt-1 border-t border-green-200">
                 <div>
                   <p className="text-xs text-muted-foreground">Assigné le</p>
-                  <p className="text-[#c2440f] font-medium">{fmtDate(hw.assignedDate)}</p>
+                  <p className="text-[#2d6a4f] font-medium">{fmtDate(hw.assignedDate)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Assigné par</p>
-                  <p className="text-[#c2440f] font-medium">{hw.createdByName ?? cls.teacherName ?? '—'}</p>
+                  <p className="text-[#2d6a4f] font-medium">{hw.createdByName ?? cls.teacherName ?? '—'}</p>
                 </div>
               </div>
 

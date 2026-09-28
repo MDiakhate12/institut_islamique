@@ -182,7 +182,7 @@ function Section({
   return (
     <div className="bg-white rounded-xl border border-border p-5 space-y-4">
       <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-[#c2440f]" />
+        <Icon className="h-4 w-4 text-[#2d6a4f]" />
         <h2 className="font-semibold text-sm text-foreground">{title}</h2>
       </div>
       {children}
@@ -211,11 +211,11 @@ function CheckRow({
           type="checkbox"
           checked={checked}
           onChange={e => onChange(e.target.checked)}
-          className="h-4 w-4 rounded border-border accent-[#c2440f]"
+          className="h-4 w-4 rounded border-border accent-[#2d6a4f]"
         />
       </div>
       <div>
-        <p className="text-sm font-medium group-hover:text-[#c2440f] transition-colors">{label}</p>
+        <p className="text-sm font-medium group-hover:text-[#2d6a4f] transition-colors">{label}</p>
         {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </div>
     </label>
@@ -359,7 +359,7 @@ function StickySaveBar({
       <Button
         onClick={onSave}
         disabled={!isDirty || isSaving}
-        className="bg-[#c2440f] hover:bg-[#a33a0d] text-white font-medium gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white font-medium gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Save className="h-4 w-4" />
         {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
@@ -397,7 +397,7 @@ function OperationsSection() {
               const [s, e] = academicYear.split('-').map(Number)
               if (s && e) setValue('academicYear', `${s - 1}-${e - 1}`, { shouldDirty: true })
             }}
-            className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-[#c2440f] hover:text-[#c2440f] transition-colors text-sm font-bold"
+            className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-[#2d6a4f] hover:text-[#2d6a4f] transition-colors text-sm font-bold"
           >‹</button>
           <Input
             value={academicYear}
@@ -411,7 +411,7 @@ function OperationsSection() {
               const [s, e] = academicYear.split('-').map(Number)
               if (s && e) setValue('academicYear', `${s + 1}-${e + 1}`, { shouldDirty: true })
             }}
-            className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-[#c2440f] hover:text-[#c2440f] transition-colors text-sm font-bold"
+            className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:border-[#2d6a4f] hover:text-[#2d6a4f] transition-colors text-sm font-bold"
           >›</button>
         </div>
       </div>
@@ -428,8 +428,8 @@ function OperationsSection() {
               className={cn(
                 'flex-1 h-9 rounded-lg border text-sm font-medium transition-colors',
                 trimester === t
-                  ? 'bg-[#c2440f] border-[#c2440f] text-white'
-                  : 'bg-white border-border text-muted-foreground hover:border-[#c2440f] hover:text-[#c2440f]'
+                  ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white'
+                  : 'bg-white border-border text-muted-foreground hover:border-[#2d6a4f] hover:text-[#2d6a4f]'
               )}
             >
               Trimestre {t}
@@ -442,13 +442,13 @@ function OperationsSection() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
         <label className={cn(
           'flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors',
-          allowReg ? 'border-[#c2440f]/40 bg-[#fdf6f0]' : 'border-border bg-white'
+          allowReg ? 'border-[#2d6a4f]/40 bg-[#f4f9f3]' : 'border-border bg-white'
         )}>
           <input
             type="checkbox"
             checked={allowReg}
             onChange={e => setValue('allowNewRegistrations', e.target.checked, { shouldDirty: true })}
-            className="mt-0.5 h-4 w-4 rounded border-border accent-[#c2440f]"
+            className="mt-0.5 h-4 w-4 rounded border-border accent-[#2d6a4f]"
           />
           <div>
             <p className="text-sm font-medium leading-snug">
@@ -462,13 +462,13 @@ function OperationsSection() {
 
         <label className={cn(
           'flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors',
-          examOpen ? 'border-[#c2440f]/40 bg-[#fdf6f0]' : 'border-border bg-white'
+          examOpen ? 'border-[#2d6a4f]/40 bg-[#f4f9f3]' : 'border-border bg-white'
         )}>
           <input
             type="checkbox"
             checked={examOpen}
             onChange={e => setValue(examField, e.target.checked, { shouldDirty: true })}
-            className="mt-0.5 h-4 w-4 rounded border-border accent-[#c2440f]"
+            className="mt-0.5 h-4 w-4 rounded border-border accent-[#2d6a4f]"
           />
           <div>
             <p className="text-sm font-medium leading-snug">
@@ -506,8 +506,8 @@ function SchoolDaysSection() {
             className={cn(
               'h-9 px-3 rounded-lg border text-sm font-medium transition-colors',
               days.includes(d.key)
-                ? 'bg-[#c2440f] border-[#c2440f] text-white'
-                : 'bg-white border-border text-muted-foreground hover:border-[#c2440f] hover:text-[#c2440f]'
+                ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white'
+                : 'bg-white border-border text-muted-foreground hover:border-[#2d6a4f] hover:text-[#2d6a4f]'
             )}
           >
             {d.label}
@@ -669,7 +669,7 @@ function RoomsSection() {
                 size="sm"
                 onClick={addRoom}
                 disabled={!newRoom.trim()}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white h-9 px-3"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white h-9 px-3"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -762,7 +762,7 @@ function ClassPeriodsSection() {
                 size="sm"
                 onClick={addPeriod}
                 disabled={!form.name || !form.startTime || !form.endTime}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white h-9 px-3 mb-0"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white h-9 px-3 mb-0"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -827,7 +827,7 @@ function GradeLevelsSection() {
                 {field.value.map(level => (
                   <span
                     key={level}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#c2440f] text-white text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2d6a4f] text-white text-sm font-medium"
                   >
                     <GripVertical className="h-3 w-3 opacity-60" />
                     {level}
@@ -894,7 +894,7 @@ function SchoolStaffSection() {
               <button
                 type="button"
                 onClick={() => setAdding(true)}
-                className="text-xs font-medium text-[#c2440f] hover:underline whitespace-nowrap ml-3"
+                className="text-xs font-medium text-[#2d6a4f] hover:underline whitespace-nowrap ml-3"
               >
                 Add Person
               </button>
@@ -920,7 +920,7 @@ function SchoolStaffSection() {
 
             {/* Add form */}
             {adding && (
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#c2440f]/40 bg-[#c2440f]/5">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#2d6a4f]/40 bg-[#2d6a4f]/5">
                 <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                 <Input
                   autoFocus
@@ -934,7 +934,7 @@ function SchoolStaffSection() {
                   onChange={e => setNewRole(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPerson() } }}
                   placeholder="e.g. Principal, Secretary"
-                  className="h-8 text-sm flex-1 border-[#c2440f]/40 focus-visible:border-[#c2440f]"
+                  className="h-8 text-sm flex-1 border-[#2d6a4f]/40 focus-visible:border-[#2d6a4f]"
                 />
                 <button
                   type="button"
@@ -983,13 +983,13 @@ function QuickLinksSection() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Link className="h-4 w-4 text-[#c2440f]" />
+                <Link className="h-4 w-4 text-[#2d6a4f]" />
                 <h2 className="font-semibold text-sm text-foreground">Liens rapides</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setNewRow({ label: '', url: '' })}
-                className="text-xs font-medium text-[#c2440f] hover:underline"
+                className="text-xs font-medium text-[#2d6a4f] hover:underline"
               >
                 + Ajouter un lien
               </button>
@@ -1158,7 +1158,7 @@ function TvRulesSection() {
                 size="sm"
                 onClick={addRule}
                 disabled={!form.title.trim()}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white h-9 px-3"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white h-9 px-3"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -1479,7 +1479,7 @@ function FinancialSection() {
             <Popover>
               <PopoverTrigger
                 aria-label="Comment fonctionnent les paiements mensuels"
-                className="text-muted-foreground hover:text-[#c2440f] transition-colors"
+                className="text-muted-foreground hover:text-[#2d6a4f] transition-colors"
               >
                 <HelpCircle className="h-3.5 w-3.5" />
               </PopoverTrigger>
@@ -1499,7 +1499,7 @@ function FinancialSection() {
                   type="checkbox"
                   checked={paymentMonths.includes(m.key)}
                   onChange={() => toggleMonth(m.key)}
-                  className="h-4 w-4 rounded border-border accent-[#c2440f]"
+                  className="h-4 w-4 rounded border-border accent-[#2d6a4f]"
                 />
                 {m.label}
               </label>
@@ -1528,7 +1528,7 @@ function FinancialSection() {
                   <Label className="text-xs font-medium text-muted-foreground">Options financières</Label>
                   <button
                     type="button"
-                    className="text-xs text-[#c2440f] hover:underline font-medium"
+                    className="text-xs text-[#2d6a4f] hover:underline font-medium"
                     onClick={() => newOptionRef.current?.focus()}
                     title="Ajouter une option"
                   >
@@ -1567,7 +1567,7 @@ function FinancialSection() {
                     size="sm"
                     onClick={addOption}
                     disabled={!newOption.trim()}
-                    className="bg-[#c2440f] hover:bg-[#a33a0d] text-white h-8 px-2.5"
+                    className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white h-8 px-2.5"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Button>
@@ -1609,7 +1609,7 @@ function FinancialSection() {
                   <button
                     type="button"
                     onClick={() => newModeRef.current?.focus()}
-                    className="text-xs text-[#c2440f] hover:underline font-medium"
+                    className="text-xs text-[#2d6a4f] hover:underline font-medium"
                     title="Ajouter un mode"
                   >
                     + Ajouter un mode
@@ -1645,7 +1645,7 @@ function FinancialSection() {
                     size="sm"
                     onClick={addMode}
                     disabled={!newMode.trim()}
-                    className="bg-[#c2440f] hover:bg-[#a33a0d] text-white h-8 px-2.5"
+                    className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white h-8 px-2.5"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Button>

@@ -129,15 +129,15 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
   ]
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#fdf6f0] flex items-start justify-center pt-10 px-4 pb-10">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f4f9f3] flex items-start justify-center pt-10 px-4 pb-10">
       <div className="w-full max-w-2xl">
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="h-14 w-14 rounded-2xl bg-[#c2440f] flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <div className="h-14 w-14 rounded-2xl bg-[#2d6a4f] flex items-center justify-center mx-auto mb-4 shadow-lg">
             <School className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-[#5c3820]">Configuration de l'école</h1>
+          <h1 className="text-2xl font-bold text-[#1e4535]">Configuration de l'école</h1>
           <p className="text-sm text-muted-foreground mt-1">Quelques étapes pour préparer votre portail</p>
         </div>
 
@@ -147,7 +147,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
             <div key={s.n} className="flex items-center">
               <div className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all',
-                step === s.n ? 'bg-[#c2440f] text-white shadow-md' :
+                step === s.n ? 'bg-[#2d6a4f] text-white shadow-md' :
                 step > s.n  ? 'bg-green-100 text-green-700' :
                               'bg-white text-gray-400 border border-gray-200',
               )}>
@@ -171,7 +171,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
           {step === 1 && (
             <div className="p-8 space-y-6">
               <div>
-                <h2 className="text-lg font-bold text-[#7a4f30]">Identité de l'école</h2>
+                <h2 className="text-lg font-bold text-[#2d6a4f]">Identité de l'école</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">Ces informations seront visibles dans l'application.</p>
               </div>
 
@@ -216,7 +216,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                     value={schoolName}
                     onChange={e => setSchoolName(e.target.value)}
                     placeholder="Association Islamique Al-Bayan"
-                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
                   />
                 </div>
 
@@ -230,7 +230,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                       onChange={e => setContactEmail(e.target.value)}
                       type="email"
                       placeholder="contact@ecole.fr"
-                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -242,7 +242,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                       onChange={e => setPhone(e.target.value)}
                       type="tel"
                       placeholder="0X XX XX XX XX"
-                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
                     />
                   </div>
                 </div>
@@ -255,7 +255,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                     value={address}
                     onChange={e => setAddress(e.target.value)}
                     placeholder="12 rue de la Paix, 69000 Lyon"
-                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
                   />
                 </div>
               </div>
@@ -264,7 +264,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                 <button
                   onClick={handleStep1}
                   disabled={isPending}
-                  className="flex items-center gap-2 bg-[#c2440f] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#a33a0d] transition-colors disabled:opacity-60"
+                  className="flex items-center gap-2 bg-[#2d6a4f] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#1b4332] transition-colors disabled:opacity-60"
                 >
                   Suivant
                   <ChevronRight className="h-4 w-4" />
@@ -277,7 +277,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
           {step === 2 && (
             <div className="p-8 space-y-6">
               <div>
-                <h2 className="text-lg font-bold text-[#7a4f30]">Opérations scolaires</h2>
+                <h2 className="text-lg font-bold text-[#2d6a4f]">Opérations scolaires</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">Définissez l'année académique, le trimestre en cours, puis activez l'inscription et les examens.</p>
               </div>
 
@@ -293,13 +293,13 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                         const [s, e] = academicYear.split('-').map(Number)
                         if (s && e) setAcademicYear(`${s - 1}-${e - 1}`)
                       }}
-                      className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#c2440f] hover:text-[#c2440f] transition-colors text-sm font-bold"
+                      className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#2d6a4f] hover:text-[#2d6a4f] transition-colors text-sm font-bold"
                     >‹</button>
                     <input
                       value={academicYear}
                       onChange={e => setAcademicYear(e.target.value)}
                       placeholder="2025-2026"
-                      className="flex-1 px-3 py-2.5 text-sm text-center font-medium border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                      className="flex-1 px-3 py-2.5 text-sm text-center font-medium border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
                     />
                     <button
                       type="button"
@@ -307,7 +307,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                         const [s, e] = academicYear.split('-').map(Number)
                         if (s && e) setAcademicYear(`${s + 1}-${e + 1}`)
                       }}
-                      className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#c2440f] hover:text-[#c2440f] transition-colors text-sm font-bold"
+                      className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#2d6a4f] hover:text-[#2d6a4f] transition-colors text-sm font-bold"
                     >›</button>
                   </div>
                 </div>
@@ -324,8 +324,8 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                         className={cn(
                           'flex-1 py-2.5 text-sm font-medium rounded-lg border transition-all',
                           currentTrimester === t
-                            ? 'bg-[#c2440f] text-white border-[#c2440f]'
-                            : 'border-gray-200 text-gray-600 hover:border-[#c2440f] hover:text-[#c2440f]',
+                            ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]'
+                            : 'border-gray-200 text-gray-600 hover:border-[#2d6a4f] hover:text-[#2d6a4f]',
                         )}
                       >
                         Trimestre {t}
@@ -338,13 +338,13 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label className={cn(
                     'flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors',
-                    allowReg ? 'border-[#c2440f]/40 bg-[#fdf6f0]' : 'border-gray-200 bg-white'
+                    allowReg ? 'border-[#2d6a4f]/40 bg-[#f4f9f3]' : 'border-gray-200 bg-white'
                   )}>
                     <input
                       type="checkbox"
                       checked={allowReg}
                       onChange={e => setAllowReg(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#c2440f]"
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#2d6a4f]"
                     />
                     <div>
                       <p className="text-sm font-medium leading-snug">
@@ -358,13 +358,13 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
 
                   <label className={cn(
                     'flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors',
-                    examOpen ? 'border-[#c2440f]/40 bg-[#fdf6f0]' : 'border-gray-200 bg-white'
+                    examOpen ? 'border-[#2d6a4f]/40 bg-[#f4f9f3]' : 'border-gray-200 bg-white'
                   )}>
                     <input
                       type="checkbox"
                       checked={examOpen}
                       onChange={e => setExamOpen(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#c2440f]"
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#2d6a4f]"
                     />
                     <div>
                       <p className="text-sm font-medium leading-snug">
@@ -389,8 +389,8 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                         className={cn(
                           'h-9 px-3 text-sm font-medium rounded-lg border transition-all',
                           schoolDays.includes(d.key)
-                            ? 'bg-[#c2440f] text-white border-[#c2440f]'
-                            : 'border-gray-200 text-gray-600 hover:border-[#c2440f] hover:text-[#c2440f]',
+                            ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]'
+                            : 'border-gray-200 text-gray-600 hover:border-[#2d6a4f] hover:text-[#2d6a4f]',
                         )}
                       >
                         {d.label}
@@ -408,7 +408,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                       onChange={e => setRoomInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addRoom())}
                       placeholder="ex: Salle 1, Salle A…"
-                      className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                      className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
                     />
                     <button
                       type="button"
@@ -423,13 +423,13 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                       {rooms.map(r => (
                         <span
                           key={r}
-                          className="flex items-center gap-1.5 px-3 py-1 text-sm bg-[#fdf6f0] text-[#7a4f30] border border-[#f0dcc8] rounded-full"
+                          className="flex items-center gap-1.5 px-3 py-1 text-sm bg-[#f4f9f3] text-[#2d6a4f] border border-[#cde6c8] rounded-full"
                         >
                           {r}
                           <button
                             type="button"
                             onClick={() => setRooms(prev => prev.filter(x => x !== r))}
-                            className="text-[#c2440f] hover:text-[#a33a0d] leading-none"
+                            className="text-[#2d6a4f] hover:text-[#1b4332] leading-none"
                           >
                             ×
                           </button>
@@ -450,7 +450,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                 <button
                   onClick={handleStep2}
                   disabled={isPending}
-                  className="flex items-center gap-2 bg-[#c2440f] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#a33a0d] transition-colors disabled:opacity-60"
+                  className="flex items-center gap-2 bg-[#2d6a4f] text-white px-6 py-2.5 rounded-lg font-medium hover:bg-[#1b4332] transition-colors disabled:opacity-60"
                 >
                   {isPending ? 'Sauvegarde…' : (
                     <>
@@ -470,26 +470,26 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                 <div className="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center mx-auto">
                   <Sparkles className="h-8 w-8 text-green-500" />
                 </div>
-                <h2 className="text-xl font-bold text-[#7a4f30]">L'école est prête !</h2>
+                <h2 className="text-xl font-bold text-[#2d6a4f]">L'école est prête !</h2>
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                   La configuration de base est terminée. Vous pouvez maintenant accéder à votre portail et ajouter des enseignants, des élèves et des classes.
                 </p>
               </div>
 
-              <div className="bg-[#fdf6f0] rounded-xl border border-[#f0dcc8] p-5 text-left space-y-2">
-                <p className="text-sm font-semibold text-[#7a4f30]">Prochaines étapes suggérées :</p>
+              <div className="bg-[#f4f9f3] rounded-xl border border-[#cde6c8] p-5 text-left space-y-2">
+                <p className="text-sm font-semibold text-[#2d6a4f]">Prochaines étapes suggérées :</p>
                 <ul className="space-y-1.5 text-sm text-gray-600">
-                  <li className="flex items-center gap-2"><ChevronRight className="h-3.5 w-3.5 text-[#c2440f]" /> Ajouter vos enseignants dans <strong>Enseignants</strong></li>
-                  <li className="flex items-center gap-2"><ChevronRight className="h-3.5 w-3.5 text-[#c2440f]" /> Créer vos classes depuis le <strong>Catalogue des classes</strong></li>
-                  <li className="flex items-center gap-2"><ChevronRight className="h-3.5 w-3.5 text-[#c2440f]" /> Configurer le calendrier académique</li>
-                  <li className="flex items-center gap-2"><ChevronRight className="h-3.5 w-3.5 text-[#c2440f]" /> Personnaliser les paramètres avancés</li>
+                  <li className="flex items-center gap-2"><ChevronRight className="h-3.5 w-3.5 text-[#2d6a4f]" /> Ajouter vos enseignants dans <strong>Enseignants</strong></li>
+                  <li className="flex items-center gap-2"><ChevronRight className="h-3.5 w-3.5 text-[#2d6a4f]" /> Créer vos classes depuis le <strong>Catalogue des classes</strong></li>
+                  <li className="flex items-center gap-2"><ChevronRight className="h-3.5 w-3.5 text-[#2d6a4f]" /> Configurer le calendrier académique</li>
+                  <li className="flex items-center gap-2"><ChevronRight className="h-3.5 w-3.5 text-[#2d6a4f]" /> Personnaliser les paramètres avancés</li>
                 </ul>
               </div>
 
               <button
                 onClick={handleComplete}
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 bg-[#c2440f] text-white py-3 rounded-lg font-semibold hover:bg-[#a33a0d] transition-colors disabled:opacity-60 text-base"
+                className="w-full flex items-center justify-center gap-2 bg-[#2d6a4f] text-white py-3 rounded-lg font-semibold hover:bg-[#1b4332] transition-colors disabled:opacity-60 text-base"
               >
                 {isPending ? 'Chargement…' : (
                   <>

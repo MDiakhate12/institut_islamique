@@ -73,7 +73,7 @@ export function NewSchoolClient() {
               <span className="text-xs text-gray-600 flex-1 break-all font-mono">{created.inviteUrl}</span>
               <button
                 onClick={() => navigator.clipboard.writeText(created.inviteUrl).then(() => toast.success('Lien copié !'))}
-                className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-[#c2440f] hover:text-[#a33a0d] transition-colors"
+                className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-[#2d6a4f] hover:text-[#1b4332] transition-colors"
               >
                 <Copy className="h-3.5 w-3.5" />
                 Copier
@@ -92,7 +92,7 @@ export function NewSchoolClient() {
             </Link>
             <button
               onClick={() => setCreated(null)}
-              className="flex-1 px-4 py-2.5 bg-[#c2440f] text-white rounded-lg text-sm font-medium hover:bg-[#a33a0d] transition-colors"
+              className="flex-1 px-4 py-2.5 bg-[#2d6a4f] text-white rounded-lg text-sm font-medium hover:bg-[#1b4332] transition-colors"
             >
               Créer une autre école
             </button>
@@ -128,7 +128,7 @@ export function NewSchoolClient() {
               {...register('schoolName')}
               onChange={onNameChange}
               placeholder="Association Islamique Al-Bayan"
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
             />
             {errors.schoolName && <p className="text-xs text-red-500">{errors.schoolName.message}</p>}
           </div>
@@ -143,7 +143,7 @@ export function NewSchoolClient() {
               <input
                 {...register('schoolSlug')}
                 placeholder="al-bayan"
-                className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
               />
             </div>
             {errors.schoolSlug && <p className="text-xs text-red-500">{errors.schoolSlug.message}</p>}
@@ -167,21 +167,21 @@ export function NewSchoolClient() {
               {...register('adminEmail')}
               type="email"
               placeholder="admin@ecole.fr"
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
             />
             {errors.adminEmail && <p className="text-xs text-red-500">{errors.adminEmail.message}</p>}
             <p className="text-xs text-gray-400">L'admin renseignera son nom lors de la création de son compte.</p>
           </div>
         </div>
 
-        <div className="bg-[#fdf6f0] border border-[#f0dcc8] rounded-lg px-4 py-3 text-sm text-[#7a4f30]">
+        <div className="bg-[#f4f9f3] border border-[#cde6c8] rounded-lg px-4 py-3 text-sm text-[#2d6a4f]">
           Un email d'invitation sera envoyé automatiquement à l'administrateur avec un lien pour créer son compte.
         </div>
 
         <button
           type="submit"
           disabled={isPending}
-          className="w-full flex items-center justify-center gap-2 bg-[#c2440f] text-white py-3 rounded-lg font-semibold hover:bg-[#a33a0d] transition-colors disabled:opacity-60"
+          className="w-full flex items-center justify-center gap-2 bg-[#2d6a4f] text-white py-3 rounded-lg font-semibold hover:bg-[#1b4332] transition-colors disabled:opacity-60"
         >
           {isPending ? (
             'Création en cours…'

@@ -124,7 +124,7 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
                         <button
                           type="button"
                           onClick={() => setEditing(toEditablePayment(p))}
-                          className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-[#c2440f] text-xs font-medium"
+                          className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-[#2d6a4f] text-xs font-medium"
                         >
                           <Pencil className="h-4 w-4" />
                           Modifier

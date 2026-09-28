@@ -184,7 +184,7 @@ function OverviewView({
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-[#7a4f30] border-[#7a4f30] hover:bg-[#7a4f30] hover:text-white"
+              className="gap-1.5 text-[#2d6a4f] border-[#2d6a4f] hover:bg-[#2d6a4f] hover:text-white"
               onClick={() => toast.info('Fonctionnalité à venir')}
             >
               <Bell className="h-3.5 w-3.5" />
@@ -399,7 +399,7 @@ function ClassDetailView({
         <Button
           onClick={handleSubmit}
           disabled={isPending || loadingStudents}
-          className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5 shrink-0"
+          className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5 shrink-0"
         >
           <Check className="h-4 w-4" />
           {isPending ? 'Enregistrement…' : 'Mettre à jour les présences'}

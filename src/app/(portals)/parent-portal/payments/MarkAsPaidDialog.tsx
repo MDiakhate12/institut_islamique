@@ -64,12 +64,12 @@ export function MarkAsPaidDialog({ children, academicYear }: Props) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={
-        <Button className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white">Marquer comme payé</Button>
+        <Button className="w-full bg-[#2d6a4f] hover:bg-[#1b4332] text-white">Marquer comme payé</Button>
       } />
       <DialogContent className="w-[calc(100%-2rem)] max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Marquer comme payé</DialogTitle>
-          <p className="text-sm text-[#c2440f] font-medium">Année scolaire : {academicYear}</p>
+          <p className="text-sm text-[#2d6a4f] font-medium">Année scolaire : {academicYear}</p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
@@ -189,7 +189,7 @@ export function MarkAsPaidDialog({ children, academicYear }: Props) {
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>Annuler</Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-[#c2440f] hover:bg-[#a33a0d] text-white">
+            <Button type="submit" disabled={isSubmitting} className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white">
               Marquer comme payé
             </Button>
           </div>

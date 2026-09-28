@@ -160,7 +160,7 @@ export function ExpensesClient() {
           type="button"
           onClick={() => setTab('reimbursements')}
           className={cn('flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px',
-            tab === 'reimbursements' ? 'border-[#c2440f] text-[#c2440f]' : 'border-transparent text-gray-500 hover:text-gray-700')}
+            tab === 'reimbursements' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent text-gray-500 hover:text-gray-700')}
         >
           <FileText className="h-4 w-4" /> Remboursements ({expenses.length})
         </button>
@@ -168,7 +168,7 @@ export function ExpensesClient() {
           type="button"
           onClick={() => setTab('wages')}
           className={cn('flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px',
-            tab === 'wages' ? 'border-[#c2440f] text-[#c2440f]' : 'border-transparent text-gray-500 hover:text-gray-700')}
+            tab === 'wages' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent text-gray-500 hover:text-gray-700')}
         >
           <CreditCard className="h-4 w-4" /> Salaires{timesheet && ` — ${timesheet.teacherCount} enseignant(s), ${timesheet.sessionCount} séance(s)`}
         </button>
@@ -176,7 +176,7 @@ export function ExpensesClient() {
           type="button"
           onClick={() => setTab('payments')}
           className={cn('flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px',
-            tab === 'payments' ? 'border-[#c2440f] text-[#c2440f]' : 'border-transparent text-gray-500 hover:text-gray-700')}
+            tab === 'payments' ? 'border-[#2d6a4f] text-[#2d6a4f]' : 'border-transparent text-gray-500 hover:text-gray-700')}
         >
           <Wallet className="h-4 w-4" /> Paiements <span className="text-purple-500 text-xs">Bêta</span>
         </button>
@@ -288,7 +288,7 @@ export function ExpensesClient() {
                 {filteredTimesheetRows.map(row => (
                   <tr key={row.teacherId}>
                     <td className="px-3 py-3 flex items-center gap-2">
-                      <span className="h-6 w-6 rounded-full bg-[#7a4f30] text-white text-xs flex items-center justify-center">
+                      <span className="h-6 w-6 rounded-full bg-[#2d6a4f] text-white text-xs flex items-center justify-center">
                         {row.teacherName.charAt(0).toUpperCase()}
                       </span>
                       {row.teacherName}

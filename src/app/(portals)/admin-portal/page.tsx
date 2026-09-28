@@ -111,8 +111,8 @@ export default async function AdminDashboardPage() {
   const firstName = displayName.split(' ')[0]
 
   return (
-    // Fond doré — remplace le bg-[#FFF8F0] du layout
-    <div className="min-h-full bg-gradient-to-br from-[#DBA571] via-[#C89A68] to-[#A67C52] relative overflow-x-hidden">
+    // Fond doré — remplace le bg-[#f4f9f3] du layout
+    <div className="min-h-full bg-gradient-to-br from-[#9ecf94] via-[#4a9e7a] to-[#A67C52] relative overflow-x-hidden">
 
       {/* ── Orbes lumineux décoratifs ── */}
       <div className="fixed top-20 left-20 w-96 h-96 bg-gradient-to-br from-white/15 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -217,7 +217,7 @@ export default async function AdminDashboardPage() {
                     )}
 
                     {/* Icône */}
-                    <div className="bg-gradient-to-br from-[#DBA571]/95 to-[#8B4429]/95 backdrop-blur-xl p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-2 sm:mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg">
+                    <div className="bg-gradient-to-br from-[#9ecf94]/95 to-[#163828]/95 backdrop-blur-xl p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-2 sm:mb-3 group-hover:scale-110 transition-all duration-300 shadow-lg">
                       <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
 

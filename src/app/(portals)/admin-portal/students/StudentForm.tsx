@@ -63,11 +63,11 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
 const RELATIONSHIP_COLORS: Record<string, string> = {
   father:   'bg-blue-600',
   mother:   'bg-pink-600',
-  guardian: 'bg-[#7a4f30]',
+  guardian: 'bg-[#2d6a4f]',
   other:    'bg-gray-500',
 }
 
-const SELECT_CLASS = 'h-10 w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30'
+const SELECT_CLASS = 'h-10 w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30'
 // Même gabarit que SELECT_CLASS pour aligner les <Input> (h-8 par défaut) sur
 // la taille des <select> natifs — une hauteur explicite est nécessaire car un
 // <select> et un <input> avec le même padding/font-size ne rendent pas à la
@@ -130,7 +130,7 @@ function GuardianForm({ initial, existingRelationships, onSave, onCancel }: Guar
   }
 
   return (
-    <div className="border border-[#c2440f]/30 rounded-lg p-3 space-y-3 bg-orange-50/30">
+    <div className="border border-[#2d6a4f]/30 rounded-lg p-3 space-y-3 bg-orange-50/30">
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-medium mb-1 block">Relation *</label>
@@ -196,7 +196,7 @@ function GuardianForm({ initial, existingRelationships, onSave, onCancel }: Guar
           type="button"
           size="sm"
           onClick={save}
-          className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+          className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
         >
           {initial ? 'Enregistrer' : 'Ajouter'}
         </Button>
@@ -401,7 +401,7 @@ export function StudentFormDialog({
         {(trigger || !isEditing) && (
           <SheetTrigger render={
             trigger ?? (
-              <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+              <Button size="sm" className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
                 <Plus className="h-4 w-4" />
                 Créer un nouvel élève
               </Button>
@@ -445,7 +445,7 @@ export function StudentFormDialog({
                 <button
                   type="button"
                   onClick={() => setAttendanceOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#D17A47] text-[#D17A47] hover:bg-[#D17A47] hover:text-white transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#2d6a4f] text-[#2d6a4f] hover:bg-[#2d6a4f] hover:text-white transition-colors"
                 >
                   <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences de l&apos;élève
                 </button>
@@ -459,7 +459,7 @@ export function StudentFormDialog({
                 <button
                   type="button"
                   onClick={() => setReportCardOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#8B4429] text-[#8B4429] hover:bg-[#8B4429] hover:text-white transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#163828] text-[#163828] hover:bg-[#163828] hover:text-white transition-colors"
                 >
                   <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
                 </button>
@@ -572,7 +572,7 @@ export function StudentFormDialog({
                   <button
                     type="button"
                     onClick={() => setGuardianFormMode('add')}
-                    className="text-sm text-[#c2440f] hover:underline font-medium"
+                    className="text-sm text-[#2d6a4f] hover:underline font-medium"
                   >
                     + Ajouter un tuteur
                   </button>
@@ -677,7 +677,7 @@ export function StudentFormDialog({
                 <button
                   type="button"
                   onClick={() => setAddClassOpen(true)}
-                  className="text-sm text-[#c2440f] hover:underline font-medium"
+                  className="text-sm text-[#2d6a4f] hover:underline font-medium"
                 >
                   + Ajouter une classe
                 </button>
@@ -693,7 +693,7 @@ export function StudentFormDialog({
                     <div key={e.id} className="border border-border rounded-lg p-3 space-y-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xs font-bold bg-[#7a4f30] text-white px-2 py-0.5 rounded shrink-0">
+                          <span className="text-xs font-bold bg-[#2d6a4f] text-white px-2 py-0.5 rounded shrink-0">
                             {e.classCode || '—'}
                           </span>
                           <span className="text-sm font-medium text-gray-700 truncate">{e.name}</span>
@@ -770,7 +770,7 @@ export function StudentFormDialog({
                 {...form.register('notes')}
                 placeholder="Ajouter des notes sur l'élève..."
                 rows={3}
-                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 resize-none"
+                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 resize-none"
               />
             </div>
 
@@ -796,7 +796,7 @@ export function StudentFormDialog({
                   type="submit"
                   size="sm"
                   disabled={isPending}
-                  className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-36"
+                  className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white min-w-36"
                 >
                   {isPending ? 'Enregistrement...' : isEditing ? 'Enregistrer les modifications' : "Créer l'élève"}
                 </Button>

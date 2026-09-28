@@ -159,7 +159,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={trigger ?? (
-          <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+          <Button size="sm" className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
             <Plus className="h-4 w-4" />
             Créer un nouvel enseignant
           </Button>
@@ -227,7 +227,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
             <label className="text-sm font-medium mb-1 block">Genre</label>
             <select
               {...(isEditing ? editForm.register('gender') : createForm.register('gender'))}
-              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
             >
               <option value="">Sélectionner le genre</option>
               <option value="male">Masculin</option>
@@ -244,7 +244,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
               </p>
             </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className={cn('text-sm font-medium', isVolunteer ? 'text-[#c2440f]' : 'text-blue-600')}>
+              <span className={cn('text-sm font-medium', isVolunteer ? 'text-[#2d6a4f]' : 'text-blue-600')}>
                 {isVolunteer ? 'Bénévole' : 'Payé'}
               </span>
               <button
@@ -252,7 +252,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
                 onClick={() => setIsVolunteer(!isVolunteer)}
                 className={cn(
                   'relative w-10 h-5 rounded-full transition-colors duration-200',
-                  isVolunteer ? 'bg-[#c2440f]' : 'bg-gray-300'
+                  isVolunteer ? 'bg-[#2d6a4f]' : 'bg-gray-300'
                 )}
               >
                 <span className={cn(
@@ -320,7 +320,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
                     href={teacherDoc.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-[#c2440f] hover:underline mt-0.5 truncate"
+                    className="flex items-center gap-1 text-xs text-[#2d6a4f] hover:underline mt-0.5 truncate"
                   >
                     <FileText className="h-3 w-3 shrink-0" />
                     <span className="truncate">{teacherDoc.name}</span>
@@ -392,7 +392,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
                 type="submit"
                 size="sm"
                 disabled={isPending}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-36"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white min-w-36"
               >
                 {isPending
                   ? 'Enregistrement...'

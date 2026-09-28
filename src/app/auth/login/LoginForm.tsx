@@ -78,7 +78,7 @@ export function LoginForm() {
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full bg-qaf-cta hover:bg-qaf-cta-hover text-white"
+          className="w-full bg-nat-cta hover:bg-nat-cta-hover text-white"
         >
           {isPending ? 'Connexion...' : 'Se connecter'}
         </Button>

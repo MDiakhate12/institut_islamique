@@ -108,7 +108,7 @@ export function TeacherInviteForm({ onSuccess, onCancel }: TeacherInviteFormProp
 
         <Button
           type="button"
-          className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+          className="w-full bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
           onClick={() => { setActivationCode(null); form.reset(); onSuccess?.() }}
         >
           Fermer
@@ -197,7 +197,7 @@ export function TeacherInviteForm({ onSuccess, onCancel }: TeacherInviteFormProp
           <Button
             type="submit"
             disabled={isPending}
-            className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-32"
+            className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white min-w-32"
           >
             {isPending ? 'Création...' : "Créer l'enseignant"}
           </Button>

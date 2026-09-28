@@ -74,7 +74,7 @@ function NoChildrenState({ onLinked }: { onLinked: () => void }) {
         </p>
 
         <LinkChildModal onLinked={onLinked}>
-          <button className="flex items-center gap-2 bg-[#c2440f] hover:bg-[#a33a0d] text-white
+          <button className="flex items-center gap-2 bg-[#2d6a4f] hover:bg-[#1b4332] text-white
                              text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
             <Plus className="h-4 w-4" />
             Ajouter d&apos;autres enfants
@@ -211,18 +211,18 @@ export function ParentAttendanceClient() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center">
-            <ClipboardCheck className="h-4.5 w-4.5 text-[#c2440f]" />
+          <div className="h-9 w-9 rounded-full bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center">
+            <ClipboardCheck className="h-4.5 w-4.5 text-[#2d6a4f]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#7a4f30]">Registres de présence</h1>
+            <h1 className="text-xl font-bold text-[#2d6a4f]">Registres de présence</h1>
             <p className="text-sm text-muted-foreground">Chronologie des présences</p>
           </div>
         </div>
 
         {children.length > 0 && (
           <LinkChildModal onLinked={handleLinked}>
-            <button className="flex items-center gap-1.5 bg-[#c2440f] hover:bg-[#a33a0d] text-white
+            <button className="flex items-center gap-1.5 bg-[#2d6a4f] hover:bg-[#1b4332] text-white
                                text-sm font-medium px-4 py-2 rounded-lg transition-colors shrink-0">
               <Plus className="h-4 w-4" />
               Ajouter d&apos;autres enfants
@@ -252,8 +252,8 @@ export function ParentAttendanceClient() {
                   className={cn(
                     'px-4 py-1.5 rounded-full text-sm font-medium border transition-colors',
                     effectiveStudentId === child.studentId
-                      ? 'bg-[#7a4f30] text-white border-[#7a4f30]'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#7a4f30] hover:text-[#7a4f30]'
+                      ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#2d6a4f] hover:text-[#2d6a4f]'
                   )}
                 >
                   {child.firstName} {child.lastName}
@@ -284,8 +284,8 @@ export function ParentAttendanceClient() {
                 <div className="flex flex-col items-center gap-1 pt-2">
                   <button
                     onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
-                    className="flex items-center gap-1.5 px-5 py-2 rounded-full border border-[#c2440f]
-                               text-[#c2440f] text-sm font-medium hover:bg-[#fdf6f0] transition-colors"
+                    className="flex items-center gap-1.5 px-5 py-2 rounded-full border border-[#2d6a4f]
+                               text-[#2d6a4f] text-sm font-medium hover:bg-[#f4f9f3] transition-colors"
                   >
                     ↓ Charger plus
                   </button>

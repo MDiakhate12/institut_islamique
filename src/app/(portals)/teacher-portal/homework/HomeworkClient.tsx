@@ -97,7 +97,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#fdf6f0] min-h-screen">
+    <div className="flex flex-col h-full bg-[#f4f9f3] min-h-screen">
       {/* Page header */}
       <div className="px-8 pt-8 pb-4 flex items-start justify-between">
         <div>
@@ -107,7 +107,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
         <Button
           onClick={() => setAddClassOpen(true)}
           className="gap-2"
-          style={{ backgroundColor: '#7a4f30' }}
+          style={{ backgroundColor: '#2d6a4f' }}
         >
           <Plus className="w-4 h-4" />
           Ajouter une classe
@@ -129,7 +129,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
                   size="sm"
                   onClick={() => setAddClassOpen(true)}
                   className="gap-1"
-                  style={{ backgroundColor: '#7a4f30' }}
+                  style={{ backgroundColor: '#2d6a4f' }}
                 >
                   <Plus className="w-3 h-3" />
                   Ajouter
@@ -233,7 +233,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
                     size="sm"
                     onClick={() => { setEditingHomework(null); setHomeworkDialogOpen(true) }}
                     className="gap-1.5"
-                    style={{ backgroundColor: '#c2440f' }}
+                    style={{ backgroundColor: '#2d6a4f' }}
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Ajouter un devoir
@@ -321,7 +321,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
                     size="sm"
                     onClick={() => { setEditingHomework(null); setHomeworkDialogOpen(true) }}
                     className="gap-1.5"
-                    style={{ backgroundColor: '#c2440f' }}
+                    style={{ backgroundColor: '#2d6a4f' }}
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Ajouter un devoir

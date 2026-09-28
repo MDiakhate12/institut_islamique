@@ -30,7 +30,7 @@ function ProgressBar({ value }: { value: number }) {
   return (
     <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
       <div
-        className="h-full bg-[#c2440f] rounded-full transition-all"
+        className="h-full bg-[#2d6a4f] rounded-full transition-all"
         style={{ width: `${Math.min(value, 100)}%` }}
       />
     </div>
@@ -48,7 +48,7 @@ function ClassCard({ cls }: { cls: AdminExamClassProgress }) {
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="font-semibold text-[#7a4f30]">{cls.className}</p>
+            <p className="font-semibold text-[#2d6a4f]">{cls.className}</p>
             {cls.teacherName && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                 <span className="h-3.5 w-3.5 rounded-full bg-gray-200 inline-flex items-center justify-center text-[10px]">👤</span>
@@ -72,7 +72,7 @@ function ClassCard({ cls }: { cls: AdminExamClassProgress }) {
         {/* Stats grid */}
         <div className="grid grid-cols-4 gap-3">
           {[
-            { label: 'Noté', value: cls.gradedCount, color: 'text-[#c2440f]' },
+            { label: 'Noté', value: cls.gradedCount, color: 'text-[#2d6a4f]' },
             { label: 'Total', value: cls.totalStudents, color: 'text-gray-800' },
             { label: 'En attente', value: cls.pendingCount, color: 'text-amber-600' },
             { label: 'Signé', value: `${cls.signedCount}/${cls.totalSignable}`, color: 'text-blue-600' },
@@ -169,7 +169,7 @@ function StudentCard({ student }: { student: AdminExamStudentProgress }) {
         {student.totalClasses > 0 && (
           <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className={cn('h-full rounded-full', completionPct === 100 ? 'bg-green-500' : 'bg-[#c2440f]')}
+              className={cn('h-full rounded-full', completionPct === 100 ? 'bg-green-500' : 'bg-[#2d6a4f]')}
               style={{ width: `${completionPct}%` }}
             />
           </div>
@@ -257,7 +257,7 @@ Jazakom allahu khayrn`
           </button>
           <button
             onClick={openMailto}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-[#c2440f] text-white hover:bg-[#a33a0d] transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-[#2d6a4f] text-white hover:bg-[#1b4332] transition-colors"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             Ouvrir dans le client e-mail
@@ -360,7 +360,7 @@ export function TrackExamsClient({
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-[#7a4f30]">Suivre les notes d&apos;examen</h1>
+          <h1 className="text-2xl font-bold text-[#2d6a4f]">Suivre les notes d&apos;examen</h1>
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-sm text-muted-foreground">
               {academicYear} • {subtitleCount}
@@ -373,7 +373,7 @@ export function TrackExamsClient({
                   className={cn(
                     'px-3 py-1 text-xs font-semibold rounded-full transition-colors',
                     trimester === t
-                      ? 'bg-[#c2440f] text-white'
+                      ? 'bg-[#2d6a4f] text-white'
                       : 'border border-gray-200 text-gray-600 hover:bg-gray-50',
                   )}
                 >
@@ -410,7 +410,7 @@ export function TrackExamsClient({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={isClassTab ? 'Rechercher des classes ou des enseignants...' : 'Rechercher des élèves...'}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -421,7 +421,7 @@ export function TrackExamsClient({
               className={cn(
                 'px-3 py-1.5 text-sm rounded-lg transition-colors whitespace-nowrap',
                 activeTab === tab.key
-                  ? 'bg-[#c2440f] text-white'
+                  ? 'bg-[#2d6a4f] text-white'
                   : 'border border-gray-200 hover:bg-gray-50 text-gray-700',
               )}
             >

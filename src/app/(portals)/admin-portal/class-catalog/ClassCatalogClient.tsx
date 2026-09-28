@@ -62,7 +62,7 @@ export function ClassCatalogClient({ readonly = false }: { readonly?: boolean } 
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors',
                 view === 'cards'
-                  ? 'bg-[#c2440f] text-white'
+                  ? 'bg-[#2d6a4f] text-white'
                   : 'bg-white text-muted-foreground hover:bg-muted'
               )}
             >
@@ -75,7 +75,7 @@ export function ClassCatalogClient({ readonly = false }: { readonly?: boolean } 
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors border-l border-border',
                 view === 'graph'
-                  ? 'bg-[#c2440f] text-white'
+                  ? 'bg-[#2d6a4f] text-white'
                   : 'bg-white text-muted-foreground hover:bg-muted'
               )}
             >
@@ -256,7 +256,7 @@ function CatalogCard({
           <button
             type="button"
             onClick={() => setShowCurriculum(true)}
-            className="flex items-center gap-1 text-xs text-[#c2440f] hover:underline self-start mt-auto"
+            className="flex items-center gap-1 text-xs text-[#2d6a4f] hover:underline self-start mt-auto"
           >
             <ArrowRight className="h-3 w-3" />
             Voir le programme

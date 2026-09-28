@@ -155,7 +155,7 @@ export function StudentsClient() {
           </Button>
           <StudentFormDialog
             trigger={
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#c2440f] hover:bg-[#a33a0d] text-white rounded-md transition-colors">
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#2d6a4f] hover:bg-[#1b4332] text-white rounded-md transition-colors">
                 <Plus className="h-4 w-4" />
                 Créer un nouvel élève
               </button>
@@ -172,7 +172,7 @@ export function StudentsClient() {
           placeholder="Rechercher des élèves, parents, téléphones, codes de classe..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 focus:border-[#c2440f]/50"
+          className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 focus:border-[#2d6a4f]/50"
         />
       </div>
 
@@ -234,7 +234,7 @@ export function StudentsClient() {
           action={!search ? (
             <StudentFormDialog
               trigger={
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#c2440f] hover:bg-[#a33a0d] text-white rounded-md transition-colors">
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#2d6a4f] hover:bg-[#1b4332] text-white rounded-md transition-colors">
                   <Plus className="h-4 w-4" /> Créer un élève
                 </button>
               }
@@ -457,7 +457,7 @@ function StudentRow({
         {s.enrollments.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {s.enrollments.map(e => (
-              <span key={e.enrollmentId} className="inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#7a4f30] text-white">
+              <span key={e.enrollmentId} className="inline-flex px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#2d6a4f] text-white">
                 {e.classCode || e.className}
               </span>
             ))}
@@ -525,12 +525,12 @@ function StudentRow({
               value={noteValue}
               onChange={e => onNoteChange(e.target.value)}
               rows={2}
-              className="w-full text-xs border border-[#c2440f]/50 rounded px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+              className="w-full text-xs border border-[#2d6a4f]/50 rounded px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
             />
             <div className="flex gap-1">
               <button
                 onClick={() => onSaveEditNote(s.id)}
-                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs bg-[#c2440f] text-white hover:bg-[#a33a0d]"
+                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs bg-[#2d6a4f] text-white hover:bg-[#1b4332]"
               >
                 <Check className="w-3 h-3" /> Sauvegarder
               </button>
@@ -560,13 +560,13 @@ function StudentRow({
         <div className="flex items-center gap-1.5">
           <button
             onClick={onOpenReportCard}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#8B4429] text-[#8B4429] hover:bg-[#8B4429] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#163828] text-[#163828] hover:bg-[#163828] hover:text-white transition-colors"
           >
             <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
           </button>
           <button
             onClick={onOpenAttendance}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#D17A47] text-[#D17A47] hover:bg-[#D17A47] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#2d6a4f] text-[#2d6a4f] hover:bg-[#2d6a4f] hover:text-white transition-colors"
           >
             <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences de l&apos;élève
           </button>

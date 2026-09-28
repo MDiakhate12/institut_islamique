@@ -129,7 +129,7 @@ export function SchoolsClient({ initialSchools }: Props) {
         </div>
         <Link
           href="/super-admin/new"
-          className="flex items-center gap-2 bg-[#c2440f] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#a33a0d] transition-colors shadow-sm"
+          className="flex items-center gap-2 bg-[#2d6a4f] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1b4332] transition-colors shadow-sm"
         >
           <Plus className="h-4 w-4" />
           Nouvelle école
@@ -144,7 +144,7 @@ export function SchoolsClient({ initialSchools }: Props) {
           <p className="text-sm text-gray-400 mt-1">Commencez par créer la première école.</p>
           <Link
             href="/super-admin/new"
-            className="inline-flex items-center gap-2 mt-4 bg-[#c2440f] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#a33a0d] transition-colors"
+            className="inline-flex items-center gap-2 mt-4 bg-[#2d6a4f] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1b4332] transition-colors"
           >
             <Plus className="h-4 w-4" />
             Créer une école
@@ -160,8 +160,8 @@ export function SchoolsClient({ initialSchools }: Props) {
 
                 {/* Left: icon + name */}
                 <div className="flex items-center gap-4 min-w-0">
-                  <div className="h-10 w-10 rounded-xl bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center shrink-0">
-                    <School className="h-5 w-5 text-[#c2440f]" />
+                  <div className="h-10 w-10 rounded-xl bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center shrink-0">
+                    <School className="h-5 w-5 text-[#2d6a4f]" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{school.name}</p>
@@ -195,7 +195,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                       <button
                         onClick={() => handleCopyInvite(school)}
                         title="Copier le lien d'invitation"
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-[#c2440f] hover:bg-[#fdf6f0] transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-[#2d6a4f] hover:bg-[#f4f9f3] transition-colors"
                       >
                         <Copy className="h-4 w-4" />
                       </button>
@@ -214,7 +214,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                   <button
                     onClick={() => setDetailsTarget(school)}
                     title="Voir les détails"
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-[#7a4f30] hover:bg-[#fdf6f0] transition-colors"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-[#2d6a4f] hover:bg-[#f4f9f3] transition-colors"
                   >
                     <Eye className="h-4 w-4" />
                   </button>
@@ -223,7 +223,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                   <button
                     onClick={() => openEdit(school)}
                     title="Modifier l'école"
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-[#c2440f] hover:bg-[#fdf6f0] transition-colors"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-[#2d6a4f] hover:bg-[#f4f9f3] transition-colors"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -248,8 +248,8 @@ export function SchoolsClient({ initialSchools }: Props) {
         <DialogContent className="max-w-lg">
           <div className="flex items-start justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center">
-                <School className="h-5 w-5 text-[#c2440f]" />
+              <div className="h-10 w-10 rounded-xl bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center">
+                <School className="h-5 w-5 text-[#2d6a4f]" />
               </div>
               <div>
                 <DialogTitle className="text-lg font-bold text-gray-900">
@@ -312,7 +312,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                   <span className="text-xs font-mono text-gray-600 flex-1 break-all">{detailsTarget.id}</span>
                   <button
                     onClick={() => navigator.clipboard.writeText(detailsTarget.id).then(() => toast.success('ID copié !'))}
-                    className="shrink-0 text-xs font-medium text-[#c2440f] hover:text-[#a33a0d]"
+                    className="shrink-0 text-xs font-medium text-[#2d6a4f] hover:text-[#1b4332]"
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
@@ -333,7 +333,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                     </span>
                     <button
                       onClick={() => handleCopyInvite(detailsTarget)}
-                      className="shrink-0 text-xs font-medium text-[#c2440f] hover:text-[#a33a0d]"
+                      className="shrink-0 text-xs font-medium text-[#2d6a4f] hover:text-[#1b4332]"
                     >
                       <Copy className="h-3.5 w-3.5" />
                     </button>
@@ -387,7 +387,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                     setEditSlug(autoSlug(e.target.value))
                   }
                 }}
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
               />
             </div>
 
@@ -398,7 +398,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                 <input
                   value={editSlug}
                   onChange={e => setEditSlug(e.target.value)}
-                  className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f] font-mono"
+                  className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f] font-mono"
                 />
               </div>
               <p className="text-xs text-amber-600">
@@ -416,7 +416,7 @@ export function SchoolsClient({ initialSchools }: Props) {
               <button
                 onClick={confirmEdit}
                 disabled={isPending || !editName.trim() || !editSlug.trim()}
-                className="flex-1 px-4 py-2.5 bg-[#c2440f] text-white rounded-lg text-sm font-medium hover:bg-[#a33a0d] transition-colors disabled:opacity-60"
+                className="flex-1 px-4 py-2.5 bg-[#2d6a4f] text-white rounded-lg text-sm font-medium hover:bg-[#1b4332] transition-colors disabled:opacity-60"
               >
                 {isPending ? 'Enregistrement…' : 'Enregistrer'}
               </button>

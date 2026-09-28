@@ -85,7 +85,7 @@ export function TeacherDetailClient({ teacher, classCount }: TeacherDetailClient
         <div className="flex items-center gap-4 mb-5">
           <Avatar className="h-16 w-16">
             <AvatarImage src={teacher.avatarUrl ?? undefined} alt={teacher.fullName ?? ''} />
-            <AvatarFallback className="bg-[#f9e8d8] text-[#7a4f30] font-bold text-lg">
+            <AvatarFallback className="bg-[#e8f3e5] text-[#2d6a4f] font-bold text-lg">
               {getInitials(teacher.fullName)}
             </AvatarFallback>
           </Avatar>
@@ -189,7 +189,7 @@ export function TeacherDetailClient({ teacher, classCount }: TeacherDetailClient
               <Button
                 type="submit"
                 disabled={isUpdating}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-28"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white min-w-28"
               >
                 {isUpdating ? 'Enregistrement...' : 'Enregistrer'}
               </Button>

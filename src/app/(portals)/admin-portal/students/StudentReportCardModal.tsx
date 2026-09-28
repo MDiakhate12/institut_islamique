@@ -35,11 +35,11 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; }
           .report { max-width: 700px; margin: 0 auto; padding: 0; }
-          .header { background: linear-gradient(135deg, #7a4f30, #c2440f); color: white; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
+          .header { background: linear-gradient(135deg, #2d6a4f, #2d6a4f); color: white; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; }
           .header-title { font-size: 22px; font-weight: 700; }
           .header-sub { font-size: 13px; margin-top: 4px; opacity: 0.9; }
-          .logo { width: 52px; height: 52px; border-radius: 50%; background: #c2440f; border: 2px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: white; }
-          .student-info { background: #fdf6f0; padding: 16px 32px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e5e0db; }
+          .logo { width: 52px; height: 52px; border-radius: 50%; background: #2d6a4f; border: 2px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: white; }
+          .student-info { background: #f4f9f3; padding: 16px 32px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e5e0db; }
           .student-name { font-size: 20px; font-weight: 700; color: #1a1a1a; }
           .student-meta { font-size: 12px; color: #666; text-align: right; line-height: 1.6; }
           .section { padding: 20px 32px; border-bottom: 1px solid #f0ebe6; }
@@ -62,16 +62,16 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
           .perf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
           .perf-card { border: 1px solid #e5e0db; border-radius: 8px; padding: 12px; text-align: center; }
           .perf-num { font-size: 22px; font-weight: 700; }
-          .perf-num.stars { color: #c2440f; }
+          .perf-num.stars { color: #2d6a4f; }
           .perf-num.graded { color: #16a34a; }
           .perf-num.trophy { color: #999; font-size: 16px; }
           .perf-label { font-size: 11px; color: #666; margin-top: 2px; }
-          .exam-card { border: 1px solid #e5e0db; border-radius: 8px; margin-bottom: 12px; overflow: hidden; border-left: 4px solid #7a4f30; }
-          .exam-header { background: #fdf6f0; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+          .exam-card { border: 1px solid #e5e0db; border-radius: 8px; margin-bottom: 12px; overflow: hidden; border-left: 4px solid #2d6a4f; }
+          .exam-header { background: #f4f9f3; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
           .exam-class { font-weight: 600; color: #333; }
           .exam-trimester { color: #666; font-size: 11px; }
           .exam-score { text-align: center; padding: 16px; border-bottom: 1px solid #f0ebe6; }
-          .exam-score-num { font-size: 40px; font-weight: 700; color: #7a4f30; }
+          .exam-score-num { font-size: 40px; font-weight: 700; color: #2d6a4f; }
           .exam-score-label { font-size: 11px; color: #999; }
           .criteria-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: 0 16px; }
           .criteria-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #f5f0ec; }
@@ -79,7 +79,7 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
           .criteria-name { font-size: 12px; color: #444; }
           .criteria-stars { display: flex; align-items: center; gap: 4px; }
           .star { font-size: 13px; }
-          .star.filled { color: #c2440f; }
+          .star.filled { color: #2d6a4f; }
           .star.empty { color: #ddd; }
           .criteria-score { font-size: 11px; color: #999; margin-left: 4px; }
           .text-section { padding: 10px 16px; font-size: 12px; }
@@ -119,7 +119,7 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
           </DialogTitle>
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#c2440f] hover:bg-[#a33a0d] text-white rounded-md transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#2d6a4f] hover:bg-[#1b4332] text-white rounded-md transition-colors"
           >
             <Printer className="w-4 h-4" />
             Imprimer / PDF
@@ -134,20 +134,20 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
           <div ref={printRef} className="report bg-white">
 
             {/* ── En-tête ── */}
-            <div className="header" style={{ background: 'linear-gradient(135deg, #7a4f30, #c2440f)', color: 'white', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="header" style={{ background: 'linear-gradient(135deg, #2d6a4f, #2d6a4f)', color: 'white', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '22px', fontWeight: 700 }}>Student Report Card</div>
                 <div style={{ fontSize: '13px', marginTop: '4px', opacity: 0.9 }}>
                   {data?.schoolName} • {student.enrollmentYear ?? '—'}
                 </div>
               </div>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#c2440f', border: '2px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 900, color: 'white' }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#2d6a4f', border: '2px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 900, color: 'white' }}>
                 Q
               </div>
             </div>
 
             {/* ── Info élève ── */}
-            <div style={{ background: '#fdf6f0', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e5e0db' }}>
+            <div style={{ background: '#f4f9f3', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e5e0db' }}>
               <div style={{ fontSize: 20, fontWeight: 700 }}>{student.firstName} {student.lastName}</div>
               <div style={{ fontSize: 12, color: '#666', textAlign: 'right', lineHeight: '1.6' }}>
                 <div>{student.enrollmentYear ?? '—'}</div>
@@ -169,7 +169,7 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
                   {student.enrollments.length > 0 ? student.enrollments.map(e => (
                     <tr key={e.enrollmentId}>
                       <td style={{ padding: '8px 12px', borderBottom: '1px solid #f0ebe6' }}>
-                        <span style={{ fontWeight: 700, color: '#7a4f30' }}>{e.classCode}</span>
+                        <span style={{ fontWeight: 700, color: '#2d6a4f' }}>{e.classCode}</span>
                         {e.className && <span style={{ color: '#444' }}> — {e.className}</span>}
                       </td>
                       <td style={{ padding: '8px 12px', borderBottom: '1px solid #f0ebe6', color: '#555' }}>
@@ -198,7 +198,7 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
             <div style={{ padding: '20px 32px', borderBottom: '1px solid #f0ebe6' }}>
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Performance académique</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                <PerfCard value={data?.totalStars ?? 0}        label="Total Étoiles"       color="#c2440f" />
+                <PerfCard value={data?.totalStars ?? 0}        label="Total Étoiles"       color="#2d6a4f" />
                 <PerfCard value={data?.gradedSubmissions ?? 0} label="Soumissions notées"  color="#16a34a" />
                 <PerfCard value={null}                         label="Niveau Trophée"       color="#999" />
               </div>
@@ -283,7 +283,7 @@ function StarRow({ label, value }: { label: string; value: number | null }) {
       <span style={{ fontSize: 12, color: '#444' }}>{label}</span>
       <span style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {Array.from({ length: 5 }).map((_, i) => (
-          <span key={i} style={{ fontSize: 13, color: i < v ? '#c2440f' : '#ddd' }}>★</span>
+          <span key={i} style={{ fontSize: 13, color: i < v ? '#2d6a4f' : '#ddd' }}>★</span>
         ))}
         <span style={{ fontSize: 11, color: '#999', marginLeft: 4 }}>{v}/5</span>
       </span>
@@ -306,11 +306,11 @@ function ExamCard({ exam }: { exam: StudentExamResult }) {
   const right  = criteria.filter((_, i) => i % 2 === 1)
 
   return (
-    <div style={{ border: '1px solid #e5e0db', borderRadius: 8, overflow: 'hidden', borderLeft: '4px solid #7a4f30' }}>
+    <div style={{ border: '1px solid #e5e0db', borderRadius: 8, overflow: 'hidden', borderLeft: '4px solid #2d6a4f' }}>
       {/* Card header */}
-      <div style={{ background: '#fdf6f0', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ background: '#f4f9f3', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>
-          <span style={{ color: '#7a4f30', fontWeight: 700 }}>{exam.classCode}</span>
+          <span style={{ color: '#2d6a4f', fontWeight: 700 }}>{exam.classCode}</span>
           {exam.className && <span> — {exam.className}</span>}
         </div>
         <div style={{ fontSize: 11, color: '#666' }}>
@@ -321,7 +321,7 @@ function ExamCard({ exam }: { exam: StudentExamResult }) {
       {/* Score */}
       {exam.score !== null && (
         <div style={{ textAlign: 'center', padding: '16px', borderBottom: '1px solid #f0ebe6' }}>
-          <div style={{ fontSize: 44, fontWeight: 700, color: '#7a4f30', lineHeight: 1 }}>{exam.score}</div>
+          <div style={{ fontSize: 44, fontWeight: 700, color: '#2d6a4f', lineHeight: 1 }}>{exam.score}</div>
           <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>Points d&apos;examen</div>
         </div>
       )}

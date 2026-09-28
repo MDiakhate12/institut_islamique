@@ -27,11 +27,11 @@ export function TeacherActivationGate({ adminEmails }: Props) {
   }
 
   return (
-    <div className="min-h-full bg-[#fdf6f0] flex items-center justify-center p-6">
+    <div className="min-h-full bg-[#f4f9f3] flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="rounded-2xl overflow-hidden shadow-lg border border-[#e8d5c4]">
           {/* Header */}
-          <div className="bg-gradient-to-br from-[#DBA571] to-[#8B4429] p-8 flex flex-col items-center text-white">
+          <div className="bg-gradient-to-br from-[#9ecf94] to-[#163828] p-8 flex flex-col items-center text-white">
             <div className="h-14 w-14 rounded-full bg-white/20 border border-white/30 flex items-center justify-center mb-4">
               <Shield className="h-7 w-7" />
             </div>
@@ -62,7 +62,7 @@ export function TeacherActivationGate({ adminEmails }: Props) {
             <Button
               onClick={handleActivate}
               disabled={!code.trim() || isPending}
-              className="w-full bg-[#7a4f30] hover:bg-[#5c3820] text-white gap-2"
+              className="w-full bg-[#2d6a4f] hover:bg-[#1e4535] text-white gap-2"
             >
               {isPending ? 'Vérification…' : 'Vérifier l\'identité →'}
             </Button>

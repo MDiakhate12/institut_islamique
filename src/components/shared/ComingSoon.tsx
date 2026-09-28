@@ -12,13 +12,13 @@ export function ComingSoon({ title, description }: Props) {
       <div className="bg-white rounded-2xl border border-border shadow-sm p-10 max-w-sm w-full text-center space-y-6">
 
         {/* Icon */}
-        <div className="mx-auto h-16 w-16 rounded-2xl bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center">
-          <Wrench className="h-7 w-7 text-[#c2440f]" />
+        <div className="mx-auto h-16 w-16 rounded-2xl bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center">
+          <Wrench className="h-7 w-7 text-[#2d6a4f]" />
         </div>
 
         {/* Text */}
         <div className="space-y-2">
-          <h1 className="text-xl font-bold text-[#7a4f30]">{title}</h1>
+          <h1 className="text-xl font-bold text-[#2d6a4f]">{title}</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {description ?? 'Cette fonctionnalité est en cours de développement et sera disponible prochainement.'}
           </p>

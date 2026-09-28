@@ -69,7 +69,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                 <DialogTitle className="text-base leading-snug">{scheduledClass.name}</DialogTitle>
                 <p className="text-xs text-muted-foreground mt-1">
                   {scheduledClass.fullCode && (
-                    <span className="text-[#c2440f] font-medium">{scheduledClass.fullCode}</span>
+                    <span className="text-[#2d6a4f] font-medium">{scheduledClass.fullCode}</span>
                   )}
                   {scheduledClass.section && <span> • Section {scheduledClass.section}</span>}
                   {scheduledClass.teacherName && (
@@ -177,7 +177,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                 type="button"
                 size="sm"
                 onClick={() => setAddOpen(true)}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add Student

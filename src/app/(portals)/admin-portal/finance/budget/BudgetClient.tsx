@@ -35,7 +35,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       onClick={onClick}
       className={cn(
         'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap',
-        active ? 'bg-[#7a4f30] text-white border-[#7a4f30]' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+        active ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
       )}
     >
       {children}
@@ -61,7 +61,7 @@ function SortTh({ label, sortKey, active, asc, onSort }: {
     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
       <button type="button" onClick={() => onSort(sortKey)} className="flex items-center gap-1 hover:text-gray-800">
         {label}
-        <ArrowUpDown className={cn('h-3 w-3', active && 'text-[#c2440f]')} />
+        <ArrowUpDown className={cn('h-3 w-3', active && 'text-[#2d6a4f]')} />
       </button>
     </th>
   )
@@ -129,7 +129,7 @@ export function BudgetClient() {
         {(paymentKpis?.pendingVerification ?? 0) > 0 && (
           <KpiCard label="(En attente de vérification)" value={formatAmount(paymentKpis!.pendingVerification)} className="bg-blue-500 text-white" />
         )}
-        <KpiCard label="Dépenses payées" value={formatAmount(dépensesPayées)} className="bg-[#5c3820] text-white" />
+        <KpiCard label="Dépenses payées" value={formatAmount(dépensesPayées)} className="bg-[#1e4535] text-white" />
         <KpiCard
           label="Budget restant"
           value={formatAmount(budgetRestant)}
@@ -268,7 +268,7 @@ export function BudgetClient() {
                           <button
                             type="button"
                             onClick={() => setEditing(p)}
-                            className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-[#c2440f] text-xs font-medium"
+                            className="flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-gray-100 text-[#2d6a4f] text-xs font-medium"
                           >
                             <Pencil className="h-4 w-4" />
                             Modifier
@@ -287,10 +287,10 @@ export function BudgetClient() {
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="border-t-2 border-[#c2440f]">
+              <tfoot className="border-t-2 border-[#2d6a4f]">
                 <tr>
                   <td colSpan={7} className="px-3 py-3 font-semibold">Total</td>
-                  <td className="px-3 py-3 font-bold text-[#c2440f]">{formatAmount(total)}</td>
+                  <td className="px-3 py-3 font-bold text-[#2d6a4f]">{formatAmount(total)}</td>
                   <td colSpan={4} />
                 </tr>
               </tfoot>

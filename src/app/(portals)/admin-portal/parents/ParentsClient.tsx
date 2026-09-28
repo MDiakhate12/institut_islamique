@@ -65,7 +65,7 @@ function BulkEmailDialog({
         {/* Header */}
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-border">
           <div className="flex items-start gap-2.5">
-            <Mail className="h-5 w-5 text-[#c2440f] shrink-0 mt-0.5" />
+            <Mail className="h-5 w-5 text-[#2d6a4f] shrink-0 mt-0.5" />
             <div>
               <h2 className="font-semibold text-base text-foreground">Envoyer à tous les parents à risque</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -86,7 +86,7 @@ function BulkEmailDialog({
               type="text"
               value={subject}
               onChange={e => setSubject(e.target.value)}
-              className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]/50"
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]/50"
             />
           </div>
 
@@ -115,7 +115,7 @@ function BulkEmailDialog({
             size="sm"
             disabled={isPending || !subject.trim()}
             onClick={handleSend}
-            className="gap-1.5 bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+            className="gap-1.5 bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
           >
             <Send className="h-3.5 w-3.5" />
             Envoyer à tous ({recipients.length})
@@ -157,7 +157,7 @@ function IndividualEmailDialog({
         {/* Header */}
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-border">
           <div className="flex items-start gap-2.5">
-            <Send className="h-5 w-5 text-[#c2440f] shrink-0 mt-0.5" />
+            <Send className="h-5 w-5 text-[#2d6a4f] shrink-0 mt-0.5" />
             <div>
               <h2 className="font-semibold text-base text-foreground">Envoyer un rappel de téléchargement</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -184,7 +184,7 @@ function IndividualEmailDialog({
               type="text"
               value={subject}
               onChange={e => setSubject(e.target.value)}
-              className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]/50"
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]/50"
             />
           </div>
 
@@ -193,7 +193,7 @@ function IndividualEmailDialog({
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Aperçu de l&apos;e-mail</p>
             <div className="rounded-xl border border-border overflow-hidden">
               {/* Email header (matches Qaf brand) */}
-              <div className="bg-[#7a4f30] px-6 py-5 flex flex-col items-center gap-1">
+              <div className="bg-[#2d6a4f] px-6 py-5 flex flex-col items-center gap-1">
                 <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
                   <span className="text-white font-bold text-lg">Q</span>
                 </div>
@@ -221,7 +221,7 @@ function IndividualEmailDialog({
             size="sm"
             disabled={isPending || !subject.trim()}
             onClick={handleSend}
-            className="gap-1.5 bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+            className="gap-1.5 bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
           >
             <Send className="h-3.5 w-3.5" />
             Envoyer l&apos;e-mail
@@ -251,7 +251,7 @@ function FilterChip({
         'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all',
         active
           ? color === 'orange'
-            ? 'bg-[#c2440f] border-[#c2440f] text-white'
+            ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white'
             : 'bg-emerald-600 border-emerald-600 text-white'
           : 'bg-white border-border text-muted-foreground hover:border-muted-foreground/50',
       )}
@@ -261,7 +261,7 @@ function FilterChip({
         'h-5 min-w-5 rounded-full text-[11px] font-bold flex items-center justify-center px-1',
         active
           ? 'bg-white/25 text-white'
-          : color === 'orange' ? 'bg-[#c2440f]/10 text-[#c2440f]' : 'bg-emerald-50 text-emerald-700',
+          : color === 'orange' ? 'bg-[#2d6a4f]/10 text-[#2d6a4f]' : 'bg-emerald-50 text-emerald-700',
       )}>
         {count}
       </span>
@@ -330,7 +330,7 @@ export function ParentsClient({
         <Button
           onClick={() => setShowBulkDialog(true)}
           disabled={atRiskRecipients.length === 0}
-          className="gap-2 bg-[#c2440f] hover:bg-[#a33a0d] text-white shrink-0"
+          className="gap-2 bg-[#2d6a4f] hover:bg-[#1b4332] text-white shrink-0"
         >
           <Mail className="h-4 w-4" />
           E-mail à risque ({atRiskRecipients.length})
@@ -344,7 +344,7 @@ export function ParentsClient({
         </span>
         <span className={cn(
           'text-xs font-medium rounded-full px-2.5 py-1 border',
-          hasAppCount > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-[#c2440f]/10 border-[#c2440f]/20 text-[#c2440f]',
+          hasAppCount > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-[#2d6a4f]/10 border-[#2d6a4f]/20 text-[#2d6a4f]',
         )}>
           Utilisation de l&apos;app : {hasAppCount}
         </span>
@@ -359,7 +359,7 @@ export function ParentsClient({
             placeholder="Rechercher par nom ou téléphone..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]/50"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]/50"
           />
         </div>
 
@@ -421,7 +421,7 @@ export function ParentsClient({
                   <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {risk && (
-                        <AlertTriangle className="h-3.5 w-3.5 text-[#c2440f] shrink-0" />
+                        <AlertTriangle className="h-3.5 w-3.5 text-[#2d6a4f] shrink-0" />
                       )}
                       {!risk && student.connectedParents.length > 0 && (
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
@@ -468,7 +468,7 @@ export function ParentsClient({
                         <div key={label}>
                           <a
                             href={`mailto:${email}`}
-                            className="text-xs text-[#c2440f] hover:underline block"
+                            className="text-xs text-[#2d6a4f] hover:underline block"
                           >
                             {email}
                           </a>
@@ -507,7 +507,7 @@ export function ParentsClient({
                         <button
                           type="button"
                           onClick={() => setIndividualDialog(student)}
-                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg border border-[#c2440f]/30 text-[#c2440f] hover:bg-[#c2440f]/5 transition-colors"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg border border-[#2d6a4f]/30 text-[#2d6a4f] hover:bg-[#2d6a4f]/5 transition-colors"
                         >
                           <Mail className="h-3 w-3" />
                           Rappel par e-mail

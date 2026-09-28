@@ -111,7 +111,7 @@ export function EditWageRecordDialog({ entry, onClose }: Props) {
           <Button
             disabled={updateStatus.isPending}
             onClick={handleSave}
-            className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+            className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
           >
             Enregistrer
           </Button>

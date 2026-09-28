@@ -57,7 +57,7 @@ export function ParentDashboard({ userFullName }: Props) {
       </div>
 
       {/* Bannière inscriptions */}
-      <div className="relative overflow-hidden rounded-xl bg-[#c2440f] text-white p-6">
+      <div className="relative overflow-hidden rounded-xl bg-[#2d6a4f] text-white p-6">
         <div className="relative z-10 max-w-lg">
           <h2 className="text-xl font-bold">Les inscriptions pour 2026-2027 sont ouvertes !</h2>
           <p className="text-white/80 text-sm mt-1">
@@ -66,7 +66,7 @@ export function ParentDashboard({ userFullName }: Props) {
           </p>
           <Link
             href="/parent-portal/enrollment"
-            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 bg-white text-[#c2440f] rounded-lg
+            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 bg-white text-[#2d6a4f] rounded-lg
                        text-sm font-medium hover:bg-orange-50 transition-colors"
           >
             <Download className="h-4 w-4" />

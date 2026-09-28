@@ -110,20 +110,20 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
             return (
               <div key={s} className="flex items-center">
                 {i > 0 && (
-                  <div className={cn('h-px w-8', isDone ? 'bg-[#c2440f]' : 'bg-gray-200')} />
+                  <div className={cn('h-px w-8', isDone ? 'bg-[#2d6a4f]' : 'bg-gray-200')} />
                 )}
                 <div className="flex flex-col items-center gap-0.5">
                   <div className={cn(
                     'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors',
-                    isActive ? 'bg-[#c2440f] border-[#c2440f] text-white'
-                      : isDone ? 'bg-[#c2440f] border-[#c2440f] text-white'
+                    isActive ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white'
+                      : isDone ? 'bg-[#2d6a4f] border-[#2d6a4f] text-white'
                       : 'bg-white border-gray-300 text-gray-400'
                   )}>
                     {isDone ? '✓' : i + 1}
                   </div>
                   <span className={cn(
                     'text-[10px] font-medium',
-                    isActive ? 'text-[#c2440f]' : isDone ? 'text-[#c2440f]' : 'text-gray-400'
+                    isActive ? 'text-[#2d6a4f]' : isDone ? 'text-[#2d6a4f]' : 'text-gray-400'
                   )}>
                     {labels[i]}
                   </span>
@@ -175,7 +175,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
               <Button
                 onClick={handleSendCode}
                 disabled={!phone.trim() || sendOtp.isPending}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
               >
                 {sendOtp.isPending ? 'Envoi…' : 'Envoyer le code →'}
               </Button>
@@ -213,8 +213,8 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
                       onPaste={i === 0 ? handlePaste : undefined}
                       className={cn(
                         'w-11 h-13 text-center text-xl font-bold rounded-lg border-2 outline-none',
-                        'transition-colors focus:border-[#c2440f] focus:ring-2 focus:ring-[#c2440f]/20',
-                        d ? 'border-[#c2440f] bg-orange-50' : 'border-gray-300 bg-white'
+                        'transition-colors focus:border-[#2d6a4f] focus:ring-2 focus:ring-[#2d6a4f]/20',
+                        d ? 'border-[#2d6a4f] bg-orange-50' : 'border-gray-300 bg-white'
                       )}
                     />
                   ))}
@@ -227,7 +227,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
 
               <button
                 onClick={() => { setStep('phone'); setDigits(['', '', '', '', '', '']) }}
-                className="flex items-center gap-1 text-xs text-[#c2440f] hover:underline"
+                className="flex items-center gap-1 text-xs text-[#2d6a4f] hover:underline"
               >
                 <ArrowLeft className="h-3 w-3" />
                 Changer de numéro

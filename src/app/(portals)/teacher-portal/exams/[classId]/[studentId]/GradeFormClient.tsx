@@ -115,16 +115,16 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
       {/* Back link */}
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#c2440f] transition-colors"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#2d6a4f] transition-colors"
       >
         ← Retour aux étudiants
       </button>
 
       <form onSubmit={handleSubmit}>
-        <div className="rounded-xl border-2 border-[#c2440f]/40 bg-white overflow-hidden">
+        <div className="rounded-xl border-2 border-[#2d6a4f]/40 bg-white overflow-hidden">
           {/* Card header */}
-          <div className="px-6 py-4 border-b border-[#c2440f]/20">
-            <h1 className="text-xl font-bold text-[#7a4f30] text-center">
+          <div className="px-6 py-4 border-b border-[#2d6a4f]/20">
+            <h1 className="text-xl font-bold text-[#2d6a4f] text-center">
               Étudiant: {info.firstName} {info.lastName}
             </h1>
           </div>
@@ -148,7 +148,7 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
                   value={coveredContent}
                   onChange={e => setCoveredContent(e.target.value)}
                   rows={5}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -157,7 +157,7 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
                   value={generalComments}
                   onChange={e => setGeneralComments(e.target.value)}
                   rows={5}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
                 />
               </div>
             </div>
@@ -174,7 +174,7 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
                 max={100}
                 value={score}
                 onChange={e => setScore(e.target.value)}
-                className="w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+                className="w-40 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
               />
             </div>
 
@@ -183,7 +183,7 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
               <button
                 type="submit"
                 disabled={loading}
-                className="px-10 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#7a4f30] hover:bg-[#5c3820] transition-colors disabled:opacity-60"
+                className="px-10 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#2d6a4f] hover:bg-[#1e4535] transition-colors disabled:opacity-60"
               >
                 {loading ? 'Envoi…' : isUpdate ? 'Mettre à jour la note' : 'Soumettre'}
               </button>

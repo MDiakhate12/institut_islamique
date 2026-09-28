@@ -144,7 +144,7 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
     <div
       className={cn(
         // Exact classes from qaf.app
-        'h-[100dvh] flex flex-col bg-gradient-to-b from-[#DBA571] to-[#8B4429]',
+        'h-[100dvh] flex flex-col bg-gradient-to-b from-[#1e4535] to-[#0f2318]',
         'border-r border-white/10 shadow-xl relative overscroll-contain shrink-0',
         'transition-all duration-300',
         collapsed ? 'w-16' : 'w-[260px]'
@@ -154,9 +154,9 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="hidden lg:flex absolute -right-5 top-1/2 -translate-y-1/2 z-50
-                   w-10 h-10 bg-[#8B4429] border-2 border-white/20 rounded-full
+                   w-10 h-10 bg-[#163828] border-2 border-white/20 rounded-full
                    items-center justify-center text-white/80
-                   hover:text-white hover:bg-[#684C42] shadow-lg
+                   hover:text-white hover:bg-[#0f2318] shadow-lg
                    transition-all cursor-pointer hover:scale-110"
         aria-label={collapsed ? 'Ouvrir' : 'Réduire'}
       >

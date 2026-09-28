@@ -112,14 +112,14 @@ export function ExpenseFormDialog({ triggerLabel = 'Nouvelle dépense', teacherS
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={
-        <Button className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+        <Button className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
           <Plus className="h-4 w-4" /> {triggerLabel}
         </Button>
       } />
       <DialogContent className="w-[calc(100%-2rem)] max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isSalary ? <Clock className="h-5 w-5 text-[#c2440f]" /> : <DollarSign className="h-5 w-5 text-[#c2440f]" />}
+            {isSalary ? <Clock className="h-5 w-5 text-[#2d6a4f]" /> : <DollarSign className="h-5 w-5 text-[#2d6a4f]" />}
             {isSalary ? 'Enregistrer les heures' : 'Nouvelle dépense'}
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -184,7 +184,7 @@ export function ExpenseFormDialog({ triggerLabel = 'Nouvelle dépense', teacherS
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Reçus (Optionnel)</label>
                 <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg py-6 cursor-pointer hover:bg-gray-50">
-                  <Paperclip className="h-6 w-6 text-[#c2440f]" />
+                  <Paperclip className="h-6 w-6 text-[#2d6a4f]" />
                   <span className="text-sm font-medium">
                     {fileName ?? 'Cliquer pour télécharger ou glisser-déposer'}
                   </span>
@@ -205,7 +205,7 @@ export function ExpenseFormDialog({ triggerLabel = 'Nouvelle dépense', teacherS
             <Button
               type="submit"
               disabled={isSalary ? wageSubmitDisabled : isSubmitting}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
             >
               {isSalary ? 'Soumettre les heures' : 'Soumettre la demande'}
             </Button>

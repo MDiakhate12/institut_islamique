@@ -50,7 +50,7 @@
 }
 
 .rbc-date-cell.rbc-now .rbc-button-link {
-  background: #c2440f;
+  background: #2d6a4f;
   color: white;
   border-radius: 50%;
   width: 24px;
@@ -83,7 +83,7 @@
 }
 
 .rbc-show-more {
-  color: #c2440f;
+  color: #2d6a4f;
   font-size: 11px;
   font-weight: 600;
   background: transparent;
@@ -109,7 +109,7 @@
 
 .rbc-header.rbc-today {
   background: #fef3ee;
-  color: #c2440f;
+  color: #2d6a4f;
 }
 
 .rbc-time-slot {
@@ -144,12 +144,12 @@
 }
 
 .rbc-current-time-indicator {
-  background: #c2440f;
+  background: #2d6a4f;
   height: 2px;
 }
 
 .rbc-current-time-indicator::before {
-  background: #c2440f;
+  background: #2d6a4f;
 }
 
 .rbc-day-slot .rbc-event {

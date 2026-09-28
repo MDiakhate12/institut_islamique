@@ -139,7 +139,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                         onClick={() => field.onChange(!field.value)}
                         className={cn(
                           'relative w-8 h-4 rounded-full transition-colors cursor-pointer',
-                          field.value ? 'bg-[#c2440f]' : 'bg-muted'
+                          field.value ? 'bg-[#2d6a4f]' : 'bg-muted'
                         )}
                       >
                         <div className={cn(
@@ -204,12 +204,12 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                             className={cn(
                               'flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border-2 transition-all flex-1 min-w-0',
                               isSelected
-                                ? `border-[#c2440f] ${cfg.bg}`
+                                ? `border-[#2d6a4f] ${cfg.bg}`
                                 : 'border-border bg-white hover:border-muted-foreground/30'
                             )}
                           >
                             <span className="text-lg leading-none">{cfg.emoji === '···' ? '···' : cfg.emoji}</span>
-                            <span className={cn('text-[10px] font-medium leading-none', isSelected ? 'text-[#c2440f]' : 'text-muted-foreground')}>
+                            <span className={cn('text-[10px] font-medium leading-none', isSelected ? 'text-[#2d6a4f]' : 'text-muted-foreground')}>
                               {cfg.label}
                             </span>
                           </button>
@@ -259,7 +259,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                   onClick={() => field.onChange(!field.value)}
                   className={cn(
                     'relative w-9 h-5 rounded-full transition-colors cursor-pointer shrink-0',
-                    field.value ? 'bg-[#c2440f]' : 'bg-muted'
+                    field.value ? 'bg-[#2d6a4f]' : 'bg-muted'
                   )}
                 >
                   <div className={cn(
@@ -309,7 +309,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                 type="submit"
                 size="sm"
                 disabled={busy}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
               >
                 {busy ? '...' : isEdit ? 'Update Event' : 'Create Event'}
               </Button>

@@ -182,7 +182,7 @@ export default function AddClassDialog({ open, onClose }: Props) {
             onClick={handleAdd}
             disabled={!classId || addPinned.isPending}
             className="gap-2"
-            style={{ backgroundColor: '#7a4f30' }}
+            style={{ backgroundColor: '#2d6a4f' }}
           >
             <Plus className="w-4 h-4" />
             {addPinned.isPending ? 'Ajout...' : 'Ajouter la classe'}

@@ -92,7 +92,7 @@ function ClassCard({ cls, search, examPeriodOpen }: {
   return (
     <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
       {/* Header */}
-      <div className="bg-[#c2440f] px-4 py-3 flex items-center justify-between gap-3">
+      <div className="bg-[#2d6a4f] px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <GraduationCap className="h-5 w-5 text-white shrink-0" />
           <div className="min-w-0">
@@ -153,11 +153,11 @@ export function ExamsClient({ initialClasses, initialTrimester, academicYear, ex
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center shrink-0">
-          <GraduationCap className="h-5 w-5 text-[#c2440f]" />
+        <div className="h-10 w-10 rounded-xl bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center shrink-0">
+          <GraduationCap className="h-5 w-5 text-[#2d6a4f]" />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-[#7a4f30]">Noter les étudiants</h1>
+          <h1 className="text-xl font-bold text-[#2d6a4f]">Noter les étudiants</h1>
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
             <p className="text-sm text-muted-foreground">
               {academicYear} — Soumettre les notes semestrielles
@@ -170,7 +170,7 @@ export function ExamsClient({ initialClasses, initialTrimester, academicYear, ex
                   className={cn(
                     'px-2.5 py-0.5 text-xs font-semibold rounded-full transition-colors',
                     trimester === t
-                      ? 'bg-[#c2440f] text-white'
+                      ? 'bg-[#2d6a4f] text-white'
                       : 'border border-gray-200 text-gray-600 hover:bg-gray-50',
                   )}
                 >
@@ -203,7 +203,7 @@ export function ExamsClient({ initialClasses, initialTrimester, academicYear, ex
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Rechercher des étudiants..."
-          className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]"
+          className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
         />
       </div>
 

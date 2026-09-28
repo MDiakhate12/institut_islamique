@@ -96,13 +96,13 @@ export function RegistrationsClient() {
       {/* ── En-tête ── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#c2440f' }}>Inscriptions des élèves</h1>
+          <h1 className="text-2xl font-bold" style={{ color: '#2d6a4f' }}>Inscriptions des élèves</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Afficher et gérer toutes les inscriptions des élèves</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/admin-portal/registration-forms"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#c2440f] hover:bg-[#a33a0d] text-white rounded-md transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#2d6a4f] hover:bg-[#1b4332] text-white rounded-md transition-colors"
           >
             <Pencil className="h-4 w-4" />
             Modifier les formulaires d&apos;inscription
@@ -126,7 +126,7 @@ export function RegistrationsClient() {
             placeholder="Rechercher par nom ou ID étudiant..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
           />
         </div>
         <select value={gradeFilter} onChange={e => setGradeFilter(e.target.value)}
@@ -310,7 +310,7 @@ function RegistrationRow({
 
       {/* Grade */}
       <td className="px-3 py-2.5 text-xs">
-        {r.grade ? <span className="text-[#c2440f] font-medium">{r.grade}</span> : <span className="text-muted-foreground">—</span>}
+        {r.grade ? <span className="text-[#2d6a4f] font-medium">{r.grade}</span> : <span className="text-muted-foreground">—</span>}
       </td>
 
       {/* Old Classes */}
@@ -518,7 +518,7 @@ function Row({ icon, label, value, highlight, dot }: {
         {dot && (
           <span className={cn('h-2.5 w-2.5 rounded-full', dot === 'blue' ? 'bg-blue-500' : 'bg-pink-400')} />
         )}
-        <span className={cn('text-xs', highlight ? 'text-[#c2440f] font-medium' : 'font-medium text-foreground')}>
+        <span className={cn('text-xs', highlight ? 'text-[#2d6a4f] font-medium' : 'font-medium text-foreground')}>
           {value}
         </span>
       </div>

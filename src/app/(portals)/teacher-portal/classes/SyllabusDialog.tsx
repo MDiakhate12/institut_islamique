@@ -15,7 +15,7 @@ export default function SyllabusDialog({ open, onClose, className, curriculum }:
     <Dialog open={open} onOpenChange={v => { if (!v) onClose() }}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center gap-3 bg-[#7a4f30] -mx-6 -mt-6 px-6 py-4 rounded-t-lg mb-2">
+          <div className="flex items-center gap-3 bg-[#2d6a4f] -mx-6 -mt-6 px-6 py-4 rounded-t-lg mb-2">
             <BookOpen className="h-5 w-5 text-white shrink-0" />
             <DialogTitle className="text-white text-base font-semibold">
               {className}
@@ -25,7 +25,7 @@ export default function SyllabusDialog({ open, onClose, className, curriculum }:
 
         {curriculum ? (
           <div
-            className="prose prose-sm max-w-none text-[#c2440f] [&_h1]:text-[#c2440f] [&_h2]:text-[#c2440f] [&_h3]:text-[#c2440f] [&_h4]:text-[#c2440f] [&_strong]:text-[#c2440f] [&_a]:text-[#c2440f] [&_li]:text-[#c2440f] [&_p]:text-[#c2440f]"
+            className="prose prose-sm max-w-none text-[#2d6a4f] [&_h1]:text-[#2d6a4f] [&_h2]:text-[#2d6a4f] [&_h3]:text-[#2d6a4f] [&_h4]:text-[#2d6a4f] [&_strong]:text-[#2d6a4f] [&_a]:text-[#2d6a4f] [&_li]:text-[#2d6a4f] [&_p]:text-[#2d6a4f]"
             dangerouslySetInnerHTML={{ __html: curriculum }}
           />
         ) : (

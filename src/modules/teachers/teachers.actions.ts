@@ -23,30 +23,30 @@ async function sendTeacherInviteEmail(email: string, memberId: string, schoolId:
     subject: 'Vous êtes invité(e) à rejoindre Qaf School',
     html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#fdf6f0;font-family:Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-    <div style="background:linear-gradient(135deg,#7a4f30,#c2440f);padding:36px 40px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
       <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Portail Enseignant</p>
     </div>
     <div style="padding:40px;">
-      <p style="color:#5c3820;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
+      <p style="color:#1e4535;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
       <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
         Vous avez été invité(e) à rejoindre <strong>Qaf School</strong> en tant qu'enseignant(e).
         Créez votre compte en cliquant sur le bouton ci-dessous, puis entrez le code d'activation
         indiqué plus bas dans le portail enseignant.
       </p>
       <div style="text-align:center;margin-bottom:24px;">
-        <a href="${signupUrl}" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+        <a href="${signupUrl}" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
           Créer mon compte →
         </a>
       </div>
       <p style="color:#374151;font-size:14px;margin:0 0 4px;">Code d'activation :</p>
-      <p style="color:#5c3820;font-size:16px;font-weight:bold;font-family:monospace;background:#fdf6f0;padding:12px 16px;border-radius:8px;margin:0;">
+      <p style="color:#1e4535;font-size:16px;font-weight:bold;font-family:monospace;background:#f4f9f3;padding:12px 16px;border-radius:8px;margin:0;">
         ${memberId}
       </p>
     </div>
-    <div style="background:#fdf6f0;padding:20px 40px;text-align:center;">
+    <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
       <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
     </div>
   </div>
@@ -210,24 +210,24 @@ export async function activateTeacherAction(code: string): Promise<ActionResult<
     subject: 'Votre compte Qaf School est activé',
     html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0;background:#fdf6f0;font-family:Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-    <div style="background:linear-gradient(135deg,#7a4f30,#c2440f);padding:36px 40px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
       <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Portail Enseignant</p>
     </div>
     <div style="padding:40px;">
-      <p style="color:#5c3820;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
+      <p style="color:#1e4535;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
       <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
         Votre compte enseignant sur <strong>Qaf School</strong> est maintenant activé. Vous avez accès complet au portail enseignant : devoirs, présences, audio Coran et plus encore.
       </p>
       <div style="text-align:center;">
-        <a href="${appUrl}/teacher-portal/homework" style="display:inline-block;background:#c2440f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+        <a href="${appUrl}/teacher-portal/homework" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
           Accéder au portail →
         </a>
       </div>
     </div>
-    <div style="background:#fdf6f0;padding:20px 40px;text-align:center;">
+    <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
       <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
     </div>
   </div>

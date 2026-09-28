@@ -17,8 +17,7 @@ export function PortalLayout({ children, session, schoolName, userFullName, isSu
       <Sidebar session={session} userFullName={userFullName} schoolName={schoolName} isSuperAdmin={isSuperAdmin} />
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         <TopBar session={session} schoolName={schoolName} userFullName={userFullName} />
-        {/* bg-[#FFF8F0] = fond crème warm des pages intérieures */}
-        <div className="flex-1 bg-[#FFF8F0] min-h-0 overflow-y-auto overscroll-contain">
+        <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
           {children}
         </div>
       </div>

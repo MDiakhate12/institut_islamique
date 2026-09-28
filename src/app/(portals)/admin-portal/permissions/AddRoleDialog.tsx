@@ -27,8 +27,8 @@ const ROLE_CONFIG: Record<AdminSubRole, RoleConfig> = {
     title: 'Ajouter un nouvel administrateur',
     description: 'Recherchez un utilisateur existant pour lui accorder des privilèges administratifs.',
     actionLabel: 'Rendre administrateur',
-    actionClass: 'bg-[#c2440f] hover:bg-[#a33a0d] text-white',
-    searchingClass: 'bg-[#c2440f] hover:bg-[#a33a0d] text-white',
+    actionClass: 'bg-[#2d6a4f] hover:bg-[#1b4332] text-white',
+    searchingClass: 'bg-[#2d6a4f] hover:bg-[#1b4332] text-white',
   },
   treasurer: {
     label: 'trésorier',
@@ -98,7 +98,7 @@ export function AddRoleDialog({ open, onClose, role, schoolName }: Props) {
     <Dialog open={open} onOpenChange={v => { if (!v) handleClose() }}>
       <DialogContent className="max-w-lg">
         <div className="flex items-center gap-2">
-          <UserPlus className="h-4 w-4 text-[#7a4f30]" />
+          <UserPlus className="h-4 w-4 text-[#2d6a4f]" />
           <DialogTitle className="text-base font-semibold">{config.title}</DialogTitle>
         </div>
         <p className="text-sm text-muted-foreground -mt-1">
@@ -115,14 +115,14 @@ export function AddRoleDialog({ open, onClose, role, schoolName }: Props) {
                 onChange={e => { setEmail(e.target.value); setResult(null) }}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
                 placeholder="utilisateur@exemple.com"
-                className="pl-9 border-[#c2440f] focus-visible:ring-[#c2440f]/30"
+                className="pl-9 border-[#2d6a4f] focus-visible:ring-[#2d6a4f]/30"
                 autoFocus
               />
             </div>
             <Button
               onClick={handleSearch}
               disabled={searching || !email.trim()}
-              className="bg-[#7a4f30] hover:bg-[#5c3820] text-white shrink-0"
+              className="bg-[#2d6a4f] hover:bg-[#1e4535] text-white shrink-0"
             >
               {searching ? 'Recherche...' : 'Rechercher'}
             </Button>

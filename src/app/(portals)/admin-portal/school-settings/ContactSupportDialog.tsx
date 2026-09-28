@@ -49,7 +49,7 @@ export function ContactSupportDialog() {
       <DialogContent className="w-[calc(100%-2rem)] max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <MessageCircle className="h-4 w-4 text-[#c2440f]" />
+            <MessageCircle className="h-4 w-4 text-[#2d6a4f]" />
             Contacter le support Qaf
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -117,7 +117,7 @@ export function ContactSupportDialog() {
               type="submit"
               size="sm"
               disabled={isPending}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5"
             >
               <Send className="h-3.5 w-3.5" />
               {isPending ? 'Envoi...' : 'Envoyer'}

@@ -123,7 +123,7 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
       <div className="flex items-center justify-between gap-3 pb-4 flex-wrap">
         {/* Tabs + item count */}
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="inline-flex items-center gap-1 p-1 bg-[#fdf6f0] border border-border/60 rounded-xl">
+          <div className="inline-flex items-center gap-1 p-1 bg-[#f4f9f3] border border-border/60 rounded-xl">
             {TABS.map(tab => (
               <button
                 key={tab.key}
@@ -164,7 +164,7 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
             type="button"
             size="sm"
             onClick={() => setShowAddSection(true)}
-            className="gap-1.5 text-xs h-8 bg-[#7a4f30] hover:bg-[#5c3820] text-white"
+            className="gap-1.5 text-xs h-8 bg-[#2d6a4f] hover:bg-[#1e4535] text-white"
           >
             <Plus className="h-3.5 w-3.5" />
             Ajouter une section
@@ -176,7 +176,7 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
             size="sm"
             onClick={handleReset}
             disabled={reset.isPending}
-            className="gap-1.5 text-xs h-8 text-[#c2440f] border-[#c2440f]/30 hover:bg-[#c2440f]/5"
+            className="gap-1.5 text-xs h-8 text-[#2d6a4f] border-[#2d6a4f]/30 hover:bg-[#2d6a4f]/5"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Réinitialiser

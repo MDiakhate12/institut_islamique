@@ -226,8 +226,8 @@ export function SignupForm({
                   className={cn(
                     'flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
                     field.value
-                      ? 'border-[#c2440f] bg-[#c2440f]/5 text-[#c2440f]'
-                      : 'border-border text-muted-foreground hover:border-[#c2440f]/40'
+                      ? 'border-[#2d6a4f] bg-[#2d6a4f]/5 text-[#2d6a4f]'
+                      : 'border-border text-muted-foreground hover:border-[#2d6a4f]/40'
                   )}
                 >
                   {field.value && <CheckCircle className="h-4 w-4" />}
@@ -245,8 +245,8 @@ export function SignupForm({
                   className={cn(
                     'flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
                     field.value
-                      ? 'border-[#c2440f] bg-[#c2440f]/5 text-[#c2440f]'
-                      : 'border-border text-muted-foreground hover:border-[#c2440f]/40'
+                      ? 'border-[#2d6a4f] bg-[#2d6a4f]/5 text-[#2d6a4f]'
+                      : 'border-border text-muted-foreground hover:border-[#2d6a4f]/40'
                   )}
                 >
                   {field.value && <CheckCircle className="h-4 w-4" />}
@@ -333,15 +333,15 @@ export function SignupForm({
                   type="checkbox"
                   checked={!!field.value}
                   onChange={e => field.onChange(e.target.checked || undefined)}
-                  className="mt-0.5 h-4 w-4 accent-[#c2440f] cursor-pointer shrink-0"
+                  className="mt-0.5 h-4 w-4 accent-[#2d6a4f] cursor-pointer shrink-0"
                 />
                 <span className="text-sm text-muted-foreground leading-snug">
                   J'accepte les{' '}
-                  <span className="text-[#c2440f] underline cursor-pointer">
+                  <span className="text-[#2d6a4f] underline cursor-pointer">
                     Conditions Générales d'Utilisation
                   </span>{' '}
                   et la{' '}
-                  <span className="text-[#c2440f] underline cursor-pointer">
+                  <span className="text-[#2d6a4f] underline cursor-pointer">
                     Politique de confidentialité
                   </span>
                 </span>
@@ -354,7 +354,7 @@ export function SignupForm({
         <Button
           type="submit"
           disabled={isPending || !form.watch('acceptedTerms')}
-          className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-2"
+          className="w-full bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-2"
         >
           {isPending ? (
             'Création du compte…'

@@ -216,7 +216,7 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
                 id="full-surah"
                 checked={isFullSurah}
                 onCheckedChange={(v) => setIsFullSurah(!!v)}
-                className="data-checked:bg-[#c2440f] data-checked:border-[#c2440f]"
+                className="data-checked:bg-[#2d6a4f] data-checked:border-[#2d6a4f]"
               />
               <label htmlFor="full-surah" className="text-sm text-gray-700 cursor-pointer">
                 Sourate complète
@@ -316,7 +316,7 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
         {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #7a4f30, #5c3820)' }}
+          style={{ background: 'linear-gradient(135deg, #2d6a4f, #1e4535)' }}
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -341,7 +341,7 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
             className={cn(
               'flex-1 py-2.5 text-sm font-medium transition-colors',
               tab === 'toute_la_classe'
-                ? 'text-[#c2440f] border-b-2 border-[#c2440f] bg-orange-50/60'
+                ? 'text-[#2d6a4f] border-b-2 border-[#2d6a4f] bg-orange-50/60'
                 : 'text-gray-500 hover:text-gray-700',
             )}
           >
@@ -470,7 +470,7 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
             onClick={handleSubmit}
             disabled={isPending}
             className="gap-2 min-w-44"
-            style={{ backgroundColor: '#c2440f' }}
+            style={{ backgroundColor: '#2d6a4f' }}
           >
             <ClipboardList className="w-4 h-4" />
             {isPending

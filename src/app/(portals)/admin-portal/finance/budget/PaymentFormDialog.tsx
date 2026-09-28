@@ -94,7 +94,7 @@ export function PaymentFormDialog({ editing, onClose }: Props) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {!editing && (
         <DialogTrigger render={
-          <Button className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5 flex-1">
+          <Button className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5 flex-1">
             <Plus className="h-4 w-4" /> Enregistrer un revenu
           </Button>
         } />
@@ -242,7 +242,7 @@ export function PaymentFormDialog({ editing, onClose }: Props) {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+            className="w-full bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
           >
             {editing ? 'Enregistrer les modifications' : 'Ajouter le paiement'}
           </Button>

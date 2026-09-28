@@ -79,7 +79,7 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, existing }: Props)
               size="sm"
               onClick={handleSubmit}
               disabled={!title.trim()}
-              className="bg-[#7a4f30] hover:bg-[#5c3820] text-white"
+              className="bg-[#2d6a4f] hover:bg-[#1e4535] text-white"
             >
               {isEdit ? 'Enregistrer les modifications' : 'Ajouter la section'}
             </Button>

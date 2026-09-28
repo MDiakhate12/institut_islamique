@@ -192,7 +192,7 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
       <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="h-4 w-4 text-[#c2440f]" />
+            <FileSpreadsheet className="h-4 w-4 text-[#2d6a4f]" />
             {title}
           </DialogTitle>
         </DialogHeader>
@@ -220,7 +220,7 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
             <div
               className={cn(
                 'border-2 border-dashed rounded-xl p-10 text-center transition-colors cursor-pointer',
-                dragging ? 'border-[#c2440f] bg-orange-50' : 'border-border hover:border-[#c2440f]/50 hover:bg-muted/30'
+                dragging ? 'border-[#2d6a4f] bg-orange-50' : 'border-border hover:border-[#2d6a4f]/50 hover:bg-muted/30'
               )}
               onDragOver={e => { e.preventDefault(); setDragging(true) }}
               onDragLeave={() => setDragging(false)}
@@ -295,7 +295,7 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
                 size="sm"
                 disabled={validCount === 0 || loading}
                 onClick={runImport}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5"
               >
                 {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                 {loading ? 'Import en cours...' : `Importer ${validCount} ligne${validCount > 1 ? 's' : ''}`}
@@ -346,7 +346,7 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
                   Nouvel import
                 </Button>
               )}
-              <Button size="sm" onClick={() => handleClose(false)} className="bg-[#c2440f] hover:bg-[#a33a0d] text-white">
+              <Button size="sm" onClick={() => handleClose(false)} className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white">
                 Fermer
               </Button>
             </div>

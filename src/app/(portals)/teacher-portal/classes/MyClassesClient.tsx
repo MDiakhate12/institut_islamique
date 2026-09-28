@@ -55,17 +55,17 @@ export default function MyClassesClient({ initialMyClasses }: Props) {
   }, [filtered])
 
   return (
-    <div className="flex flex-col bg-[#fdf6f0] min-h-screen">
+    <div className="flex flex-col bg-[#f4f9f3] min-h-screen">
       <div className="max-w-5xl mx-auto w-full px-4 py-8 space-y-8">
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="bg-[#7a4f30]/10 rounded-xl p-2.5">
-              <BookOpen className="h-6 w-6 text-[#c2440f]" />
+            <div className="bg-[#2d6a4f]/10 rounded-xl p-2.5">
+              <BookOpen className="h-6 w-6 text-[#2d6a4f]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#c2440f]">Mes Classes</h1>
+              <h1 className="text-2xl font-bold text-[#2d6a4f]">Mes Classes</h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {myClasses.length} classe{myClasses.length !== 1 ? 's' : ''} qui vous sont attribuées
               </p>
@@ -176,7 +176,7 @@ function ClassCard({
 
       {cls.teacherName && (
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-[#7a4f30] flex items-center justify-center shrink-0">
+          <div className="h-7 w-7 rounded-full bg-[#2d6a4f] flex items-center justify-center shrink-0">
             <span className="text-white text-xs font-bold">{cls.teacherInitial ?? '?'}</span>
           </div>
           <span className="text-xs text-foreground">{cls.teacherName}</span>

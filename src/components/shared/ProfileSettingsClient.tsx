@@ -159,7 +159,7 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#7a4f30]">Modifier le profil</h1>
+        <h1 className="text-2xl font-bold text-[#2d6a4f]">Modifier le profil</h1>
         <p className="text-muted-foreground mt-1">
           Gérez les informations de votre compte et vos préférences.
         </p>
@@ -169,8 +169,8 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
         {/* ── Main column ── */}
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-2xl border border-border bg-white overflow-hidden">
-            <div className="bg-[#fdf6f0] px-6 py-4 border-b border-border">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-[#c2440f]">
+            <div className="bg-[#f4f9f3] px-6 py-4 border-b border-border">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-[#2d6a4f]">
                 <User className="h-5 w-5" /> Identité &amp; Contact
               </h2>
               <p className="text-sm text-muted-foreground mt-0.5">
@@ -179,13 +179,13 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
             </div>
 
             <div className="p-6 space-y-5">
-              <div className="flex items-center gap-4 rounded-xl border border-[#f0dcc8] bg-[#fdf6f0]/60 p-4">
-                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-[#DBA571] to-[#8B4429] flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-4 rounded-xl border border-[#cde6c8] bg-[#f4f9f3]/60 p-4">
+                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-[#9ecf94] to-[#163828] flex items-center justify-center shrink-0">
                   <span className="text-white text-lg font-bold">{initials}</span>
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground truncate">{displayName}</p>
-                  <p className="text-sm text-[#c2440f] truncate">{profile.email}</p>
+                  <p className="text-sm text-[#2d6a4f] truncate">{profile.email}</p>
                 </div>
               </div>
 
@@ -231,15 +231,15 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
                           checked
                             ? disabled
                               ? 'border-blue-200 bg-blue-50 text-blue-700 cursor-default'
-                              : 'border-[#e8c9a3] bg-[#fdf6f0] text-foreground'
+                              : 'border-[#e8c9a3] bg-[#f4f9f3] text-foreground'
                             : 'border-border bg-white text-muted-foreground',
-                          !disabled && 'cursor-pointer hover:border-[#c2440f]/40',
+                          !disabled && 'cursor-pointer hover:border-[#2d6a4f]/40',
                         )}
                       >
                         <span className={cn(
                           'flex items-center justify-center h-4 w-4 rounded border shrink-0',
                           checked
-                            ? disabled ? 'bg-blue-600 border-blue-600' : 'bg-[#c2440f] border-[#c2440f]'
+                            ? disabled ? 'bg-blue-600 border-blue-600' : 'bg-[#2d6a4f] border-[#2d6a4f]'
                             : 'border-gray-300 bg-white',
                         )}>
                           {checked && <span className="h-2 w-2 rounded-[2px] bg-white" />}
@@ -273,7 +273,7 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
                     variant="outline"
                     disabled={updateLanguage.isPending}
                     onClick={handleSaveLanguage}
-                    className="border-[#c2440f]/40 text-[#c2440f] hover:bg-[#fdf6f0]"
+                    className="border-[#2d6a4f]/40 text-[#2d6a4f] hover:bg-[#f4f9f3]"
                   >
                     {updateLanguage.isPending ? 'Enregistrement...' : 'Enregistrer'}
                   </Button>
@@ -284,11 +284,11 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2 border-t border-border">
-                {isDirty && <span className="text-xs text-[#c2440f]">Modifications non enregistrées</span>}
+                {isDirty && <span className="text-xs text-[#2d6a4f]">Modifications non enregistrées</span>}
                 <Button
                   disabled={updateProfile.isPending}
                   onClick={handleSaveProfile}
-                  className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-36"
+                  className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white min-w-36"
                 >
                   {updateProfile.isPending ? 'Enregistrement...' : 'Enregistrer le profil'}
                 </Button>
@@ -427,7 +427,7 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
                 <Button
                   onClick={handleSaveGeminiKey}
                   disabled={saveGeminiKey.isPending}
-                  className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+                  className="w-full bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
                 >
                   {saveGeminiKey.isPending ? 'Saving...' : 'Save API Key'}
                 </Button>
@@ -436,9 +436,9 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
           )}
 
           {roles.includes('parent') && (
-            <div className="rounded-2xl border border-[#f0dcc8] bg-[#fdf6f0]/50 overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-[#f0dcc8]">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-[#7a4f30]">
+            <div className="rounded-2xl border border-[#cde6c8] bg-[#f4f9f3]/50 overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-[#cde6c8]">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-[#2d6a4f]">
                   <Smile className="h-4.5 w-4.5" /> Gérer les enfants
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -450,7 +450,7 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
                   children.map(child => (
                     <div
                       key={child.studentId}
-                      className="flex items-center justify-between rounded-lg border border-[#f0dcc8] bg-white px-3.5 py-2.5"
+                      className="flex items-center justify-between rounded-lg border border-[#cde6c8] bg-white px-3.5 py-2.5"
                     >
                       <div>
                         <p className="text-sm font-medium">{child.firstName} {child.lastName}</p>
@@ -475,7 +475,7 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
                   </div>
                 )}
                 <LinkChildModal>
-                  <Button className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+                  <Button className="w-full bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
                     <Plus className="h-4 w-4" /> Ajouter un enfant
                   </Button>
                 </LinkChildModal>

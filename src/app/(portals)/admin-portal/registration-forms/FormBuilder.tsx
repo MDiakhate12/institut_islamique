@@ -193,7 +193,7 @@ function FieldRow({
       className={cn(
         'group relative flex items-start gap-3 px-4 py-3',
         'border-b border-border/50 last:border-b-0',
-        isOver && 'bg-[#c2440f]/5',
+        isOver && 'bg-[#2d6a4f]/5',
       )}
     >
       {/* Drag handle */}
@@ -212,10 +212,10 @@ function FieldRow({
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* yes_no indicator — small orange square matching qaf.app */}
           {field.type === 'yes_no' && (
-            <span className="inline-block h-3.5 w-3.5 rounded-[3px] bg-[#c2440f] shrink-0" />
+            <span className="inline-block h-3.5 w-3.5 rounded-[3px] bg-[#2d6a4f] shrink-0" />
           )}
           <span className="text-sm font-medium text-foreground">{field.label}</span>
-          {field.required && <span className="text-[#c2440f] text-sm font-medium">*</span>}
+          {field.required && <span className="text-[#2d6a4f] text-sm font-medium">*</span>}
           {isSystem && <Lock className="h-3 w-3 text-amber-500 shrink-0" />}
         </div>
 
@@ -337,10 +337,10 @@ function EditSystemFieldDialog({
               onClick={() => setRequired(r => !r)}
               className="flex items-center gap-2 shrink-0 ml-4 mt-0.5"
             >
-              <span className={cn('text-sm font-medium transition-colors', required ? 'text-[#c2440f]' : 'text-muted-foreground')}>
+              <span className={cn('text-sm font-medium transition-colors', required ? 'text-[#2d6a4f]' : 'text-muted-foreground')}>
                 Obligatoire
               </span>
-              <div className={cn('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', required ? 'bg-[#c2440f]' : 'bg-muted-foreground/30')}>
+              <div className={cn('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', required ? 'bg-[#2d6a4f]' : 'bg-muted-foreground/30')}>
                 <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform', required ? 'translate-x-[18px]' : 'translate-x-0.5')} />
               </div>
             </button>
@@ -459,7 +459,7 @@ function EditSystemFieldDialog({
               size="sm"
               onClick={handleSave}
               disabled={!canSave}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
             >
               Enregistrer les modifications
             </Button>
@@ -505,7 +505,7 @@ function BuilderSyllabusDialog({ cls, onClose }: { cls: RegistrationClassItem; o
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="bg-[#5c3820] px-5 py-4 flex items-start justify-between gap-4 shrink-0">
+        <div className="bg-[#1e4535] px-5 py-4 flex items-start justify-between gap-4 shrink-0">
           <h3 className="text-white font-semibold text-sm leading-snug">
             {cls.name} ({cls.code}) — Programme
           </h3>
@@ -516,7 +516,7 @@ function BuilderSyllabusDialog({ cls, onClose }: { cls: RegistrationClassItem; o
         <div className="flex-1 overflow-y-auto p-5">
           {cls.curriculum
             ? <div
-                className="text-sm [&_h2]:text-[#c2440f] [&_h2]:font-semibold [&_h2]:mb-1 [&_h3]:text-[#c2440f] [&_h3]:font-semibold [&_h3]:mb-1 [&_h4]:text-[#c2440f] [&_h4]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_li]:mb-0.5 space-y-0.5"
+                className="text-sm [&_h2]:text-[#2d6a4f] [&_h2]:font-semibold [&_h2]:mb-1 [&_h3]:text-[#2d6a4f] [&_h3]:font-semibold [&_h3]:mb-1 [&_h4]:text-[#2d6a4f] [&_h4]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_li]:mb-0.5 space-y-0.5"
                 dangerouslySetInnerHTML={{ __html: cls.curriculum }}
               />
             : <p className="text-sm text-muted-foreground">Aucun syllabus disponible pour cette classe.</p>
@@ -577,7 +577,7 @@ function ClassSelectionPreview({ formType, classes = [] }: { formType: FormType;
                     <button
                       type="button"
                       onClick={() => setSyllabusClass(cls)}
-                      className="shrink-0 flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-[#7a4f30] text-white hover:bg-[#5c3820] transition-colors"
+                      className="shrink-0 flex items-center gap-1 text-[10px] px-2 py-1 rounded bg-[#2d6a4f] text-white hover:bg-[#1e4535] transition-colors"
                     >
                       <BookOpen className="h-2.5 w-2.5" />
                       Syllabus
@@ -767,7 +767,7 @@ function SectionBlock({
               <button
                 type="button"
                 onClick={() => setAddingField(true)}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-[#c2440f] transition-colors"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-[#2d6a4f] transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Ajouter une question à la section

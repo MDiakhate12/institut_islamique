@@ -50,7 +50,7 @@ export default async function TeacherPortalLayout({ children }: { children: Reac
     <div className="flex h-[100dvh]">
       <TeacherSidebar session={session} userFullName={userFullName} schoolName={schoolName} />
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <div className="flex-1 bg-[#FFF8F0] min-h-0 overflow-y-auto overscroll-contain">
+        <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
           {session.isPending ? (
             <TeacherActivationGate adminEmails={adminEmails} />
           ) : (

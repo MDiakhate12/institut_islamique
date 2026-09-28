@@ -24,7 +24,7 @@ export default async function ParentPortalLayout({ children }: { children: React
     <div className="flex h-[100dvh]">
       <ParentSidebar session={session} userFullName={userFullName} schoolName={schoolName} />
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <div className="flex-1 bg-[#FFF8F0] min-h-0 overflow-y-auto overscroll-contain">
+        <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
           {children}
         </div>
       </div>

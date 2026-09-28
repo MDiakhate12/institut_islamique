@@ -33,12 +33,12 @@ function FieldRenderer({
   const options     = 'options'     in field ? (field.options     ?? []) : []
   const note        = 'note'        in field ? field.note                : undefined
 
-  const inputClass = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 focus:border-[#c2440f]/50 transition-colors'
+  const inputClass = 'w-full border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]/50 transition-colors'
 
   const labelEl = (
     <label className="text-sm font-medium text-foreground block mb-1">
       {label}
-      {required && <span className="text-[#c2440f] ml-0.5">*</span>}
+      {required && <span className="text-[#2d6a4f] ml-0.5">*</span>}
     </label>
   )
 
@@ -154,17 +154,17 @@ function FieldRenderer({
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all',
                   isSelected
-                    ? 'border-[#c2440f] bg-[#c2440f]/5'
+                    ? 'border-[#2d6a4f] bg-[#2d6a4f]/5'
                     : 'border-border bg-white hover:border-muted-foreground/30'
                 )}
               >
                 <div className={cn(
                   'h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0',
-                  isSelected ? 'border-[#c2440f]' : 'border-muted-foreground/40'
+                  isSelected ? 'border-[#2d6a4f]' : 'border-muted-foreground/40'
                 )}>
-                  {isSelected && <div className="h-2.5 w-2.5 rounded-full bg-[#c2440f]" />}
+                  {isSelected && <div className="h-2.5 w-2.5 rounded-full bg-[#2d6a4f]" />}
                 </div>
-                <span className={cn('text-sm', isSelected ? 'text-[#c2440f] font-medium' : 'text-foreground')}>{opt}</span>
+                <span className={cn('text-sm', isSelected ? 'text-[#2d6a4f] font-medium' : 'text-foreground')}>{opt}</span>
               </button>
             )
           })}
@@ -181,11 +181,11 @@ function FieldRenderer({
           type="checkbox"
           checked={(value as boolean) ?? false}
           onChange={e => onChange(e.target.checked)}
-          className="mt-0.5 h-4 w-4 rounded border-border accent-[#c2440f] shrink-0"
+          className="mt-0.5 h-4 w-4 rounded border-border accent-[#2d6a4f] shrink-0"
         />
         <div>
           <span className="text-sm text-foreground">{label}</span>
-          {required && <span className="text-[#c2440f] ml-0.5">*</span>}
+          {required && <span className="text-[#2d6a4f] ml-0.5">*</span>}
           {note && <p className="text-xs text-muted-foreground mt-1">{note}</p>}
         </div>
       </label>
@@ -228,11 +228,11 @@ function FieldRenderer({
           type="checkbox"
           checked={(value as boolean) ?? false}
           onChange={e => onChange(e.target.checked)}
-          className="mt-0.5 h-4 w-4 rounded border-border accent-[#c2440f] shrink-0"
+          className="mt-0.5 h-4 w-4 rounded border-border accent-[#2d6a4f] shrink-0"
         />
         <div>
           <span className="text-sm text-foreground">{label}</span>
-          {required && <span className="text-[#c2440f] ml-0.5">*</span>}
+          {required && <span className="text-[#2d6a4f] ml-0.5">*</span>}
           {note && <p className="text-xs text-muted-foreground mt-1">{note}</p>}
         </div>
       </label>
@@ -262,13 +262,13 @@ function FieldRenderer({
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all',
                   isChecked
-                    ? 'border-[#c2440f] bg-[#c2440f]/5'
+                    ? 'border-[#2d6a4f] bg-[#2d6a4f]/5'
                     : 'border-border bg-white hover:border-muted-foreground/30'
                 )}
               >
                 <div className={cn(
                   'h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
-                  isChecked ? 'border-[#c2440f] bg-[#c2440f]' : 'border-muted-foreground/40 bg-white'
+                  isChecked ? 'border-[#2d6a4f] bg-[#2d6a4f]' : 'border-muted-foreground/40 bg-white'
                 )}>
                   {isChecked && (
                     <svg viewBox="0 0 12 12" className="h-3 w-3 text-white fill-current">
@@ -276,7 +276,7 @@ function FieldRenderer({
                     </svg>
                   )}
                 </div>
-                <span className={cn('text-sm', isChecked ? 'text-[#c2440f] font-medium' : 'text-foreground')}>{opt}</span>
+                <span className={cn('text-sm', isChecked ? 'text-[#2d6a4f] font-medium' : 'text-foreground')}>{opt}</span>
               </button>
             )
           })}
@@ -302,7 +302,7 @@ function PublicSyllabusDialog({ cls, onClose }: { cls: RegistrationClassItem; on
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="bg-[#5c3820] px-5 py-4 flex items-start justify-between gap-4 shrink-0">
+        <div className="bg-[#1e4535] px-5 py-4 flex items-start justify-between gap-4 shrink-0">
           <h3 className="text-white font-semibold text-sm leading-snug">
             {cls.name} ({cls.code}) — Programme
           </h3>
@@ -313,7 +313,7 @@ function PublicSyllabusDialog({ cls, onClose }: { cls: RegistrationClassItem; on
         <div className="flex-1 overflow-y-auto p-5">
           {cls.curriculum
             ? <div
-                className="text-sm [&_h2]:text-[#c2440f] [&_h2]:font-semibold [&_h2]:mb-1 [&_h3]:text-[#c2440f] [&_h3]:font-semibold [&_h3]:mb-1 [&_h4]:text-[#c2440f] [&_h4]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_li]:mb-0.5"
+                className="text-sm [&_h2]:text-[#2d6a4f] [&_h2]:font-semibold [&_h2]:mb-1 [&_h3]:text-[#2d6a4f] [&_h3]:font-semibold [&_h3]:mb-1 [&_h4]:text-[#2d6a4f] [&_h4]:font-medium [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_li]:mb-0.5"
                 dangerouslySetInnerHTML={{ __html: cls.curriculum }}
               />
             : <p className="text-sm text-muted-foreground">Aucun syllabus disponible pour cette classe.</p>
@@ -368,13 +368,13 @@ function ClassSelectionCards({
                       className={cn(
                         'relative flex flex-col gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all',
                         isSelected
-                          ? 'border-[#c2440f] bg-[#c2440f]/5'
+                          ? 'border-[#2d6a4f] bg-[#2d6a4f]/5'
                           : 'border-border bg-white hover:border-muted-foreground/30'
                       )}
                     >
                       {/* Selected checkmark */}
                       {isSelected && (
-                        <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-[#c2440f] flex items-center justify-center shrink-0">
+                        <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-[#2d6a4f] flex items-center justify-center shrink-0">
                           <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
                             <path d="M2 6L4.5 8.5L10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
@@ -384,13 +384,13 @@ function ClassSelectionCards({
                       {/* Class name */}
                       <p className={cn(
                         'text-xs font-medium leading-snug line-clamp-3',
-                        isSelected ? 'text-[#c2440f] pr-6' : 'text-foreground',
+                        isSelected ? 'text-[#2d6a4f] pr-6' : 'text-foreground',
                       )}>
                         {cls.name}
                       </p>
 
                       {/* Code badge */}
-                      <span className="inline-flex self-start text-[10px] bg-[#7a4f30] text-white rounded px-1.5 py-0.5 font-medium">
+                      <span className="inline-flex self-start text-[10px] bg-[#2d6a4f] text-white rounded px-1.5 py-0.5 font-medium">
                         {cls.fullCode}
                       </span>
 
@@ -399,7 +399,7 @@ function ClassSelectionCards({
                         <button
                           type="button"
                           onClick={e => { e.stopPropagation(); setSyllabusClass(cls) }}
-                          className="inline-flex self-start items-center gap-1 text-[10px] bg-[#7a4f30] text-white rounded px-1.5 py-0.5 hover:bg-[#5c3820] transition-colors"
+                          className="inline-flex self-start items-center gap-1 text-[10px] bg-[#2d6a4f] text-white rounded px-1.5 py-0.5 hover:bg-[#1e4535] transition-colors"
                         >
                           <BookOpen className="h-2.5 w-2.5" />
                           Syllabus
@@ -431,7 +431,7 @@ function InfoBlockRenderer({ block }: { block: InfoBlock }) {
       <div className="flex-1 min-w-0">
         {block.title && <p className={cn('font-semibold text-sm mb-1', cfg.titleColor)}>{block.title}</p>}
         <div
-          className="text-sm text-foreground/80 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-[#c2440f] [&_a]:underline [&_p]:mb-1 [&_p:last-child]:mb-0"
+          className="text-sm text-foreground/80 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_a]:text-[#2d6a4f] [&_a]:underline [&_p]:mb-1 [&_p:last-child]:mb-0"
           dangerouslySetInnerHTML={{ __html: block.content }}
         />
       </div>
@@ -459,7 +459,7 @@ function SectionRenderer({
     <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
       {/* Section header */}
       <div className="px-5 py-4 border-b border-border/60">
-        <h3 className="font-semibold text-[#c2440f] text-base">{section.title}</h3>
+        <h3 className="font-semibold text-[#2d6a4f] text-base">{section.title}</h3>
         {section.description && (
           <p className="text-sm text-muted-foreground mt-0.5">{section.description}</p>
         )}
@@ -587,7 +587,7 @@ export function PublicRegistrationForm({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header bar */}
-      <div className="bg-[#c2440f] py-6 text-center">
+      <div className="bg-[#2d6a4f] py-6 text-center">
         <h1 className="text-2xl font-bold text-white">Inscription à {schoolName}</h1>
         <p className="text-white/80 text-sm mt-1">Année scolaire {academicYear}</p>
       </div>
@@ -598,7 +598,7 @@ export function PublicRegistrationForm({
           <button
             type="button"
             onClick={() => backHref ? router.push(backHref) : router.back()}
-            className="text-sm text-[#c2440f] hover:underline flex items-center gap-1"
+            className="text-sm text-[#2d6a4f] hover:underline flex items-center gap-1"
           >
             ← Sélectionner un autre élève
           </button>
@@ -649,16 +649,16 @@ export function PublicRegistrationForm({
           <button
             type="submit"
             disabled={isPending}
-            className="w-full py-4 bg-[#c2440f] hover:bg-[#a33a0d] text-white font-semibold text-base rounded-xl transition-colors disabled:opacity-50 mt-2"
+            className="w-full py-4 bg-[#2d6a4f] hover:bg-[#1b4332] text-white font-semibold text-base rounded-xl transition-colors disabled:opacity-50 mt-2"
           >
             {isPending ? 'Envoi en cours…' : "Soumettre l'inscription"}
           </button>
 
           <p className="text-center text-xs text-muted-foreground pb-4">
             En cliquant sur &quot;Soumettre l&apos;inscription&quot;, vous acceptez nos{' '}
-            <a href="#" className="text-[#c2440f] hover:underline">Conditions d&apos;utilisation</a>
+            <a href="#" className="text-[#2d6a4f] hover:underline">Conditions d&apos;utilisation</a>
             {' '}et{' '}
-            <a href="#" className="text-[#c2440f] hover:underline">Politique de confidentialité</a>
+            <a href="#" className="text-[#2d6a4f] hover:underline">Politique de confidentialité</a>
           </p>
         </form>
       </div>

@@ -17,27 +17,27 @@ function NoChildrenState() {
       <div className="w-full max-w-xl rounded-2xl border border-orange-200 bg-orange-50/60 p-8">
         <div className="flex items-start gap-4">
           <div className="rounded-full bg-orange-100 p-3 shrink-0">
-            <ClipboardList className="h-6 w-6 text-[#c2440f]" />
+            <ClipboardList className="h-6 w-6 text-[#2d6a4f]" />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-[#c2440f] text-lg">Aucun enfant trouvé</h2>
+            <h2 className="font-bold text-[#2d6a4f] text-lg">Aucun enfant trouvé</h2>
             <p className="text-sm text-muted-foreground mt-1">
               Vous n&apos;avez aucun enfant enregistré dans le système. Cliquez sur le bouton
               ci-dessous pour lier vos enfants à votre compte en toute sécurité.
             </p>
             <Link href="/parent-portal/children">
-              <Button className="mt-4 bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-2">
+              <Button className="mt-4 bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-2">
                 <Plus className="h-4 w-4" />
                 Ajouter d&apos;autres enfants
               </Button>
             </Link>
             <div className="mt-3 space-y-1">
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <ChevronRight className="h-3 w-3 text-[#c2440f]" />
+                <ChevronRight className="h-3 w-3 text-[#2d6a4f]" />
                 Vous devrez vérifier votre numéro de téléphone pour lier des élèves à votre compte.
               </p>
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <ChevronRight className="h-3 w-3 text-[#c2440f]" />
+                <ChevronRight className="h-3 w-3 text-[#2d6a4f]" />
                 Utilisez le numéro de téléphone enregistré dans le compte scolaire de votre enfant.
               </p>
             </div>
@@ -67,7 +67,7 @@ function FileRow({ url, name, size }: { url: string; name: string; size: number 
         {kb && <p className="text-[10px] text-muted-foreground">{kb} KB</p>}
       </div>
       <a href={url} target="_blank" rel="noopener noreferrer"
-        className="shrink-0 text-xs font-medium text-[#c2440f] hover:underline">
+        className="shrink-0 text-xs font-medium text-[#2d6a4f] hover:underline">
         Voir
       </a>
     </div>
@@ -120,10 +120,10 @@ function HomeworkCard({
             <p className="text-xs text-muted-foreground">{dateLabel}</p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="rounded-md bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-[#c2440f]">
+            <span className="rounded-md bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-[#2d6a4f]">
               Sec: {item.classSection ?? '1'}
             </span>
-            <span className="rounded-md bg-[#7a4f30]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#7a4f30]">
+            <span className="rounded-md bg-[#2d6a4f]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#2d6a4f]">
               {item.classCode}
             </span>
           </div>
@@ -132,8 +132,8 @@ function HomeworkCard({
         {/* HIFZ badge */}
         {hasQuran && (
           <div className="mt-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#c2440f]/10 px-2 py-0.5 text-[10px] font-bold text-[#c2440f]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#c2440f]" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#2d6a4f]/10 px-2 py-0.5 text-[10px] font-bold text-[#2d6a4f]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#2d6a4f]" />
               HIFZ
             </span>
           </div>
@@ -143,7 +143,7 @@ function HomeworkCard({
         {hasQuran && (
           <div className="mt-2 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="text-xl font-bold text-[#7a4f30] leading-tight">
+              <h3 className="text-xl font-bold text-[#2d6a4f] leading-tight">
                 {item.surahName} - {item.surahArabic}
               </h3>
               {versesLabel && (
@@ -157,8 +157,8 @@ function HomeworkCard({
               className={cn(
                 'mt-1 shrink-0 rounded-full p-1.5 transition-colors',
                 showPlayer
-                  ? 'bg-[#7a4f30]/10 text-[#7a4f30]'
-                  : 'text-muted-foreground hover:text-[#7a4f30] hover:bg-[#7a4f30]/5'
+                  ? 'bg-[#2d6a4f]/10 text-[#2d6a4f]'
+                  : 'text-muted-foreground hover:text-[#2d6a4f] hover:bg-[#2d6a4f]/5'
               )}
             >
               <Headphones className="h-5 w-5" />
@@ -187,8 +187,8 @@ function HomeworkCard({
         {/* Notes */}
         {item.description && (
           <div className="mt-3">
-            <p className="text-xs font-semibold text-[#c2440f]">Notes :</p>
-            <p className="text-sm text-[#c2440f] mt-0.5">{item.description}</p>
+            <p className="text-xs font-semibold text-[#2d6a4f]">Notes :</p>
+            <p className="text-sm text-[#2d6a4f] mt-0.5">{item.description}</p>
           </div>
         )}
 
@@ -196,7 +196,7 @@ function HomeworkCard({
         {item.revisionSurahs.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {item.revisionSurahs.map(s => (
-              <span key={s.name} className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-[#c2440f]">
+              <span key={s.name} className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-[#2d6a4f]">
                 {s.name}
               </span>
             ))}
@@ -220,7 +220,7 @@ function HomeworkCard({
                 'gap-2 text-white',
                 item.submissionUrl
                   ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-[#c2440f] hover:bg-[#a33a0d]'
+                  : 'bg-[#2d6a4f] hover:bg-[#1b4332]'
               )}
             >
               {item.submissionUrl ? (
@@ -323,11 +323,11 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
   return (
     <div className="flex flex-col min-h-full">
       {/* Page header */}
-      <div className="sticky top-0 z-10 bg-[#FFF8F0] border-b border-border/50 px-6 py-4">
+      <div className="sticky top-0 z-10 bg-[#f4f9f3] border-b border-border/50 px-6 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-[#c2440f]/10 p-2.5">
-              <ClipboardList className="h-5 w-5 text-[#c2440f]" />
+            <div className="rounded-xl bg-[#2d6a4f]/10 p-2.5">
+              <ClipboardList className="h-5 w-5 text-[#2d6a4f]" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">Devoirs</h1>
@@ -348,7 +348,7 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
                 onClick={() => setView('chronologie')}
                 className={cn(
                   'px-3 py-1.5 transition-colors',
-                  view === 'chronologie' ? 'bg-[#7a4f30] text-white' : 'bg-white text-muted-foreground hover:bg-muted/50'
+                  view === 'chronologie' ? 'bg-[#2d6a4f] text-white' : 'bg-white text-muted-foreground hover:bg-muted/50'
                 )}
               >
                 Chronologie
@@ -358,7 +358,7 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
                 onClick={() => setView('classe')}
                 className={cn(
                   'px-3 py-1.5 transition-colors border-l border-border',
-                  view === 'classe' ? 'bg-[#7a4f30] text-white' : 'bg-white text-muted-foreground hover:bg-muted/50'
+                  view === 'classe' ? 'bg-[#2d6a4f] text-white' : 'bg-white text-muted-foreground hover:bg-muted/50'
                 )}
               >
                 Par classe
@@ -366,7 +366,7 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
             </div>
             {/* Add child */}
             <Link href="/parent-portal/children">
-              <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+              <Button size="sm" className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
                 <Plus className="h-3.5 w-3.5" />
                 Ajouter d&apos;autres enfants
               </Button>
@@ -385,8 +385,8 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
                 className={cn(
                   'rounded-full px-4 py-1.5 text-sm font-medium transition-colors border',
                   child.studentId === selectedChildId
-                    ? 'bg-[#7a4f30] text-white border-[#7a4f30]'
-                    : 'bg-white text-muted-foreground border-border hover:border-[#7a4f30]/50'
+                    ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]'
+                    : 'bg-white text-muted-foreground border-border hover:border-[#2d6a4f]/50'
                 )}
               >
                 {child.firstName} {child.lastName}
@@ -438,7 +438,7 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
                     <span className={cn(
                       'rounded-md px-1.5 py-0.5 text-[10px] font-bold',
                       subjectCode === 'QRN'
-                        ? 'bg-[#c2440f]/10 text-[#c2440f]'
+                        ? 'bg-[#2d6a4f]/10 text-[#2d6a4f]'
                         : subjectCode === 'ARA'
                         ? 'bg-blue-100 text-blue-700'
                         : 'bg-green-100 text-green-700'

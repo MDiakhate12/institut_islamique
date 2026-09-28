@@ -44,10 +44,10 @@ function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: 
   const { mutate: sign, isPending } = useSignExamGrade()
 
   return (
-    <div className="rounded-xl border-2 border-[#c2440f]/30 bg-white overflow-hidden">
+    <div className="rounded-xl border-2 border-[#2d6a4f]/30 bg-white overflow-hidden">
       {/* Class header */}
-      <div className="px-5 py-4 border-b border-[#c2440f]/10">
-        <p className="font-semibold text-[#7a4f30]">{grade.className}</p>
+      <div className="px-5 py-4 border-b border-[#2d6a4f]/10">
+        <p className="font-semibold text-[#2d6a4f]">{grade.className}</p>
         {grade.teacherName && (
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
             <User className="h-3.5 w-3.5" />
@@ -95,7 +95,7 @@ function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: 
         {grade.score !== null && (
           <p className="text-sm text-gray-700">
             Points d&apos;examen :{' '}
-            <span className="text-xl font-bold text-[#c2440f]">{grade.score}/100</span>
+            <span className="text-xl font-bold text-[#2d6a4f]">{grade.score}/100</span>
           </p>
         )}
 
@@ -114,7 +114,7 @@ function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: 
             <button
               onClick={() => sign({ examResultId: grade.examResultId, parentSignature: parentName })}
               disabled={isPending}
-              className="px-4 py-1.5 rounded-lg text-sm font-medium text-white bg-[#7a4f30] hover:bg-[#5c3820] transition-colors disabled:opacity-60"
+              className="px-4 py-1.5 rounded-lg text-sm font-medium text-white bg-[#2d6a4f] hover:bg-[#1e4535] transition-colors disabled:opacity-60"
             >
               {isPending ? 'Envoi…' : 'Signer avec mon nom'}
             </button>
@@ -158,11 +158,11 @@ export function ExamsClient({ initialChildren, initialTrimester, academicYear, p
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center shrink-0">
-          <GraduationCap className="h-5 w-5 text-[#c2440f]" />
+        <div className="h-10 w-10 rounded-xl bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center shrink-0">
+          <GraduationCap className="h-5 w-5 text-[#2d6a4f]" />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-[#7a4f30]">
+          <h1 className="text-xl font-bold text-[#2d6a4f]">
             Bulletins scolaires
           </h1>
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
@@ -177,7 +177,7 @@ export function ExamsClient({ initialChildren, initialTrimester, academicYear, p
                   className={cn(
                     'px-2.5 py-0.5 text-xs font-semibold rounded-full transition-colors',
                     trimester === t
-                      ? 'bg-[#c2440f] text-white'
+                      ? 'bg-[#2d6a4f] text-white'
                       : 'border border-gray-200 text-gray-600 hover:bg-gray-50',
                   )}
                 >
@@ -211,7 +211,7 @@ export function ExamsClient({ initialChildren, initialTrimester, academicYear, p
                     className={cn(
                       'px-4 py-1.5 rounded-lg text-sm font-medium transition-all',
                       activeId === child.studentId
-                        ? 'bg-[#c2440f] text-white'
+                        ? 'bg-[#2d6a4f] text-white'
                         : 'border border-gray-200 text-gray-600 hover:bg-gray-50',
                     )}
                   >
@@ -225,7 +225,7 @@ export function ExamsClient({ initialChildren, initialTrimester, academicYear, p
           {/* Student name */}
           {activeChild && (
             <>
-              <h2 className="text-lg font-bold text-[#7a4f30]">
+              <h2 className="text-lg font-bold text-[#2d6a4f]">
                 Élève : {activeChild.firstName} {activeChild.lastName}
               </h2>
               <ChildGrades child={activeChild} parentName={parentName} />

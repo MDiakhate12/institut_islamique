@@ -103,7 +103,7 @@ export function RichTextEditor({ value, onChange, placeholder = 'Saisissez le co
           className={cn(
             'px-3 py-2.5 text-sm focus:outline-none',
             '[&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4',
-            '[&_a]:text-[#c2440f] [&_a]:underline',
+            '[&_a]:text-[#2d6a4f] [&_a]:underline',
             '[&_strong]:font-semibold',
           )}
         />

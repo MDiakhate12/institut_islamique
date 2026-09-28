@@ -115,17 +115,17 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
   }
 
   return (
-    <div className="flex flex-col bg-[#fdf6f0] min-h-screen">
+    <div className="flex flex-col bg-[#f4f9f3] min-h-screen">
       <div className="max-w-5xl mx-auto w-full px-4 py-8 space-y-8">
 
         {/* Page header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="bg-[#7a4f30]/10 rounded-xl p-2.5">
-              <Users className="h-6 w-6 text-[#7a4f30]" />
+            <div className="bg-[#2d6a4f]/10 rounded-xl p-2.5">
+              <Users className="h-6 w-6 text-[#2d6a4f]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#c2440f]">Prise de présence</h1>
+              <h1 className="text-2xl font-bold text-[#2d6a4f]">Prise de présence</h1>
               <p className="text-sm text-muted-foreground mt-0.5 capitalize">
                 Aujourd&apos;hui · {fmtDateShort(today)}
               </p>
@@ -135,7 +135,7 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
           <Button
             onClick={() => setAddClassOpen(true)}
             className="gap-2 shrink-0"
-            style={{ backgroundColor: '#7a4f30' }}
+            style={{ backgroundColor: '#2d6a4f' }}
           >
             <Plus className="h-4 w-4" />
             Ajouter une classe
@@ -145,7 +145,7 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
         {/* Class selector */}
         {pinnedClasses.length > 0 ? (
           <div>
-            <p className="text-sm font-semibold text-[#7a4f30] mb-3 uppercase tracking-wide text-xs">
+            <p className="text-sm font-semibold text-[#2d6a4f] mb-3 uppercase tracking-wide text-xs">
               Sélectionner une classe
             </p>
             <div className="flex flex-wrap gap-3">
@@ -195,7 +195,7 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
             <Button
               onClick={() => setAddClassOpen(true)}
               className="mt-4 gap-2"
-              style={{ backgroundColor: '#7a4f30' }}
+              style={{ backgroundColor: '#2d6a4f' }}
             >
               <Plus className="h-4 w-4" />
               Ajouter une classe
@@ -208,8 +208,8 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
           <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
             {/* Class header */}
             <div className="px-6 py-4 border-b border-border flex items-center gap-4">
-              <div className="bg-[#7a4f30]/10 rounded-xl p-2">
-                <ClipboardList className="h-5 w-5 text-[#7a4f30]" />
+              <div className="bg-[#2d6a4f]/10 rounded-xl p-2">
+                <ClipboardList className="h-5 w-5 text-[#2d6a4f]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -275,7 +275,7 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
                 onClick={() => setSubmitDialogOpen(true)}
                 disabled={!canSubmit}
                 className="gap-2 min-w-64"
-                style={canSubmit ? { backgroundColor: '#7a4f30' } : undefined}
+                style={canSubmit ? { backgroundColor: '#2d6a4f' } : undefined}
               >
                 <ClipboardList className="h-4 w-4" />
                 {!canSubmit

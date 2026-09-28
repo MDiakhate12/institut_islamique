@@ -11,7 +11,7 @@ export default async function EnrollmentSuccessPage() {
 
   return (
     <div>
-      <div className="bg-[#c2440f] py-6 text-center">
+      <div className="bg-[#2d6a4f] py-6 text-center">
         <h1 className="text-2xl font-bold text-white">Inscription à {schoolName}</h1>
         <p className="text-white/80 text-sm mt-1">Année scolaire {academicYear}</p>
       </div>

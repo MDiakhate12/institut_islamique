@@ -69,10 +69,10 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
 
   const PRESETS = [
     { label: 'Surligner', action: applyHighlight },
-    { label: 'Important', action: () => insertAtCursor('<p><span style="color:#c2440f"><strong>⚠️ Important:</strong></span></p>') },
-    { label: 'Rappel', action: () => insertAtCursor('<p><span style="color:#c2440f"><strong>🔔 Reminder:</strong></span></p>') },
+    { label: 'Important', action: () => insertAtCursor('<p><span style="color:#2d6a4f"><strong>⚠️ Important:</strong></span></p>') },
+    { label: 'Rappel', action: () => insertAtCursor('<p><span style="color:#2d6a4f"><strong>🔔 Reminder:</strong></span></p>') },
     { label: 'Action requise', action: () => insertAtCursor('<p><span style="color:#16a34a"><strong>✅ Action Required:</strong></span></p>') },
-    { label: 'Date et heure', action: () => insertAtCursor(`<p><span style="color:#c2440f">📅 Date: <em>${monthYear.charAt(0).toUpperCase() + monthYear.slice(1)}</em> ⏰ Time: <em>12h 00</em></span></p>`) },
+    { label: 'Date et heure', action: () => insertAtCursor(`<p><span style="color:#2d6a4f">📅 Date: <em>${monthYear.charAt(0).toUpperCase() + monthYear.slice(1)}</em> ⏰ Time: <em>12h 00</em></span></p>`) },
     { label: 'Séparateur', action: () => insertAtCursor('<hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0"/>') },
   ]
 
@@ -125,7 +125,7 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
         {PRESETS.map(p => (
           <button key={p.label} type="button"
             onMouseDown={e => { e.preventDefault(); p.action() }}
-            className="text-xs px-2 py-0.5 rounded border border-border hover:border-[#c2440f] hover:text-[#c2440f] text-muted-foreground transition-colors">
+            className="text-xs px-2 py-0.5 rounded border border-border hover:border-[#2d6a4f] hover:text-[#2d6a4f] text-muted-foreground transition-colors">
             {p.label}
           </button>
         ))}
@@ -142,7 +142,7 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
           className={cn(
             'px-3 py-2.5 text-sm focus:outline-none',
             '[&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4',
-            '[&_a]:text-[#c2440f] [&_a]:underline',
+            '[&_a]:text-[#2d6a4f] [&_a]:underline',
             '[&_strong]:font-semibold',
             '[&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold',
             '[&_hr]:border-t [&_hr]:border-gray-200 [&_hr]:my-2',
@@ -256,11 +256,11 @@ export function AnnouncementDialog({ schoolName, announcement, onClose, onSaved 
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start gap-3 p-6 border-b border-border">
-          <div className="h-10 w-10 rounded-full bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center shrink-0">
+          <div className="h-10 w-10 rounded-full bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center shrink-0">
             <span className="text-lg">📢</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-[#7a4f30] text-base">
+            <h2 className="font-semibold text-[#2d6a4f] text-base">
               {isEdit ? "Modifier l'annonce" : `Envoyer une annonce à ${schoolName}`}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -279,7 +279,7 @@ export function AnnouncementDialog({ schoolName, announcement, onClose, onSaved 
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="ex. : Mise à jour importante"
-            className="w-full text-xl font-semibold text-[#c2440f] placeholder:text-[#c2440f]/40 border-none outline-none bg-transparent"
+            className="w-full text-xl font-semibold text-[#2d6a4f] placeholder:text-[#2d6a4f]/40 border-none outline-none bg-transparent"
           />
 
           {/* Content */}
@@ -307,12 +307,12 @@ export function AnnouncementDialog({ schoolName, announcement, onClose, onSaved 
                     className={cn(
                       'flex flex-col items-center gap-1.5 py-3 px-2 rounded-lg transition-colors',
                       selected
-                        ? 'bg-[#fdf6f0] border border-[#f0dcc8]'
+                        ? 'bg-[#f4f9f3] border border-[#cde6c8]'
                         : 'hover:bg-muted/50'
                     )}
                   >
-                    <Icon className={cn('h-5 w-5', selected ? 'text-[#c2440f]' : 'text-muted-foreground')} />
-                    <span className={cn('text-sm font-medium', selected ? 'text-[#c2440f]' : 'text-muted-foreground')}>
+                    <Icon className={cn('h-5 w-5', selected ? 'text-[#2d6a4f]' : 'text-muted-foreground')} />
+                    <span className={cn('text-sm font-medium', selected ? 'text-[#2d6a4f]' : 'text-muted-foreground')}>
                       {opt.label}
                     </span>
                   </button>
@@ -342,7 +342,7 @@ export function AnnouncementDialog({ schoolName, announcement, onClose, onSaved 
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-border rounded-lg py-4 flex flex-col items-center gap-2 text-muted-foreground hover:border-[#c2440f] hover:text-[#c2440f] transition-colors"
+                className="w-full border-2 border-dashed border-border rounded-lg py-4 flex flex-col items-center gap-2 text-muted-foreground hover:border-[#2d6a4f] hover:text-[#2d6a4f] transition-colors"
               >
                 <ImageIcon className="h-5 w-5" />
                 <span className="text-sm">Sélectionner une image</span>
@@ -364,7 +364,7 @@ export function AnnouncementDialog({ schoolName, announcement, onClose, onSaved 
               Annuler
             </button>
             <button type="submit" disabled={submitting}
-              className="flex-1 py-2.5 bg-[#c2440f] hover:bg-[#a33a0d] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+              className="flex-1 py-2.5 bg-[#2d6a4f] hover:bg-[#1b4332] disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
               <span>📢</span>
               {submitting ? 'Envoi...' : isEdit ? "Mettre à jour l'annonce" : "Envoyer l'annonce"}
             </button>

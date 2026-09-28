@@ -62,7 +62,7 @@ export function AddStudentDialog({ scheduledClass, open, onOpenChange, onStudent
           <p className="text-sm text-muted-foreground">
             Select a student to add to{' '}
             <span className="font-medium text-foreground">{scheduledClass.name}</span>
-            {' '}<span className="text-[#c2440f]">{scheduledClass.fullCode}</span>
+            {' '}<span className="text-[#2d6a4f]">{scheduledClass.fullCode}</span>
           </p>
         </DialogHeader>
 
@@ -106,7 +106,7 @@ export function AddStudentDialog({ scheduledClass, open, onOpenChange, onStudent
                   size="sm"
                   onClick={() => handleEnroll(s.id)}
                   disabled={enrollingId === s.id}
-                  className="bg-[#c2440f] hover:bg-[#a33a0d] text-white h-7 px-2.5 text-xs"
+                  className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white h-7 px-2.5 text-xs"
                 >
                   {enrollingId === s.id ? '...' : <UserPlus className="h-3.5 w-3.5" />}
                 </Button>

@@ -44,14 +44,14 @@ export function LogMyHoursDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={
-        <Button className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+        <Button className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
           <Clock className="h-4 w-4" /> Enregistrer les heures
         </Button>
       } />
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-[#c2440f]" /> Enregistrer les heures
+            <Clock className="h-5 w-5 text-[#2d6a4f]" /> Enregistrer les heures
           </DialogTitle>
           <p className="text-sm text-muted-foreground">Enregistrez vos heures d&apos;enseignement pour la paie</p>
         </DialogHeader>
@@ -80,7 +80,7 @@ export function LogMyHoursDialog() {
             <Button
               disabled={!hoursNum || logHours.isPending}
               onClick={handleSubmit}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
             >
               Soumettre les heures
             </Button>

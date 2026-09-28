@@ -19,7 +19,7 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registe
 
   return (
     <div>
-      <div className="bg-[#c2440f] py-6 text-center">
+      <div className="bg-[#2d6a4f] py-6 text-center">
         <h1 className="text-2xl font-bold text-white">Inscription à {schoolName}</h1>
         <p className="text-white/80 text-sm mt-1">Année scolaire {academicYear}</p>
       </div>
@@ -37,7 +37,7 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registe
           {students.length === 0 ? (
             <div className="border border-gray-200 rounded-xl p-8 flex flex-col items-center text-center gap-3">
               <div className="h-14 w-14 rounded-full bg-orange-50 flex items-center justify-center">
-                <Phone className="h-6 w-6 text-[#c2440f]" />
+                <Phone className="h-6 w-6 text-[#2d6a4f]" />
               </div>
               <h3 className="font-semibold text-gray-900">Trouver votre élève</h3>
               <p className="text-sm text-muted-foreground max-w-sm">
@@ -47,7 +47,7 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registe
               <LinkChildModal onLinked={() => router.refresh()}>
                 <button
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white
-                             bg-[#c2440f] hover:bg-[#a33a0d] transition-colors"
+                             bg-[#2d6a4f] hover:bg-[#1b4332] transition-colors"
                 >
                   <UserPlus className="h-4 w-4" />
                   Lier mon élève
@@ -85,17 +85,17 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registe
                     key={child.studentId}
                     href={`/parent-portal/enrollment/${child.studentId}`}
                     className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white
-                               hover:border-[#c2440f]/30 hover:shadow-sm transition-all"
+                               hover:border-[#2d6a4f]/30 hover:shadow-sm transition-all"
                   >
                     <div className="h-9 w-9 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-                      <Users className="h-5 w-5 text-[#c2440f]" />
+                      <Users className="h-5 w-5 text-[#2d6a4f]" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 text-sm">{child.firstName} {child.lastName}</p>
                       <p className="text-xs text-muted-foreground">ID : {idLabel}</p>
                     </div>
                     <div className="h-8 w-8 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-                      <ArrowRight className="h-4 w-4 text-[#c2440f]" />
+                      <ArrowRight className="h-4 w-4 text-[#2d6a4f]" />
                     </div>
                   </Link>
                 )
@@ -107,7 +107,7 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registe
         <Link
           href="/parent-portal/enrollment/new"
           className="flex items-center justify-center gap-2 w-full py-4 rounded-xl text-white font-semibold
-                     bg-gradient-to-r from-[#c2440f] to-[#e8853f] hover:opacity-90 transition-opacity"
+                     bg-gradient-to-r from-[#2d6a4f] to-[#e8853f] hover:opacity-90 transition-opacity"
         >
           <Plus className="h-4 w-4" />
           Ajouter un nouvel élève à l&apos;école

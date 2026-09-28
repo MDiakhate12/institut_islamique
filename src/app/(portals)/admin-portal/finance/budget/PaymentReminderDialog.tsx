@@ -41,7 +41,7 @@ export function PaymentReminderDialog() {
   return (
     <Dialog open={step !== null} onOpenChange={v => { if (!v) reset(); else setStep('select') }}>
       <DialogTrigger render={
-        <Button className="bg-[#7a4f30] hover:bg-[#5c3820] text-white gap-1.5 flex-1">
+        <Button className="bg-[#2d6a4f] hover:bg-[#1e4535] text-white gap-1.5 flex-1">
           <Bell className="h-4 w-4" /> Rappeler les parents impayés
         </Button>
       } />
@@ -50,7 +50,7 @@ export function PaymentReminderDialog() {
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-[#c2440f]" /> Envoyer des rappels de paiement
+                <Bell className="h-5 w-5 text-[#2d6a4f]" /> Envoyer des rappels de paiement
               </DialogTitle>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
@@ -64,7 +64,7 @@ export function PaymentReminderDialog() {
                   onClick={() => setPeriod(p)}
                   className={cn(
                     'w-full text-left border rounded-lg p-3 transition-colors',
-                    period === p ? 'border-[#c2440f] bg-orange-50' : 'border-gray-200 hover:bg-gray-50'
+                    period === p ? 'border-[#2d6a4f] bg-orange-50' : 'border-gray-200 hover:bg-gray-50'
                   )}
                 >
                   <p className="font-medium text-sm">{PAYMENT_PERIOD_LABELS[p]}</p>
@@ -77,7 +77,7 @@ export function PaymentReminderDialog() {
               <Button
                 disabled={!period}
                 onClick={() => setStep('confirm')}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
               >
                 Continuer
               </Button>
@@ -102,7 +102,7 @@ export function PaymentReminderDialog() {
               <Button
                 disabled={remind.isPending}
                 onClick={handleSend}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
               >
                 Envoyer les rappels
               </Button>

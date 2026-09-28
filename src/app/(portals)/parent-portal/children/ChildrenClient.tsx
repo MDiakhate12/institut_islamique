@@ -29,10 +29,10 @@ function ClassCard({ cls }: { cls: EnrolledClass }) {
   const sectionLabel = cls.section ? `Sec ${cls.section}` : null
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-[#c2440f]/30 hover:shadow-sm transition-all">
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-[#2d6a4f]/30 hover:shadow-sm transition-all">
       <div className="p-4 space-y-3">
         {/* Name */}
-        <p className="font-semibold text-[#7a4f30] leading-snug pr-2">{cls.className}</p>
+        <p className="font-semibold text-[#2d6a4f] leading-snug pr-2">{cls.className}</p>
 
         {/* Badges: subject code + level + section */}
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -68,14 +68,14 @@ function ClassCard({ cls }: { cls: EnrolledClass }) {
       <div className="border-t border-gray-100 grid grid-cols-2 divide-x divide-gray-100">
         <Link
           href={`/parent-portal/attendance?classId=${cls.classId}`}
-          className="flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-600 hover:text-[#c2440f] hover:bg-[#fdf6f0] transition-colors"
+          className="flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-600 hover:text-[#2d6a4f] hover:bg-[#f4f9f3] transition-colors"
         >
           <CalendarCheck className="h-3.5 w-3.5" />
           Présence
         </Link>
         <Link
           href={`/parent-portal/homework?classId=${cls.classId}`}
-          className="flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-600 hover:text-[#c2440f] hover:bg-[#fdf6f0] transition-colors"
+          className="flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-600 hover:text-[#2d6a4f] hover:bg-[#f4f9f3] transition-colors"
         >
           <BookMarked className="h-3.5 w-3.5" />
           Devoirs
@@ -86,7 +86,7 @@ function ClassCard({ cls }: { cls: EnrolledClass }) {
       <div className="border-t border-gray-100 px-4 py-2">
         <Link
           href={`/parent-portal/catalog?classId=${cls.classId}`}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-[#c2440f] transition-colors"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-[#2d6a4f] transition-colors"
         >
           <BookOpen className="h-3 w-3" />
           Voir le programme
@@ -101,7 +101,7 @@ function ChildClasses({ child }: { child: ChildWithClasses }) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <div className="h-16 w-16 rounded-full bg-orange-50 flex items-center justify-center mb-4">
-          <BookOpen className="h-8 w-8 text-[#c2440f]/60" />
+          <BookOpen className="h-8 w-8 text-[#2d6a4f]/60" />
         </div>
         <h3 className="text-lg font-semibold text-gray-800">Aucune classe trouvée</h3>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">
@@ -150,16 +150,16 @@ export function ChildrenClient({ initialChildren }: Props) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center shrink-0">
-            <BookOpen className="h-4 w-4 text-[#c2440f]" />
+          <div className="h-9 w-9 rounded-full bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center shrink-0">
+            <BookOpen className="h-4 w-4 text-[#2d6a4f]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#7a4f30]">Classes de mes enfants</h1>
+            <h1 className="text-xl font-bold text-[#2d6a4f]">Classes de mes enfants</h1>
             <p className="text-sm text-muted-foreground">Voir toutes les classes de vos enfants</p>
           </div>
         </div>
         <LinkChildModal onLinked={() => {}}>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[#c2440f] hover:bg-[#a33a0d] transition-colors shrink-0">
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[#2d6a4f] hover:bg-[#1b4332] transition-colors shrink-0">
             <UserPlus className="h-4 w-4" />
             + Ajouter d&apos;autres enfants
           </button>
@@ -180,8 +180,8 @@ export function ChildrenClient({ initialChildren }: Props) {
                   className={cn(
                     'flex-1 px-4 py-2 text-sm rounded-lg font-medium transition-all text-center',
                     activeId === child.studentId
-                      ? 'bg-[#fdf6f0] text-[#c2440f] border border-[#f0dcc8] shadow-sm'
-                      : 'text-gray-600 hover:text-[#7a4f30] hover:bg-gray-50',
+                      ? 'bg-[#f4f9f3] text-[#2d6a4f] border border-[#cde6c8] shadow-sm'
+                      : 'text-gray-600 hover:text-[#2d6a4f] hover:bg-gray-50',
                   )}
                 >
                   {child.firstName} {child.lastName}
@@ -194,7 +194,7 @@ export function ChildrenClient({ initialChildren }: Props) {
           {activeChild?.studentCustomId && (
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span>ID étudiant :</span>
-              <span className="inline-flex items-center rounded-full border border-[#c2440f]/30 bg-[#fdf6f0] px-2.5 py-0.5 text-xs font-medium text-[#c2440f]">
+              <span className="inline-flex items-center rounded-full border border-[#2d6a4f]/30 bg-[#f4f9f3] px-2.5 py-0.5 text-xs font-medium text-[#2d6a4f]">
                 {activeChild.studentCustomId}
               </span>
             </div>
@@ -212,7 +212,7 @@ function EmptyNoChildren() {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <div className="h-20 w-20 rounded-full bg-orange-50 flex items-center justify-center mb-5">
-        <Users className="h-10 w-10 text-[#c2440f]/60" />
+        <Users className="h-10 w-10 text-[#2d6a4f]/60" />
       </div>
       <h3 className="text-xl font-semibold text-gray-800">Aucun enfant lié</h3>
       <p className="text-sm text-muted-foreground mt-2 max-w-sm">
@@ -220,7 +220,7 @@ function EmptyNoChildren() {
         enregistré à l&apos;école.
       </p>
       <LinkChildModal onLinked={() => {}}>
-        <button className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-[#c2440f] hover:bg-[#a33a0d] transition-colors">
+        <button className="mt-6 flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-[#2d6a4f] hover:bg-[#1b4332] transition-colors">
           <UserPlus className="h-4 w-4" />
           Lier mon élève
         </button>

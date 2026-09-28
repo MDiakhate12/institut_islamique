@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import type { InfoBlock, InfoBlockStyle } from '@/modules/registrations/registrations.types'
 
 const STYLES: { value: InfoBlockStyle; label: string; icon: string; bg: string; border: string; text: string }[] = [
-  { value: 'info',    label: 'INFORMATION', icon: 'ℹ️', bg: 'bg-[#7a4f30]/10', border: 'border-[#7a4f30]/30', text: 'text-[#7a4f30]' },
+  { value: 'info',    label: 'INFORMATION', icon: 'ℹ️', bg: 'bg-[#2d6a4f]/10', border: 'border-[#2d6a4f]/30', text: 'text-[#2d6a4f]' },
   { value: 'warning', label: 'AVERTISSEMENT', icon: '⚠️', bg: 'bg-amber-50',  border: 'border-amber-300',  text: 'text-amber-700'  },
   { value: 'success', label: 'SUCCÈS',       icon: '✅', bg: 'bg-emerald-50', border: 'border-emerald-300', text: 'text-emerald-700' },
   { value: 'error',   label: 'ERREUR',       icon: '❌', bg: 'bg-red-50',     border: 'border-red-300',     text: 'text-red-700'    },
@@ -72,7 +72,7 @@ export function AddInfoBlockDialog({ open, onOpenChange, onAdd, existing }: Prop
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm">Style d'affichage</Label>
-              <button type="button" className="text-xs text-[#c2440f] hover:underline">Thème de couleur</button>
+              <button type="button" className="text-xs text-[#2d6a4f] hover:underline">Thème de couleur</button>
             </div>
             <div className="grid grid-cols-4 gap-2">
               {STYLES.map(s => (
@@ -115,7 +115,7 @@ export function AddInfoBlockDialog({ open, onOpenChange, onAdd, existing }: Prop
               size="sm"
               onClick={handleSubmit}
               disabled={!content.trim()}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
             >
               {isEdit ? 'Enregistrer les modifications' : 'Ajouter le bloc d\'info'}
             </Button>

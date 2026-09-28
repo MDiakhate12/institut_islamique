@@ -50,7 +50,7 @@ export default function SubmitAttendanceDialog({ open, onClose, onConfirm, isLoa
           <Button
             onClick={onConfirm}
             disabled={isLoading}
-            style={{ backgroundColor: '#c2440f' }}
+            style={{ backgroundColor: '#2d6a4f' }}
             className="text-white hover:opacity-90"
           >
             {isLoading ? 'Soumission...' : 'Soumettre'}

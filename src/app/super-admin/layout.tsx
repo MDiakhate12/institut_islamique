@@ -20,7 +20,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-[#5c3820] text-white px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md">
+      <header className="bg-[#1e4535] text-white px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md">
         <div className="flex items-center gap-3">
           <Shield className="h-5 w-5 text-amber-300" />
           <span className="font-bold text-base">Qaf School — Super Admin</span>

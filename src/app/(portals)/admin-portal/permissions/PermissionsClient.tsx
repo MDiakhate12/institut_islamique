@@ -49,8 +49,8 @@ function MemberCard({
         Révoquer
       </button>
 
-      <div className="h-9 w-9 rounded-full bg-[#fdf6f0] border border-[#f0dcc8] flex items-center justify-center">
-        <ShieldCheck className="h-4.5 w-4.5 text-[#c2440f]" />
+      <div className="h-9 w-9 rounded-full bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center">
+        <ShieldCheck className="h-4.5 w-4.5 text-[#2d6a4f]" />
       </div>
 
       <div className="space-y-1">
@@ -113,10 +113,10 @@ const SECTIONS: SectionConfig[] = [
     role: 'admin',
     label: 'Administrateurs actuels',
     description: 'Accès complet à toutes les fonctionnalités et paramètres.',
-    icon: <ShieldCheck className="h-4.5 w-4.5 text-[#c2440f]" />,
-    accentClass: 'text-[#c2440f]',
+    icon: <ShieldCheck className="h-4.5 w-4.5 text-[#2d6a4f]" />,
+    accentClass: 'text-[#2d6a4f]',
     emptyText: 'Aucun administrateur assigné pour l\'instant.',
-    buttonClass: 'bg-[#c2440f] hover:bg-[#a33a0d] text-white',
+    buttonClass: 'bg-[#2d6a4f] hover:bg-[#1b4332] text-white',
     buttonLabel: 'Ajouter un nouvel administrateur',
   },
   {
@@ -212,7 +212,7 @@ export function PermissionsClient({ schoolName }: { schoolName: string }) {
   return (
     <div className="p-6 space-y-10 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-[#7a4f30]">Autorisations</h1>
+        <h1 className="text-2xl font-bold text-[#2d6a4f]">Autorisations</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Gérer les accès administratifs et les rôles
         </p>

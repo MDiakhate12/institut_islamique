@@ -103,7 +103,7 @@ export const stickyNotes = pgTable('sticky_notes', {
   schoolId:  uuid('school_id').notNull().references(() => schools.id, { onDelete: 'cascade' }),
   userId:    uuid('user_id').notNull(),
   content:   text('content').notNull(),
-  color:     text('color').default('#fdf6f0'),
+  color:     text('color').default('#f4f9f3'),
   positionX: integer('position_x').default(0),
   positionY: integer('position_y').default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

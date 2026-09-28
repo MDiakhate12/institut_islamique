@@ -166,11 +166,11 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
       {/* Surah info + reciter */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#7a4f30] text-white text-xs font-bold">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2d6a4f] text-white text-xs font-bold">
             {surahNumber}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#7a4f30] leading-tight truncate">{surahArabic}</p>
+            <p className="text-sm font-semibold text-[#2d6a4f] leading-tight truncate">{surahArabic}</p>
             <p className="text-xs text-muted-foreground leading-tight">{surahName}</p>
           </div>
         </div>
@@ -180,7 +180,7 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
           <button
             type="button"
             onClick={() => setMenu(m => !m)}
-            className="flex items-center gap-1 rounded-lg border border-orange-200 bg-white px-2 py-1.5 text-xs text-[#7a4f30] hover:bg-orange-50 transition-colors max-w-[220px]"
+            className="flex items-center gap-1 rounded-lg border border-orange-200 bg-white px-2 py-1.5 text-xs text-[#2d6a4f] hover:bg-orange-50 transition-colors max-w-[220px]"
           >
             <span className="truncate font-medium">{reciter.label}</span>
             <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
@@ -194,14 +194,14 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
                   onClick={() => { setReciterId(r.id); setMenu(false) }}
                   className={cn(
                     'flex w-full items-center justify-between gap-2 px-3 py-2.5 text-sm hover:bg-orange-50 transition-colors',
-                    r.id === reciterId ? 'text-[#c2440f] font-medium' : 'text-foreground'
+                    r.id === reciterId ? 'text-[#2d6a4f] font-medium' : 'text-foreground'
                   )}
                 >
                   <div className="text-right min-w-0">
                     <p className="font-medium truncate">{r.arabic}</p>
                     <p className="text-xs text-muted-foreground truncate">{r.label}</p>
                   </div>
-                  {r.id === reciterId && <Check className="h-3.5 w-3.5 shrink-0 text-[#c2440f]" />}
+                  {r.id === reciterId && <Check className="h-3.5 w-3.5 shrink-0 text-[#2d6a4f]" />}
                 </button>
               ))}
             </div>
@@ -211,7 +211,7 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
 
       {/* Ayah info */}
       <div className="mt-2 flex justify-center">
-        <span className="rounded-full bg-orange-100 px-3 py-0.5 text-xs text-[#c2440f] font-medium">
+        <span className="rounded-full bg-orange-100 px-3 py-0.5 text-xs text-[#2d6a4f] font-medium">
           Ayah {currentAyah} · Ayah {currentAyah - fromVerse + 1} sur {totalAyahs}
         </span>
       </div>
@@ -226,7 +226,7 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
           onChange={handleSeek}
           className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer"
           style={{
-            background: `linear-gradient(to right, #c2440f ${progress * 100}%, #e5e7eb ${progress * 100}%)`
+            background: `linear-gradient(to right, #2d6a4f ${progress * 100}%, #e5e7eb ${progress * 100}%)`
           }}
         />
         <span className="text-[10px] text-muted-foreground w-7">{fmtTime(duration)}</span>
@@ -234,16 +234,16 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
 
       {/* Controls */}
       <div className="mt-2 flex items-center justify-center gap-4">
-        <button type="button" onClick={toggleMute} className="text-muted-foreground hover:text-[#7a4f30] transition-colors">
+        <button type="button" onClick={toggleMute} className="text-muted-foreground hover:text-[#2d6a4f] transition-colors">
           {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </button>
-        <button type="button" onClick={handlePrev} className="text-muted-foreground hover:text-[#7a4f30] transition-colors">
+        <button type="button" onClick={handlePrev} className="text-muted-foreground hover:text-[#2d6a4f] transition-colors">
           <SkipBack className="h-5 w-5" />
         </button>
         <button
           type="button"
           onClick={togglePlay}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7a4f30] text-white shadow-md hover:bg-[#5c3820] transition-colors"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2d6a4f] text-white shadow-md hover:bg-[#1e4535] transition-colors"
         >
           {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-0.5" />}
         </button>
@@ -251,7 +251,7 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
           type="button"
           onClick={handleNext}
           disabled={currentAyah >= toVerse}
-          className="text-muted-foreground hover:text-[#7a4f30] transition-colors disabled:opacity-30"
+          className="text-muted-foreground hover:text-[#2d6a4f] transition-colors disabled:opacity-30"
         >
           <SkipForward className="h-5 w-5" />
         </button>
@@ -259,18 +259,18 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
           <button
             type="button"
             onClick={() => setRepeatMax(r => Math.min(r + 1, 10))}
-            className="text-[#c2440f] hover:text-[#a33a0d] transition-colors p-0.5"
+            className="text-[#2d6a4f] hover:text-[#1b4332] transition-colors p-0.5"
           >
             <ChevronUp className="h-3.5 w-3.5" />
           </button>
           <div className="flex items-center gap-1">
-            <RefreshCw className="h-4 w-4 text-[#c2440f]" />
-            <span className="text-xs font-bold text-[#c2440f]">{repeatMax}×</span>
+            <RefreshCw className="h-4 w-4 text-[#2d6a4f]" />
+            <span className="text-xs font-bold text-[#2d6a4f]">{repeatMax}×</span>
           </div>
           <button
             type="button"
             onClick={() => setRepeatMax(r => Math.max(r - 1, 1))}
-            className="text-[#c2440f] hover:text-[#a33a0d] transition-colors p-0.5"
+            className="text-[#2d6a4f] hover:text-[#1b4332] transition-colors p-0.5"
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
@@ -282,7 +282,7 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
         <span className="rounded-full bg-white border border-orange-200 px-2.5 py-0.5 text-[10px] text-muted-foreground">
           Répétition de chaque ayah {repeatMax} fois
         </span>
-        <span className="rounded-full bg-white border border-orange-200 px-2.5 py-0.5 text-[10px] text-[#c2440f] font-medium">
+        <span className="rounded-full bg-white border border-orange-200 px-2.5 py-0.5 text-[10px] text-[#2d6a4f] font-medium">
           {repeatCycle} sur {repeatMax}
         </span>
       </div>

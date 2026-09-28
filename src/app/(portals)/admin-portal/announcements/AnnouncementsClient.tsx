@@ -45,8 +45,8 @@ export function AnnouncementsClient({ schoolName }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <Megaphone className="h-7 w-7 text-[#c2440f]" />
-            <h1 className="text-2xl font-bold text-[#7a4f30]">Annonces</h1>
+            <Megaphone className="h-7 w-7 text-[#2d6a4f]" />
+            <h1 className="text-2xl font-bold text-[#2d6a4f]">Annonces</h1>
           </div>
           <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
             <span>🔔</span>
@@ -55,7 +55,7 @@ export function AnnouncementsClient({ schoolName }: Props) {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 bg-[#c2440f] hover:bg-[#a33a0d] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shrink-0"
+          className="flex items-center gap-2 bg-[#2d6a4f] hover:bg-[#1b4332] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shrink-0"
         >
           <Plus className="h-4 w-4" />
           Créer une annonce

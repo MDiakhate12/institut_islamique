@@ -127,7 +127,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={trigger ?? (
-          <Button size="sm" className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5">
+          <Button size="sm" className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
             <Plus className="h-4 w-4" />
             Créer une nouvelle classe
           </Button>
@@ -138,7 +138,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
       <DialogContent className="w-[95vw] max-w-5xl max-h-[95vh] overflow-y-auto p-0 [&>button]:top-4 [&>button]:right-4 [&>button]:text-white [&>button]:hover:text-white/80">
 
         {/* Header orange */}
-        <div className="bg-gradient-to-r from-[#c2440f] to-[#a33a0d] px-7 py-5 rounded-t-lg sticky top-0 z-10">
+        <div className="bg-gradient-to-r from-[#2d6a4f] to-[#1b4332] px-7 py-5 rounded-t-lg sticky top-0 z-10">
           <DialogHeader>
             <DialogTitle className="text-white text-lg font-semibold">
               {isEditing ? 'Modifier les infos de la classe' : 'Ajouter une nouvelle classe au catalogue'}
@@ -165,7 +165,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
                 </label>
                 <select
                   {...form.register('subjectCode')}
-                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+                  className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
                 >
                   <option value="">Choisir une matière</option>
                   {SUBJECTS.map(s => (
@@ -245,7 +245,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
                     value={watchedPrevId ?? ''}
                     onChange={e => form.setValue('previousClassId', e.target.value || null)}
                     disabled={!watchedSubject}
-                    className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 disabled:opacity-50 disabled:bg-muted/20"
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 disabled:opacity-50 disabled:bg-muted/20"
                   >
                     <option value="">
                       {watchedSubject ? 'Aucune' : "Sélectionner le type d'abord"}
@@ -298,7 +298,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
                     value={watchedNextId ?? ''}
                     onChange={e => form.setValue('nextClassId', e.target.value || null)}
                     disabled={!watchedSubject}
-                    className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 disabled:opacity-50 disabled:bg-muted/20"
+                    className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 disabled:opacity-50 disabled:bg-muted/20"
                   >
                     <option value="">
                       {watchedSubject ? 'Aucune' : "Sélectionner le type d'abord"}
@@ -312,7 +312,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
                 </div>
               </div>
               {nextClassForPreview && (
-                <div className="flex items-center gap-1.5 text-sm text-[#c2440f]">
+                <div className="flex items-center gap-1.5 text-sm text-[#2d6a4f]">
                   <ArrowRight className="h-4 w-4" />
                   <span>
                     Les élèves passent à <strong>{nextClassForPreview.code}</strong>
@@ -362,7 +362,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
               <button
                 type="button"
                 onClick={() => form.setValue('curriculum', Object.values(TEMPLATE_SECTIONS).join('\n'))}
-                className="h-7 px-2.5 text-xs border border-[#c2440f]/40 rounded bg-[#c2440f]/5 hover:bg-[#c2440f]/10 text-[#c2440f] flex items-center gap-1 shadow-sm"
+                className="h-7 px-2.5 text-xs border border-[#2d6a4f]/40 rounded bg-[#2d6a4f]/5 hover:bg-[#2d6a4f]/10 text-[#2d6a4f] flex items-center gap-1 shadow-sm"
               >
                 <ChevronRight className="h-3 w-3" />
                 Start from Template
@@ -377,7 +377,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
               }}
               rows={16}
               placeholder="Décrivez le programme de cette classe..."
-              className="w-full border border-border rounded-b-md px-4 py-3 text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 -mt-px"
+              className="w-full border border-border rounded-b-md px-4 py-3 text-sm font-mono resize-y focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 -mt-px"
             />
             <p className="text-xs text-muted-foreground">
               Tip: Use the toolbar buttons to format text. Click template buttons to quickly insert common sections.
@@ -399,7 +399,7 @@ export function ClassCatalogFormDialog({ catalogClass, allClasses = [], trigger,
                 Annuler
               </Button>
               <Button type="submit" size="sm" disabled={isPending}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-44">
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white min-w-44">
                 {isPending
                   ? 'Enregistrement...'
                   : isEditing ? 'Enregistrer les modifications' : 'Ajouter la classe'}

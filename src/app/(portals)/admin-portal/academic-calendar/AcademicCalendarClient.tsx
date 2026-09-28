@@ -227,7 +227,7 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
               onClick={() => { setTypeFilter('all'); setFilterOpen(false) }}
               className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center gap-2"
             >
-              {typeFilter === 'all' && <span className="text-[#c2440f]">✓</span>}
+              {typeFilter === 'all' && <span className="text-[#2d6a4f]">✓</span>}
               {typeFilter !== 'all' && <span className="w-4" />}
               Tous les événements
             </button>
@@ -240,7 +240,7 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
                   onClick={() => { setTypeFilter(type); setFilterOpen(false) }}
                   className="w-full text-left px-3 py-1.5 text-sm hover:bg-muted/50 flex items-center gap-2"
                 >
-                  {typeFilter === type && <span className="text-[#c2440f]">✓</span>}
+                  {typeFilter === type && <span className="text-[#2d6a4f]">✓</span>}
                   {typeFilter !== type && <span className="w-4" />}
                   <span>{cfg.emoji}</span>
                   <span>{cfg.label}</span>
@@ -274,7 +274,7 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
                   onClick={() => setView(v)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors border-r border-border last:border-r-0',
-                    isActive ? 'bg-[#c2440f] text-white' : 'text-muted-foreground hover:bg-muted/30'
+                    isActive ? 'bg-[#2d6a4f] text-white' : 'text-muted-foreground hover:bg-muted/30'
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -291,7 +291,7 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
           {!readonly && (
             <Button
               onClick={openCreate}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5"
             >
               <Plus className="h-4 w-4" />
               Ajouter un événement
@@ -326,7 +326,7 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
-          <h2 className="text-lg font-semibold text-[#c2440f]">{dateLabel}</h2>
+          <h2 className="text-lg font-semibold text-[#2d6a4f]">{dateLabel}</h2>
         </div>
       )}
 
@@ -448,7 +448,7 @@ function ListViewContent({
             onClick={setAllDays}
             className={cn(
               'px-3 py-1.5 text-xs font-medium border-r border-border transition-colors',
-              activeDays.length === 7 ? 'bg-[#c2440f] text-white' : 'text-muted-foreground hover:bg-muted/30'
+              activeDays.length === 7 ? 'bg-[#2d6a4f] text-white' : 'text-muted-foreground hover:bg-muted/30'
             )}
           >
             Tous
@@ -460,7 +460,7 @@ function ListViewContent({
               onClick={() => toggleDay(d.key)}
               className={cn(
                 'px-2.5 py-1.5 text-xs font-medium border-r border-border last:border-r-0 transition-colors',
-                activeDays.includes(d.key) ? 'bg-[#c2440f]/10 text-[#c2440f]' : 'text-muted-foreground hover:bg-muted/30'
+                activeDays.includes(d.key) ? 'bg-[#2d6a4f]/10 text-[#2d6a4f]' : 'text-muted-foreground hover:bg-muted/30'
               )}
             >
               {d.label}
@@ -490,7 +490,7 @@ function ListViewContent({
 
           return (
             <div key={monthKey}>
-              <h3 className="text-base font-semibold text-[#c2440f] mb-2">{monthLabel}</h3>
+              <h3 className="text-base font-semibold text-[#2d6a4f] mb-2">{monthLabel}</h3>
               <div className="rounded-xl border border-border overflow-hidden bg-white">
                 {/* Header */}
                 <div className="grid grid-cols-[120px_1fr] border-b border-border px-4 py-2 bg-muted/10">
@@ -568,7 +568,7 @@ function FilterChip({ active, onClick, label, icon }: {
       className={cn(
         'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors',
         active
-          ? 'bg-[#c2440f]/10 border-[#c2440f]/30 text-[#c2440f]'
+          ? 'bg-[#2d6a4f]/10 border-[#2d6a4f]/30 text-[#2d6a4f]'
           : 'border-border text-muted-foreground hover:bg-muted/30'
       )}
     >

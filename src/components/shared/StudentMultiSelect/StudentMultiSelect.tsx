@@ -70,7 +70,7 @@ export function StudentMultiSelect({ options, selected, onChange, placeholder = 
                 >
                   <span className={cn(
                     'shrink-0 w-4 h-4 rounded border flex items-center justify-center',
-                    selected.includes(o.id) ? 'bg-[#c2440f] border-[#c2440f]' : 'border-gray-300'
+                    selected.includes(o.id) ? 'bg-[#2d6a4f] border-[#2d6a4f]' : 'border-gray-300'
                   )}>
                     {selected.includes(o.id) && <Check className="w-3 h-3 text-white" />}
                   </span>

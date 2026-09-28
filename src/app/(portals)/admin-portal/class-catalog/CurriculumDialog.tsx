@@ -22,7 +22,7 @@ function renderCurriculum(text: string) {
 
     if (line.startsWith('## ')) {
       elements.push(
-        <h3 key={i} className="text-sm font-bold text-[#c2440f] mt-5 mb-1.5 first:mt-0">
+        <h3 key={i} className="text-sm font-bold text-[#2d6a4f] mt-5 mb-1.5 first:mt-0">
           {line.slice(3)}
         </h3>
       )
@@ -37,7 +37,7 @@ function renderCurriculum(text: string) {
         <ol key={`ol-${i}`} className="space-y-1 mb-1">
           {items.map((item, j) => (
             <li key={j} className="flex items-start gap-2 text-sm">
-              <span className="text-[#c2440f] font-semibold shrink-0 w-4 tabular-nums">{j + 1}.</span>
+              <span className="text-[#2d6a4f] font-semibold shrink-0 w-4 tabular-nums">{j + 1}.</span>
               <span>{item}</span>
             </li>
           ))}
@@ -53,7 +53,7 @@ function renderCurriculum(text: string) {
         <ul key={`ul-${i}`} className="space-y-1 mb-1">
           {items.map((item, j) => (
             <li key={j} className="flex items-start gap-2 text-sm">
-              <span className="text-[#c2440f] shrink-0">•</span>
+              <span className="text-[#2d6a4f] shrink-0">•</span>
               <span>{item}</span>
             </li>
           ))}

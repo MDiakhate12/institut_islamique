@@ -118,7 +118,7 @@ function buildResumeHtml(overview: AdminHomeworkOverview, dateStr: string, schoo
 <title>${fmtFilename(dateStr)}</title>
 <style>
   body { font-family: -apple-system, Arial, sans-serif; margin: 0; padding: 40px; color: #111; }
-  .header { background: linear-gradient(135deg,#7a4f30,#5c3820); color: white; padding: 24px 32px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+  .header { background: linear-gradient(135deg,#2d6a4f,#1e4535); color: white; padding: 24px 32px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
   .header h1 { margin:0; font-size:22px; font-weight:700; }
   .header .sub { margin:4px 0 0; font-size:13px; opacity:.8; }
   .header .school { font-size:14px; font-weight:600; opacity:.9; }
@@ -346,14 +346,14 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
       </div>
 
       {/* Date banner */}
-      <div className="flex items-center justify-between rounded-xl border border-border bg-[#fdf6f0] px-5 py-4">
+      <div className="flex items-center justify-between rounded-xl border border-border bg-[#f4f9f3] px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#c2440f]/10">
-            <CalendarDays className="h-5 w-5 text-[#c2440f]" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2d6a4f]/10">
+            <CalendarDays className="h-5 w-5 text-[#2d6a4f]" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Devoirs consultés pour le</p>
-            <p className="font-semibold text-[#c2440f] capitalize">{fmtLongDate(date)}</p>
+            <p className="font-semibold text-[#2d6a4f] capitalize">{fmtLongDate(date)}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -378,7 +378,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2.5 text-xs text-[#c2440f]"
+            className="h-8 px-2.5 text-xs text-[#2d6a4f]"
             onClick={() => { setDate(latestSchoolDay(schoolDays)); setFilter(null) }}
           >
             Aller à aujourd&apos;hui
@@ -408,7 +408,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
           <Button
             size="sm"
             className="gap-2 text-xs h-8"
-            style={{ backgroundColor: '#7a4f30' }}
+            style={{ backgroundColor: '#2d6a4f' }}
           >
             <Bell className="h-3.5 w-3.5" />
             Relancer les enseignants

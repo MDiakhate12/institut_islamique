@@ -62,7 +62,7 @@ function TypeCard({
       className={cn(
         'flex flex-col items-center justify-center gap-2 py-3 px-1 rounded-xl border-2 transition-all text-center',
         selected
-          ? 'border-[#7a4f30] bg-[#7a4f30]/5 text-[#7a4f30]'
+          ? 'border-[#2d6a4f] bg-[#2d6a4f]/5 text-[#2d6a4f]'
           : 'border-border bg-white text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground'
       )}
     >
@@ -167,13 +167,13 @@ export function AddFieldDialog({ open, onOpenChange, onAdd, existing }: Props) {
             >
               <span className={cn(
                 'text-sm font-medium transition-colors',
-                required ? 'text-[#c2440f]' : 'text-muted-foreground'
+                required ? 'text-[#2d6a4f]' : 'text-muted-foreground'
               )}>
                 Obligatoire
               </span>
               <div className={cn(
                 'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
-                required ? 'bg-[#c2440f]' : 'bg-muted-foreground/30'
+                required ? 'bg-[#2d6a4f]' : 'bg-muted-foreground/30'
               )}>
                 <span className={cn(
                   'inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform',
@@ -202,7 +202,7 @@ export function AddFieldDialog({ open, onOpenChange, onAdd, existing }: Props) {
 
           {/* ── Type selector — row 1 (6) + row 2 (5) ────────────────────── */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-[#c2440f]">Type de question</Label>
+            <Label className="text-sm font-medium text-[#2d6a4f]">Type de question</Label>
             <div className="space-y-2">
               <div className="grid grid-cols-6 gap-2">
                 {ROW1.map(ft => (
@@ -309,7 +309,7 @@ export function AddFieldDialog({ open, onOpenChange, onAdd, existing }: Props) {
               size="sm"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
             >
               {isEdit ? 'Enregistrer les modifications' : 'Ajouter la question'}
             </Button>

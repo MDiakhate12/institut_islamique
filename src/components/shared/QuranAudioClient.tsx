@@ -207,28 +207,28 @@ export default function QuranAudioClient() {
   const rangeNums = Array.from({ length: totalAyahs }, (_, i) => fromVerse + i)
 
   return (
-    <div className="flex flex-col bg-[#fdf6f0] min-h-screen">
+    <div className="flex flex-col bg-[#f4f9f3] min-h-screen">
       <div className="max-w-2xl mx-auto w-full px-4 py-8 space-y-6">
 
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="bg-[#7a4f30]/10 rounded-xl p-2.5">
-            <Music2 className="h-6 w-6 text-[#c2440f]" />
+          <div className="bg-[#2d6a4f]/10 rounded-xl p-2.5">
+            <Music2 className="h-6 w-6 text-[#2d6a4f]" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#c2440f]">Audio Coran</h1>
+            <h1 className="text-2xl font-bold text-[#2d6a4f]">Audio Coran</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Écoutez de belles récitations coraniques. Sélectionnez une sourate et choisissez votre récitant préféré.
             </p>
           </div>
         </div>
 
-        <p className="text-right text-lg text-[#7a4f30]" dir="rtl">استمع إلى القرآن الكريم</p>
+        <p className="text-right text-lg text-[#2d6a4f]" dir="rtl">استمع إلى القرآن الكريم</p>
 
         {/* Surah selector card */}
         <div className="bg-white rounded-2xl border border-border shadow-sm p-5 space-y-4">
           <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <span className="text-[#7a4f30] text-base">☰</span>
+            <span className="text-[#2d6a4f] text-base">☰</span>
             Sélectionner une Sourate
           </p>
 
@@ -236,7 +236,7 @@ export default function QuranAudioClient() {
           <select
             value={selectedNumber}
             onChange={e => handleSurahChange(Number(e.target.value))}
-            className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20 cursor-pointer"
+            className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 cursor-pointer"
           >
             {[...SURAHS_BY_NUMBER].reverse().map(s => (
               <option key={s.number} value={s.number}>
@@ -255,7 +255,7 @@ export default function QuranAudioClient() {
               onClick={handleFullSurahToggle}
               className={cn(
                 'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
-                isFullSurah ? 'bg-[#c2440f]' : 'bg-gray-200'
+                isFullSurah ? 'bg-[#2d6a4f]' : 'bg-gray-200'
               )}
             >
               <span className={cn(
@@ -277,7 +277,7 @@ export default function QuranAudioClient() {
                     setFromVerse(v)
                     if (v > toVerse) setToVerse(v)
                   }}
-                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20"
+                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20"
                 >
                   {ayahNums.map(n => (
                     <option key={n} value={n}>Ayah {n}</option>
@@ -289,7 +289,7 @@ export default function QuranAudioClient() {
                 <select
                   value={toVerse}
                   onChange={e => setToVerse(Number(e.target.value))}
-                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c2440f]/20"
+                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20"
                 >
                   {ayahNums.filter(n => n >= fromVerse).map(n => (
                     <option key={n} value={n}>Ayah {n}</option>
@@ -307,11 +307,11 @@ export default function QuranAudioClient() {
             {/* Surah info + reciter selector */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-full bg-[#c2440f] text-white text-xs font-bold">
+                <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-full bg-[#2d6a4f] text-white text-xs font-bold">
                   {selectedNumber}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-bold text-[#7a4f30] leading-tight" dir="rtl">{selectedSurah.arabic}</p>
+                  <p className="font-bold text-[#2d6a4f] leading-tight" dir="rtl">{selectedSurah.arabic}</p>
                   <p className="text-xs text-muted-foreground leading-tight">{selectedSurah.name}</p>
                 </div>
               </div>
@@ -319,7 +319,7 @@ export default function QuranAudioClient() {
               <div className="relative shrink-0">
                 <button
                   onClick={() => setShowReciterMenu(m => !m)}
-                  className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-white px-2.5 py-2 text-xs text-[#7a4f30] hover:bg-orange-50 transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-white px-2.5 py-2 text-xs text-[#2d6a4f] hover:bg-orange-50 transition-colors"
                 >
                   <div className="text-right min-w-0 max-w-[160px]">
                     <p className="font-medium truncate text-xs" dir="rtl">{reciter.arabic}</p>
@@ -335,14 +335,14 @@ export default function QuranAudioClient() {
                         onClick={() => { setReciterId(r.id); setShowReciterMenu(false) }}
                         className={cn(
                           'flex w-full items-center gap-2 px-3 py-2.5 text-sm transition-colors',
-                          r.id === reciterId ? 'bg-orange-50 text-[#c2440f]' : 'hover:bg-orange-50/60 text-foreground'
+                          r.id === reciterId ? 'bg-orange-50 text-[#2d6a4f]' : 'hover:bg-orange-50/60 text-foreground'
                         )}
                       >
                         <div className="flex-1 text-right min-w-0" dir="rtl">
                           <p className="font-medium text-xs truncate">{r.arabic}</p>
                           <p className="text-[10px] text-muted-foreground truncate" dir="ltr">{r.label}</p>
                         </div>
-                        {r.id === reciterId && <Check className="h-3.5 w-3.5 shrink-0 text-[#c2440f]" />}
+                        {r.id === reciterId && <Check className="h-3.5 w-3.5 shrink-0 text-[#2d6a4f]" />}
                       </button>
                     ))}
                   </div>
@@ -352,7 +352,7 @@ export default function QuranAudioClient() {
 
             {/* Ayah indicator chip */}
             <div className="flex justify-center">
-              <span className="rounded-full bg-white/80 border border-orange-200 px-3 py-0.5 text-xs text-[#c2440f] font-medium">
+              <span className="rounded-full bg-white/80 border border-orange-200 px-3 py-0.5 text-xs text-[#2d6a4f] font-medium">
                 Ayah {currentAyah} · Ayah {currentAyah - fromVerse + 1} sur {fromVerse}-{toVerse}
               </span>
             </div>
@@ -364,9 +364,9 @@ export default function QuranAudioClient() {
                 type="range" min={0} max={1} step={0.001}
                 value={progress}
                 onChange={handleSeek}
-                className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer accent-[#c2440f]"
+                className="flex-1 h-1.5 appearance-none rounded-full cursor-pointer accent-[#2d6a4f]"
                 style={{
-                  background: `linear-gradient(to right, #c2440f ${progress * 100}%, #e5e7eb ${progress * 100}%)`,
+                  background: `linear-gradient(to right, #2d6a4f ${progress * 100}%, #e5e7eb ${progress * 100}%)`,
                 }}
               />
               <span className="text-[10px] text-muted-foreground w-8 tabular-nums">{fmtTime(duration)}</span>
@@ -374,22 +374,22 @@ export default function QuranAudioClient() {
 
             {/* Controls */}
             <div className="flex items-center justify-center gap-5">
-              <button onClick={toggleMute} className="text-muted-foreground hover:text-[#7a4f30] transition-colors">
+              <button onClick={toggleMute} className="text-muted-foreground hover:text-[#2d6a4f] transition-colors">
                 {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
               </button>
-              <button onClick={handlePrev} className="text-muted-foreground hover:text-[#7a4f30] transition-colors">
+              <button onClick={handlePrev} className="text-muted-foreground hover:text-[#2d6a4f] transition-colors">
                 <SkipBack className="h-5 w-5" />
               </button>
               <button
                 onClick={togglePlay}
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-[#c2440f] text-white shadow-md hover:bg-[#a33a0d] transition-colors"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2d6a4f] text-white shadow-md hover:bg-[#1b4332] transition-colors"
               >
                 {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 translate-x-0.5" />}
               </button>
               <button
                 onClick={handleNext}
                 disabled={currentAyah >= toVerse}
-                className="text-muted-foreground hover:text-[#7a4f30] transition-colors disabled:opacity-30"
+                className="text-muted-foreground hover:text-[#2d6a4f] transition-colors disabled:opacity-30"
               >
                 <SkipForward className="h-5 w-5" />
               </button>
@@ -398,17 +398,17 @@ export default function QuranAudioClient() {
               <div className="flex flex-col items-center gap-0">
                 <button
                   onClick={() => setRepeatMax(r => Math.min(r + 1, 10))}
-                  className="text-[#c2440f] hover:text-[#a33a0d] transition-colors p-0.5"
+                  className="text-[#2d6a4f] hover:text-[#1b4332] transition-colors p-0.5"
                 >
                   <ChevronUp className="h-3.5 w-3.5" />
                 </button>
                 <div className="flex items-center gap-1">
-                  <RefreshCw className="h-4 w-4 text-[#c2440f]" />
-                  <span className="text-xs font-bold text-[#c2440f]">{repeatMax}×</span>
+                  <RefreshCw className="h-4 w-4 text-[#2d6a4f]" />
+                  <span className="text-xs font-bold text-[#2d6a4f]">{repeatMax}×</span>
                 </div>
                 <button
                   onClick={() => setRepeatMax(r => Math.max(r - 1, 1))}
-                  className="text-[#c2440f] hover:text-[#a33a0d] transition-colors p-0.5"
+                  className="text-[#2d6a4f] hover:text-[#1b4332] transition-colors p-0.5"
                 >
                   <ChevronDown className="h-3.5 w-3.5" />
                 </button>
@@ -420,7 +420,7 @@ export default function QuranAudioClient() {
               <span className="rounded-full bg-white/80 border border-orange-200 px-2.5 py-0.5 text-[10px] text-muted-foreground">
                 Répétition de chaque ayah {repeatMax} fois
               </span>
-              <span className="rounded-full bg-white/80 border border-orange-200 px-2.5 py-0.5 text-[10px] text-[#c2440f] font-medium">
+              <span className="rounded-full bg-white/80 border border-orange-200 px-2.5 py-0.5 text-[10px] text-[#2d6a4f] font-medium">
                 {repeatCycle} sur {repeatMax}
               </span>
             </div>
@@ -434,7 +434,7 @@ export default function QuranAudioClient() {
                   className={cn(
                     'h-8 w-8 rounded-full text-sm font-medium transition-all',
                     n === currentAyah
-                      ? 'bg-[#c2440f] text-white shadow-sm'
+                      ? 'bg-[#2d6a4f] text-white shadow-sm'
                       : 'bg-white border border-orange-200 text-foreground hover:bg-orange-50 hover:border-orange-300'
                   )}
                 >

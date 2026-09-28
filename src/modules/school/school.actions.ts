@@ -112,7 +112,7 @@ export async function sendSupportEmailAction(input: {
 <head><meta charset="UTF-8"></head>
 <body style="font-family:Arial,sans-serif;padding:32px;background:#f9fafb;">
   <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;border:1px solid #e5e7eb;">
-    <h2 style="color:#c2440f;margin:0 0 20px;">Support Qaf School</h2>
+    <h2 style="color:#2d6a4f;margin:0 0 20px;">Support Qaf School</h2>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
       <tr><td style="padding:6px 0;color:#6b7280;width:100px;">Nom</td><td style="padding:6px 0;font-weight:600;">${input.name}</td></tr>
       <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;">${input.email}</td></tr>

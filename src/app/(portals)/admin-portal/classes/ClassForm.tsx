@@ -162,7 +162,7 @@ export function ClassFormDialog({
             <select
               {...form.register('catalogClassId')}
               disabled={!subjectFilter}
-              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30 disabled:opacity-50 disabled:bg-muted/20"
+              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 disabled:opacity-50 disabled:bg-muted/20"
             >
               <option value="">
                 {subjectFilter ? 'Sélectionner un numéro de classe' : "Sélectionner le type d'abord"}
@@ -200,7 +200,7 @@ export function ClassFormDialog({
               <label className="text-sm font-medium mb-1.5 block">Salle de classe</label>
               <select
                 {...form.register('room')}
-                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
               >
                 <option value="">Aucune</option>
                 {roomOptions.map(r => (
@@ -217,7 +217,7 @@ export function ClassFormDialog({
               <select
                 value={teacherId ?? ''}
                 onChange={e => form.setValue('teacherId', e.target.value || null)}
-                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
               >
                 <option value="">Aucun</option>
                 {teachers.filter(t => t.id !== assistantTeacherId).map(t => (
@@ -233,7 +233,7 @@ export function ClassFormDialog({
               <select
                 value={assistantTeacherId ?? ''}
                 onChange={e => form.setValue('assistantTeacherId', e.target.value || null)}
-                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#c2440f]/30"
+                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
               >
                 <option value="">Aucun</option>
                 {teachers.filter(t => t.id !== teacherId).map(t => (
@@ -261,7 +261,7 @@ export function ClassFormDialog({
                 type="submit"
                 size="sm"
                 disabled={isPending}
-                className="bg-[#c2440f] hover:bg-[#a33a0d] text-white min-w-40"
+                className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white min-w-40"
               >
                 {isPending
                   ? 'Enregistrement...'

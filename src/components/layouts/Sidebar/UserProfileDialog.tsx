@@ -56,7 +56,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
           showCloseButton={false}
         >
           {/* ── Header gradient ── */}
-          <div className="relative bg-gradient-to-br from-[#DBA571] to-[#8B4429] px-6 pt-6 pb-8">
+          <div className="relative bg-gradient-to-br from-[#9ecf94] to-[#163828] px-6 pt-6 pb-8">
             {/* Close button */}
             <button
               type="button"
@@ -127,7 +127,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
                   <span className="text-sm text-muted-foreground">Email</span>
                   <a
                     href={`mailto:${session.email}`}
-                    className="text-sm text-[#c2440f] font-medium truncate max-w-[180px] hover:underline"
+                    className="text-sm text-[#2d6a4f] font-medium truncate max-w-[180px] hover:underline"
                   >
                     {session.email}
                   </a>
@@ -158,7 +158,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
                 href={profileHref}
                 onClick={() => setOpen(false)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-                           bg-gradient-to-r from-[#c2440f] to-[#a33a0d] text-white font-medium text-sm
+                           bg-gradient-to-r from-[#2d6a4f] to-[#1b4332] text-white font-medium text-sm
                            hover:opacity-90 transition-opacity"
               >
                 <PenSquare className="h-4 w-4" />

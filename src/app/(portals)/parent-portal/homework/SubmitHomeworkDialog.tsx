@@ -36,7 +36,7 @@ function WaveformBars({ active }: { active: boolean }) {
         <div
           key={i}
           className={cn(
-            'w-1 rounded-full bg-[#c2440f] transition-all',
+            'w-1 rounded-full bg-[#2d6a4f] transition-all',
             active ? 'animate-pulse' : 'opacity-30'
           )}
           style={{
@@ -230,7 +230,7 @@ export function SubmitHomeworkDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Mic className="h-5 w-5 text-[#c2440f]" />
+            <Mic className="h-5 w-5 text-[#2d6a4f]" />
             Soumettre le devoir
           </DialogTitle>
         </DialogHeader>
@@ -239,7 +239,7 @@ export function SubmitHomeworkDialog({
         <div className="rounded-xl bg-muted/40 border border-border p-3 space-y-1.5 text-sm">
           {versesLabel && (
             <div className="flex items-start gap-2">
-              <BookOpen className="h-4 w-4 text-[#c2440f] shrink-0 mt-0.5" />
+              <BookOpen className="h-4 w-4 text-[#2d6a4f] shrink-0 mt-0.5" />
               <span className="text-foreground font-medium">{versesLabel}</span>
             </div>
           )}
@@ -248,8 +248,8 @@ export function SubmitHomeworkDialog({
             <span className="text-muted-foreground">{studentName}</span>
           </div>
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-[#c2440f] shrink-0" />
-            <span className="text-[#c2440f] font-medium">
+            <CalendarDays className="h-4 w-4 text-[#2d6a4f] shrink-0" />
+            <span className="text-[#2d6a4f] font-medium">
               {new Date(assignedDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           </div>
@@ -258,8 +258,8 @@ export function SubmitHomeworkDialog({
         {/* State: idle */}
         {state === 'idle' && (
           <div className="flex flex-col items-center gap-4 py-6">
-            <div className="rounded-full bg-[#c2440f]/10 p-6">
-              <Mic className="h-10 w-10 text-[#c2440f]" />
+            <div className="rounded-full bg-[#2d6a4f]/10 p-6">
+              <Mic className="h-10 w-10 text-[#2d6a4f]" />
             </div>
             <div className="text-center">
               <p className="font-semibold text-foreground">Enregistrer votre récitation</p>
@@ -269,7 +269,7 @@ export function SubmitHomeworkDialog({
             </div>
             <Button
               onClick={startRecording}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-2"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-2"
             >
               <Mic className="h-4 w-4" />
               Commencer l&apos;enregistrement
@@ -306,7 +306,7 @@ export function SubmitHomeworkDialog({
             <div className="w-full space-y-1">
               <div className="relative h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className="absolute h-full rounded-full bg-[#c2440f] transition-all"
+                  className="absolute h-full rounded-full bg-[#2d6a4f] transition-all"
                   style={{ width: duration > 0 ? `${(playTime / duration) * 100}%` : '0%' }}
                 />
               </div>
@@ -331,7 +331,7 @@ export function SubmitHomeworkDialog({
 
             <Button
               onClick={handleSubmit}
-              className="w-full bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-2"
+              className="w-full bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-2"
             >
               <Send className="h-4 w-4" />
               Envoyer au professeur
@@ -342,7 +342,7 @@ export function SubmitHomeworkDialog({
         {/* State: uploading */}
         {state === 'uploading' && (
           <div className="flex flex-col items-center gap-4 py-8">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#c2440f]/20 border-t-[#c2440f]" />
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#2d6a4f]/20 border-t-[#2d6a4f]" />
             <p className="text-sm text-muted-foreground">Envoi en cours…</p>
           </div>
         )}
@@ -361,7 +361,7 @@ export function SubmitHomeworkDialog({
             </div>
             <Button
               onClick={() => onOpenChange(false)}
-              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
             >
               Fermer
             </Button>
