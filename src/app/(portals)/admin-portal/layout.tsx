@@ -3,9 +3,14 @@ import { PortalLayout } from '@/components/layouts/PortalLayout/PortalLayout'
 import { db } from '@/db'
 import { schools, profiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { redirect } from 'next/navigation'
 
 export default async function AdminPortalLayout({ children }: { children: React.ReactNode }) {
   const session = await requireSession()
+
+  if (!session.roles.includes('admin')) {
+    redirect('/teacher-portal')
+  }
 
   const [schoolResult, profileResult] = await Promise.all([
     db.select({ name: schools.name }).from(schools).where(eq(schools.id, session.schoolId)).limit(1),
