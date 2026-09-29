@@ -208,7 +208,7 @@ export async function getPublicRegistrationFormAction(
 
     const [form, classes] = await Promise.all([
       registrationsService.getOrCreateForm(school.id, formType),
-      scheduledClassesService.getCatalogForForm(),
+      scheduledClassesService.getForRegistration(school.id),
     ])
     const settings         = school.settings as { gradeLevels?: string[]; financialOptions?: string[]; academicYear?: string } | null
     const gradeOptions     = settings?.gradeLevels      ?? []
@@ -225,9 +225,9 @@ export async function getPublicRegistrationFormAction(
 // ── Admin: get classes for the form builder preview ───────────────────────────
 
 export async function getAdminRegistrationClassesAction(): Promise<ActionResult<RegistrationClassItem[]>> {
-  await requireSession()
+  const session = await requireSession()
   try {
-    const data = await scheduledClassesService.getCatalogForForm()
+    const data = await scheduledClassesService.getForRegistration(session.schoolId)
     return ok(data)
   } catch (e) {
     console.error('[getAdminRegistrationClassesAction]', e)

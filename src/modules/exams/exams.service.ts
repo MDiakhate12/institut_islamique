@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import {
-  examResults, classes, classCatalog, classEnrollments,
+  examResults, classes, classEnrollments,
   students, schoolMembers, profiles, parentStudents,
 } from '@/db/schema'
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
@@ -36,11 +36,10 @@ export const examsService = {
         classId: classes.id,
         className: classes.name,
         room: classes.room,
-        subjectCode: classCatalog.subjectCode,
-        catalogCode: classCatalog.code,
+        subjectCode: classes.subject,
+        catalogCode: classes.subject,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
       .where(
         and(
           eq(classes.schoolId, schoolId),
@@ -133,11 +132,10 @@ export const examsService = {
       db
         .select({
           name: classes.name,
-          catalogCode: classCatalog.code,
-          subjectCode: classCatalog.subjectCode,
+          catalogCode: classes.subject,
+          subjectCode: classes.subject,
         })
         .from(classes)
-        .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
         .where(and(eq(classes.id, classId), eq(classes.schoolId, schoolId)))
         .limit(1),
     ])
@@ -244,12 +242,11 @@ export const examsService = {
       .select({
         classId: classes.id,
         className: classes.name,
-        catalogCode: classCatalog.code,
-        subjectCode: classCatalog.subjectCode,
+        catalogCode: classes.subject,
+        subjectCode: classes.subject,
         teacherName: profiles.fullName,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
       .leftJoin(schoolMembers, eq(classes.teacherId, schoolMembers.id))
       .leftJoin(profiles, eq(schoolMembers.userId, profiles.userId))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
@@ -359,10 +356,9 @@ export const examsService = {
       .select({
         classId: classes.id,
         className: classes.name,
-        catalogCode: classCatalog.code,
+        catalogCode: classes.subject,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
 
     if (allClasses.length === 0) return []

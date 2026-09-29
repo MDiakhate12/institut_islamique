@@ -32,7 +32,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
   // Classes available for transfer (same school, different class, same subject)
   const transferTargets = allClasses.filter(c =>
     c.id !== scheduledClass.id &&
-    (c.subjectCode === scheduledClass.subjectCode || !scheduledClass.subjectCode)
+    (c.subject === scheduledClass.subject || !scheduledClass.subject)
   )
 
   function handleUnenroll(enrollmentId: string, name: string) {

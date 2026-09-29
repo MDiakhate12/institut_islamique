@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import {
-  wageEntries, schoolMembers, profiles, classes, classCatalog,
+  wageEntries, schoolMembers, profiles, classes,
 } from '@/db/schema'
 import { and, eq, sql } from 'drizzle-orm'
 import { schoolService } from '@/modules/school/school.service'
@@ -16,7 +16,7 @@ async function buildTimesheet(schoolId: string, teacherId?: string): Promise<Wag
       teacherName: profiles.fullName,
       classId: wageEntries.classId,
       className: classes.name,
-      classCode: classCatalog.code,
+      classCode: classes.subject,
       date: wageEntries.date,
       hoursWorked: wageEntries.hoursWorked,
       hourlyRateCents: wageEntries.hourlyRateCents,
@@ -27,7 +27,6 @@ async function buildTimesheet(schoolId: string, teacherId?: string): Promise<Wag
     .leftJoin(schoolMembers, eq(schoolMembers.id, wageEntries.teacherId))
     .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
     .leftJoin(classes, eq(classes.id, wageEntries.classId))
-    .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
     .where(
       teacherId
         ? and(eq(wageEntries.schoolId, schoolId), eq(wageEntries.teacherId, teacherId))
@@ -126,9 +125,8 @@ export const wagesService = {
 
   async getTeacherClassOptions(schoolId: string, teacherId: string): Promise<TeacherClassOption[]> {
     const rows = await db
-      .select({ id: classes.id, name: classes.name, classCode: classCatalog.code })
+      .select({ id: classes.id, name: classes.name, classCode: classes.subject })
       .from(classes)
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.teacherId, teacherId), eq(classes.isActive, true)))
 
     return rows

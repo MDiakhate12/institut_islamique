@@ -1,7 +1,5 @@
-import { requireSession } from '@/lib/auth/session'
-import { ClassCatalogClient } from '@/app/(portals)/admin-portal/class-catalog/ClassCatalogClient'
+import { redirect } from 'next/navigation'
 
-export default async function ParentCatalogPage() {
-  await requireSession()
-  return <ClassCatalogClient readonly />
+export default function ParentCatalogPage() {
+  redirect('/parent-portal/children')
 }

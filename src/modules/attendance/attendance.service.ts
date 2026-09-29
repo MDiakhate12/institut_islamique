@@ -1,7 +1,7 @@
 import { db } from '@/db'
 import {
   attendance, attendanceRecords, teacherAttendanceClasses,
-  classes, classCatalog, classEnrollments, students, schoolMembers, profiles,
+  classes, classEnrollments, students, schoolMembers, profiles,
   parentStudents, schools,
 } from '@/db/schema'
 import { DEFAULT_SETTINGS } from '@/db/schema/schools'
@@ -21,15 +21,13 @@ export const attendanceService = {
       .select({
         pinnedId:    teacherAttendanceClasses.id,
         classId:     classes.id,
-        catalogCode: classCatalog.code,
-        subjectCode: classCatalog.subjectCode,
+        subject:     classes.subject,
         name:        classes.name,
         section:     classes.section,
         teacherName: profiles.fullName,
       })
       .from(teacherAttendanceClasses)
       .innerJoin(classes, eq(classes.id, teacherAttendanceClasses.classId))
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(
@@ -42,8 +40,8 @@ export const attendanceService = {
     return rows.map(r => ({
       pinnedId:    r.pinnedId,
       classId:     r.classId,
-      catalogCode: r.catalogCode ?? '',
-      subjectCode: r.subjectCode ?? '',
+      catalogCode: r.subject,
+      subjectCode: r.subject,
       name:        r.name,
       section:     r.section ?? null,
       teacherName: r.teacherName ?? null,
@@ -65,15 +63,12 @@ export const attendanceService = {
   async getClassOptions(schoolId: string, memberId: string, excludeClassIds: string[] = []): Promise<AttendanceClassOption[]> {
     const rows = await db
       .select({
-        id:          classes.id,
-        catalogCode: classCatalog.code,
-        subjectCode: classCatalog.subjectCode,
-        levelNumber: classCatalog.levelNumber,
-        name:        classes.name,
-        section:     classes.section,
+        id:      classes.id,
+        subject: classes.subject,
+        name:    classes.name,
+        section: classes.section,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .where(and(
         eq(classes.schoolId, schoolId),
         eq(classes.isActive, true),
@@ -85,13 +80,13 @@ export const attendanceService = {
           ? notInArray(classes.id, excludeClassIds)
           : undefined,
       ))
-      .orderBy(classCatalog.subjectCode, classCatalog.levelNumber, classes.section)
+      .orderBy(classes.subject, classes.section)
 
     return rows.map(r => ({
       id:          r.id,
-      catalogCode: r.catalogCode ?? '',
-      subjectCode: r.subjectCode ?? '',
-      levelNumber: r.levelNumber ?? null,
+      catalogCode: r.subject,
+      subjectCode: r.subject,
+      levelNumber: null,
       name:        r.name,
       section:     r.section ?? null,
     }))
@@ -201,12 +196,10 @@ export const attendanceService = {
         room:        classes.room,
         section:     classes.section,
         teacherId:   classes.teacherId,
-        catalogCode: classCatalog.code,
-        subjectCode: classCatalog.subjectCode,
+        subject:     classes.subject,
         teacherName: profiles.fullName,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
@@ -328,8 +321,8 @@ export const attendanceService = {
       classOverviews.push({
         classId:      c.classId,
         name:         c.name,
-        catalogCode:  c.catalogCode ?? '',
-        subjectCode:  c.subjectCode ?? '',
+        catalogCode:  c.subject,
+        subjectCode:  c.subject,
         section:      c.section ?? null,
         room:         c.room ?? null,
         teacherName:  c.teacherName ?? null,
@@ -392,14 +385,13 @@ export const attendanceService = {
     // 3. Student's active class enrollments
     const enrollRows = await db
       .select({
-        classId:     classEnrollments.classId,
-        className:   classes.name,
-        catalogCode: classCatalog.code,
-        section:     classes.section,
+        classId:   classEnrollments.classId,
+        className: classes.name,
+        subject:   classes.subject,
+        section:   classes.section,
       })
       .from(classEnrollments)
       .leftJoin(classes, eq(classes.id, classEnrollments.classId))
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .where(and(
         eq(classEnrollments.studentId, studentId),
         eq(classEnrollments.schoolId, schoolId),
@@ -473,7 +465,7 @@ export const attendanceService = {
           date,
           classId:         cls.classId,
           className:       cls.className ?? '',
-          catalogCode:     cls.catalogCode ?? '',
+          catalogCode:     cls.subject ?? '',
           section:         cls.section ?? null,
           status:          att ? (statusByAttId.get(att.id) ?? null) : null,
           submittedAt:     att?.submittedAt ?? null,

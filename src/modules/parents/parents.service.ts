@@ -1,7 +1,7 @@
 import { db } from '@/db'
 import {
   students, parentStudents, guardians, schoolMembers, profiles,
-  classEnrollments, classes, classCatalog, otpCodes,
+  classEnrollments, classes, otpCodes,
 } from '@/db/schema'
 import { and, eq, asc, isNull, inArray, gt, desc } from 'drizzle-orm'
 import type {
@@ -224,13 +224,12 @@ export const parentsService = {
           className:   classes.name,
           room:        classes.room,
           section:     classes.section,
-          subjectCode: classCatalog.subjectCode,
-          levelNumber: classCatalog.levelNumber,
+          subjectCode: classes.subject,
+          levelNumber: classes.section,
           teacherName: profiles.fullName,
         })
         .from(classEnrollments)
         .leftJoin(classes, eq(classEnrollments.classId, classes.id))
-        .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
         .leftJoin(schoolMembers, eq(classes.teacherId, schoolMembers.id))
         .leftJoin(profiles, eq(schoolMembers.userId, profiles.userId))
         .where(

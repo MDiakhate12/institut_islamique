@@ -1,151 +1,22 @@
 import { db } from '@/db'
-import { classCatalog, classes, classEnrollments, students, schoolMembers, profiles } from '@/db/schema'
+import { classes, classEnrollments, students, schoolMembers, profiles } from '@/db/schema'
 import { eq, and, asc, isNull, inArray, sql } from 'drizzle-orm'
-import type {
-  CreateCatalogClassInput, UpdateCatalogClassInput,
-  CreateClassInput, UpdateClassInput,
-} from './classes.schema'
-import type {
-  CatalogClass, CatalogClassWithNext,
-  ClassWithDetails, EnrolledStudentInClass,
-} from './classes.types'
+import type { CreateClassInput, UpdateClassInput } from './classes.schema'
+import type { ClassWithDetails, EnrolledStudentInClass } from './classes.types'
 import { buildFullCode } from './classes.types'
 import type { Student } from '@/modules/students/students.types'
-
-// ── Catalog service ───────────────────────────────────────────────────────────
-
-export const catalogClassesService = {
-  async getAll(): Promise<CatalogClassWithNext[]> {
-    const rows = await db
-      .select()
-      .from(classCatalog)
-      .orderBy(asc(classCatalog.subjectCode), asc(classCatalog.levelNumber))
-
-    const byId = new Map(rows.map(r => [r.id, r]))
-
-    // Build reverse map: nextClassId → id of the class that points to it as "next"
-    const prevMap = new Map<string, string>()
-    for (const r of rows) {
-      if (r.nextClassId) prevMap.set(r.nextClassId, r.id)
-    }
-
-    return rows.map(r => {
-      const prevId = prevMap.get(r.id) ?? null
-      const prev   = prevId ? byId.get(prevId) : null
-      return {
-        ...r,
-        nextClassName:     r.nextClassId ? (byId.get(r.nextClassId)?.name ?? null) : null,
-        nextClassCode:     r.nextClassId ? (byId.get(r.nextClassId)?.code ?? null) : null,
-        previousClassId:   prevId,
-        previousClassName: prev?.name ?? null,
-        previousClassCode: prev?.code ?? null,
-      }
-    })
-  },
-
-  async getById(id: string): Promise<CatalogClass | null> {
-    const [row] = await db
-      .select()
-      .from(classCatalog)
-      .where(eq(classCatalog.id, id))
-      .limit(1)
-    return row ?? null
-  },
-
-  async create(data: CreateCatalogClassInput): Promise<CatalogClass> {
-    const code = data.levelNumber
-      ? `${data.subjectCode}-${data.levelNumber}`
-      : data.subjectCode
-
-    const [row] = await db
-      .insert(classCatalog)
-      .values({
-        code,
-        subjectCode:  data.subjectCode,
-        levelNumber:  data.levelNumber ?? null,
-        name:         data.name,
-        nextClassId:  data.nextClassId ?? null,
-        curriculum:   data.curriculum  ?? null,
-      })
-      .returning()
-
-    // If a previous class was selected, link it → new class by updating its nextClassId
-    if (data.previousClassId) {
-      await db
-        .update(classCatalog)
-        .set({ nextClassId: row.id, updatedAt: new Date() })
-        .where(eq(classCatalog.id, data.previousClassId))
-    }
-
-    return row
-  },
-
-  async update(id: string, data: UpdateCatalogClassInput): Promise<CatalogClass> {
-    const existing = await this.getById(id)
-    const subjectCode = data.subjectCode ?? existing?.subjectCode ?? ''
-    const levelNumber = data.levelNumber !== undefined ? data.levelNumber : existing?.levelNumber
-
-    const code = levelNumber
-      ? `${subjectCode}-${levelNumber}`
-      : subjectCode
-
-    const [row] = await db
-      .update(classCatalog)
-      .set({
-        code,
-        ...(data.subjectCode  !== undefined && { subjectCode: data.subjectCode }),
-        ...(data.levelNumber  !== undefined && { levelNumber: data.levelNumber ?? null }),
-        ...(data.name         !== undefined && { name: data.name }),
-        ...(data.nextClassId  !== undefined && { nextClassId: data.nextClassId ?? null }),
-        ...(data.curriculum   !== undefined && { curriculum: data.curriculum ?? null }),
-        updatedAt: new Date(),
-      })
-      .where(eq(classCatalog.id, id))
-      .returning()
-
-    // Handle previous class link change
-    if (data.previousClassId !== undefined) {
-      // Find which class currently points to this one (current previous)
-      const currentAll = await db.select({ id: classCatalog.id, nextClassId: classCatalog.nextClassId }).from(classCatalog)
-      const currentPrev = currentAll.find(r => r.nextClassId === id)
-
-      if (currentPrev && currentPrev.id !== data.previousClassId) {
-        // Old previous class no longer leads here — clear its nextClassId
-        await db
-          .update(classCatalog)
-          .set({ nextClassId: null, updatedAt: new Date() })
-          .where(eq(classCatalog.id, currentPrev.id))
-      }
-
-      if (data.previousClassId) {
-        // New previous class now leads to this one
-        await db
-          .update(classCatalog)
-          .set({ nextClassId: id, updatedAt: new Date() })
-          .where(eq(classCatalog.id, data.previousClassId))
-      }
-    }
-
-    return row
-  },
-
-  async delete(id: string): Promise<void> {
-    await db.delete(classCatalog).where(eq(classCatalog.id, id))
-  },
-}
 
 // ── Scheduled classes service ─────────────────────────────────────────────────
 
 export const scheduledClassesService = {
   async getBySchool(schoolId: string): Promise<ClassWithDetails[]> {
-    // 1. Classes joined with catalog
     const rows = await db
       .select({
         id:                 classes.id,
         schoolId:           classes.schoolId,
-        catalogClassId:     classes.catalogClassId,
         teacherId:          classes.teacherId,
         assistantTeacherId: classes.assistantTeacherId,
+        subject:            classes.subject,
         name:               classes.name,
         room:               classes.room,
         section:            classes.section,
@@ -156,15 +27,10 @@ export const scheduledClassesService = {
         examPeriodT3Open:   classes.examPeriodT3Open,
         createdAt:          classes.createdAt,
         updatedAt:          classes.updatedAt,
-        subjectCode:        classCatalog.subjectCode,
-        levelNumber:        classCatalog.levelNumber,
-        catalogCode:        classCatalog.code,
-        curriculum:         classCatalog.curriculum,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
       .where(eq(classes.schoolId, schoolId))
-      .orderBy(asc(classCatalog.subjectCode), asc(classCatalog.levelNumber), asc(classes.section))
+      .orderBy(asc(classes.subject), asc(classes.section))
 
     if (rows.length === 0) return []
 
@@ -207,7 +73,8 @@ export const scheduledClassesService = {
       teacherName: r.teacherId ? (teacherNameMap.get(r.teacherId) ?? null) : null,
       assistantTeacherName: r.assistantTeacherId ? (teacherNameMap.get(r.assistantTeacherId) ?? null) : null,
       enrollmentCount: countMap.get(r.id) ?? 0,
-      fullCode: buildFullCode(r.catalogCode, r.section),
+      fullCode: buildFullCode(r.subject, r.section),
+      subjectCode: r.subject,
     }))
   },
 
@@ -217,21 +84,14 @@ export const scheduledClassesService = {
   },
 
   async create(schoolId: string, data: CreateClassInput): Promise<string> {
-    // Get name from catalog
-    const [catalogRow] = await db
-      .select({ name: classCatalog.name })
-      .from(classCatalog)
-      .where(eq(classCatalog.id, data.catalogClassId))
-      .limit(1)
-
     const [row] = await db
       .insert(classes)
       .values({
         schoolId,
-        catalogClassId:     data.catalogClassId,
-        teacherId:          data.teacherId    ?? null,
+        subject:            data.subject,
+        teacherId:          data.teacherId          ?? null,
         assistantTeacherId: data.assistantTeacherId ?? null,
-        name:               data.customName?.trim() || catalogRow?.name || 'Classe',
+        name:               data.name.trim(),
         room:               data.room    || null,
         section:            data.section || null,
         academicYear:       data.academicYear,
@@ -245,18 +105,8 @@ export const scheduledClassesService = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: Record<string, any> = { updatedAt: new Date() }
 
-    if (data.catalogClassId !== undefined) {
-      updateData.catalogClassId = data.catalogClassId
-      if (data.catalogClassId) {
-        const [catalogRow] = await db
-          .select({ name: classCatalog.name })
-          .from(classCatalog)
-          .where(eq(classCatalog.id, data.catalogClassId))
-          .limit(1)
-        if (catalogRow) updateData.name = data.customName?.trim() || catalogRow.name
-      }
-    }
-    if (data.customName !== undefined) updateData.name = data.customName.trim() || updateData.name
+    if (data.subject            !== undefined) updateData.subject            = data.subject
+    if (data.name               !== undefined) updateData.name               = data.name.trim()
     if (data.section            !== undefined) updateData.section            = data.section            || null
     if (data.room               !== undefined) updateData.room               = data.room               || null
     if (data.teacherId          !== undefined) updateData.teacherId          = data.teacherId          ?? null
@@ -350,54 +200,26 @@ export const scheduledClassesService = {
     return rows.map(r => r.room).filter((r): r is string => r !== null)
   },
 
-  // Light fetch for the registration form class picker (no teacher/count joins)
+  // Light fetch for the registration form class picker
   async getForRegistration(schoolId: string) {
     const rows = await db
       .select({
-        id:          classes.id,
-        name:        classes.name,
-        section:     classes.section,
-        subjectCode: classCatalog.subjectCode,
-        catalogCode: classCatalog.code,
-        levelNumber: classCatalog.levelNumber,
-        curriculum:  classCatalog.curriculum,
+        id:      classes.id,
+        name:    classes.name,
+        section: classes.section,
+        subject: classes.subject,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classes.catalogClassId, classCatalog.id))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
-      .orderBy(asc(classCatalog.subjectCode), asc(classCatalog.levelNumber), asc(classes.section))
+      .orderBy(asc(classes.subject), asc(classes.section))
 
     return rows.map(r => ({
       id:          r.id,
       name:        r.name,
-      code:        r.catalogCode ?? '',
-      fullCode:    buildFullCode(r.catalogCode, r.section),
-      subjectCode: r.subjectCode ?? 'Other',
-      curriculum:  r.curriculum,
-    }))
-  },
-
-  // All catalog entries for the registration form class picker (not school-specific)
-  async getCatalogForForm() {
-    const rows = await db
-      .select({
-        id:          classCatalog.id,
-        code:        classCatalog.code,
-        name:        classCatalog.name,
-        subjectCode: classCatalog.subjectCode,
-        levelNumber: classCatalog.levelNumber,
-        curriculum:  classCatalog.curriculum,
-      })
-      .from(classCatalog)
-      .orderBy(asc(classCatalog.subjectCode), asc(classCatalog.levelNumber))
-
-    return rows.map(r => ({
-      id:          r.code,   // store the catalog code in formData (e.g. "QRN-100")
-      code:        r.code,
-      fullCode:    r.code,
-      name:        r.name,
-      subjectCode: r.subjectCode,
-      curriculum:  r.curriculum,
+      code:        buildFullCode(r.subject, r.section),
+      fullCode:    buildFullCode(r.subject, r.section),
+      subjectCode: r.subject,
+      curriculum:  null,
     }))
   },
 }

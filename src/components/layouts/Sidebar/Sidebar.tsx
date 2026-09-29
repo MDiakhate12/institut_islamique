@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useRef } from 'react'
 import {
   Users, GraduationCap, BookOpen, ClipboardList, CalendarCheck,
-  BookMarked, Star, BookCopy, CalendarDays, BarChart3, Library,
+  BookMarked, Star, CalendarDays, BarChart3, Library,
   ArrowLeftRight, UserPlus, FileText,
   CreditCard, Receipt,
   StickyNote, Mail, UserSquare2, Megaphone, Cake,
@@ -46,7 +46,6 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Suivi des présences',        href: ROUTES.admin.attendance,         icon: CalendarCheck },
       { label: 'Suivi des devoirs',          href: ROUTES.admin.homework,           icon: BookMarked },
       { label: 'Suivi des étoiles',          href: ROUTES.admin.trackStars,         icon: Star, wip: true },
-      { label: 'Catalogue des classes',      href: ROUTES.admin.classCatalog,       icon: BookCopy },
       { label: 'Calendrier académique',      href: ROUTES.admin.calendar,           icon: CalendarDays },
       { label: 'Rapports',                   href: ROUTES.admin.reports,            icon: BarChart3, wip: true },
       { label: 'Suivi des livres',           href: ROUTES.admin.bookTracking,       icon: Library, wip: true },

@@ -1,7 +1,7 @@
 import { db } from '@/db'
 import {
   homework, homeworkSubmissions, teacherHomeworkClasses, virtualSessions,
-  classes, classCatalog, schoolMembers, profiles,
+  classes, schoolMembers, profiles,
   classEnrollments, students, parentStudents,
 } from '@/db/schema'
 import { eq, and, sql, or, notInArray, desc, inArray, isNull, asc } from 'drizzle-orm'
@@ -31,8 +31,7 @@ export const homeworkService = {
       .select({
         pinnedId:    teacherHomeworkClasses.id,
         classId:     classes.id,
-        catalogCode: classCatalog.code,
-        subjectCode: classCatalog.subjectCode,
+        subject:     classes.subject,
         name:        classes.name,
         section:     classes.section,
         teacherName: profiles.fullName,
@@ -42,7 +41,6 @@ export const homeworkService = {
       })
       .from(teacherHomeworkClasses)
       .innerJoin(classes, eq(classes.id, teacherHomeworkClasses.classId))
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(
@@ -54,8 +52,8 @@ export const homeworkService = {
 
     return rows.map(r => ({
       ...r,
-      catalogCode: r.catalogCode ?? '',
-      subjectCode: r.subjectCode ?? '',
+      catalogCode: r.subject,
+      subjectCode: r.subject,
       teacherName: r.teacherName ?? null,
       homeworkCount: r.homeworkCount ?? 0,
     }))
@@ -78,15 +76,12 @@ export const homeworkService = {
   async getClassOptions(schoolId: string, memberId: string, excludeClassIds: string[] = []): Promise<ClassOption[]> {
     const rows = await db
       .select({
-        id:          classes.id,
-        catalogCode: classCatalog.code,
-        subjectCode: classCatalog.subjectCode,
-        levelNumber: classCatalog.levelNumber,
-        name:        classes.name,
-        section:     classes.section,
+        id:      classes.id,
+        subject: classes.subject,
+        name:    classes.name,
+        section: classes.section,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .where(and(
         eq(classes.schoolId, schoolId),
         eq(classes.isActive, true),
@@ -98,13 +93,13 @@ export const homeworkService = {
           ? notInArray(classes.id, excludeClassIds)
           : undefined,
       ))
-      .orderBy(classCatalog.subjectCode, classCatalog.levelNumber, classes.section)
+      .orderBy(classes.subject, classes.section)
 
     return rows.map(r => ({
       id:          r.id,
-      catalogCode: r.catalogCode ?? '',
-      subjectCode: r.subjectCode ?? '',
-      levelNumber: r.levelNumber ?? null,
+      catalogCode: r.subject,
+      subjectCode: r.subject,
+      levelNumber: null,
       name:        r.name,
       section:     r.section ?? null,
     }))
@@ -336,9 +331,9 @@ export const homeworkService = {
         schoolId:     homework.schoolId,
         classId:      homework.classId,
         className:    classes.name,
-        classCode:    classCatalog.code,
+        classCode:    classes.subject,
         classSection: classes.section,
-        subjectCode:  classCatalog.subjectCode,
+        subjectCode:  classes.subject,
         assignedDate: homework.assignedDate,
         surahName:    homework.surahName,
         surahArabic:  homework.surahArabic,
@@ -355,7 +350,6 @@ export const homeworkService = {
       })
       .from(homework)
       .leftJoin(classes, eq(classes.id, homework.classId))
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .leftJoin(schoolMembers, eq(schoolMembers.id, homework.createdBy))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(and(eq(homework.schoolId, schoolId), inArray(homework.classId, classIds)))
@@ -438,15 +432,14 @@ export const homeworkService = {
       .select({
         classId:     classes.id,
         className:   classes.name,
-        classCode:   classCatalog.code,
-        subjectCode: classCatalog.subjectCode,
+        classCode:   classes.subject,
+        subjectCode: classes.subject,
         section:     classes.section,
         room:        classes.room,
         teacherId:   classes.teacherId,
         teacherName: profiles.fullName,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))

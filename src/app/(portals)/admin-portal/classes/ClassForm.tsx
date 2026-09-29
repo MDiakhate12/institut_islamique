@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState, useEffect, useRef } from 'react'
+import { useTransition, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -8,9 +8,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { createClassSchema, type CreateClassInput } from '@/modules/classes/classes.schema'
 import { createClassAction, updateClassAction, deleteClassAction } from '@/modules/classes/classes.actions'
 import { classKeys } from '@/modules/classes/classes.hooks'
-import { SUBJECT_CODES, getSubjectColor } from '@/modules/classes/classes.types'
+import { SUBJECT_CODES, SUBJECT_LABELS, getSubjectColor } from '@/modules/classes/classes.types'
 import type { ClassWithDetails } from '@/modules/classes/classes.types'
-import type { CatalogClassWithNext } from '@/modules/classes/classes.types'
 import type { TeacherListItem } from '@/modules/teachers/teachers.types'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
@@ -23,7 +22,6 @@ const CURRENT_YEAR = '2025-2026'
 
 interface Props {
   scheduledClass?: ClassWithDetails
-  catalogClasses?: CatalogClassWithNext[]
   teachers?: TeacherListItem[]
   rooms?: string[]
   trigger?: React.ReactNode
@@ -32,7 +30,6 @@ interface Props {
 
 export function ClassFormDialog({
   scheduledClass,
-  catalogClasses = [],
   teachers = [],
   rooms = [],
   trigger,
@@ -45,42 +42,23 @@ export function ClassFormDialog({
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDelete] = useTransition()
 
-  // Subject type filter (derived from editing class or first selection)
-  const [subjectFilter, setSubjectFilter] = useState<string>(
-    scheduledClass?.subjectCode ?? ''
-  )
-
   const form = useForm<CreateClassInput>({
     resolver: zodResolver(createClassSchema),
     defaultValues: {
-      catalogClassId:     scheduledClass?.catalogClassId ?? '',
-      customName:         scheduledClass?.name           ?? '',
-      section:            scheduledClass?.section        ?? '',
-      room:               scheduledClass?.room           ?? '',
-      teacherId:          scheduledClass?.teacherId      ?? null,
+      subject:            scheduledClass?.subject            ?? '',
+      name:               scheduledClass?.name               ?? '',
+      section:            scheduledClass?.section            ?? '',
+      room:               scheduledClass?.room               ?? '',
+      teacherId:          scheduledClass?.teacherId          ?? null,
       assistantTeacherId: scheduledClass?.assistantTeacherId ?? null,
-      academicYear:       scheduledClass?.academicYear   ?? CURRENT_YEAR,
+      academicYear:       scheduledClass?.academicYear       ?? CURRENT_YEAR,
     },
   })
 
-  // Auto-populate name when catalog selection changes (skip on first render)
-  const catalogClassId = form.watch('catalogClassId')
-  const isFirstRender = useRef(true)
-  useEffect(() => {
-    if (isFirstRender.current) { isFirstRender.current = false; return }
-    const selected = catalogClasses.find(c => c.id === catalogClassId)
-    if (selected) form.setValue('customName', selected.name, { shouldDirty: true })
-  }, [catalogClassId]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Catalog classes filtered by selected subject
-  const filteredCatalog = catalogClasses.filter(c =>
-    !subjectFilter || c.subjectCode === subjectFilter
-  )
-
-  const teacherId = form.watch('teacherId')
+  const teacherId          = form.watch('teacherId')
   const assistantTeacherId = form.watch('assistantTeacherId')
+  const selectedSubject    = form.watch('subject')
 
-  // Room options — configured rooms, plus the class's current room if it's since been removed from settings
   const currentRoom = scheduledClass?.room
   const roomOptions = currentRoom && !rooms.includes(currentRoom)
     ? [...rooms, currentRoom]
@@ -96,7 +74,6 @@ export function ClassFormDialog({
       qc.invalidateQueries({ queryKey: classKeys.lists() })
       toast.success(isEditing ? 'Classe modifiée' : 'Classe créée')
       form.reset()
-      setSubjectFilter('')
       setOpen(false)
       onSuccess?.()
     })
@@ -115,7 +92,7 @@ export function ClassFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) isFirstRender.current = true }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) form.reset() }}>
       <DialogTrigger>{trigger}</DialogTrigger>
 
       <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
@@ -125,23 +102,20 @@ export function ClassFormDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1" onReset={() => { isFirstRender.current = true }}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1">
 
-          {/* Type de classe */}
+          {/* Matière */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Type de classe</label>
+            <label className="text-sm font-medium mb-2 block">Matière</label>
             <div className="flex gap-2 flex-wrap">
               {SUBJECT_CODES.map(code => {
                 const colors = getSubjectColor(code)
-                const active = subjectFilter === code
+                const active = selectedSubject === code
                 return (
                   <button
                     key={code}
                     type="button"
-                    onClick={() => {
-                      setSubjectFilter(active ? '' : code)
-                      form.setValue('catalogClassId', '')
-                    }}
+                    onClick={() => form.setValue('subject', active ? '' : code, { shouldValidate: true })}
                     className={cn(
                       'px-3 py-1 rounded-full text-sm font-semibold border-2 transition-all',
                       active
@@ -149,45 +123,26 @@ export function ClassFormDialog({
                         : 'bg-white text-muted-foreground border-border hover:border-muted-foreground'
                     )}
                   >
-                    {code}
+                    {SUBJECT_LABELS[code] ?? code}
                   </button>
                 )
               })}
             </div>
-          </div>
-
-          {/* Numéro de classe */}
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Numéro de classe</label>
-            <select
-              {...form.register('catalogClassId')}
-              disabled={!subjectFilter}
-              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 disabled:opacity-50 disabled:bg-muted/20"
-            >
-              <option value="">
-                {subjectFilter ? 'Sélectionner un numéro de classe' : "Sélectionner le type d'abord"}
-              </option>
-              {filteredCatalog.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.levelNumber} — {c.name}
-                </option>
-              ))}
-            </select>
-            {form.formState.errors.catalogClassId && (
-              <p className="text-xs text-destructive mt-1">{form.formState.errors.catalogClassId.message}</p>
+            {form.formState.errors.subject && (
+              <p className="text-xs text-destructive mt-1">{form.formState.errors.subject.message}</p>
             )}
           </div>
 
-          {/* Nom personnalisé */}
+          {/* Nom de la classe */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">
-              Nom de la classe
-              <span className="ml-1 text-xs font-normal text-muted-foreground">(pré-rempli depuis le catalogue, modifiable)</span>
-            </label>
+            <label className="text-sm font-medium mb-1.5 block">Nom de la classe</label>
             <Input
-              placeholder="ex. Coran Débutants"
-              {...form.register('customName')}
+              placeholder="ex. Coran Débutants, Niveau Intermédiaire..."
+              {...form.register('name')}
             />
+            {form.formState.errors.name && (
+              <p className="text-xs text-destructive mt-1">{form.formState.errors.name.message}</p>
+            )}
           </div>
 
           {/* Section + Salle */}

@@ -1,95 +1,16 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { catalogClassesService, scheduledClassesService } from './classes.service'
-import {
-  createCatalogClassSchema, updateCatalogClassSchema,
-  createClassSchema, updateClassSchema,
-} from './classes.schema'
+import { scheduledClassesService } from './classes.service'
+import { createClassSchema, updateClassSchema } from './classes.schema'
 import { requireSession } from '@/lib/auth/session'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
-import type { CatalogClass, CatalogClassWithNext, ClassWithDetails, EnrolledStudentInClass } from './classes.types'
+import type { ClassWithDetails, EnrolledStudentInClass } from './classes.types'
 import type { Student } from '@/modules/students/students.types'
 import { ROUTES } from '@/lib/constants'
 
-const CATALOG_PATH = '/admin-portal/class-catalog'
 const CLASSES_PATH = ROUTES.admin.classes
-
-// ── Catalog actions ───────────────────────────────────────────────────────────
-
-export async function getCatalogClassesAction(): Promise<ActionResult<CatalogClassWithNext[]>> {
-  await requireSession()
-  try {
-    const data = await catalogClassesService.getAll()
-    return ok(data)
-  } catch (e) {
-    console.error('[getCatalogClassesAction]', e)
-    return err('Impossible de charger le catalogue')
-  }
-}
-
-export async function createCatalogClassAction(
-  input: unknown
-): Promise<ActionResult<CatalogClass>> {
-  const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
-
-  const parsed = createCatalogClassSchema.safeParse(input)
-  if (!parsed.success) return err(parsed.error.issues[0].message)
-
-  try {
-    const row = await catalogClassesService.create(parsed.data)
-    revalidatePath(CATALOG_PATH)
-    return ok(row)
-  } catch (e: unknown) {
-    console.error('[createCatalogClassAction]', e)
-    const allText = [
-      e instanceof Error ? e.message : '',
-      e instanceof Error && e.cause instanceof Error ? e.cause.message : '',
-    ].join(' ')
-    if (allText.includes('unique') || allText.includes('23505')) return err('Ce code de classe existe déjà')
-    return err('Impossible de créer la classe')
-  }
-}
-
-export async function updateCatalogClassAction(
-  id: string,
-  input: unknown
-): Promise<ActionResult<CatalogClass>> {
-  const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
-
-  const parsed = updateCatalogClassSchema.safeParse(input)
-  if (!parsed.success) return err(parsed.error.issues[0].message)
-
-  try {
-    const row = await catalogClassesService.update(id, parsed.data)
-    revalidatePath(CATALOG_PATH)
-    return ok(row)
-  } catch (e) {
-    console.error('[updateCatalogClassAction]', e)
-    return err('Impossible de modifier la classe')
-  }
-}
-
-export async function deleteCatalogClassAction(
-  id: string
-): Promise<ActionResult<void>> {
-  const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
-
-  try {
-    await catalogClassesService.delete(id)
-    revalidatePath(CATALOG_PATH)
-    return ok(undefined)
-  } catch (e) {
-    console.error('[deleteCatalogClassAction]', e)
-    return err('Impossible de supprimer la classe')
-  }
-}
-
-// ── Scheduled class actions ───────────────────────────────────────────────────
 
 export async function getClassesAction(): Promise<ActionResult<ClassWithDetails[]>> {
   const session = await requireSession()

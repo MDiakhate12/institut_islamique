@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import {
-  students, classEnrollments, classes, classCatalog,
+  students, classEnrollments, classes,
   guardians, payments, schoolMembers, profiles,
   attendance, attendanceRecords, homework, homeworkGrades,
   examResults, schools,
@@ -72,7 +72,7 @@ export const studentsService = {
           enrollmentId: classEnrollments.id,
           studentId:    classEnrollments.studentId,
           classId:      classes.id,
-          classCode:    classCatalog.code,
+          classCode:    classes.subject,
           className:    classes.name,
           teacherName:  profiles.fullName,
           room:         classes.room,
@@ -82,7 +82,6 @@ export const studentsService = {
         })
         .from(classEnrollments)
         .innerJoin(classes, eq(classes.id, classEnrollments.classId))
-        .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
         .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
         .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
         .where(and(eq(classEnrollments.schoolId, schoolId), isNull(classEnrollments.unenrolledAt))),
@@ -497,7 +496,7 @@ export const studentsService = {
       .select({
         id:          homework.id,
         date:        homework.assignedDate,
-        classCode:   classCatalog.code,
+        classCode:   classes.subject,
         className:   classes.name,
         title:       homework.title,
         surahName:   homework.surahName,
@@ -506,7 +505,6 @@ export const studentsService = {
       })
       .from(homework)
       .innerJoin(classes, eq(classes.id, homework.classId))
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .leftJoin(homeworkGrades, and(
         eq(homeworkGrades.homeworkId, homework.id),
         eq(homeworkGrades.studentId, studentId),
@@ -534,14 +532,13 @@ export const studentsService = {
     const rows = await db
       .select({
         id:          classes.id,
-        classCode:   classCatalog.code,
+        classCode:   classes.subject,
         name:        classes.name,
         teacherName: profiles.fullName,
         room:        classes.room,
         section:     classes.section,
       })
       .from(classes)
-      .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
       .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
@@ -589,7 +586,7 @@ export const studentsService = {
       db
         .select({
           id:             examResults.id,
-          classCode:      classCatalog.code,
+          classCode:      classes.subject,
           className:      classes.name,
           teacherName:    profiles.fullName,
           trimester:      examResults.trimester,
@@ -607,7 +604,6 @@ export const studentsService = {
         })
         .from(examResults)
         .innerJoin(classes, eq(classes.id, examResults.classId))
-        .leftJoin(classCatalog, eq(classCatalog.id, classes.catalogClassId))
         .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
         .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
         .where(and(

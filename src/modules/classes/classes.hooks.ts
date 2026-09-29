@@ -2,10 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getCatalogClassesAction,
-  createCatalogClassAction,
-  updateCatalogClassAction,
-  deleteCatalogClassAction,
   getClassesAction,
   createClassAction,
   updateClassAction,
@@ -17,16 +13,7 @@ import {
   getAvailableStudentsAction,
   getDistinctRoomsAction,
 } from './classes.actions'
-import type { CreateCatalogClassInput, UpdateCatalogClassInput, CreateClassInput, UpdateClassInput } from './classes.schema'
-
-// ── Catalog query keys ────────────────────────────────────────────────────────
-
-export const catalogKeys = {
-  all:   ['catalog'] as const,
-  lists: () => [...catalogKeys.all, 'list'] as const,
-}
-
-// ── Scheduled class query keys ────────────────────────────────────────────────
+import type { CreateClassInput, UpdateClassInput } from './classes.schema'
 
 export const classKeys = {
   all:         ['classes'] as const,
@@ -35,45 +22,6 @@ export const classKeys = {
   available:   (classId: string) => [...classKeys.all, 'available', classId] as const,
   rooms:       () => [...classKeys.all, 'rooms'] as const,
 }
-
-// ── Catalog hooks ─────────────────────────────────────────────────────────────
-
-export function useCatalogClasses() {
-  return useQuery({
-    queryKey: catalogKeys.lists(),
-    queryFn: async () => {
-      const result = await getCatalogClassesAction()
-      if (!result.success) throw new Error(result.error)
-      return result.data
-    },
-  })
-}
-
-export function useCreateCatalogClass() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (input: CreateCatalogClassInput) => createCatalogClassAction(input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: catalogKeys.lists() }),
-  })
-}
-
-export function useUpdateCatalogClass(id: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (input: UpdateCatalogClassInput) => updateCatalogClassAction(id, input),
-    onSuccess: () => qc.invalidateQueries({ queryKey: catalogKeys.lists() }),
-  })
-}
-
-export function useDeleteCatalogClass() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => deleteCatalogClassAction(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: catalogKeys.lists() }),
-  })
-}
-
-// ── Scheduled class hooks ─────────────────────────────────────────────────────
 
 export function useClasses() {
   return useQuery({
@@ -133,9 +81,7 @@ export function useUpdateClass(id: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (input: UpdateClassInput) => updateClassAction(id, input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: classKeys.lists() })
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: classKeys.lists() }),
   })
 }
 

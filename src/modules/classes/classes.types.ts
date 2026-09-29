@@ -1,24 +1,10 @@
-import type { InferSelectModel } from 'drizzle-orm'
-import { classCatalog } from '@/db/schema'
-
-export type CatalogClass = InferSelectModel<typeof classCatalog>
-
-// Type enrichi avec le nom de la classe suivante ET précédente (dérivées du graphe nextClassId)
-export type CatalogClassWithNext = CatalogClass & {
-  nextClassName:     string | null
-  nextClassCode:     string | null
-  previousClassId:   string | null
-  previousClassName: string | null
-  previousClassCode: string | null
-}
-
 // Type for a scheduled class with all joined details
 export type ClassWithDetails = {
   id: string
   schoolId: string
-  catalogClassId: string | null
   teacherId: string | null
   assistantTeacherId: string | null
+  subject: string
   name: string
   room: string | null
   section: string | null
@@ -29,17 +15,13 @@ export type ClassWithDetails = {
   examPeriodT3Open: boolean
   createdAt: Date
   updatedAt: Date
-  // Joined from catalog
-  subjectCode: string | null
-  levelNumber: string | null
-  catalogCode: string | null
-  curriculum: string | null
   // Joined from teachers
   teacherName: string | null
   assistantTeacherName: string | null
   // Computed
   enrollmentCount: number
-  fullCode: string   // e.g. "QRN-402-1"
+  fullCode: string        // e.g. "QRN-1"
+  subjectCode: string     // alias for subject (backward-compat)
 }
 
 // Student enrolled in a specific class
@@ -53,15 +35,18 @@ export type EnrolledStudentInClass = {
   unenrolledAt: Date | null
 }
 
-// Codes matières disponibles
-export const SUBJECT_CODES = ['QRN', 'ARA', 'ISL', 'NUR'] as const
+// Codes matières disponibles (par école — extensible)
+export const SUBJECT_CODES = ['QRN', 'ARA', 'ISL', 'NUR', 'TAF', 'HAD', 'LIV'] as const
 export type SubjectCode = (typeof SUBJECT_CODES)[number] | string
 
 export const SUBJECT_LABELS: Record<string, string> = {
-  QRN: 'Quran',
+  QRN: 'Coran',
   ARA: 'Arabe',
   ISL: 'Études islamiques',
   NUR: 'Nuraniyah',
+  TAF: 'Tafsir',
+  HAD: 'Hadith',
+  LIV: 'Livre',
 }
 
 export const SUBJECT_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
@@ -69,6 +54,9 @@ export const SUBJECT_COLORS: Record<string, { bg: string; text: string; border: 
   ARA: { bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-300',  dot: 'bg-purple-500'  },
   ISL: { bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-300',    dot: 'bg-blue-500'    },
   NUR: { bg: 'bg-orange-100',  text: 'text-orange-800',  border: 'border-orange-300',  dot: 'bg-orange-500'  },
+  TAF: { bg: 'bg-amber-100',   text: 'text-amber-800',   border: 'border-amber-300',   dot: 'bg-amber-500'   },
+  HAD: { bg: 'bg-rose-100',    text: 'text-rose-800',    border: 'border-rose-300',    dot: 'bg-rose-500'    },
+  LIV: { bg: 'bg-sky-100',     text: 'text-sky-800',     border: 'border-sky-300',     dot: 'bg-sky-500'     },
 }
 
 export function getSubjectColor(code: string | null | undefined) {
@@ -77,9 +65,9 @@ export function getSubjectColor(code: string | null | undefined) {
   }
 }
 
-export function buildFullCode(catalogCode: string | null | undefined, section: string | null | undefined): string {
-  if (!catalogCode && !section) return ''
-  if (!catalogCode) return section ?? ''
-  if (!section) return catalogCode
-  return `${catalogCode}-${section}`
+export function buildFullCode(subject: string | null | undefined, section: string | null | undefined): string {
+  if (!subject && !section) return ''
+  if (!subject) return section ?? ''
+  if (!section) return subject
+  return `${subject}-${section}`
 }

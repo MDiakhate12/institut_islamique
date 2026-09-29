@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react'
 import { useClasses } from '@/modules/classes/classes.hooks'
-import { useCatalogClasses } from '@/modules/classes/classes.hooks'
 import { useTeachers } from '@/modules/teachers/teachers.hooks'
 import { useSchool } from '@/modules/school/school.hooks'
 import { getSubjectColor, SUBJECT_LABELS } from '@/modules/classes/classes.types'
@@ -81,7 +80,6 @@ function renderCurriculum(text: string) {
 
 export function ClassesClient() {
   const { data: classes, isLoading } = useClasses()
-  const { data: catalogClasses } = useCatalogClasses()
   const { data: teachers } = useTeachers()
   const { data: school } = useSchool()
   const configuredRooms = school?.settings?.rooms ?? []
@@ -167,7 +165,6 @@ export function ClassesClient() {
             Télécharger en Excel
           </Button>
           <ClassFormDialog
-            catalogClasses={catalogClasses ?? []}
             teachers={teachers ?? []}
             rooms={configuredRooms}
             trigger={
@@ -298,7 +295,6 @@ export function ClassesClient() {
                       key={c.id}
                       scheduledClass={c}
                       allClasses={classes ?? []}
-                      catalogClasses={catalogClasses ?? []}
                       teachers={teachers ?? []}
                       rooms={configuredRooms}
                       onEditStudents={() => setStudentsClass(c)}
@@ -338,7 +334,6 @@ export function ClassesClient() {
 function ClassCard({
   scheduledClass: c,
   allClasses,
-  catalogClasses,
   teachers,
   rooms,
   onEditStudents,
@@ -346,7 +341,6 @@ function ClassCard({
 }: {
   scheduledClass: ClassWithDetails
   allClasses: ClassWithDetails[]
-  catalogClasses: import('@/modules/classes/classes.types').CatalogClassWithNext[]
   teachers: import('@/modules/teachers/teachers.types').TeacherListItem[]
   rooms: string[]
   onEditStudents: () => void
@@ -362,9 +356,6 @@ function ClassCard({
           <span className={cn('text-[11px] font-bold px-1.5 py-0.5 rounded', colors.bg, colors.text)}>
             {c.subjectCode}
           </span>
-        )}
-        {c.levelNumber && (
-          <span className="text-xs font-mono text-muted-foreground font-medium">{c.levelNumber}</span>
         )}
         {c.section && (
           <span className="text-xs text-muted-foreground">Sec {c.section}</span>
@@ -405,25 +396,11 @@ function ClassCard({
           <Users className="h-3 w-3" />
           Edit Students ({c.enrollmentCount})
         </button>
-        {c.curriculum && (
-          <>
-            <span className="text-border mx-1">|</span>
-            <button
-              type="button"
-              onClick={onViewSyllabus}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <BookOpen className="h-3 w-3" />
-              View Syllabus
-            </button>
-          </>
-        )}
         {/* Spacer */}
         <div className="flex-1" />
         {/* Edit + Delete icons */}
         <ClassFormDialog
           scheduledClass={c}
-          catalogClasses={catalogClasses}
           teachers={teachers}
           rooms={rooms}
           trigger={
@@ -462,10 +439,7 @@ function SyllabusDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="prose prose-sm max-w-none pt-1">
-          {scheduledClass.curriculum
-            ? renderCurriculum(scheduledClass.curriculum)
-            : <p className="text-sm text-muted-foreground italic">Aucun programme défini pour cette classe.</p>
-          }
+          <p className="text-sm text-muted-foreground italic">Aucun programme défini pour cette classe.</p>
         </div>
       </DialogContent>
     </Dialog>

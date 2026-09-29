@@ -68,6 +68,7 @@ export const classes = pgTable('classes', {
   catalogClassId:     uuid('catalog_class_id').references(() => classCatalog.id),
   teacherId:          uuid('teacher_id').references(() => schoolMembers.id),
   assistantTeacherId: uuid('assistant_teacher_id').references(() => schoolMembers.id),
+  subject:            text('subject').notNull().default('QRN'),
   name:               text('name').notNull(),
   room:               text('room'),
   section:            text('section'),

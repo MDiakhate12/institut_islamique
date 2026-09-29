@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS } from '@/db/schema/schools'
 import Link from 'next/link'
 import {
   Users, GraduationCap, BookOpen, ClipboardList, CalendarCheck,
-  BookMarked, Star, BookCopy, CalendarDays, BarChart3, Library,
+  BookMarked, Star, CalendarDays, BarChart3, Library,
   ArrowLeftRight, UserPlus, FileText,
   CreditCard, Receipt,
   StickyNote, Mail, UserSquare2, Megaphone, Cake,
@@ -44,7 +44,6 @@ const SECTIONS: NavSection[] = [
       { label: 'Suivi des présences',          href: ROUTES.admin.attendance,        icon: CalendarCheck },
       { label: 'Suivi des devoirs',            href: ROUTES.admin.homework,          icon: BookMarked },
       { label: 'Suivi des étoiles',            href: ROUTES.admin.trackStars,        icon: Star },
-      { label: 'Catalogue des classes',        href: ROUTES.admin.classCatalog,      icon: BookCopy },
       { label: 'Calendrier académique',        href: ROUTES.admin.calendar,          icon: CalendarDays },
       { label: 'Rapports et analyses',         href: ROUTES.admin.reports,           icon: BarChart3 },
       { label: 'Suivi des livres',             href: ROUTES.admin.bookTracking,      icon: Library },
