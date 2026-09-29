@@ -80,7 +80,7 @@ export function SubmitHomeworkDialog({
     const onPlay        = () => setPlaying(true)
     const onPause       = () => setPlaying(false)
     const onTimeUpdate  = () => setPlayTime(audio.currentTime)
-    const onLoaded      = () => setDuration(audio.duration)
+    const onLoaded      = () => { if (isFinite(audio.duration)) setDuration(audio.duration) }
     const onEnded       = () => { setPlaying(false); setPlayTime(0) }
     audio.addEventListener('play',            onPlay)
     audio.addEventListener('pause',           onPause)
@@ -202,7 +202,7 @@ export function SubmitHomeworkDialog({
       const result = await submitHomeworkRecordingAction(homeworkId, studentId, {
         base64,
         mimeType: mimeTypeRef.current,
-        durationSeconds: duration > 0 ? Math.round(duration) : elapsed > 0 ? elapsed : null,
+        durationSeconds: duration > 0 && isFinite(duration) ? Math.round(duration) : elapsed > 0 ? elapsed : null,
       })
 
       if (!result.success) {
@@ -312,7 +312,7 @@ export function SubmitHomeworkDialog({
               </div>
               <div className="flex justify-between text-[10px] text-muted-foreground">
                 <span>{formatDuration(playTime)}</span>
-                <span>{duration > 0 ? formatDuration(duration) : formatDuration(elapsed)}</span>
+                <span>{duration > 0 && isFinite(duration) ? formatDuration(duration) : formatDuration(elapsed)}</span>
               </div>
             </div>
 
