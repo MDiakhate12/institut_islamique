@@ -117,7 +117,7 @@ export function ParentSidebar({ session, userFullName, schoolName }: ParentSideb
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 scrollbar-hide">
-        {PARENT_NAV.map(item => {
+        {PARENT_NAV.filter(item => !item.wip).map(item => {
           const active = isActive(item.href)
           return (
             <Link

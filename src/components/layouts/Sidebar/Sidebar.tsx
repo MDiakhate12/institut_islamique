@@ -141,15 +141,19 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
     return pathname === href || pathname.startsWith(href + '/')
   }
 
-  // Filter items by search
+  // Hide wip items; filter by search
+  const visibleSections = NAV_SECTIONS
+    .map(s => ({ ...s, items: s.items.filter(item => !item.wip) }))
+    .filter(s => s.items.length > 0)
+
   const filteredSections = search.trim()
-    ? NAV_SECTIONS.map(s => ({
+    ? visibleSections.map(s => ({
         ...s,
         items: s.items.filter(item =>
           item.label.toLowerCase().includes(search.toLowerCase())
         ),
       })).filter(s => s.items.length > 0)
-    : NAV_SECTIONS
+    : visibleSections
 
   return (
     <div
