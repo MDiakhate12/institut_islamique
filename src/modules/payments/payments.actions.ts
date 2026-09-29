@@ -7,7 +7,7 @@ import type { ActionResult } from '@/lib/result'
 import { db } from '@/db'
 import { profiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, getSchoolName } from '@/lib/email'
 import { paymentsService } from './payments.service'
 import { createPaymentSchema, createParentPaymentSchema } from './payments.schema'
 import type { CreatePaymentInput, CreateParentPaymentInput } from './payments.schema'
@@ -138,16 +138,18 @@ export async function remindUnpaidParentsAction(
     const unpaid = await paymentsService.getUnpaidParents(session.schoolId, period)
     const studentsCount = unpaid.reduce((sum, u) => sum + u.studentNames.length, 0)
 
+    const schoolName = await getSchoolName(session.schoolId)
     const results = await Promise.allSettled(
       unpaid.map(u => sendEmail({
         to: u.email,
-        subject: 'Qaf School — Rappel de paiement',
+        fromName: schoolName,
+        subject: `${schoolName} — Rappel de paiement`,
         html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
-      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">${schoolName}</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Rappel de paiement</p>
     </div>
     <div style="padding:40px;">
@@ -157,7 +159,7 @@ export async function remindUnpaidParentsAction(
       </p>
     </div>
     <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
-      <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
+      <p style="color:#9ca3af;font-size:12px;margin:0;">${schoolName} — Jazakum Allahu Khayran</p>
     </div>
   </div>
 </body></html>`,

@@ -4,7 +4,7 @@ import { requireSession } from '@/lib/auth/session'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { sendSmsOtp } from '@/lib/sms'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, getSchoolName } from '@/lib/email'
 import { parentsService } from './parents.service'
 import type { StudentParentInfo, ChildWithClasses } from './parents.types'
 
@@ -23,8 +23,9 @@ export async function sendDownloadReminderAction(
   emails: string[],
   subject: string,
 ): Promise<ActionResult<{ sent: number }>> {
-  await requireSession()
+  const session = await requireSession()
   try {
+    const schoolName = await getSchoolName(session.schoolId)
     const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -32,30 +33,25 @@ export async function sendDownloadReminderAction(
 <body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
-      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
-      <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Application de gestion scolaire islamique</p>
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">${schoolName}</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Portail de gestion scolaire islamique</p>
     </div>
     <div style="padding:40px;">
       <p style="color:#1e4535;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
       <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
-        Nous vous rappelons de télécharger l'application <strong>Qaf School</strong> pour rester connecté(e)
+        Nous vous rappelons d'accéder au portail <strong>${schoolName}</strong> pour rester connecté(e)
         aux actualités et au suivi scolaire de votre enfant.
       </p>
-      <div style="text-align:center;margin-bottom:32px;">
-        <a href="https://qaf.app" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
-          Télécharger l'application →
-        </a>
-      </div>
     </div>
     <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
-      <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
+      <p style="color:#9ca3af;font-size:12px;margin:0;">${schoolName} — Jazakum Allahu Khayran</p>
     </div>
   </div>
 </body>
 </html>`
 
     const results = await Promise.allSettled(
-      emails.map(to => sendEmail({ to, subject, html }))
+      emails.map(to => sendEmail({ to, fromName: schoolName, subject, html }))
     )
     const sent = results.filter(r => r.status === 'fulfilled' && r.value).length
     return ok({ sent })

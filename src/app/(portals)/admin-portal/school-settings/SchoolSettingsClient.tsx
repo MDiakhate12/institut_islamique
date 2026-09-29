@@ -890,13 +890,13 @@ function SchoolStaffSection() {
         return (
           <Section icon={Users} title="Personnel de l'école">
             <div className="flex items-center justify-between -mt-2 mb-1">
-              <p className="text-xs text-muted-foreground">List of school admins and staff members with their roles.</p>
+              <p className="text-xs text-muted-foreground">La liste des administrateurs et membres du personnel de l'école avec leurs rôles.</p>
               <button
                 type="button"
                 onClick={() => setAdding(true)}
                 className="text-xs font-medium text-[#2d6a4f] hover:underline whitespace-nowrap ml-3"
               >
-                Add Person
+                Ajouter une personne
               </button>
             </div>
 
@@ -936,6 +936,13 @@ function SchoolStaffSection() {
                   placeholder="ex. Directeur, Secrétaire"
                   className="h-8 text-sm flex-1 border-[#2d6a4f]/40 focus-visible:border-[#2d6a4f]"
                 />
+                <button
+                  type="button"
+                  onClick={addPerson}
+                  className="text-xs font-medium text-[#2d6a4f] hover:underline whitespace-nowrap ml-3"
+                >
+                  Ajouter
+                </button>
                 <button
                   type="button"
                   onClick={() => { setAdding(false); setNewName(''); setNewRole('') }}

@@ -56,7 +56,7 @@ export function TopBar({ session, schoolName, userFullName }: TopBarProps) {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-base sm:text-lg font-bold text-[#1a2c1e]">
-                  Application Scolaire Qaf
+                  {schoolName ?? 'Portail scolaire'}
                 </h1>
                 <p className="text-sm text-[#4d6b54] font-medium flex items-center gap-1">
                   <span className="text-[#cde6c8]">•</span>

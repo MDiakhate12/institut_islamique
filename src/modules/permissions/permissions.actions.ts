@@ -9,7 +9,7 @@ import type { AdminSubRole } from '@/lib/constants'
 import { permissionsService } from './permissions.service'
 import type { PermissionMember, SearchResult } from './permissions.types'
 import { z } from 'zod'
-import { sendEmail, getAppUrl } from '@/lib/email'
+import { sendEmail, getAppUrl, getSchoolName } from '@/lib/email'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
@@ -70,23 +70,24 @@ export async function grantRoleAction(
   try {
     const { userExists } = await permissionsService.grantRole(session.schoolId, email, role)
     revalidatePath('/admin-portal/permissions')
-    const appUrl = await getAppUrl()
+    const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
     const ctaUrl = userExists
       ? `${appUrl}/admin-portal`
       : `${appUrl}/auth/signup?invite=admin&schoolId=${session.schoolId}&email=${encodeURIComponent(email)}`
     const ctaLabel = userExists ? 'Accéder au portail →' : 'Créer mon compte →'
     const bodyText = userExists
-      ? `Le rôle <strong>${ROLE_LABELS[role] ?? role}</strong> vous a été accordé sur <strong>Qaf School</strong>. Vous pouvez maintenant accéder au portail d'administration avec ce niveau d'accès.`
-      : `Vous avez été invité(e) à rejoindre <strong>Qaf School</strong> en tant que <strong>${ROLE_LABELS[role] ?? role}</strong>. Créez votre compte pour accéder au portail d'administration.`
+      ? `Le rôle <strong>${ROLE_LABELS[role] ?? role}</strong> vous a été accordé sur <strong>${schoolName}</strong>. Vous pouvez maintenant accéder au portail d'administration avec ce niveau d'accès.`
+      : `Vous avez été invité(e) à rejoindre <strong>${schoolName}</strong> en tant que <strong>${ROLE_LABELS[role] ?? role}</strong>. Créez votre compte pour accéder au portail d'administration.`
     void sendEmail({
       to: email,
-      subject: `Qaf School — Invitation ${ROLE_LABELS[role] ?? role}`,
+      fromName: schoolName,
+      subject: `${schoolName} — Invitation ${ROLE_LABELS[role] ?? role}`,
       html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
-      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">${schoolName}</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Gestion des accès</p>
     </div>
     <div style="padding:40px;">
@@ -99,7 +100,7 @@ export async function grantRoleAction(
       </div>
     </div>
     <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
-      <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
+      <p style="color:#9ca3af;font-size:12px;margin:0;">${schoolName} — Jazakum Allahu Khayran</p>
     </div>
   </div>
 </body></html>`,

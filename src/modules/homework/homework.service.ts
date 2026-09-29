@@ -13,15 +13,15 @@ function buildTitle(input: { hasNewSurah?: boolean; surahName?: string; surahAra
   const parts: string[] = []
   if (input.hasNewSurah && input.surahName) {
     if (input.isFullSurah) {
-      parts.push(`Your homework is the full Surah: ${input.surahName} - ${input.surahArabic ?? ''}`)
+      parts.push(`Votre de voir est la Surah complète : ${input.surahName} - ${input.surahArabic ?? ''}`)
     } else {
-      parts.push(`Your homework is Surah: ${input.surahName} - ${input.surahArabic ?? ''} (V. ${input.fromVerse}-${input.toVerse})`)
+      parts.push(`Votre devoir est la Surah : ${input.surahName} - ${input.surahArabic ?? ''} (V. ${input.fromVerse}-${input.toVerse})`)
     }
   }
   if (input.hasRevision && input.revisionSurahs?.length) {
-    parts.push(`Revision: ${input.revisionSurahs.map(s => s.name).join(', ')}`)
+    parts.push(`Révision : ${input.revisionSurahs.map(s => s.name).join(', ')}`)
   }
-  return parts.join(' + ') || 'Homework'
+  return parts.join(' + ') || 'Devoir'
 }
 
 export const homeworkService = {

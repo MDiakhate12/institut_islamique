@@ -90,7 +90,7 @@ export function TeacherSidebar({ session, userFullName, schoolName }: TeacherSid
           </div>
         ) : (
           <>
-            <p className="font-bold text-white text-[13px] leading-tight">Portail Qaf</p>
+            <p className="font-bold text-white text-[13px] leading-tight">{schoolName ?? 'Portail enseignant'}</p>
             <p className="text-white/70 text-xs mt-0.5 truncate">Bienvenue, {displayName}</p>
           </>
         )}

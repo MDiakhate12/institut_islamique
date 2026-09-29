@@ -5,7 +5,7 @@ import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { examsService } from './exams.service'
 import { submitExamSchema, signGradeSchema } from './exams.schema'
-import { sendEmail, getAdminEmails, getAppUrl } from '@/lib/email'
+import { sendEmail, getAdminEmails, getAppUrl, getSchoolName } from '@/lib/email'
 import type {
   TeacherExamClass, ExamResult, GradeFormStudent,
   AdminExamClassProgress, AdminExamStudentProgress,
@@ -63,17 +63,18 @@ export async function submitExamResultAction(
   if (!parsed.success) return err(parsed.error.issues[0].message)
   try {
     await examsService.submitExamResult(session.schoolId, session.memberId, parsed.data)
-    const appUrl = await getAppUrl()
+    const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
     getAdminEmails(session.schoolId).then(emails =>
       Promise.allSettled(emails.map(to => sendEmail({
         to,
-        subject: `Qaf School — Notes soumises (Trimestre ${parsed.data.trimester})`,
+        fromName: schoolName,
+        subject: `${schoolName} — Notes soumises (Trimestre ${parsed.data.trimester})`,
         html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
-      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">${schoolName}</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Notes d'examen soumises</p>
     </div>
     <div style="padding:40px;">
@@ -88,7 +89,7 @@ export async function submitExamResultAction(
       </div>
     </div>
     <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
-      <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
+      <p style="color:#9ca3af;font-size:12px;margin:0;">${schoolName} — Jazakum Allahu Khayran</p>
     </div>
   </div>
 </body></html>`,

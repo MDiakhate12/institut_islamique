@@ -17,8 +17,8 @@ interface Props {
 }
 
 const ROLE_CONFIG: Record<string, { label: string; bg: string; text: string; icon: string }> = {
-  admin:   { label: 'School Admin', bg: 'bg-amber-100',   text: 'text-amber-800',  icon: '⚙️' },
-  teacher: { label: 'Teacher',      bg: 'bg-blue-100',    text: 'text-blue-800',   icon: '🎓' },
+  admin:   { label: 'Administrateur', bg: 'bg-amber-100',   text: 'text-amber-800',  icon: '⚙️' },
+  teacher: { label: 'Enseignant',      bg: 'bg-blue-100',    text: 'text-blue-800',   icon: '🎓' },
   parent:  { label: 'Parent',       bg: 'bg-emerald-100', text: 'text-emerald-800', icon: '👤' },
 }
 
@@ -93,7 +93,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <span className="inline-block h-2 w-2 rounded-full border border-muted-foreground/50" />
-                  Roles &amp; Permissions
+                  Rôles et Permissions
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {session.roles.map(role => {
@@ -119,7 +119,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
             {/* Account info */}
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Account Information
+                Informations du compte
               </p>
               <div className="rounded-xl border border-border divide-y divide-border overflow-hidden">
                 {/* Email */}
@@ -136,17 +136,17 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
                 {/* School */}
                 {schoolName && (
                   <div className="flex items-center justify-between px-3 py-2.5">
-                    <span className="text-sm text-muted-foreground">School</span>
+                    <span className="text-sm text-muted-foreground">École</span>
                     <span className="text-sm font-medium text-foreground">{schoolName}</span>
                   </div>
                 )}
 
                 {/* Status */}
                 <div className="flex items-center justify-between px-3 py-2.5">
-                  <span className="text-sm text-muted-foreground">Status</span>
+                  <span className="text-sm text-muted-foreground">Statut</span>
                   <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Online
+                    En ligne
                   </span>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
                            hover:opacity-90 transition-opacity"
               >
                 <PenSquare className="h-4 w-4" />
-                Edit Profile
+                Modifier mon profil
               </Link>
 
               <button
@@ -174,7 +174,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
                            hover:bg-red-100 transition-colors disabled:opacity-50"
               >
                 <LogOut className="h-4 w-4" />
-                {isPending ? 'Déconnexion...' : 'Sign Out'}
+                {isPending ? 'Déconnexion...' : 'Se déconnecter'}
               </button>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer'
 import { headers } from 'next/headers'
 import { db } from '@/db'
-import { sql } from 'drizzle-orm'
+import { sql, eq } from 'drizzle-orm'
+import { schools } from '@/db/schema'
 
 export async function getAppUrl(): Promise<string> {
   const h = await headers()
@@ -38,6 +39,15 @@ export async function getParentEmailsForClass(classId: string): Promise<string[]
   return (rows as unknown as { email: string }[]).map(r => r.email).filter(Boolean)
 }
 
+export async function getSchoolName(schoolId: string): Promise<string> {
+  try {
+    const [row] = await db.select({ name: schools.name }).from(schools).where(eq(schools.id, schoolId)).limit(1)
+    return row?.name ?? 'Portail scolaire'
+  } catch {
+    return 'Portail scolaire'
+  }
+}
+
 function createTransporter() {
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -54,11 +64,13 @@ export async function sendEmail(opts: {
   to: string
   subject: string
   html: string
+  fromName?: string
 }): Promise<boolean> {
+  const { fromName = 'Portail scolaire', ...mailOpts } = opts
   try {
     await createTransporter().sendMail({
-      from: `Qaf School <${process.env.SMTP_USER}>`,
-      ...opts,
+      from: `${fromName} <${process.env.SMTP_USER}>`,
+      ...mailOpts,
     })
     return true
   } catch (e) {

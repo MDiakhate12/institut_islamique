@@ -8,7 +8,7 @@ import { homeworkService } from './homework.service'
 import { createHomeworkSchema, updateHomeworkSchema } from './homework.schema'
 import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem, AdminHomeworkOverview } from './homework.types'
 import { createClient } from '@/lib/supabase/server'
-import { sendEmail, getParentEmailsForClass, getAppUrl } from '@/lib/email'
+import { sendEmail, getParentEmailsForClass, getAppUrl, getSchoolName } from '@/lib/email'
 
 const path = '/teacher-portal/homework'
 
@@ -81,17 +81,18 @@ export async function createHomeworkAction(input: unknown): Promise<ActionResult
 
     const surahLabel = item.surahName ? `${item.surahName}${item.surahArabic ? ` — ${item.surahArabic}` : ''}` : null
     const description = item.description || surahLabel || 'Nouveau devoir'
-    const appUrl = await getAppUrl()
+    const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
     getParentEmailsForClass(parsed.data.classId).then(emails =>
       Promise.allSettled(emails.map(to => sendEmail({
         to,
-        subject: 'Nouveau devoir — Qaf School',
+        fromName: schoolName,
+        subject: `Nouveau devoir — ${schoolName}`,
         html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
-      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">Qaf School</h1>
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">${schoolName}</h1>
       <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Nouveau devoir assigné</p>
     </div>
     <div style="padding:40px;">
@@ -109,7 +110,7 @@ export async function createHomeworkAction(input: unknown): Promise<ActionResult
       </div>
     </div>
     <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
-      <p style="color:#9ca3af;font-size:12px;margin:0;">Qaf School — Jazakum Allahu Khayran</p>
+      <p style="color:#9ca3af;font-size:12px;margin:0;">${schoolName} — Jazakum Allahu Khayran</p>
     </div>
   </div>
 </body></html>`,
