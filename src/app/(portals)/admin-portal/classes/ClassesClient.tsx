@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   Search, Pencil, Users, BookOpen, MapPin, GraduationCap,
-  Plus, Download, Settings2, X,
+  Plus, Download, Settings2, X, Trash2, Check,
 } from 'lucide-react'
 import { updateSchoolSettingsAction } from '@/modules/school/school.actions'
 import { cn } from '@/lib/utils'
@@ -488,6 +488,9 @@ function ManageRoomsDialog({
   const [rooms, setRooms] = useState<string[]>(currentRooms)
   const [newRoom, setNewRoom] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editingRoom, setEditingRoom] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const qc = useQueryClient()
 
   // Sync if currentRooms changes (e.g. parent re-fetches)
@@ -511,6 +514,20 @@ function ManageRoomsDialog({
     setNewRoom('')
   }
 
+  function confirmEdit(oldName: string) {
+    const v = editValue.trim()
+    if (!v) return
+    if (v === oldName) { setEditingRoom(null); return }
+    if (rooms.includes(v)) { toast.error('Cette salle existe déjà'); return }
+    setRooms(prev => prev.map(x => x === oldName ? v : x))
+    setEditingRoom(null)
+  }
+
+  function deleteRoom(name: string) {
+    setRooms(prev => prev.filter(x => x !== name))
+    setConfirmDelete(null)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-2rem)] max-w-sm">
@@ -526,20 +543,88 @@ function ManageRoomsDialog({
           <div className="space-y-1.5">
             {rooms.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">Aucune salle configurée.</p>
-            ) : (
-              rooms.map(r => (
+            ) : rooms.map(r => {
+              if (confirmDelete === r) {
+                return (
+                  <div key={r} className="flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-red-50 border border-red-200">
+                    <span className="text-sm text-red-700 font-medium">Supprimer « {r} » ?</span>
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => deleteRoom(r)}
+                        className="text-xs px-2.5 py-1 rounded bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+                      >
+                        Supprimer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(null)}
+                        className="text-xs px-2.5 py-1 rounded border border-border hover:bg-muted transition-colors"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )
+              }
+
+              if (editingRoom === r) {
+                return (
+                  <div key={r} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted/40 border border-[#2d6a4f]/40">
+                    <Input
+                      value={editValue}
+                      onChange={e => setEditValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); confirmEdit(r) }
+                        if (e.key === 'Escape') setEditingRoom(null)
+                      }}
+                      className="h-7 text-sm flex-1 px-2"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      title="Valider"
+                      onClick={() => confirmEdit(r)}
+                      className="p-1 rounded text-[#2d6a4f] hover:bg-[#2d6a4f]/10 transition-colors"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Annuler"
+                      onClick={() => setEditingRoom(null)}
+                      className="p-1 rounded text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )
+              }
+
+              return (
                 <div key={r} className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-md bg-muted/40 border border-border">
                   <span className="text-sm">{r}</span>
-                  <button
-                    type="button"
-                    onClick={() => setRooms(prev => prev.filter(x => x !== r))}
-                    className="p-0.5 rounded hover:bg-red-100 hover:text-red-600 text-muted-foreground transition-colors"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      title="Renommer la salle"
+                      onClick={() => { setEditingRoom(r); setEditValue(r) }}
+                      className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Supprimer la salle"
+                      onClick={() => setConfirmDelete(r)}
+                      className="p-1.5 rounded text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
-              ))
-            )}
+              )
+            })}
           </div>
 
           {/* Add new */}
