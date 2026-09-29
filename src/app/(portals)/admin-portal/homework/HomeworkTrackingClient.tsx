@@ -334,7 +334,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
+    <div className="p-6 space-y-6">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Suivi des devoirs scolaires</h1>
