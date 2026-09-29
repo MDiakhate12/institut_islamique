@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
 import type { PinnedClass, ClassOption, HomeworkItem } from '@/modules/homework/homework.types'
 import AddClassDialog from './AddClassDialog'
 import HomeworkDialog from './HomeworkDialog'
@@ -380,7 +381,7 @@ function HomeworkCard({ number, isNewest, homework: hw, onEdit, onDelete, onGrad
     : null
 
   const dateLabel = hw.assignedDate
-    ? format(new Date(hw.assignedDate), 'EEEE, MMMM d, yyyy')
+    ? format(new Date(hw.assignedDate), 'EEEE d MMMM yyyy', { locale: fr })
     : ''
 
   const fileSizeLabel = hw.fileSize

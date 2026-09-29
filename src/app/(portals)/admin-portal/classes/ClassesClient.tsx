@@ -387,18 +387,18 @@ function ClassCard({
         {c.room && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" />
-            <span>Room: {c.room}</span>
+            <span>Salle : {c.room}</span>
           </div>
         )}
         {c.teacherName && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <GraduationCap className="h-3 w-3 shrink-0" />
-            <span>Teacher: {c.teacherName}</span>
+            <span>Enseignant : {c.teacherName}</span>
           </div>
         )}
         <div>
           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600">
-            0 homeworks
+            0 devoirs
           </span>
         </div>
       </div>
@@ -411,7 +411,7 @@ function ClassCard({
           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mr-2"
         >
           <Users className="h-3 w-3" />
-          Edit Students ({c.enrollmentCount})
+          Gérer les élèves ({c.enrollmentCount})
         </button>
         {/* Spacer */}
         <div className="flex-1" />

@@ -93,7 +93,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-2rem)] max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit Event' : 'Create New Event'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Modifier l\'événement' : 'Créer un événement'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -159,7 +159,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                    <span>🕐</span> Start Time
+                    <span>🕐</span> Heure de début
                   </Label>
                   <Input
                     {...register('startTime')}
@@ -169,7 +169,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                    <span>🕐</span> End Time
+                    <span>🕐</span> Heure de fin
                   </Label>
                   <Input
                     {...register('endTime')}
@@ -184,7 +184,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
           {/* Event Type */}
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-              <span>🏷️</span> Event Type
+              <span>🏷️</span> Type d'événement
             </div>
             <Controller
               control={control}
@@ -225,8 +225,8 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
           {/* Location */}
           <div className="space-y-1">
             <Label className="text-sm font-medium flex items-center gap-1.5">
-              <span>📍</span> Location
-              <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
+              <span>📍</span> Lieu
+              <span className="text-xs text-muted-foreground font-normal">(Optionnel)</span>
             </Label>
             <Input
               {...register('location')}
@@ -239,11 +239,11 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
           <div className="space-y-1">
             <Label className="text-sm font-medium">
               Description
-              <span className="text-xs text-muted-foreground font-normal ml-1">(Optional...)</span>
+              <span className="text-xs text-muted-foreground font-normal ml-1">(Optionnel...)</span>
             </Label>
             <textarea
               {...register('description')}
-              placeholder="Add any additional details about this event..."
+              placeholder="Ajoutez des informations complémentaires sur cet événement..."
               rows={3}
               className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
             />
@@ -267,7 +267,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                     field.value ? 'translate-x-4' : 'translate-x-0'
                   )} />
                 </div>
-                <span className="text-sm text-muted-foreground">🔒 Hide for everyone except Admins</span>
+                <span className="text-sm text-muted-foreground">🔒 Masquer pour tout le monde sauf les Admins</span>
               </label>
             )}
           />
@@ -285,7 +285,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                   className="gap-1.5 text-muted-foreground"
                 >
                   <Copy className="h-3.5 w-3.5" />
-                  Duplicate
+                  Dupliquer
                 </Button>
                 <Button
                   type="button"
@@ -296,14 +296,14 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                   className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  Delete
+                  Supprimer
                 </Button>
               </div>
             ) : <div />}
 
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button
                 type="submit"
@@ -311,7 +311,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                 disabled={busy}
                 className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
               >
-                {busy ? '...' : isEdit ? 'Update Event' : 'Create Event'}
+                {busy ? '...' : isEdit ? 'Mettre à jour' : 'Créer'}
               </Button>
             </div>
           </div>

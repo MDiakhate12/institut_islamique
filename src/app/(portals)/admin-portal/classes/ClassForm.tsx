@@ -24,7 +24,7 @@ interface Props {
   scheduledClass?: ClassWithDetails
   teachers?: TeacherListItem[]
   rooms?: string[]
-  trigger?: React.ReactNode
+  trigger?: React.ReactElement
   onSuccess?: () => void
 }
 
@@ -93,7 +93,7 @@ export function ClassFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) form.reset() }}>
-      <DialogTrigger>{trigger}</DialogTrigger>
+      {trigger && <DialogTrigger render={trigger} />}
 
       <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
         <DialogHeader>
