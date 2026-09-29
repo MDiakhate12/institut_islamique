@@ -136,7 +136,7 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
             {/* ── En-tête ── */}
             <div className="header" style={{ background: 'linear-gradient(135deg, #2d6a4f, #2d6a4f)', color: 'white', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: '22px', fontWeight: 700 }}>Student Report Card</div>
+                <div style={{ fontSize: '22px', fontWeight: 700 }}>Bulletin de notes</div>
                 <div style={{ fontSize: '13px', marginTop: '4px', opacity: 0.9 }}>
                   {data?.schoolName} • {student.enrollmentYear ?? '—'}
                 </div>

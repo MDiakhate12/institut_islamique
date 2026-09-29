@@ -888,7 +888,7 @@ function SchoolStaffSection() {
         }
 
         return (
-          <Section icon={Users} title="School Staff">
+          <Section icon={Users} title="Personnel de l'école">
             <div className="flex items-center justify-between -mt-2 mb-1">
               <p className="text-xs text-muted-foreground">List of school admins and staff members with their roles.</p>
               <button
@@ -926,14 +926,14 @@ function SchoolStaffSection() {
                   autoFocus
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
-                  placeholder="Full name"
+                  placeholder="Nom complet"
                   className="h-8 text-sm flex-1"
                 />
                 <Input
                   value={newRole}
                   onChange={e => setNewRole(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPerson() } }}
-                  placeholder="e.g. Principal, Secretary"
+                  placeholder="ex. Directeur, Secrétaire"
                   className="h-8 text-sm flex-1 border-[#2d6a4f]/40 focus-visible:border-[#2d6a4f]"
                 />
                 <button

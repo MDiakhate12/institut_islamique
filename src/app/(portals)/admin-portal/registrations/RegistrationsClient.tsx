@@ -167,17 +167,17 @@ export function RegistrationsClient() {
                 <thead>
                   <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
                     <SortableTh label="ID" />
-                    <SortableTh label="Student" />
-                    <SortableTh label="Registered At" />
+                    <SortableTh label="Élève" />
+                    <SortableTh label="Inscrit le" />
                     <th className="px-3 py-3 text-left">Parents</th>
                     <th className="px-3 py-3 text-left">Contact</th>
-                    <SortableTh label="DOB" />
-                    <SortableTh label="Grade" />
-                    <th className="px-3 py-3 text-left">Old Classes</th>
+                    <SortableTh label="Naissance" />
+                    <SortableTh label="Niveau" />
+                    <th className="px-3 py-3 text-left">Anciennes classes</th>
                     <th className="px-3 py-3 text-left min-w-[160px]">Classes</th>
-                    <SortableTh label="Tuition" />
-                    <th className="px-3 py-3 text-left">Tenant</th>
-                    <th className="px-3 py-3 text-left">Consents</th>
+                    <SortableTh label="Frais" />
+                    <th className="px-3 py-3 text-left">École</th>
+                    <th className="px-3 py-3 text-left">Consentements</th>
                     {customFieldLabels.map(label => (
                       <th key={label} className="px-3 py-3 text-left max-w-[140px] truncate">{label}</th>
                     ))}
@@ -414,22 +414,22 @@ function RegistrationDetailPanel({
 
         {/* Student Info */}
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Student Info</h3>
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Infos élève</h3>
           <div className="space-y-1.5">
-            <Row icon="📅" label="Date of Birth" value={r.studentBirthDate
+            <Row icon="📅" label="Date de naissance" value={r.studentBirthDate
               ? new Date(r.studentBirthDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
               : '—'} />
-            <Row icon="●" label="Gender" value={r.studentGender === 'male' ? 'Male' : r.studentGender === 'female' ? 'Female' : '—'} dot={r.studentGender === 'male' ? 'blue' : r.studentGender === 'female' ? 'pink' : undefined} />
-            <Row icon="🎓" label="Grade" value={r.grade ?? '—'} highlight />
+            <Row icon="●" label="Genre" value={r.studentGender === 'male' ? 'Garçon' : r.studentGender === 'female' ? 'Fille' : '—'} dot={r.studentGender === 'male' ? 'blue' : r.studentGender === 'female' ? 'pink' : undefined} />
+            <Row icon="🎓" label="Niveau" value={r.grade ?? '—'} highlight />
           </div>
         </section>
 
         {/* Parents / Guardians */}
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Parents / Guardians</h3>
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Parents / Tuteurs</h3>
           <div className="space-y-1.5">
-            {father && <Row icon="👤" label="Father" value={father.name} />}
-            {mother && <Row icon="👤" label="Mother" value={mother.name} />}
+            {father && <Row icon="👤" label="Père" value={father.name} />}
+            {mother && <Row icon="👤" label="Mère" value={mother.name} />}
             {!father && !mother && <p className="text-xs text-muted-foreground">—</p>}
           </div>
         </section>
@@ -440,11 +440,11 @@ function RegistrationDetailPanel({
           <div className="space-y-1.5">
             {r.parents[0]?.email && (
               <div className="flex items-center justify-between gap-2">
-                <span className="text-muted-foreground text-xs">Primary Email</span>
+                <span className="text-muted-foreground text-xs">Email principal</span>
                 <a href={`mailto:${r.parents[0].email}`} className="text-blue-600 text-xs hover:underline">{r.parents[0].email}</a>
               </div>
             )}
-            {r.parents[0]?.phone && <Row icon="" label="Primary Phone" value={r.parents[0].phone} />}
+            {r.parents[0]?.phone && <Row icon="" label="Téléphone principal" value={r.parents[0].phone} />}
           </div>
         </section>
 
@@ -452,7 +452,7 @@ function RegistrationDetailPanel({
         {r.classes.length > 0 && (
           <section>
             <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Classes</h3>
-            <p className="text-[11px] text-muted-foreground mb-1.5">Registered</p>
+            <p className="text-[11px] text-muted-foreground mb-1.5">Inscrit dans</p>
             <div className="flex flex-wrap gap-1.5">
               {r.classes.map(c => <ClassBadge key={c.fullCode} code={c.fullCode} />)}
             </div>
@@ -461,16 +461,16 @@ function RegistrationDetailPanel({
 
         {/* Tuition & Financial */}
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Tuition & Financial</h3>
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Frais &amp; Finances</h3>
           <div className="space-y-1.5">
-            <Row icon="$" label="Tuition Type" value={r.paymentFrequency ?? '—'} />
-            <Row icon="" label="Financial Assistance" value={r.financialAid ?? '—'} />
+            <Row icon="$" label="Type de paiement" value={r.paymentFrequency ?? '—'} />
+            <Row icon="" label="Aide financière" value={r.financialAid ?? '—'} />
             <div className="flex items-center justify-between gap-2">
-              <span className="text-muted-foreground text-xs">Photo Permission</span>
+              <span className="text-muted-foreground text-xs">Autorisation photo</span>
               <ConsentBadge value={r.photoConsent} label="" />
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-muted-foreground text-xs">Policy Acknowledgment</span>
+              <span className="text-muted-foreground text-xs">Acceptation du règlement</span>
               <ConsentBadge value={r.policyConsent} label="" />
             </div>
           </div>
@@ -481,7 +481,7 @@ function RegistrationDetailPanel({
           <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Enrollment Info</h3>
           <div className="space-y-1.5">
             <Row icon="🏫" label="School" value="Attawba" />
-            <Row icon="#" label="Year" value={`${new Date(r.submittedAt).getFullYear()}-${new Date(r.submittedAt).getFullYear() + 1}`} />
+            <Row icon="#" label="Année" value={`${new Date(r.submittedAt).getFullYear()}-${new Date(r.submittedAt).getFullYear() + 1}`} />
           </div>
         </section>
 

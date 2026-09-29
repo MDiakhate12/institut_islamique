@@ -165,7 +165,7 @@ export function ClassesClient() {
             onClick={() => setManageRoomsOpen(true)}
           >
             <Settings2 className="h-3.5 w-3.5" />
-            Gérer les salles
+            Gérer les salles de classe
           </Button>
           <Button
             size="sm"
@@ -182,7 +182,7 @@ export function ClassesClient() {
             trigger={
               <Button size="sm" className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5">
                 <Plus className="h-4 w-4" />
-                Créer une nouvelle offre de classe
+                Créer une nouvelle classe
               </Button>
             }
           />
@@ -517,7 +517,7 @@ function ManageRoomsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings2 className="h-4 w-4 text-[#2d6a4f]" />
-            Gérer les salles
+            Gérer les salles de classe
           </DialogTitle>
         </DialogHeader>
 

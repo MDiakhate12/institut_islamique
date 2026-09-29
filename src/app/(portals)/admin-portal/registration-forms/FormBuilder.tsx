@@ -728,10 +728,10 @@ function SectionBlock({
                 ℹ️ Auto-populated Fields (Read-only)
               </p>
               <div className="mt-1.5 space-y-0.5">
-                {['Student Name', 'Student ID', 'Gender', 'Date of Birth', "Father's Name", "Mother's Name", 'Email', 'Phone'].map(f => (
+                {["Nom de l'élève", "ID de l'élève", 'Genre', 'Date de naissance', 'Nom du père', 'Nom de la mère', 'Email', 'Téléphone'].map(f => (
                   <div key={f} className="flex items-center justify-between py-0.5">
                     <span className="text-xs text-foreground">{f}</span>
-                    <span className="text-[10px] text-muted-foreground bg-muted rounded px-1.5 py-0.5">Auto-filled</span>
+                    <span className="text-[10px] text-muted-foreground bg-muted rounded px-1.5 py-0.5">Auto-rempli</span>
                   </div>
                 ))}
               </div>

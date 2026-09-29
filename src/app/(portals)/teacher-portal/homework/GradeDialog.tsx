@@ -56,7 +56,7 @@ export default function GradeDialog({ open, onClose, homework }: Props) {
           <div className="w-72 border-r border-gray-100 flex flex-col bg-gray-50 flex-shrink-0">
             <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                STUDENTS ({students.length})
+                ÉLÈVES ({students.length})
               </span>
             </div>
             <div className="flex-1 overflow-y-auto">
@@ -112,7 +112,7 @@ export default function GradeDialog({ open, onClose, homework }: Props) {
                   <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                     <Video className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-700 font-medium mb-1">No recording submitted</p>
+                  <p className="text-gray-700 font-medium mb-1">Aucun enregistrement soumis</p>
                   <p className="text-sm text-gray-400">
                     Student must submit a recording for Quran homework.
                   </p>

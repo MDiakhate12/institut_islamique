@@ -146,7 +146,7 @@ function buildResumeHtml(overview: AdminHomeworkOverview, dateStr: string, schoo
 <div class="kpis">
   <div class="kpi green"><div class="num">${stats.submitted}</div><div class="label">Soumis</div></div>
   <div class="kpi red"><div class="num">${stats.missing}</div><div class="label">Manquant</div></div>
-  <div class="kpi blue"><div class="num">${stats.total}</div><div class="label">Total classes</div></div>
+  <div class="kpi blue"><div class="num">${stats.total}</div><div class="label">Total</div></div>
   <div class="kpi amber"><div class="num">${completion}%</div><div class="label">Achèvement</div></div>
 </div>
 <h2>Classes</h2>

@@ -466,7 +466,7 @@ function HomeworkCard({ number, isNewest, homework: hw, onEdit, onDelete, onGrad
 
       {hw.description && (
         <p className="text-sm text-gray-500 mb-2">
-          <span className="font-medium">Additional Notes: </span>{hw.description}
+          <span className="font-medium">Notes : </span>{hw.description}
         </p>
       )}
 

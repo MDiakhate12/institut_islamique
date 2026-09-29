@@ -341,12 +341,12 @@ export function ExpensesClient() {
               <CreditCard className="h-5 w-5 text-gray-500" />
             </div>
             <div>
-              <p className="font-medium">No Payment Account Connected</p>
-              <p className="text-sm text-muted-foreground">Connect Stripe to accept digital payments from parents (tuition, fees, donations).</p>
+              <p className="font-medium">Aucun compte de paiement connecté</p>
+              <p className="text-sm text-muted-foreground">Connectez Stripe pour accepter les paiements en ligne des parents (frais, dons...).</p>
             </div>
           </div>
           <Button disabled className="mt-4 bg-indigo-600 text-white gap-2 opacity-60 cursor-not-allowed">
-            <CreditCard className="h-4 w-4" /> Connect Stripe
+            <CreditCard className="h-4 w-4" /> Connecter Stripe
           </Button>
         </div>
       )}
@@ -358,7 +358,7 @@ export function ExpensesClient() {
           </DialogHeader>
           <p className="text-sm text-muted-foreground">Êtes-vous sûr de vouloir REJETER cette demande ?</p>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setRejectingId(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRejectingId(null)}>Annuler</Button>
             <Button
               className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => { if (rejectingId) rejectExpense.mutate(rejectingId); setRejectingId(null) }}

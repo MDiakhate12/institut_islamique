@@ -72,13 +72,13 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                     <span className="text-[#2d6a4f] font-medium">{scheduledClass.fullCode}</span>
                   )}
                   {scheduledClass.teacherName && (
-                    <span> • Taught by {scheduledClass.teacherName}</span>
+                    <span> • Enseignant : {scheduledClass.teacherName}</span>
                   )}
                 </p>
               </div>
               <div className="shrink-0 text-right">
                 <div className="text-lg font-bold text-foreground leading-none">{count}</div>
-                <div className="text-xs text-muted-foreground">Enrolled</div>
+                <div className="text-xs text-muted-foreground">Inscrits</div>
               </div>
             </div>
           </DialogHeader>
@@ -107,13 +107,13 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                   </div>
                   {/* Status badge */}
                   <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                    Enrolled
+                    Inscrit
                   </span>
                   {/* Transfer button */}
                   <div className="relative">
                     <button
                       type="button"
-                      title="Transfer to another class"
+                      title="Transférer vers une autre classe"
                       onClick={() => setTransferEnrollmentId(
                         transferEnrollmentId === e.enrollmentId ? null : e.enrollmentId
                       )}
@@ -125,11 +125,11 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                     {transferEnrollmentId === e.enrollmentId && (
                       <div className="absolute right-0 top-7 z-20 bg-white border border-border rounded-lg shadow-lg py-1 min-w-52">
                         <p className="px-3 py-1 text-xs text-muted-foreground font-medium">
-                          Transfer to another class
+                          Transférer vers une autre classe
                         </p>
                         {transferTargets.length === 0 ? (
                           <p className="px-3 py-2 text-xs text-muted-foreground italic">
-                            No other classes available
+                            Aucune autre classe disponible
                           </p>
                         ) : (
                           transferTargets.map(c => (
@@ -152,7 +152,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                   {/* Remove button */}
                   <button
                     type="button"
-                    title="Remove from class"
+                    title="Retirer de la classe"
                     onClick={() => handleUnenroll(e.enrollmentId, `${e.firstName} ${e.lastName}`)}
                     className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
                   >
@@ -169,7 +169,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
             count > 0 ? 'justify-between' : 'justify-end'
           )}>
             {count > 0 && (
-              <p className="text-xs text-muted-foreground">{count} student{count !== 1 ? 's' : ''} in class</p>
+              <p className="text-xs text-muted-foreground">{count} élève{count !== 1 ? 's' : ''} dans la classe</p>
             )}
             <div className="flex gap-2">
               <Button
@@ -179,7 +179,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                 className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add Student
+                Ajouter un élève
               </Button>
               <Button
                 type="button"
@@ -188,7 +188,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                 className="gap-1.5 text-muted-foreground"
                 onClick={() => toast.info("La page de présences sera disponible bientôt")}
               >
-                Take Attendance
+                Prendre les présences
               </Button>
             </div>
           </div>

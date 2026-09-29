@@ -46,37 +46,37 @@ export function EditWageRecordDialog({ entry, onClose }: Props) {
     <Dialog open={!!entry} onOpenChange={v => { if (!v) onClose() }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Wage Record</DialogTitle>
-          <p className="text-sm text-muted-foreground">Update the status and rate for this wage entry</p>
+          <DialogTitle>Modifier l&apos;entrée de salaire</DialogTitle>
+          <p className="text-sm text-muted-foreground">Modifier le statut et le taux de cette entrée</p>
         </DialogHeader>
 
         <div className="rounded-lg bg-gray-50 p-3 grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-muted-foreground text-xs">Teacher:</p>
+            <p className="text-muted-foreground text-xs">Enseignant :</p>
             <p className="font-medium">{entry.teacherName}</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-xs">Date:</p>
+            <p className="text-muted-foreground text-xs">Date :</p>
             <p className="font-medium">{new Date(entry.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           </div>
           {entry.classId && (
             <>
               <div>
-                <p className="text-muted-foreground text-xs">Class ID:</p>
+                <p className="text-muted-foreground text-xs">Code classe :</p>
                 <p className="font-medium">{entry.classCode ?? '—'}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Class:</p>
+                <p className="text-muted-foreground text-xs">Classe :</p>
                 <p className="font-medium">{entry.className ?? '—'}</p>
               </div>
             </>
           )}
           <div>
-            <p className="text-muted-foreground text-xs">Hours:</p>
+            <p className="text-muted-foreground text-xs">Heures :</p>
             <p className="font-medium">{entry.hoursWorked}h</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-xs">Amount:</p>
+            <p className="text-muted-foreground text-xs">Montant :</p>
             <p className="font-medium">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount / 100)}</p>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function EditWageRecordDialog({ entry, onClose }: Props) {
         </div>
 
         <div>
-          <label className="text-sm font-medium mb-1.5 block">Hourly Rate</label>
+          <label className="text-sm font-medium mb-1.5 block">Taux horaire</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
             <Input type="number" step="0.01" className="pl-7" value={rate} onChange={e => setRate(e.target.value)} />

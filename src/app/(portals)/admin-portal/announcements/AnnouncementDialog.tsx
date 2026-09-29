@@ -70,9 +70,9 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
   const PRESETS = [
     { label: 'Surligner', action: applyHighlight },
     { label: 'Important', action: () => insertAtCursor('<p><span style="color:#2d6a4f"><strong>⚠️ Important:</strong></span></p>') },
-    { label: 'Rappel', action: () => insertAtCursor('<p><span style="color:#2d6a4f"><strong>🔔 Reminder:</strong></span></p>') },
-    { label: 'Action requise', action: () => insertAtCursor('<p><span style="color:#16a34a"><strong>✅ Action Required:</strong></span></p>') },
-    { label: 'Date et heure', action: () => insertAtCursor(`<p><span style="color:#2d6a4f">📅 Date: <em>${monthYear.charAt(0).toUpperCase() + monthYear.slice(1)}</em> ⏰ Time: <em>12h 00</em></span></p>`) },
+    { label: 'Rappel', action: () => insertAtCursor('<p><span style="color:#2d6a4f"><strong>🔔 Rappel :</strong></span></p>') },
+    { label: 'Action requise', action: () => insertAtCursor('<p><span style="color:#16a34a"><strong>✅ Action requise :</strong></span></p>') },
+    { label: 'Date et heure', action: () => insertAtCursor(`<p><span style="color:#2d6a4f">📅 Date : <em>${monthYear.charAt(0).toUpperCase() + monthYear.slice(1)}</em> ⏰ Heure : <em>12h 00</em></span></p>`) },
     { label: 'Séparateur', action: () => insertAtCursor('<hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0"/>') },
   ]
 

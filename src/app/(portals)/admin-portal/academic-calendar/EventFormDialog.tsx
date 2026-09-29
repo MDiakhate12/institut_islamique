@@ -100,10 +100,10 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
 
           {/* Title */}
           <div className="space-y-1">
-            <Label className="text-sm font-medium">Event Title</Label>
+            <Label className="text-sm font-medium">Titre de l&apos;événement</Label>
             <Input
               {...register('title', { required: 'Le titre est requis' })}
-              placeholder="Event Title"
+              placeholder="Titre de l'événement"
               autoFocus
               className={cn('h-9 text-sm', errors.title && 'border-destructive')}
             />
@@ -113,13 +113,13 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
           {/* Date & Time */}
           <div className="space-y-3">
             <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-              <span>📅</span> Date &amp; Time
+              <span>📅</span> Date &amp; Heure
             </div>
 
             {/* Event Date + All day toggle */}
             <div className="flex items-center gap-3">
               <div className="flex-1 space-y-1">
-                <Label className="text-xs text-muted-foreground">Event Date</Label>
+                <Label className="text-xs text-muted-foreground">Date</Label>
                 <div className="relative">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm">📅</span>
                   <Input
@@ -147,7 +147,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
                           field.value ? 'translate-x-4' : 'translate-x-0'
                         )} />
                       </div>
-                      All day event
+                      Toute la journée
                     </label>
                   )}
                 />
@@ -230,7 +230,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
             </Label>
             <Input
               {...register('location')}
-              placeholder="e.g., Main Hall, Room 101, Masjid..."
+              placeholder="ex. Grande salle, Salle 101, Masjid..."
               className="h-9 text-sm"
             />
           </div>

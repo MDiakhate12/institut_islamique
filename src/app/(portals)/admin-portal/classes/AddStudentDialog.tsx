@@ -58,9 +58,9 @@ export function AddStudentDialog({ scheduledClass, open, onOpenChange, onStudent
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-2rem)] max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Student to Class</DialogTitle>
+          <DialogTitle>Ajouter un élève à la classe</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Select a student to add to{' '}
+            Sélectionner un élève à ajouter à{' '}
             <span className="font-medium text-foreground">{scheduledClass.name}</span>
             {' '}<span className="text-[#2d6a4f]">{scheduledClass.fullCode}</span>
           </p>
@@ -70,7 +70,7 @@ export function AddStudentDialog({ scheduledClass, open, onOpenChange, onStudent
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search students by name, ID, or phone..."
+            placeholder="Rechercher par nom, ID ou téléphone..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
