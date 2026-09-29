@@ -14,7 +14,6 @@ interface ClassOption {
   name: string
   teacherName: string | null
   room: string | null
-  section: string | null
 }
 
 interface Props {

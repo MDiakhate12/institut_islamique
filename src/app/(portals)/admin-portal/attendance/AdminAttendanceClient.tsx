@@ -289,9 +289,6 @@ function ClassCard({ cls, onClick }: { cls: AdminClassOverview; onClick: () => v
 
       <div>
         <p className="text-sm font-semibold leading-snug line-clamp-2">{cls.name}</p>
-        {cls.section && (
-          <p className="text-xs text-muted-foreground mt-0.5">{cls.section}</p>
-        )}
       </div>
 
       <div className="text-xs text-muted-foreground space-y-0.5">

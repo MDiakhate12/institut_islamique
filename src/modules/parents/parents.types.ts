@@ -25,9 +25,7 @@ export type EnrolledClass = {
   classId: string
   className: string
   room: string | null
-  section: string | null
   subjectCode: string | null
-  levelNumber: string | null
   teacherName: string | null
 }
 

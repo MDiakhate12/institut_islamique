@@ -159,7 +159,7 @@ export async function getStudentHomeworkAction(
 
 export async function getActiveClassesAction(): Promise<ActionResult<{
   id: string; classCode: string; name: string; teacherName: string | null
-  room: string | null; section: string | null
+  room: string | null
 }[]>> {
   const session = await requireSession()
   try {

@@ -120,9 +120,6 @@ function HomeworkCard({
             <p className="text-xs text-muted-foreground">{dateLabel}</p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="rounded-md bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-[#2d6a4f]">
-              Sec: {item.classSection ?? '1'}
-            </span>
             <span className="rounded-md bg-[#2d6a4f]/10 px-1.5 py-0.5 text-[10px] font-bold text-[#2d6a4f]">
               {item.classCode}
             </span>

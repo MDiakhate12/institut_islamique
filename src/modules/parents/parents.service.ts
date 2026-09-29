@@ -223,9 +223,7 @@ export const parentsService = {
           classId:     classEnrollments.classId,
           className:   classes.name,
           room:        classes.room,
-          section:     classes.section,
           subjectCode: classes.subject,
-          levelNumber: classes.section,
           teacherName: profiles.fullName,
         })
         .from(classEnrollments)
@@ -248,9 +246,7 @@ export const parentsService = {
           classId:     r.classId,
           className:   r.className,
           room:        r.room,
-          section:     r.section,
           subjectCode: r.subjectCode ?? null,
-          levelNumber: r.levelNumber ?? null,
           teacherName: r.teacherName ?? null,
         })
       }

@@ -243,10 +243,6 @@ function ClassCard({ cls, onClick }: { cls: AdminClassHomework; onClick: () => v
         </div>
       </div>
 
-      {cls.section && (
-        <p className="text-xs text-muted-foreground mb-1">Section {cls.section}</p>
-      )}
-
       {submitted && hw ? (
         <>
           {hw.surahName && (

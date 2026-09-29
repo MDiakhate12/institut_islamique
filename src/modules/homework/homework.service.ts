@@ -33,7 +33,6 @@ export const homeworkService = {
         classId:     classes.id,
         subject:     classes.subject,
         name:        classes.name,
-        section:     classes.section,
         teacherName: profiles.fullName,
         homeworkCount: sql<number>`(
           SELECT count(*) FROM homework h WHERE h.class_id = ${classes.id} AND h.school_id = ${schoolId}
@@ -51,10 +50,12 @@ export const homeworkService = {
       )
 
     return rows.map(r => ({
-      ...r,
-      catalogCode: r.subject,
-      subjectCode: r.subject,
-      teacherName: r.teacherName ?? null,
+      pinnedId:      r.pinnedId,
+      classId:       r.classId,
+      catalogCode:   r.subject,
+      subjectCode:   r.subject,
+      name:          r.name,
+      teacherName:   r.teacherName ?? null,
       homeworkCount: r.homeworkCount ?? 0,
     }))
   },
@@ -79,7 +80,6 @@ export const homeworkService = {
         id:      classes.id,
         subject: classes.subject,
         name:    classes.name,
-        section: classes.section,
       })
       .from(classes)
       .where(and(
@@ -93,15 +93,13 @@ export const homeworkService = {
           ? notInArray(classes.id, excludeClassIds)
           : undefined,
       ))
-      .orderBy(classes.subject, classes.section)
+      .orderBy(classes.subject, classes.name)
 
     return rows.map(r => ({
       id:          r.id,
       catalogCode: r.subject,
       subjectCode: r.subject,
-      levelNumber: null,
       name:        r.name,
-      section:     r.section ?? null,
     }))
   },
 
@@ -332,7 +330,6 @@ export const homeworkService = {
         classId:      homework.classId,
         className:    classes.name,
         classCode:    classes.subject,
-        classSection: classes.section,
         subjectCode:  classes.subject,
         assignedDate: homework.assignedDate,
         surahName:    homework.surahName,
@@ -399,7 +396,6 @@ export const homeworkService = {
           classId:      row.classId,
           className:    row.className ?? '',
           classCode:    row.classCode ?? '',
-          classSection: row.classSection ?? null,
           subjectCode:  row.subjectCode ?? '',
           assignedDate: row.assignedDate as string,
           surahName:    row.surahName ?? null,
@@ -434,7 +430,6 @@ export const homeworkService = {
         className:   classes.name,
         classCode:   classes.subject,
         subjectCode: classes.subject,
-        section:     classes.section,
         room:        classes.room,
         teacherId:   classes.teacherId,
         teacherName: profiles.fullName,
@@ -492,7 +487,6 @@ export const homeworkService = {
         className:   c.className,
         classCode:   c.classCode ?? '',
         subjectCode: c.subjectCode ?? '',
-        section:     c.section ?? null,
         room:        c.room ?? null,
         teacherName: c.teacherName ?? null,
         homework: hw ? {

@@ -57,10 +57,6 @@ export function ClassDetailDialog({ cls, date, onClose }: Props) {
             </div>
           </div>
           <div>
-            <span className="text-muted-foreground text-xs">Section</span>
-            <p className="mt-0.5 font-medium">{cls.section ?? '—'}</p>
-          </div>
-          <div>
             <span className="text-muted-foreground text-xs">Salle</span>
             <p className="mt-0.5 font-medium">{cls.room ?? '—'}</p>
           </div>

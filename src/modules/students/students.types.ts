@@ -38,7 +38,6 @@ export type StudentEnrollment = {
   className: string
   teacherName: string | null
   room: string | null
-  section: string | null
   paymentPlan: string
   paidT1: boolean
   paidT2: boolean

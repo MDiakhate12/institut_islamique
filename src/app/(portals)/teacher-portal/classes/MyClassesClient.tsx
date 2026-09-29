@@ -166,12 +166,6 @@ function ClassCard({
             {cls.room}
           </span>
         )}
-        {cls.section && (
-          <span className="flex items-center gap-1">
-            <Users className="h-3.5 w-3.5" />
-            Sec {cls.section}
-          </span>
-        )}
       </div>
 
       {cls.teacherName && (

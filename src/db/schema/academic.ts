@@ -71,7 +71,7 @@ export const classes = pgTable('classes', {
   subject:            text('subject').notNull().default('QRN'),
   name:               text('name').notNull(),
   room:               text('room'),
-  section:            text('section'),
+  curriculum:         text('curriculum'),
   academicYear:       text('academic_year').notNull(),
   isActive:           boolean('is_active').notNull().default(true),
   examPeriodT1Open:   boolean('exam_period_t1_open').notNull().default(false),

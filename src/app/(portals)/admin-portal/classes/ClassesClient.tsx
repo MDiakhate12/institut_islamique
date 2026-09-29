@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useClasses } from '@/modules/classes/classes.hooks'
 import { useTeachers } from '@/modules/teachers/teachers.hooks'
 import { useSchool } from '@/modules/school/school.hooks'
@@ -15,8 +16,9 @@ import {
 } from '@/components/ui/dialog'
 import {
   Search, Pencil, Users, BookOpen, MapPin, GraduationCap,
-  Plus, Download, BookText,
+  Plus, Download, Settings2, X,
 } from 'lucide-react'
+import { updateSchoolSettingsAction } from '@/modules/school/school.actions'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -93,6 +95,7 @@ export function ClassesClient() {
   // Dialog state
   const [studentsClass, setStudentsClass] = useState<ClassWithDetails | null>(null)
   const [syllabusClass, setSyllabusClass] = useState<ClassWithDetails | null>(null)
+  const [manageRoomsOpen, setManageRoomsOpen] = useState(false)
 
   // Derived filter options
   const teacherOptions = useMemo(() =>
@@ -155,6 +158,15 @@ export function ClassesClient() {
           )}
         </h1>
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-muted-foreground"
+            onClick={() => setManageRoomsOpen(true)}
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            Gérer les salles
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -326,6 +338,14 @@ export function ClassesClient() {
           onOpenChange={open => { if (!open) setSyllabusClass(null) }}
         />
       )}
+
+      {/* ── Manage rooms dialog ── */}
+      <ManageRoomsDialog
+        open={manageRoomsOpen}
+        onOpenChange={setManageRoomsOpen}
+        currentRooms={configuredRooms}
+        school={school}
+      />
     </div>
   )
 }
@@ -350,15 +370,12 @@ function ClassCard({
 
   return (
     <div className="bg-white rounded-xl border border-border p-4 flex flex-col gap-2.5 hover:shadow-sm transition-shadow">
-      {/* Top: badges row */}
+      {/* Top: subject badge */}
       <div className="flex items-center gap-1.5 flex-wrap">
         {c.subjectCode && (
           <span className={cn('text-[11px] font-bold px-1.5 py-0.5 rounded', colors.bg, colors.text)}>
             {c.subjectCode}
           </span>
-        )}
-        {c.section && (
-          <span className="text-xs text-muted-foreground">Sec {c.section}</span>
         )}
       </div>
 
@@ -435,11 +452,124 @@ function SyllabusDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-[#2d6a4f]" />
-            {scheduledClass.name} — Syllabus
+            {scheduledClass.name} — Programme
           </DialogTitle>
         </DialogHeader>
-        <div className="prose prose-sm max-w-none pt-1">
-          <p className="text-sm text-muted-foreground italic">Aucun programme défini pour cette classe.</p>
+        <div className="pt-1">
+          {scheduledClass.curriculum ? (
+            renderCurriculum(scheduledClass.curriculum)
+          ) : (
+            <p className="text-sm text-muted-foreground italic">
+              Aucun programme défini pour cette classe.
+              <br />
+              <span className="not-italic text-[#2d6a4f]">
+                Cliquez sur Modifier pour ajouter un programme.
+              </span>
+            </p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ── Manage rooms dialog ───────────────────────────────────────────────────────
+function ManageRoomsDialog({
+  open,
+  onOpenChange,
+  currentRooms,
+  school,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  currentRooms: string[]
+  school: import('@/modules/school/school.types').School | undefined
+}) {
+  const [rooms, setRooms] = useState<string[]>(currentRooms)
+  const [newRoom, setNewRoom] = useState('')
+  const [saving, setSaving] = useState(false)
+  const qc = useQueryClient()
+
+  // Sync if currentRooms changes (e.g. parent re-fetches)
+  useState(() => { setRooms(currentRooms) })
+
+  async function handleSave() {
+    if (!school) return
+    setSaving(true)
+    const result = await updateSchoolSettingsAction({ ...school.settings, rooms })
+    setSaving(false)
+    if (!result.success) { toast.error(result.error); return }
+    qc.invalidateQueries({ queryKey: ['school'] })
+    toast.success('Salles mises à jour')
+    onOpenChange(false)
+  }
+
+  function addRoom() {
+    const v = newRoom.trim()
+    if (!v || rooms.includes(v)) return
+    setRooms(prev => [...prev, v])
+    setNewRoom('')
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-[#2d6a4f]" />
+            Gérer les salles
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          {/* Existing rooms */}
+          <div className="space-y-1.5">
+            {rooms.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">Aucune salle configurée.</p>
+            ) : (
+              rooms.map(r => (
+                <div key={r} className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-md bg-muted/40 border border-border">
+                  <span className="text-sm">{r}</span>
+                  <button
+                    type="button"
+                    onClick={() => setRooms(prev => prev.filter(x => x !== r))}
+                    className="p-0.5 rounded hover:bg-red-100 hover:text-red-600 text-muted-foreground transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Add new */}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Nom de la salle (ex. Salle 1, Salle A)"
+              value={newRoom}
+              onChange={e => setNewRoom(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addRoom() } }}
+              className="h-9"
+            />
+            <Button type="button" size="sm" variant="outline" onClick={addRoom} className="shrink-0">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={saving}
+            onClick={handleSave}
+            className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
+          >
+            {saving ? 'Enregistrement...' : 'Enregistrer'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

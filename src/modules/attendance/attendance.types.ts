@@ -13,7 +13,6 @@ export type PinnedAttendanceClass = {
   catalogCode: string
   subjectCode: string
   name: string
-  section: string | null
   teacherName: string | null
 }
 
@@ -21,9 +20,7 @@ export type AttendanceClassOption = {
   id: string
   catalogCode: string
   subjectCode: string
-  levelNumber: string | null
   name: string
-  section: string | null
 }
 
 export type SubmitAttendanceInput = {
@@ -44,7 +41,6 @@ export type ParentAttendanceEntry = {
   classId: string
   className: string
   catalogCode: string
-  section: string | null
   status: AttendanceStatus | null      // null = not submitted by teacher
   submittedAt: Date | null
   submittedByName: string | null
@@ -57,7 +53,6 @@ export type AdminClassOverview = {
   name: string
   catalogCode: string
   subjectCode: string
-  section: string | null
   room: string | null
   teacherName: string | null
   teacherId: string | null

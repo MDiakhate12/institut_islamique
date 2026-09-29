@@ -34,7 +34,6 @@ interface ClassRow {
   name: string
   teacherName: string | null
   room: string | null
-  section: string | null
   paidT1: boolean
   paidT2: boolean
   paidT3: boolean
@@ -239,7 +238,7 @@ export function StudentFormDialog({
   const [localEnrollments, setLocalEnrollments] = useState<ClassRow[]>(() =>
     (student?.enrollments ?? []).map(e => ({
       id: e.classId, classCode: e.classCode, name: e.className,
-      teacherName: e.teacherName, room: e.room, section: e.section,
+      teacherName: e.teacherName, room: e.room,
       paidT1: e.paidT1, paidT2: e.paidT2, paidT3: e.paidT3,
     }))
   )
@@ -274,7 +273,7 @@ export function StudentFormDialog({
     form.reset()
     setLocalEnrollments((student?.enrollments ?? []).map(e => ({
       id: e.classId, classCode: e.classCode, name: e.className,
-      teacherName: e.teacherName, room: e.room, section: e.section,
+      teacherName: e.teacherName, room: e.room,
       paidT1: e.paidT1, paidT2: e.paidT2, paidT3: e.paidT3,
     })))
     setRemovedClassIds([])
@@ -819,7 +818,7 @@ export function StudentFormDialog({
             ...prev,
             {
               id: cls.id, classCode: cls.classCode, name: cls.name, teacherName: cls.teacherName,
-              room: cls.room, section: cls.section, paidT1: false, paidT2: false, paidT3: false, isNew: true,
+              room: cls.room, paidT1: false, paidT2: false, paidT3: false, isNew: true,
             },
           ])
         }}

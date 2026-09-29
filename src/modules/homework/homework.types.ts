@@ -33,7 +33,6 @@ export type PinnedClass = {
   catalogCode: string
   subjectCode: string
   name: string
-  section: string | null
   teacherName: string | null
   homeworkCount: number
 }
@@ -42,9 +41,7 @@ export type ClassOption = {
   id: string
   catalogCode: string
   subjectCode: string
-  levelNumber: string | null
   name: string
-  section: string | null
 }
 
 export type VirtualSession = {
@@ -74,7 +71,6 @@ export type AdminClassHomework = {
   className: string
   classCode: string
   subjectCode: string
-  section: string | null
   room: string | null
   teacherName: string | null
   homework: {
@@ -113,7 +109,6 @@ export type ParentHomeworkItem = {
   classId: string
   className: string
   classCode: string
-  classSection: string | null
   subjectCode: string
   assignedDate: string
   surahName: string | null

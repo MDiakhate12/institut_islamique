@@ -12,7 +12,7 @@ export const teacherClassesService = {
         subjectCode:  classes.subject,
         name:         classes.name,
         room:         classes.room,
-        section:      classes.section,
+        curriculum:   classes.curriculum,
         teacherName:  profiles.fullName,
         studentCount: sql<number>`(
           SELECT count(*) FROM class_enrollments ce
@@ -32,19 +32,17 @@ export const teacherClassesService = {
           ),
         )
       )
-      .orderBy(classes.subject, classes.section)
+      .orderBy(classes.subject, classes.name)
 
     return rows.map(r => ({
       classId:        r.classId,
       catalogCode:    r.catalogCode ?? '',
       subjectCode:    r.subjectCode ?? '',
-      levelNumber:    null,
       name:           r.name,
       room:           r.room ?? null,
-      section:        r.section ?? null,
+      curriculum:     r.curriculum ?? null,
       teacherName:    r.teacherName ?? null,
       teacherInitial: r.teacherName?.[0]?.toUpperCase() ?? null,
-      curriculum:     null,
       studentCount:   r.studentCount ?? 0,
     }))
   },

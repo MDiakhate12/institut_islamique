@@ -23,7 +23,6 @@ const SUBJECT_LABELS: Record<string, string> = {
 
 export default function AddClassDialog({ open, onClose }: Props) {
   const [subjectCode, setSubjectCode] = useState('')
-  const [levelNumber, setLevelNumber] = useState('')
   const [classId, setClassId] = useState('')
 
   const { data: options = [] } = useAttendanceClassOptions()
@@ -34,28 +33,13 @@ export default function AddClassDialog({ open, onClose }: Props) {
     return codes.sort()
   }, [options])
 
-  const levels = useMemo(() => {
-    if (!subjectCode) return []
-    const nums = [...new Set(
-      options
-        .filter(o => o.subjectCode === subjectCode && o.levelNumber)
-        .map(o => o.levelNumber as string)
-    )]
-    return nums.sort((a, b) => parseInt(a) - parseInt(b))
-  }, [options, subjectCode])
-
   const sections = useMemo(() => {
     if (!subjectCode) return []
-    return options.filter(o => {
-      if (o.subjectCode !== subjectCode) return false
-      if (levelNumber && levelNumber !== 'all' && o.levelNumber !== levelNumber) return false
-      return true
-    })
-  }, [options, subjectCode, levelNumber])
+    return options.filter(o => o.subjectCode === subjectCode)
+  }, [options, subjectCode])
 
   function reset() {
     setSubjectCode('')
-    setLevelNumber('')
     setClassId('')
   }
 
@@ -91,7 +75,7 @@ export default function AddClassDialog({ open, onClose }: Props) {
             <Label className="text-sm font-medium text-gray-700">Type de matière</Label>
             <Select
               value={subjectCode}
-              onValueChange={v => { if (v) { setSubjectCode(v); setLevelNumber(''); setClassId('') } }}
+              onValueChange={v => { if (v) { setSubjectCode(v); setClassId('') } }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Sélectionner une matière" />
@@ -106,26 +90,6 @@ export default function AddClassDialog({ open, onClose }: Props) {
             </Select>
           </div>
 
-          {levels.length > 0 && (
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-gray-700">Niveau</Label>
-              <Select
-                value={levelNumber}
-                onValueChange={v => { if (v) { setLevelNumber(v); setClassId('') } }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionner un niveau" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les niveaux</SelectItem>
-                  {levels.map(l => (
-                    <SelectItem key={l} value={l}>Niveau {l}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           {sections.length > 0 && (
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-gray-700">Classe</Label>
@@ -136,8 +100,7 @@ export default function AddClassDialog({ open, onClose }: Props) {
                 <SelectContent>
                   {sections.map(cls => (
                     <SelectItem key={cls.id} value={cls.id}>
-                      {cls.catalogCode}{cls.section ? ` — Section ${cls.section}` : ''}
-                      {cls.name ? ` (${cls.name})` : ''}
+                      {cls.catalogCode}{cls.name ? ` — ${cls.name}` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

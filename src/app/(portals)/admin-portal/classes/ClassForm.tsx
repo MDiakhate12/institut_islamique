@@ -47,7 +47,7 @@ export function ClassFormDialog({
     defaultValues: {
       subject:            scheduledClass?.subject            ?? '',
       name:               scheduledClass?.name               ?? '',
-      section:            scheduledClass?.section            ?? '',
+      curriculum:         scheduledClass?.curriculum         ?? '',
       room:               scheduledClass?.room               ?? '',
       teacherId:          scheduledClass?.teacherId          ?? null,
       assistantTeacherId: scheduledClass?.assistantTeacherId ?? null,
@@ -145,24 +145,32 @@ export function ClassFormDialog({
             )}
           </div>
 
-          {/* Section + Salle */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Numéro de section</label>
-              <Input placeholder="ex. 1" {...form.register('section')} />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Salle de classe</label>
-              <select
-                {...form.register('room')}
-                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
-              >
-                <option value="">Aucune</option>
-                {roomOptions.map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </div>
+          {/* Salle */}
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">Salle de classe</label>
+            <select
+              {...form.register('room')}
+              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
+            >
+              <option value="">Aucune</option>
+              {roomOptions.map(r => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Programme */}
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">
+              Programme
+              <span className="ml-1 text-xs font-normal text-muted-foreground">(optionnel)</span>
+            </label>
+            <textarea
+              {...form.register('curriculum')}
+              rows={5}
+              placeholder="Décrivez le programme de cette classe... (markdown supporté : # Titre, ## Section, - liste)"
+              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 resize-y font-mono"
+            />
           </div>
 
           {/* Enseignants */}

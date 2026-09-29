@@ -71,7 +71,6 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                   {scheduledClass.fullCode && (
                     <span className="text-[#2d6a4f] font-medium">{scheduledClass.fullCode}</span>
                   )}
-                  {scheduledClass.section && <span> • Section {scheduledClass.section}</span>}
                   {scheduledClass.teacherName && (
                     <span> • Taught by {scheduledClass.teacherName}</span>
                   )}

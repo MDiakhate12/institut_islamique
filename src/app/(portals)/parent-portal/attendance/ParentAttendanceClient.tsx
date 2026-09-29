@@ -100,7 +100,6 @@ function AttendanceCard({ entry }: { entry: ParentAttendanceEntry }) {
           <p className="text-sm font-medium text-gray-900 truncate">{entry.className}</p>
           <p className="text-xs text-muted-foreground mt-0.5">
             Classe {entry.catalogCode}
-            {entry.section ? ` - Section ${entry.section}` : ''}
           </p>
           {entry.submittedAt && entry.submittedByName && (
             <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">

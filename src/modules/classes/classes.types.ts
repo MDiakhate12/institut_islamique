@@ -7,7 +7,7 @@ export type ClassWithDetails = {
   subject: string
   name: string
   room: string | null
-  section: string | null
+  curriculum: string | null
   academicYear: string
   isActive: boolean
   examPeriodT1Open: boolean
@@ -20,7 +20,7 @@ export type ClassWithDetails = {
   assistantTeacherName: string | null
   // Computed
   enrollmentCount: number
-  fullCode: string        // e.g. "QRN-1"
+  fullCode: string        // alias for subject code
   subjectCode: string     // alias for subject (backward-compat)
 }
 
@@ -65,9 +65,6 @@ export function getSubjectColor(code: string | null | undefined) {
   }
 }
 
-export function buildFullCode(subject: string | null | undefined, section: string | null | undefined): string {
-  if (!subject && !section) return ''
-  if (!subject) return section ?? ''
-  if (!section) return subject
-  return `${subject}-${section}`
+export function buildFullCode(subject: string | null | undefined): string {
+  return subject ?? ''
 }

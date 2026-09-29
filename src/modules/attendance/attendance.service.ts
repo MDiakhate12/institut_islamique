@@ -23,7 +23,6 @@ export const attendanceService = {
         classId:     classes.id,
         subject:     classes.subject,
         name:        classes.name,
-        section:     classes.section,
         teacherName: profiles.fullName,
       })
       .from(teacherAttendanceClasses)
@@ -43,7 +42,6 @@ export const attendanceService = {
       catalogCode: r.subject,
       subjectCode: r.subject,
       name:        r.name,
-      section:     r.section ?? null,
       teacherName: r.teacherName ?? null,
     }))
   },
@@ -66,7 +64,6 @@ export const attendanceService = {
         id:      classes.id,
         subject: classes.subject,
         name:    classes.name,
-        section: classes.section,
       })
       .from(classes)
       .where(and(
@@ -80,15 +77,13 @@ export const attendanceService = {
           ? notInArray(classes.id, excludeClassIds)
           : undefined,
       ))
-      .orderBy(classes.subject, classes.section)
+      .orderBy(classes.subject, classes.name)
 
     return rows.map(r => ({
       id:          r.id,
       catalogCode: r.subject,
       subjectCode: r.subject,
-      levelNumber: null,
       name:        r.name,
-      section:     r.section ?? null,
     }))
   },
 
@@ -194,7 +189,6 @@ export const attendanceService = {
         classId:     classes.id,
         name:        classes.name,
         room:        classes.room,
-        section:     classes.section,
         teacherId:   classes.teacherId,
         subject:     classes.subject,
         teacherName: profiles.fullName,
@@ -203,7 +197,7 @@ export const attendanceService = {
       .leftJoin(schoolMembers, eq(schoolMembers.id, classes.teacherId))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
-      .orderBy(classes.room, classes.section)
+      .orderBy(classes.room, classes.name)
 
     if (classRows.length === 0) {
       return {
@@ -323,7 +317,6 @@ export const attendanceService = {
         name:         c.name,
         catalogCode:  c.subject,
         subjectCode:  c.subject,
-        section:      c.section ?? null,
         room:         c.room ?? null,
         teacherName:  c.teacherName ?? null,
         teacherId:    c.teacherId ?? null,
@@ -388,7 +381,6 @@ export const attendanceService = {
         classId:   classEnrollments.classId,
         className: classes.name,
         subject:   classes.subject,
-        section:   classes.section,
       })
       .from(classEnrollments)
       .leftJoin(classes, eq(classes.id, classEnrollments.classId))
@@ -466,7 +458,6 @@ export const attendanceService = {
           classId:         cls.classId,
           className:       cls.className ?? '',
           catalogCode:     cls.subject ?? '',
-          section:         cls.section ?? null,
           status:          att ? (statusByAttId.get(att.id) ?? null) : null,
           submittedAt:     att?.submittedAt ?? null,
           submittedByName: att?.submittedByName ?? null,

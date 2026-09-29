@@ -26,25 +26,15 @@ function SubjectBadge({ code }: { code: string }) {
 }
 
 function ClassCard({ cls }: { cls: EnrolledClass }) {
-  const sectionLabel = cls.section ? `Sec ${cls.section}` : null
-
   return (
     <div className="rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-[#2d6a4f]/30 hover:shadow-sm transition-all">
       <div className="p-4 space-y-3">
         {/* Name */}
         <p className="font-semibold text-[#2d6a4f] leading-snug pr-2">{cls.className}</p>
 
-        {/* Badges: subject code + level + section */}
+        {/* Badges: subject code */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {cls.subjectCode && <SubjectBadge code={cls.subjectCode} />}
-          {cls.levelNumber && (
-            <span className="text-xs font-medium text-gray-600">{cls.levelNumber}</span>
-          )}
-          {sectionLabel && (
-            <span className="text-xs font-medium text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
-              {sectionLabel}
-            </span>
-          )}
         </div>
 
         {/* Room + Teacher */}

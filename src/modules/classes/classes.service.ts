@@ -3,7 +3,6 @@ import { classes, classEnrollments, students, schoolMembers, profiles } from '@/
 import { eq, and, asc, isNull, inArray, sql } from 'drizzle-orm'
 import type { CreateClassInput, UpdateClassInput } from './classes.schema'
 import type { ClassWithDetails, EnrolledStudentInClass } from './classes.types'
-import { buildFullCode } from './classes.types'
 import type { Student } from '@/modules/students/students.types'
 
 // ── Scheduled classes service ─────────────────────────────────────────────────
@@ -19,7 +18,7 @@ export const scheduledClassesService = {
         subject:            classes.subject,
         name:               classes.name,
         room:               classes.room,
-        section:            classes.section,
+        curriculum:         classes.curriculum,
         academicYear:       classes.academicYear,
         isActive:           classes.isActive,
         examPeriodT1Open:   classes.examPeriodT1Open,
@@ -30,7 +29,7 @@ export const scheduledClassesService = {
       })
       .from(classes)
       .where(eq(classes.schoolId, schoolId))
-      .orderBy(asc(classes.subject), asc(classes.section))
+      .orderBy(asc(classes.subject), asc(classes.name))
 
     if (rows.length === 0) return []
 
@@ -73,7 +72,7 @@ export const scheduledClassesService = {
       teacherName: r.teacherId ? (teacherNameMap.get(r.teacherId) ?? null) : null,
       assistantTeacherName: r.assistantTeacherId ? (teacherNameMap.get(r.assistantTeacherId) ?? null) : null,
       enrollmentCount: countMap.get(r.id) ?? 0,
-      fullCode: buildFullCode(r.subject, r.section),
+      fullCode: r.subject,
       subjectCode: r.subject,
     }))
   },
@@ -92,8 +91,8 @@ export const scheduledClassesService = {
         teacherId:          data.teacherId          ?? null,
         assistantTeacherId: data.assistantTeacherId ?? null,
         name:               data.name.trim(),
-        room:               data.room    || null,
-        section:            data.section || null,
+        room:               data.room      || null,
+        curriculum:         data.curriculum || null,
         academicYear:       data.academicYear,
       })
       .returning({ id: classes.id })
@@ -107,7 +106,7 @@ export const scheduledClassesService = {
 
     if (data.subject            !== undefined) updateData.subject            = data.subject
     if (data.name               !== undefined) updateData.name               = data.name.trim()
-    if (data.section            !== undefined) updateData.section            = data.section            || null
+    if (data.curriculum         !== undefined) updateData.curriculum         = data.curriculum         || null
     if (data.room               !== undefined) updateData.room               = data.room               || null
     if (data.teacherId          !== undefined) updateData.teacherId          = data.teacherId          ?? null
     if (data.assistantTeacherId !== undefined) updateData.assistantTeacherId = data.assistantTeacherId ?? null
@@ -206,20 +205,20 @@ export const scheduledClassesService = {
       .select({
         id:      classes.id,
         name:    classes.name,
-        section: classes.section,
         subject: classes.subject,
+        curriculum: classes.curriculum,
       })
       .from(classes)
       .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true)))
-      .orderBy(asc(classes.subject), asc(classes.section))
+      .orderBy(asc(classes.subject), asc(classes.name))
 
     return rows.map(r => ({
       id:          r.id,
       name:        r.name,
-      code:        buildFullCode(r.subject, r.section),
-      fullCode:    buildFullCode(r.subject, r.section),
+      code:        r.subject,
+      fullCode:    r.subject,
       subjectCode: r.subject,
-      curriculum:  null,
+      curriculum:  r.curriculum ?? null,
     }))
   },
 }

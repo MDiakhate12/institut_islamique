@@ -166,9 +166,6 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
                       <p className="text-sm font-semibold text-gray-900 mt-1 truncate">
                         {cls.catalogCode}
                       </p>
-                      {cls.section && (
-                        <p className="text-xs text-gray-500">Section {cls.section}</p>
-                      )}
                       {cls.teacherName && (
                         <p className="text-xs text-gray-400 mt-0.5">Prof: {cls.teacherName}</p>
                       )}
@@ -209,7 +206,6 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-bold text-gray-900">
                     {selectedPinned?.catalogCode ?? '—'}
-                    {selectedPinned?.section ? ` — Section ${selectedPinned.section}` : ''}
                   </h2>
                   <span className="text-sm text-gray-400">|</span>
                   <span className="text-sm text-gray-500">
