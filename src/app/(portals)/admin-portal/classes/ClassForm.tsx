@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -17,8 +17,38 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 
 const CURRENT_YEAR = '2025-2026'
+
+const CURRICULUM_TEMPLATE = `# Programme
+
+## Tranche d'âge
+[Indiquer la tranche d'âge cible]
+
+## Prérequis
+- Aucun prérequis
+
+## Trimestre 1
+-
+
+## Trimestre 2
+-
+
+## Trimestre 3
+-
+
+## Objectifs
+-
+
+## Évaluation
+-
+
+## Livres
+-
+
+## Vue d'ensemble
+`
 
 interface Props {
   scheduledClass?: ClassWithDetails
@@ -37,7 +67,9 @@ export function ClassFormDialog({
 }: Props) {
   const [open, setOpen] = useState(false)
   const isEditing = !!scheduledClass
+  const [curriculumOpen, setCurriculumOpen] = useState(isEditing && !!scheduledClass?.curriculum)
   const qc = useQueryClient()
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDelete] = useTransition()
@@ -79,6 +111,46 @@ export function ClassFormDialog({
     })
   }
 
+  function insertAtCursor(prefix: string, suffix = '', placeholder = 'texte') {
+    const ta = textareaRef.current
+    if (!ta) return
+    const start = ta.selectionStart
+    const end = ta.selectionEnd
+    const current = form.getValues('curriculum') ?? ''
+    const selected = current.slice(start, end) || placeholder
+    const newValue = current.slice(0, start) + prefix + selected + suffix + current.slice(end)
+    form.setValue('curriculum', newValue, { shouldDirty: true })
+    setTimeout(() => {
+      ta.focus()
+      ta.setSelectionRange(start + prefix.length, start + prefix.length + selected.length)
+    }, 0)
+  }
+
+  function insertLinePrefix(prefix: string) {
+    const ta = textareaRef.current
+    if (!ta) return
+    const start = ta.selectionStart
+    const current = form.getValues('curriculum') ?? ''
+    const lineStart = current.lastIndexOf('\n', start - 1) + 1
+    const newValue = current.slice(0, lineStart) + prefix + current.slice(lineStart)
+    form.setValue('curriculum', newValue, { shouldDirty: true })
+    setTimeout(() => { ta.focus(); ta.setSelectionRange(start + prefix.length, start + prefix.length) }, 0)
+  }
+
+  function insertSection(label: string) {
+    const ta = textareaRef.current
+    if (!ta) return
+    const current = form.getValues('curriculum') ?? ''
+    const sep = current && !current.endsWith('\n') ? '\n' : ''
+    form.setValue('curriculum', current + sep + `\n## ${label}\n`, { shouldDirty: true })
+    setTimeout(() => { ta.focus(); ta.scrollTop = ta.scrollHeight }, 0)
+  }
+
+  function startFromTemplate() {
+    form.setValue('curriculum', CURRICULUM_TEMPLATE, { shouldDirty: true })
+    setTimeout(() => { textareaRef.current?.focus() }, 0)
+  }
+
   function handleDelete() {
     if (!scheduledClass) return
     startDelete(async () => {
@@ -95,7 +167,7 @@ export function ClassFormDialog({
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) form.reset() }}>
       {trigger && <DialogTrigger render={trigger} />}
 
-      <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? 'Modifier la classe' : 'Ajouter une nouvelle classe'}
@@ -159,19 +231,85 @@ export function ClassFormDialog({
             </select>
           </div>
 
-          {/* Programme */}
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">
-              Programme
-              <span className="ml-1 text-xs font-normal text-muted-foreground">(optionnel)</span>
-            </label>
-            <textarea
-              {...form.register('curriculum')}
-              rows={5}
-              placeholder="Décrivez le programme de cette classe... (markdown supporté : # Titre, ## Section, - liste)"
-              className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30 resize-y font-mono"
-            />
-          </div>
+          {/* Programme — collapsible */}
+          {(() => {
+            const { ref: regRef, ...curriculumRest } = form.register('curriculum')
+            const hasCurriculum = !!form.watch('curriculum')
+            return (
+              <div className="border border-border rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setCurriculumOpen(v => !v)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    Programme
+                    <span className="text-xs font-normal text-muted-foreground">(optionnel)</span>
+                    {hasCurriculum && !curriculumOpen && (
+                      <span className="text-xs text-[#2d6a4f]">• Défini</span>
+                    )}
+                  </span>
+                  {curriculumOpen
+                    ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  }
+                </button>
+
+                {curriculumOpen && (
+                  <div className="border-t border-border">
+                    {/* Barre d'outils */}
+                    <div className="px-2 py-2 border-b border-border flex flex-wrap items-center gap-1.5 bg-muted/20">
+                      {/* Formatage */}
+                      {[
+                        { label: 'H1', title: 'Titre 1',   action: () => insertLinePrefix('# '),       cls: 'font-bold' },
+                        { label: 'H2', title: 'Titre 2',   action: () => insertLinePrefix('## '),      cls: 'font-semibold' },
+                        { label: 'B',  title: 'Gras',      action: () => insertAtCursor('**', '**'),   cls: 'font-bold' },
+                        { label: 'I',  title: 'Italique',  action: () => insertAtCursor('*', '*'),     cls: 'italic' },
+                      ].map(btn => (
+                        <button key={btn.label} type="button" title={btn.title} onClick={btn.action}
+                          className={cn('px-2 py-0.5 text-xs rounded border border-border hover:bg-muted bg-white transition-colors', btn.cls)}>
+                          {btn.label}
+                        </button>
+                      ))}
+                      <div className="w-px h-4 bg-border mx-0.5" />
+                      {/* Sections */}
+                      {[
+                        "Tranche d'âge", 'Prérequis',
+                        'Trimestre 1', 'Trimestre 2', 'Trimestre 3',
+                        'Objectifs', 'Évaluation', 'Livres', 'Vue d\'ensemble',
+                      ].map(s => (
+                        <button key={s} type="button" onClick={() => insertSection(s)}
+                          className="px-2 py-0.5 text-xs rounded border border-border hover:bg-muted bg-white transition-colors whitespace-nowrap">
+                          {s}
+                        </button>
+                      ))}
+                      <div className="w-px h-4 bg-border mx-0.5" />
+                      <button type="button" onClick={startFromTemplate}
+                        className="px-2 py-0.5 text-xs rounded border border-[#2d6a4f]/40 text-[#2d6a4f] hover:bg-[#2d6a4f]/10 bg-white transition-colors font-medium whitespace-nowrap">
+                        › Gabarit complet
+                      </button>
+                    </div>
+
+                    {/* Zone de texte */}
+                    <textarea
+                      {...curriculumRest}
+                      ref={(el) => { textareaRef.current = el; regRef(el) }}
+                      rows={10}
+                      placeholder="Décrivez le programme de cette classe..."
+                      className="w-full px-3 py-2.5 text-sm focus:outline-none resize-y font-mono min-h-[200px] block"
+                    />
+
+                    {/* Astuce */}
+                    <div className="px-3 py-1.5 bg-muted/30 border-t border-border">
+                      <p className="text-xs text-muted-foreground">
+                        Astuce : utilisez la barre d&apos;outils pour formater. Les boutons de section insèrent directement des titres courants.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Enseignants */}
           <div className="grid grid-cols-2 gap-3">
