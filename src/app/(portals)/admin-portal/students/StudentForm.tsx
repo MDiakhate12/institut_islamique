@@ -522,31 +522,61 @@ export function StudentFormDialog({
               </div>
             )}
 
-            {/* Niveau scolaire + fréquence paiement (issus de l'inscription, lecture seule) */}
-            {(student?.schoolGrade || student?.paymentFrequency) && (
-              <div className="grid grid-cols-2 gap-3">
-                {student?.schoolGrade && (
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">Niveau scolaire</label>
-                    <Input
-                      value={student.schoolGrade}
-                      readOnly
-                      className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
-                    />
-                  </div>
-                )}
-                {student?.paymentFrequency && (
-                  <div>
-                    <label className="text-sm font-medium mb-1 block">Fréquence paiement</label>
-                    <Input
-                      value={
-                        student.paymentFrequency === 'annually' ? 'Annuellement' :
-                        student.paymentFrequency.startsWith('trimester') ? 'Trimestriellement' :
-                        student.paymentFrequency
-                      }
-                      readOnly
-                      className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
-                    />
+            {/* Données du formulaire d'inscription (lecture seule, JSONB) */}
+            {student && (student.schoolGrade || student.paymentFrequency || student.regFatherName || student.regMotherName || student.regEmail || student.regPhone || student.regSponsorship) && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Formulaire d&apos;inscription</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {student.regFatherName && (
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Nom du père</label>
+                      <Input value={student.regFatherName} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
+                    </div>
+                  )}
+                  {student.regMotherName && (
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Nom de la mère</label>
+                      <Input value={student.regMotherName} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
+                    </div>
+                  )}
+                  {student.regPhone && (
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Téléphone (formulaire)</label>
+                      <Input value={student.regPhone} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
+                    </div>
+                  )}
+                  {student.regEmail && (
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Email (formulaire)</label>
+                      <Input value={student.regEmail} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
+                    </div>
+                  )}
+                  {student.schoolGrade && (
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Niveau scolaire</label>
+                      <Input value={student.schoolGrade} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
+                    </div>
+                  )}
+                  {student.paymentFrequency && (
+                    <div>
+                      <label className="text-xs font-medium mb-1 block text-muted-foreground">Fréquence paiement</label>
+                      <Input
+                        value={
+                          student.paymentFrequency === 'Annuellement' ? 'Annuellement' :
+                          student.paymentFrequency === 'Semestriellement' ? 'Semestriellement' :
+                          student.paymentFrequency === 'annually' ? 'Annuellement' :
+                          student.paymentFrequency.startsWith('trimester') ? 'Trimestriellement' :
+                          student.paymentFrequency
+                        }
+                        readOnly
+                        className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
+                      />
+                    </div>
+                  )}
+                </div>
+                {student.regSponsorship && !student.regSponsorship.toLowerCase().startsWith('non') && (
+                  <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                    <span className="font-semibold">Parrainage :</span> {student.regSponsorship}
                   </div>
                 )}
               </div>

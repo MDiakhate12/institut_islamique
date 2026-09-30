@@ -71,10 +71,14 @@ export type StudentListItem = Pick<
   paymentT3:            boolean
   // true si les 3 sont payés via un seul paiement annuel (affichage distinct de 3 paiements séparés)
   paymentAnnual:        boolean
-  // Niveau scolaire actuel (issu de la dernière inscription, JSONB form_data)
+  // Champs issus de form_data JSONB (dernière inscription)
   schoolGrade:          string | null
-  // Fréquence de paiement choisie à l'inscription (Annuellement / Semestriellement)
   paymentFrequency:     string | null
+  regFatherName:        string | null
+  regMotherName:        string | null
+  regEmail:             string | null
+  regPhone:             string | null
+  regSponsorship:       string | null
 }
 
 export type StudentPayment = {

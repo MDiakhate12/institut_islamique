@@ -26,7 +26,10 @@ const COLUMNS = [
   { id: 'status',           label: 'Statut',                  def: true  },
   { id: 'schoolGrade',      label: 'Niveau scolaire',         def: false },
   { id: 'paymentFrequency', label: 'Fréquence de paiement',   def: false },
-  { id: 'phone',            label: 'Téléphone tuteur',        def: false },
+  { id: 'phone',            label: 'Téléphone (formulaire)',  def: false },
+  { id: 'regEmail',         label: 'Email (formulaire)',      def: false },
+  { id: 'regFatherName',    label: 'Nom du père',             def: false },
+  { id: 'regMotherName',    label: 'Nom de la mère',          def: false },
   { id: 'enrollmentYear',   label: "Année d'inscription",     def: false },
   { id: 'attendance',       label: 'Présences',               def: false },
 ] as const
@@ -265,6 +268,9 @@ export function StudentsClient() {
                   {visibleCols.schoolGrade      && <th className="px-3 py-3 text-left min-w-[140px]">Niveau scolaire</th>}
                   {visibleCols.paymentFrequency && <th className="px-3 py-3 text-left min-w-[140px]">Fréquence</th>}
                   {visibleCols.phone           && <th className="px-3 py-3 text-left min-w-[140px]">Téléphone</th>}
+                  {visibleCols.regEmail        && <th className="px-3 py-3 text-left min-w-[180px]">Email</th>}
+                  {visibleCols.regFatherName   && <th className="px-3 py-3 text-left min-w-[140px]">Père</th>}
+                  {visibleCols.regMotherName   && <th className="px-3 py-3 text-left min-w-[140px]">Mère</th>}
                   {visibleCols.enrollmentYear  && <th className="px-3 py-3 text-left">Année</th>}
                   {visibleCols.attendance     && <th className="px-3 py-3 text-left min-w-[120px]">Présences</th>}
                 </tr>
@@ -374,7 +380,6 @@ function SortTh({ label, onClick, className }: { label: string; onClick: () => v
 
 function StudentRow({ student: s, index, visibleCols, onEdit }: { student: StudentListItem; index: number; visibleCols: VisibleCols; onEdit: (s: StudentListItem) => void }) {
   const teacherName = s.enrollments[0]?.teacherName ?? null
-  const primaryGuardian = s.guardians[0]
 
   return (
     <tr
@@ -462,7 +467,25 @@ function StudentRow({ student: s, index, visibleCols, onEdit }: { student: Stude
 
       {visibleCols.phone && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
-          {primaryGuardian?.phone ?? <span className="italic">—</span>}
+          {s.regPhone ?? <span className="italic">—</span>}
+        </td>
+      )}
+
+      {visibleCols.regEmail && (
+        <td className="px-3 py-3 text-sm text-muted-foreground">
+          {s.regEmail ?? <span className="italic">—</span>}
+        </td>
+      )}
+
+      {visibleCols.regFatherName && (
+        <td className="px-3 py-3 text-sm text-muted-foreground">
+          {s.regFatherName ?? <span className="italic">—</span>}
+        </td>
+      )}
+
+      {visibleCols.regMotherName && (
+        <td className="px-3 py-3 text-sm text-muted-foreground">
+          {s.regMotherName ?? <span className="italic">—</span>}
         </td>
       )}
 
