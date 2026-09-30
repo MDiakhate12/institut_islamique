@@ -71,6 +71,7 @@ export function ClassFormDialog({
   const qc = useQueryClient()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [isDeleting, startDelete] = useTransition()
 
@@ -164,6 +165,7 @@ export function ClassFormDialog({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) form.reset() }}>
       {trigger && <DialogTrigger render={trigger} />}
 
@@ -350,7 +352,7 @@ export function ClassFormDialog({
             isEditing ? 'justify-between' : 'justify-end'
           )}>
             {isEditing && (
-              <Button type="button" variant="destructive" size="sm" disabled={isDeleting} onClick={handleDelete}>
+              <Button type="button" variant="destructive" size="sm" disabled={isDeleting} onClick={() => setConfirmDeleteOpen(true)}>
                 {isDeleting ? 'Suppression...' : 'Supprimer'}
               </Button>
             )}
@@ -373,5 +375,30 @@ export function ClassFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Supprimer la classe ?</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Cette action est irréversible. La classe et ses données associées seront définitivement supprimées.
+        </p>
+        <div className="flex justify-end gap-2 mt-2">
+          <Button variant="outline" size="sm" onClick={() => setConfirmDeleteOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={isDeleting}
+            onClick={() => { setConfirmDeleteOpen(false); handleDelete() }}
+          >
+            {isDeleting ? 'Suppression...' : 'Supprimer'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

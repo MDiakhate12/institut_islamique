@@ -487,7 +487,12 @@ export function StudentFormDialog({
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Nom de famille *</label>
-                <Input placeholder="Nom" className={INPUT_SIZE_CLASS} {...form.register('lastName')} />
+                <Input
+                  placeholder="Nom"
+                  className={cn(INPUT_SIZE_CLASS, 'uppercase')}
+                  {...form.register('lastName')}
+                  onChange={e => form.setValue('lastName', e.target.value.toUpperCase(), { shouldDirty: true })}
+                />
                 {form.formState.errors.lastName && (
                   <p className="text-xs text-destructive mt-1">{form.formState.errors.lastName.message}</p>
                 )}

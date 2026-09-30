@@ -26,8 +26,11 @@ export function guardianDisplayName(g: GuardianSummary): string {
 export function calcAge(birthDate: string | null | undefined): string {
   if (!birthDate) return '—'
   const birth = new Date(birthDate)
+  if (isNaN(birth.getTime())) return '—'
   const now = new Date()
+  if (birth > now) return '—'
   const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+  if (totalMonths < 0) return '—'
   return `${Math.floor(totalMonths / 12)}a ${totalMonths % 12}m`
 }
 

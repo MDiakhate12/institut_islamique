@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
-import { toast } from 'sonner'
+import { useState, useMemo } from 'react'
 import {
-  useStudents, useDeactivateStudent, useUpdateStudentNote,
+  useStudents,
 } from '@/modules/students/students.hooks'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Plus, Download, ArrowUpDown, Check, X, Pencil, ReceiptText, CalendarDays, ClipboardList, BookOpen } from 'lucide-react'
+import { Users, Plus, Download, ArrowUpDown, Pencil, ReceiptText, CalendarDays, ClipboardList, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
@@ -34,8 +33,6 @@ function buildYearOptions(students: StudentListItem[]): string[] {
 
 export function StudentsClient() {
   const { data: students, isLoading } = useStudents()
-  const { mutate: deactivate }        = useDeactivateStudent()
-  const { mutate: saveNote }          = useUpdateStudentNote()
 
   const [search, setSearch]             = useState('')
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all')
@@ -46,11 +43,6 @@ export function StudentsClient() {
   const [t3Filter, setT3Filter]         = useState<PayFilter>('all')
   const [sortKey, setSortKey]           = useState<SortKey>(null)
   const [sortAsc, setSortAsc]           = useState(true)
-
-  // Inline note editing
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
-  const [noteValue, setNoteValue]         = useState('')
-  const noteInputRef = useRef<HTMLTextAreaElement | null>(null)
 
   // Modal states
   const [reportCardStudent, setReportCardStudent] = useState<StudentListItem | null>(null)
@@ -107,32 +99,7 @@ export function StudentsClient() {
     else { setSortKey(key); setSortAsc(true) }
   }
 
-  function handleDeactivate(id: string) {
-    deactivate(id, { onSuccess: r => { if (!r.success) toast.error(r.error) } })
-  }
-
-  function startEditNote(s: StudentListItem) {
-    setEditingNoteId(s.id)
-    setNoteValue(s.notes ?? '')
-    setTimeout(() => noteInputRef.current?.focus(), 50)
-  }
-
-  function cancelEditNote() {
-    setEditingNoteId(null)
-    setNoteValue('')
-  }
-
-  function saveEditNote(studentId: string) {
-    saveNote({ studentId, note: noteValue }, {
-      onSuccess: r => {
-        if (!r.success) { toast.error(r.error); return }
-        setEditingNoteId(null)
-        setNoteValue('')
-      },
-    })
-  }
-
-  const total = students?.length ?? 0
+  const total = filtered.length
 
   return (
     <div className="p-6 space-y-4">
@@ -142,7 +109,7 @@ export function StudentsClient() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Élèves</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gérer les inscriptions et les profils des élèves</p>
-          {!isLoading && <p className="text-xs text-muted-foreground mt-1">{total} élève{total !== 1 ? 's' : ''}</p>}
+          {!isLoading && <p className="text-base font-semibold text-foreground mt-1">{total} élève{total !== 1 ? 's' : ''}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button
@@ -248,27 +215,10 @@ export function StudentsClient() {
               <thead>
                 <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
                   <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} className="sticky left-0 z-10 bg-[#fefbf6] border-r border-border" />
-                  <th className="px-3 py-3 text-left">Étoiles</th>
-                  <th className="px-3 py-3 text-left">Trophée</th>
-                  <SortTh label="Date de naissance" onClick={() => toggleSort('birthDate')} />
-                  <th className="px-3 py-3 text-left min-w-[160px]">Parent 1</th>
-                  <th className="px-3 py-3 text-left min-w-[130px]">Parent 2</th>
-                  <th className="px-3 py-3 text-left min-w-[120px]">Téléphone</th>
-                  <th className="px-3 py-3 text-left">Nb. classes</th>
-                  <th className="px-3 py-3 text-left min-w-[120px]">Classes</th>
-                  <th className="px-3 py-3 text-left">T1</th>
-                  <th className="px-3 py-3 text-left">T2</th>
-                  <th className="px-3 py-3 text-left">T3</th>
+                  <SortTh label="Âge" onClick={() => toggleSort('birthDate')} />
+                  <th className="px-3 py-3 text-left min-w-[120px]">Classe(s)</th>
+                  <th className="px-3 py-3 text-left min-w-[140px]">Enseignant</th>
                   <th className="px-3 py-3 text-left">Statut</th>
-                  <th className="px-3 py-3 text-center">Présent</th>
-                  <th className="px-3 py-3 text-center">Retard</th>
-                  <th className="px-3 py-3 text-center">Absent</th>
-                  <th className="px-3 py-3 text-center">Excusé</th>
-                  <th className="px-3 py-3 text-left min-w-[110px]">Année inscrit.</th>
-                  <th className="px-3 py-3 text-left min-w-[110px]">Date adhésion</th>
-                  <th className="px-3 py-3 text-left min-w-[120px]">Dernière présence</th>
-                  <th className="px-3 py-3 text-left min-w-[130px]">N° urgence</th>
-                  <th className="px-3 py-3 text-left min-w-[200px]">Commentaire</th>
                   <th className="px-3 py-3 text-left min-w-[300px]">Actions</th>
                 </tr>
               </thead>
@@ -278,14 +228,6 @@ export function StudentsClient() {
                     key={s.id}
                     student={s}
                     index={i}
-                    onDeactivate={handleDeactivate}
-                    editingNoteId={editingNoteId}
-                    noteValue={noteValue}
-                    noteInputRef={noteInputRef}
-                    onStartEditNote={startEditNote}
-                    onCancelEditNote={cancelEditNote}
-                    onSaveEditNote={saveEditNote}
-                    onNoteChange={setNoteValue}
                     onOpenReportCard={() => setReportCardStudent(s)}
                     onOpenAttendance={() => setAttendanceModal({ studentId: s.id, studentName: `${s.firstName} ${s.lastName}` })}
                     onOpenPayments={() => setPaymentsModal({ studentId: s.id, studentName: `${s.firstName} ${s.lastName}` })}
@@ -358,101 +300,50 @@ function PaymentBadge({ paid, annual }: { paid: boolean; annual?: boolean }) {
 }
 
 function StudentRow({
-  student: s, index, onDeactivate,
-  editingNoteId, noteValue, noteInputRef,
-  onStartEditNote, onCancelEditNote, onSaveEditNote, onNoteChange,
+  student: s, index,
   onOpenReportCard, onOpenAttendance, onOpenPayments, onOpenHomework,
 }: {
   student: StudentListItem
   index: number
-  onDeactivate: (id: string) => void
-  editingNoteId: string | null
-  noteValue: string
-  noteInputRef: React.RefObject<HTMLTextAreaElement | null>
-  onStartEditNote: (s: StudentListItem) => void
-  onCancelEditNote: () => void
-  onSaveEditNote: (id: string) => void
-  onNoteChange: (v: string) => void
   onOpenReportCard: () => void
   onOpenAttendance: () => void
   onOpenPayments: () => void
   onOpenHomework: () => void
 }) {
-  const father = s.guardians.find(g => g.relationship === 'father' || g.isPrimary)
-  const mother = s.guardians.find(g => g.relationship === 'mother') ?? s.guardians.find(g => !g.isPrimary)
-  const emergencyPhone = father?.emergencyPhone ?? s.guardians.find(g => g.emergencyPhone)?.emergencyPhone
-  const isEditingNote = editingNoteId === s.id
   const [editOpen, setEditOpen] = useState(false)
+  const teacherName = s.enrollments[0]?.teacherName ?? null
 
   return (
     <tr
       onClick={() => setEditOpen(true)}
-      className="group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-top cursor-pointer"
+      className="group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-middle cursor-pointer"
     >
-      {/* Nom + ID — figé au scroll horizontal */}
+      {/* Nom + pastille genre — figé au scroll horizontal */}
       <td className="px-3 py-3 sticky left-0 z-10 bg-white group-hover:bg-[#fdfbf8] border-r border-border/50">
-        <div className="flex items-start gap-2">
-          <span className="text-muted-foreground text-xs mt-0.5 shrink-0">{index + 1}.</span>
-          <div className={cn('mt-1.5 h-2 w-2 rounded-full shrink-0', s.isActive ? 'bg-blue-500' : 'bg-gray-300')} />
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground text-xs shrink-0">{index + 1}.</span>
+          <span className={cn(
+            'h-2 w-2 rounded-full shrink-0',
+            s.gender === 'male'   ? 'bg-blue-400' :
+            s.gender === 'female' ? 'bg-pink-400' : 'bg-gray-300'
+          )} />
           <div>
-            <p className="font-semibold text-foreground">{s.lastName} {s.firstName}</p>
+            <p className="font-semibold text-foreground">{s.lastName.toUpperCase()} {s.firstName}</p>
             {s.studentCustomId && (
-              <p className="text-xs text-muted-foreground mt-0.5">ID : {s.studentCustomId}</p>
+              <p className="text-xs text-muted-foreground">ID : {s.studentCustomId}</p>
             )}
           </div>
         </div>
       </td>
 
-      {/* Étoiles */}
-      <td className="px-3 py-3"><span className="text-amber-500">⭐</span> 0</td>
-
-      {/* Trophée */}
-      <td className="px-3 py-3 text-muted-foreground text-xs italic">Pas encore</td>
-
-      {/* Date naissance */}
+      {/* Âge */}
       <td className="px-3 py-3">
         {s.birthDate ? (
-          <div>
-            <p className="font-medium">{calcAge(s.birthDate)}</p>
-            <p className="text-xs text-muted-foreground">
-              {new Date(s.birthDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </p>
-          </div>
+          <span className="font-medium text-sm">{calcAge(s.birthDate)}</span>
         ) : <span className="text-muted-foreground">—</span>}
       </td>
 
-      {/* Parent 1 (père) */}
-      <td className="px-3 py-3">
-        {father ? (
-          <div>
-            <p className="font-medium text-xs">{father.linkedMemberName ?? father.firstName} {father.lastName}</p>
-            {father.email && <p className="text-xs text-muted-foreground truncate max-w-36">{father.email}</p>}
-          </div>
-        ) : <span className="text-muted-foreground text-xs italic">—</span>}
-      </td>
-
-      {/* Parent 2 (mère) */}
-      <td className="px-3 py-3">
-        {mother ? (
-          <div>
-            <p className="font-medium text-xs">{mother.linkedMemberName ?? mother.firstName} {mother.lastName}</p>
-            {mother.email && <p className="text-xs text-muted-foreground truncate max-w-32">{mother.email}</p>}
-          </div>
-        ) : <span className="text-muted-foreground text-xs italic">—</span>}
-      </td>
-
-      {/* Téléphone */}
-      <td className="px-3 py-3 text-xs text-muted-foreground">
-        {s.phone ?? '—'}
-      </td>
-
-      {/* Nb classes */}
-      <td className="px-3 py-3 text-center">
-        <span className="font-medium">{s.enrollments.length}</span>
-        <span className="text-xs text-muted-foreground ml-1">classe{s.enrollments.length !== 1 ? 's' : ''}</span>
-      </td>
-
-      {/* Classes (codes) */}
+      {/* Classe(s) */}
       <td className="px-3 py-3">
         {s.enrollments.length > 0 ? (
           <div className="flex flex-wrap gap-1">
@@ -465,94 +356,19 @@ function StudentRow({
         ) : <span className="text-muted-foreground text-xs italic">Aucune</span>}
       </td>
 
-      {/* Paiements T1/T2/T3 */}
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT1} annual={s.paymentAnnual} /></td>
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT2} annual={s.paymentAnnual} /></td>
-      <td className="px-3 py-3"><PaymentBadge paid={s.paymentT3} annual={s.paymentAnnual} /></td>
+      {/* Enseignant */}
+      <td className="px-3 py-3 text-sm text-muted-foreground">
+        {teacherName ?? <span className="italic">—</span>}
+      </td>
 
       {/* Statut */}
       <td className="px-3 py-3">
         <span className={cn(
           'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
-          s.isActive ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
+          s.isActive ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
         )}>
           {s.isActive ? 'Inscrit' : 'Inactif'}
         </span>
-      </td>
-
-      {/* Présences — données réelles */}
-      <td className="px-3 py-3 text-center">
-        <AttBadge value={s.attendancePresent} color="blue" />
-      </td>
-      <td className="px-3 py-3 text-center">
-        <AttBadge value={s.attendanceLate} color="orange" />
-      </td>
-      <td className="px-3 py-3 text-center">
-        <AttBadge value={s.attendanceAbsent} color="red" />
-      </td>
-      <td className="px-3 py-3 text-center">
-        <AttBadge value={s.attendanceExcused} color="purple" />
-      </td>
-
-      {/* Année inscription */}
-      <td className="px-3 py-3 text-xs">{s.enrollmentYear ?? '—'}</td>
-
-      {/* Date adhésion */}
-      <td className="px-3 py-3 text-xs text-muted-foreground">
-        {s.enrolledAt
-          ? new Date(s.enrolledAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-          : new Date(s.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
-      </td>
-
-      {/* Dernière présence — données réelles */}
-      <td className="px-3 py-3 text-xs text-muted-foreground">
-        {s.lastAttendanceDate
-          ? new Date(s.lastAttendanceDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-          : 'Jamais'}
-      </td>
-
-      {/* Numéro urgence */}
-      <td className="px-3 py-3 text-xs text-muted-foreground">
-        {emergencyPhone ?? '—'}
-      </td>
-
-      {/* Commentaire inline éditable */}
-      <td className="px-3 py-3 min-w-[200px]" onClick={e => e.stopPropagation()}>
-        {isEditingNote ? (
-          <div className="flex flex-col gap-1">
-            <textarea
-              ref={noteInputRef}
-              value={noteValue}
-              onChange={e => onNoteChange(e.target.value)}
-              rows={2}
-              className="w-full text-xs border border-[#2d6a4f]/50 rounded px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
-            />
-            <div className="flex gap-1">
-              <button
-                onClick={() => onSaveEditNote(s.id)}
-                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs bg-[#2d6a4f] text-white hover:bg-[#1b4332]"
-              >
-                <Check className="w-3 h-3" /> Sauvegarder
-              </button>
-              <button
-                onClick={onCancelEditNote}
-                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600 hover:bg-gray-200"
-              >
-                <X className="w-3 h-3" /> Annuler
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => onStartEditNote(s)}
-            className="flex items-start gap-1.5 group text-left w-full"
-          >
-            <Pencil className="w-3 h-3 text-muted-foreground mt-0.5 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" />
-            <span className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              {s.notes ?? 'Cliquer pour ajouter un commentaire'}
-            </span>
-          </button>
-        )}
       </td>
 
       {/* Actions */}
@@ -562,13 +378,13 @@ function StudentRow({
             onClick={onOpenReportCard}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#163828] text-[#163828] hover:bg-[#163828] hover:text-white transition-colors"
           >
-            <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin de notes
+            <ReceiptText className="h-3.5 w-3.5 shrink-0" /> Bulletin
           </button>
           <button
             onClick={onOpenAttendance}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#2d6a4f] text-[#2d6a4f] hover:bg-[#2d6a4f] hover:text-white transition-colors"
           >
-            <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences de l&apos;élève
+            <CalendarDays className="h-3.5 w-3.5 shrink-0" /> Présences
           </button>
           <button
             onClick={onOpenPayments}
@@ -588,7 +404,7 @@ function StudentRow({
             onOpenChange={setEditOpen}
             trigger={
               <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border font-medium shrink-0 bg-white border-[#1447E6] text-[#1447E6] hover:bg-[#1447E6] hover:text-white transition-colors">
-                <Pencil className="h-3.5 w-3.5 shrink-0" /> Modifier l&apos;élève
+                <Pencil className="h-3.5 w-3.5 shrink-0" /> Modifier
               </button>
             }
           />
@@ -619,7 +435,7 @@ function StudentsSkeleton() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/20">
-              {Array.from({ length: 14 }).map((_, i) => (
+              {Array.from({ length: 6 }).map((_, i) => (
                 <th key={i} className="px-3 py-3"><Skeleton className="h-3 w-20" /></th>
               ))}
             </tr>
@@ -627,7 +443,7 @@ function StudentsSkeleton() {
           <tbody>
             {Array.from({ length: 5 }).map((_, i) => (
               <tr key={i} className="border-b border-border/50">
-                {Array.from({ length: 14 }).map((_, j) => (
+                {Array.from({ length: 6 }).map((_, j) => (
                   <td key={j} className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
                 ))}
               </tr>

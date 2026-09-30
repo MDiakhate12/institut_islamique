@@ -61,6 +61,7 @@ function FieldRenderer({
   }
 
   if (type === 'text' || type === 'email' || type === 'tel') {
+    const isLastName = field.kind === 'system_field' && 'fieldKey' in field && (field as { fieldKey: string }).fieldKey === 'lastName'
     return (
       <div>
         {labelEl}
@@ -68,9 +69,9 @@ function FieldRenderer({
         <input
           type={type}
           value={(value as string) ?? ''}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => onChange(isLastName ? e.target.value.toUpperCase() : e.target.value)}
           placeholder={placeholder}
-          className={inputClass}
+          className={isLastName ? cn(inputClass, 'uppercase') : inputClass}
         />
       </div>
     )

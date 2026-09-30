@@ -3,7 +3,7 @@ import {
   students, classEnrollments, classes,
   guardians, payments, schoolMembers, profiles,
   attendance, attendanceRecords, homework, homeworkGrades,
-  examResults, schools,
+  examResults, schools, registrations,
 } from '@/db/schema'
 import { eq, and, isNull, desc, inArray, count, max, or, sum } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
@@ -557,6 +557,7 @@ export const studentsService = {
   },
 
   async delete(schoolId: string, studentId: string): Promise<void> {
+    await db.delete(registrations).where(eq(registrations.studentId, studentId))
     await db
       .delete(students)
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))

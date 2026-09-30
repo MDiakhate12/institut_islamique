@@ -12,12 +12,17 @@ const guardianInputSchema = z.object({
 
 export type GuardianInput = z.infer<typeof guardianInputSchema>
 
+const birthDateField = z.string().optional().refine(
+  val => !val || (!isNaN(new Date(val).getTime()) && new Date(val) <= new Date()),
+  { message: 'Date de naissance invalide ou dans le futur' }
+)
+
 export const createStudentSchema = z.object({
   firstName:      z.string().min(1, 'Le prénom est requis'),
   lastName:       z.string().min(1, 'Le nom est requis'),
   gender:         z.enum(['male', 'female'], { message: 'Le genre est requis' }),
   isActive:       z.boolean(),
-  birthDate:      z.string().optional(),
+  birthDate:      birthDateField,
   notes:          z.string().optional(),
   enrollmentYear: z.string().optional(),
   guardians:      z.array(guardianInputSchema).optional(),
@@ -33,7 +38,7 @@ export const updateStudentSchema = z.object({
   lastName:       z.string().min(1).optional(),
   gender:         z.enum(['male', 'female']).optional(),
   isActive:       z.boolean().optional(),
-  birthDate:      z.string().optional(),
+  birthDate:      birthDateField,
   notes:          z.string().optional(),
   enrollmentYear: z.string().optional(),
   guardians:      z.array(guardianInputSchema).optional(),

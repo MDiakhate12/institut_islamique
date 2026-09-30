@@ -44,6 +44,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
   const queryClient = useQueryClient()
 
   // ── Tout l'état du formulaire ici (survit à la fermeture du dialog) ────────
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [isRemoving, startRemove]    = useTransition()
   const [isVolunteer, setIsVolunteer] = useState(
@@ -156,6 +157,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={trigger ?? (
@@ -379,7 +381,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
                 variant="destructive"
                 size="sm"
                 disabled={isRemoving}
-                onClick={handleRemove}
+                onClick={() => setConfirmRemoveOpen(true)}
               >
                 {isRemoving ? 'Suppression...' : "Supprimer l'enseignant"}
               </Button>
@@ -403,5 +405,30 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
         </form>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Supprimer l&apos;enseignant ?</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Cette action est irréversible. L&apos;enseignant sera définitivement supprimé.
+        </p>
+        <div className="flex justify-end gap-2 mt-2">
+          <Button variant="outline" size="sm" onClick={() => setConfirmRemoveOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={isRemoving}
+            onClick={() => { setConfirmRemoveOpen(false); handleRemove() }}
+          >
+            {isRemoving ? 'Suppression...' : 'Supprimer'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

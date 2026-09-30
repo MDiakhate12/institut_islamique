@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useClasses } from '@/modules/classes/classes.hooks'
 import { useTeachers } from '@/modules/teachers/teachers.hooks'
@@ -493,8 +493,7 @@ function ManageRoomsDialog({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const qc = useQueryClient()
 
-  // Sync if currentRooms changes (e.g. parent re-fetches)
-  useState(() => { setRooms(currentRooms) })
+  useEffect(() => { setRooms(currentRooms) }, [currentRooms])
 
   async function handleSave() {
     if (!school) return
