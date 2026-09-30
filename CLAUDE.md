@@ -498,6 +498,7 @@ const id = `ib-${nanoid(8)}`         // info block
 - **Un seul formulaire, deux consommateurs** : le portail public (`/portal/register/[schoolSlug]`) et le portail parent authentifié (`/parent-portal/enrollment`) appellent tous les deux `getPublicRegistrationFormAction` + rendent `PublicRegistrationForm` sans variante — toute modification du formulaire par l'admin (`/admin-portal/registration-forms`) se répercute automatiquement des deux côtés, sans déploiement de code.
 - `submitRegistrationAction(schoolSlug, formType, formData, knownStudentId?, submitterMemberId?)` — les 2 derniers paramètres sont optionnels et réservés au flux parent-portal authentifié : `knownStudentId` évite de re-matcher l'élève pour une réinscription (on le connaît déjà, on a cliqué dessus dans le sélecteur), `submitterMemberId` déclenche l'auto-liaison (`parentStudents`) du nouvel élève au parent qui vient de le créer, pour qu'il apparaisse immédiatement dans "Mes enfants" sans passer par le flux OTP (décision produit : ne pas attendre l'approbation admin).
 - Le sélecteur `/parent-portal/enrollment` marque un élève « Inscrit » (non cliquable) dès qu'une ligne existe dans `registrations` pour son `studentId` — il n'y a pas de notion d'année scolaire sur `registrations`, donc « déjà inscrit » = « a déjà une soumission », peu importe son statut.
+- **Champs form_data exposés dans le drawer élève** : `studentsService.getBySchool` joint la dernière `registration` par élève et extrait `sf-school-grade` → `schoolGrade` et `sf-sponsorship` → `regSponsorship` ainsi que `sf-father-name`/`sf-mother-name`/`sf-primary-email`/`sf-primary-phone` en fallback si `guardians` ne contient pas le lien père/mère. Règle de priorité : données structurées (`guardians`, `class_enrollments`) > form_data JSONB. `paymentFrequency` vient de `enrollments[0].paymentPlan`, pas de `sf-payment-freq` (redondant).
 
 ### 7.5 Éditeur de texte riche (admin)
 Utiliser `contentEditable` + `document.execCommand` (voir `RichTextEditor.tsx`).
@@ -571,6 +572,47 @@ Trois modules (`src/modules/payments/`, `src/modules/expenses/`, `src/modules/wa
 - Bug corrigé (2026-08-15) : la grille 2 colonnes (`grid-cols-[1fr_360px]`) utilisait `items-start`, donc chaque colonne ne prenait que sa propre hauteur de contenu au lieu de la hauteur de ligne. La colonne gauche (13 sections) est bien plus haute que la droite (3 sections) — résultat : la colonne droite s'arrêtait ~500px avant la gauche, laissant un grand vide crème au-dessus de la `StickySaveBar`. Fix : `items-stretch` sur la grille (la cellule droite est étirée à la hauteur de la ligne) + `sticky top-6` sur le wrapper de la colonne droite lui-même — son contenu top-aligné reste alors ancré en haut de la cellule étirée pendant que la gauche défile plus loin, sans jamais laisser de vide. Pattern standard "sidebar sticky à hauteur inégale" : `items-stretch` + `sticky`, jamais `items-start` + `sticky` (ce dernier n'a aucune marge de manœuvre puisque la cellule fait déjà exactement la hauteur du contenu).
 - Bug corrigé au passage (2026-08-15) : la `nav` de la Sidebar (`src/components/layouts/Sidebar/Sidebar.tsx`) porte `overflow-y-auto scrollbar-hide` depuis le début, mais `scrollbar-hide` n'était défini nulle part (ni Tailwind core, ni config, ni CSS custom) — classe fantôme, donc la barre de défilement interne de la sidebar restait visible malgré l'intention du nom. Ajouté dans `globals.css` via `@utility scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; &::-webkit-scrollbar { display: none } }` (syntaxe Tailwind v4 CSS-first, pas de `tailwind.config.js` dans ce projet).
 
+### 7.15 React portal event bubbling dans les `<tr>` cliquables
+
+Les événements React (click, keydown…) remontent via l'arbre **React**, pas via le DOM. Un `Sheet` ou `Dialog` monté dans un portal reste quand même enfant React du composant qui le déclare. Conséquence : si un `<Sheet>` est rendu à l'intérieur d'un `<tr onClick={() => open()}>`, un clic sur le bouton × de fermeture du Sheet déclenche : X → Sheet → composant → `<tr>` → `open()` → le drawer se rouvre immédiatement.
+
+**Règle** : ne jamais rendre un `Sheet` ou `Dialog` à l'intérieur d'un `<tr>` (ou d'un autre élément cliquable qui l'entoure).
+
+**Pattern correct** pour un tableau avec drawer d'édition :
+```tsx
+// Au niveau du composant parent de la table
+const [editingItem, setEditingItem] = useState<Item | null>(null)
+
+// Dans la ligne — pas de dialog ici
+<tr onClick={() => setEditingItem(item)}>...</tr>
+
+// En dehors du tableau — montage conditionnel + key
+{editingItem && (
+  <ItemFormDialog
+    key={editingItem.id}       // force remontage à chaque item différent
+    item={editingItem}
+    open={true}
+    onOpenChange={v => { if (!v) setEditingItem(null) }}
+  />
+)}
+```
+
+### 7.16 `useForm` — les `defaultValues` sont figées au montage
+
+React Hook Form initialise les `defaultValues` **une seule fois**, au montage du composant. Si un même composant formulaire reçoit un `item` différent (ex : l'utilisateur clique sur un autre élève dans le tableau), les champs affichent encore les valeurs de l'élève précédent car le composant n'a pas remonté.
+
+**Règle** : toujours passer `key={item.id}` sur tout composant qui contient un `useForm` et peut être réutilisé pour des objets différents. Le `key` force un remontage complet → `useForm` repart avec les bonnes `defaultValues`.
+
+```tsx
+// ❌ FAUX — le form garde les valeurs de l'item précédent
+<StudentFormDialog item={editingItem} open={!!editingItem} />
+
+// ✅ CORRECT
+{editingItem && (
+  <StudentFormDialog key={editingItem.id} item={editingItem} open={true} />
+)}
+```
+
 ---
 
 ## 8. État d'avancement des modules
@@ -582,7 +624,7 @@ Trois modules (`src/modules/payments/`, `src/modules/expenses/`, `src/modules/wa
 | **Auth** | Login, callback, signOut, session guard + `/auth/signup` (parent + enseignant) |
 | **Layout** | Sidebar admin (UserProfileDialog), TeacherSidebar (gate activation), ParentSidebar, Header, PortalLayout |
 | **School** | `/admin-portal/school-settings` |
-| **Students** | `/admin-portal/students` (liste + détail + création/édition + export Excel) |
+| **Students** | `/admin-portal/students` (liste + détail + création/édition + export Excel) — sélecteur de colonnes persisté en localStorage (`qaf:students:columns`), colonnes optionnelles : téléphone/email/père/mère depuis `guardians` + présences ; drawer avec popup détail tuteur (clic sur carte), `schoolGrade` et `regSponsorship` depuis `form_data` JSONB de la dernière inscription |
 | **Teachers** | `/admin-portal/teachers` (liste + détail + flow activation NIL_UUID) |
 | **Classes** | `/admin-portal/classes` |
 | **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante) + `/teacher-portal/catalog` + `/parent-portal/catalog` (readonly partagé) |
