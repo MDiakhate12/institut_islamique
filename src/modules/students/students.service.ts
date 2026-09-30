@@ -3,7 +3,7 @@ import {
   students, classEnrollments, classes,
   guardians, payments, schoolMembers, profiles,
   attendance, attendanceRecords, homework, homeworkGrades,
-  examResults, schools, registrations,
+  examResults, schools, registrations, registrationForms,
 } from '@/db/schema'
 import { eq, and, isNull, desc, inArray, count, max, or, sum } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
@@ -39,6 +39,7 @@ export const studentsService = {
       attendanceStatRows,
       lastAttendanceRows,
       registrationRows,
+      formSchemaRows,
     ] = await Promise.all([
       // 1. Base students
       db
@@ -135,6 +136,13 @@ export const studentsService = {
         .from(registrations)
         .where(eq(registrations.schoolId, schoolId))
         .orderBy(desc(registrations.submittedAt)),
+
+      // 8. Registration form schema — to map custom field IDs to labels
+      db
+        .select({ formSchema: registrationForms.formSchema })
+        .from(registrationForms)
+        .where(and(eq(registrationForms.schoolId, schoolId), eq(registrationForms.formType, 'new_student')))
+        .limit(1),
     ])
 
     // Build lookup maps
@@ -144,6 +152,25 @@ export const studentsService = {
       acc[r.studentId] = (r.formData as Record<string, unknown>) ?? {}
       return acc
     }, {})
+
+    // Build custom field map from form schema: id → label
+    type FieldShape = { kind: string; id: string; label?: string }
+    type ItemShape  = { kind: string; fields?: FieldShape[] }
+    const rawSchema = (formSchemaRows[0]?.formSchema as ItemShape[] | undefined) ?? []
+    const customFieldMap = new Map<string, string>() // id → label
+    let previousTeacherFieldId: string | null = null
+    for (const item of rawSchema) {
+      if (item.kind === 'section' && item.fields) {
+        for (const field of item.fields) {
+          if (field.kind === 'custom_field' && field.label) {
+            customFieldMap.set(field.id, field.label)
+            if (!previousTeacherFieldId && field.label.toLowerCase().includes('enseignant')) {
+              previousTeacherFieldId = field.id
+            }
+          }
+        }
+      }
+    }
     const guardiansByStudent = guardianRows.reduce<Record<string, GuardianSummary[]>>((acc, g) => {
       if (!acc[g.studentId]) acc[g.studentId] = []
       acc[g.studentId].push(g as GuardianSummary)
@@ -234,6 +261,15 @@ export const studentsService = {
         regEmail:           (registrationByStudent[s.id]?.['sf-primary-email']  as string | undefined) ?? null,
         regPhone:           (registrationByStudent[s.id]?.['sf-primary-phone']  as string | undefined) ?? null,
         regSponsorship:     (registrationByStudent[s.id]?.['sf-sponsorship']    as string | undefined) ?? null,
+        previousTeacher:    previousTeacherFieldId
+          ? (registrationByStudent[s.id]?.[previousTeacherFieldId] as string | undefined) ?? null
+          : null,
+        regCustomFields:    Array.from(customFieldMap.entries())
+          .filter(([id]) => {
+            const v = registrationByStudent[s.id]?.[id]
+            return v != null && v !== ''
+          })
+          .map(([id, label]) => ({ label, value: String(registrationByStudent[s.id]?.[id]) })),
       }
     })
   },

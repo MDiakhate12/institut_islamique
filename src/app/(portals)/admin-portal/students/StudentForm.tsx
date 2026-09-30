@@ -15,7 +15,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText, CalendarDays, ClipboardList, BookOpen } from 'lucide-react'
+import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText, CalendarDays, ClipboardList, BookOpen, ChevronDown, ChevronUp, ClipboardCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { StudentListItem, GuardianSummary } from '@/modules/students/students.types'
 import { guardianDisplayName, calcAge } from '@/modules/students/students.types'
@@ -214,6 +214,38 @@ interface Props {
   // en plus (ou à la place) du trigger
   open?: boolean
   onOpenChange?: (open: boolean) => void
+}
+
+// ── Collapsible section for registration form data ────────────────────────────
+
+function RegistrationDataCollapsible({ fields }: { fields: { label: string; value: string }[] }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-lg border border-border overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-muted/20 hover:bg-muted/40 transition-colors text-left"
+      >
+        <div className="flex items-center gap-2">
+          <ClipboardCheck className="h-4 w-4 text-[#2d6a4f]" />
+          <span className="text-sm font-medium">Données de l&apos;inscription</span>
+          <span className="text-xs text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">{fields.length}</span>
+        </div>
+        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </button>
+      {open && (
+        <div className="divide-y divide-border">
+          {fields.map((f, i) => (
+            <div key={i} className="px-3 py-2.5 space-y-0.5">
+              <p className="text-xs text-muted-foreground">{f.label}</p>
+              <p className="text-sm font-medium">{f.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function StudentFormDialog({
@@ -538,6 +570,11 @@ export function StudentFormDialog({
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Données du formulaire d'inscription (champs custom) */}
+            {student && student.regCustomFields.length > 0 && (
+              <RegistrationDataCollapsible fields={student.regCustomFields} />
             )}
 
             {/* Genre + Année d'inscription */}

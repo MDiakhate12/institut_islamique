@@ -21,18 +21,19 @@ type PayFilter     = 'all' | 'paid' | 'unpaid'
 // ── Column visibility ──────────────────────────────────────────────────────────
 
 const COLUMNS = [
-  { id: 'age',              label: 'Âge',                    def: true  },
-  { id: 'classes',          label: 'Classe(s)',               def: true  },
-  { id: 'teacher',          label: 'Enseignant',              def: true  },
-  { id: 'status',           label: 'Statut',                  def: true  },
-  { id: 'fatherPhone',      label: 'Tél. du père',            def: false },
-  { id: 'motherPhone',      label: 'Tél. de la mère',         def: false },
-  { id: 'fatherEmail',      label: 'Email du père',           def: false },
-  { id: 'motherEmail',      label: 'Email de la mère',        def: false },
-  { id: 'regFatherName',    label: 'Nom du père',             def: false },
-  { id: 'regMotherName',    label: 'Nom de la mère',          def: false },
-  { id: 'enrollmentYear',   label: "Année d'inscription",     def: false },
-  { id: 'attendance',       label: 'Présences',               def: false },
+  { id: 'age',              label: 'Âge',                          def: true  },
+  { id: 'classes',          label: 'Classe(s)',                     def: true  },
+  { id: 'teacher',          label: 'Enseignant',                    def: true  },
+  { id: 'previousTeacher',  label: 'Enseignant(e) précédent(e)',    def: true  },
+  { id: 'status',           label: 'Statut',                        def: true  },
+  { id: 'fatherPhone',      label: 'Tél. du père',                  def: false },
+  { id: 'motherPhone',      label: 'Tél. de la mère',               def: false },
+  { id: 'fatherEmail',      label: 'Email du père',                 def: false },
+  { id: 'motherEmail',      label: 'Email de la mère',              def: false },
+  { id: 'regFatherName',    label: 'Nom du père',                   def: false },
+  { id: 'regMotherName',    label: 'Nom de la mère',                def: false },
+  { id: 'enrollmentYear',   label: "Année d'inscription",           def: false },
+  { id: 'attendance',       label: 'Présences',                     def: false },
 ] as const
 
 type ColId = typeof COLUMNS[number]['id']
@@ -297,8 +298,9 @@ export function StudentsClient() {
                   <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} className="sticky left-0 z-10 bg-[#fefbf6] border-r border-border" />
                   {visibleCols.age            && <SortTh label="Âge"                onClick={() => toggleSort('birthDate')} />}
                   {visibleCols.classes        && <th className="px-3 py-3 text-left min-w-[200px]">Classe(s)</th>}
-                  {visibleCols.teacher        && <th className="px-3 py-3 text-left min-w-[140px]">Enseignant</th>}
-                  {visibleCols.status         && <th className="px-3 py-3 text-left">Statut</th>}
+                  {visibleCols.teacher          && <th className="px-3 py-3 text-left min-w-[140px]">Enseignant</th>}
+                  {visibleCols.previousTeacher  && <th className="px-3 py-3 text-left min-w-[140px]">Ens. précédent(e)</th>}
+                  {visibleCols.status           && <th className="px-3 py-3 text-left">Statut</th>}
                   {visibleCols.fatherPhone      && <th className="px-3 py-3 text-left min-w-[140px]">Tél. père</th>}
                   {visibleCols.motherPhone      && <th className="px-3 py-3 text-left min-w-[140px]">Tél. mère</th>}
                   {visibleCols.fatherEmail      && <th className="px-3 py-3 text-left min-w-[180px]">Email père</th>}
@@ -536,6 +538,12 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
       {visibleCols.teacher && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
           {teacherName ?? <span className="italic">—</span>}
+        </td>
+      )}
+
+      {visibleCols.previousTeacher && (
+        <td className="px-3 py-3 text-sm text-muted-foreground">
+          {s.previousTeacher ?? <span className="italic">—</span>}
         </td>
       )}
 

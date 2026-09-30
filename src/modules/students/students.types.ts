@@ -78,6 +78,9 @@ export type StudentListItem = Pick<
   regEmail:             string | null
   regPhone:             string | null
   regSponsorship:       string | null
+  previousTeacher:      string | null
+  // Tous les champs custom (non-système) du formulaire avec leur libellé
+  regCustomFields:      { label: string; value: string }[]
 }
 
 export type StudentPayment = {
