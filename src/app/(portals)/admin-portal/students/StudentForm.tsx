@@ -225,6 +225,8 @@ export function StudentFormDialog({
   const [addClassOpen, setAddClassOpen] = useState(false)
   const [swappingClassId, setSwappingClassId] = useState<string | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [removeClassConfirm, setRemoveClassConfirm] = useState<{ classId: string; className: string; isNew: boolean } | null>(null)
+  const [removeGuardianConfirm, setRemoveGuardianConfirm] = useState<LocalGuardian | null>(null)
   const [attendanceOpen, setAttendanceOpen] = useState(false)
   const [homeworkOpen, setHomeworkOpen]     = useState(false)
   const [reportCardOpen, setReportCardOpen] = useState(false)
@@ -520,6 +522,18 @@ export function StudentFormDialog({
               </div>
             )}
 
+            {/* Niveau scolaire (issu de l'inscription, lecture seule) */}
+            {student?.schoolGrade && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Niveau scolaire</label>
+                <Input
+                  value={student.schoolGrade}
+                  readOnly
+                  className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
+                />
+              </div>
+            )}
+
             {/* Genre + Année d'inscription */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -629,7 +643,7 @@ export function StudentFormDialog({
                             </button>
                             <button
                               type="button"
-                              onClick={() => removeGuardian(g)}
+                              onClick={() => setRemoveGuardianConfirm(g)}
                               className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -714,7 +728,7 @@ export function StudentFormDialog({
                           <button
                             type="button"
                             title="Retirer de cette classe"
-                            onClick={() => removeClass(e.id, e.isNew ?? false)}
+                            onClick={() => setRemoveClassConfirm({ classId: e.id, className: e.name, isNew: e.isNew ?? false })}
                             className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -733,7 +747,14 @@ export function StudentFormDialog({
             {/* Paiements */}
             {isEditing && (
               <div>
-                <p className="text-sm font-semibold mb-1.5">Paiements</p>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <p className="text-sm font-semibold">Paiements</p>
+                  {student.enrollments[0]?.paymentPlan && (
+                    <span className="text-xs text-muted-foreground px-2 py-0.5 rounded-full bg-muted border border-border">
+                      {student.enrollments[0].paymentPlan === 'annually' ? 'Annuel' : 'Trimestriel'}
+                    </span>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {(['paidT1', 'paidT2', 'paidT3'] as const).map((field, idx) => {
                     const paid = isTrimesterPaid(field)
@@ -854,6 +875,68 @@ export function StudentFormDialog({
             studentId={student.id}
             studentName={`${student.firstName} ${student.lastName}`}
           />
+
+          {/* Confirmation retrait de tuteur */}
+          <Dialog open={!!removeGuardianConfirm} onOpenChange={v => { if (!v) setRemoveGuardianConfirm(null) }}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Retirer ce tuteur ?</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">
+                {removeGuardianConfirm
+                  ? <>Retirer <strong>{removeGuardianConfirm.name || 'ce tuteur'}</strong> de la liste des tuteurs ?</>
+                  : 'Cette action retirera le tuteur de la liste.'
+                }
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setRemoveGuardianConfirm(null)}>Annuler</Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    if (removeGuardianConfirm) {
+                      removeGuardian(removeGuardianConfirm)
+                      setRemoveGuardianConfirm(null)
+                    }
+                  }}
+                >
+                  Retirer
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Confirmation retrait de classe */}
+          <Dialog open={!!removeClassConfirm} onOpenChange={v => { if (!v) setRemoveClassConfirm(null) }}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Retirer de cette classe ?</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">
+                {removeClassConfirm?.className
+                  ? <>Retirer l&apos;élève de <strong>{removeClassConfirm.className}</strong> ?</>
+                  : 'Cette action retirera l\'élève de la classe.'
+                }
+              </p>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setRemoveClassConfirm(null)}>Annuler</Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    if (removeClassConfirm) {
+                      removeClass(removeClassConfirm.classId, removeClassConfirm.isNew)
+                      setRemoveClassConfirm(null)
+                    }
+                  }}
+                >
+                  Retirer
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
             <DialogContent className="max-w-md">

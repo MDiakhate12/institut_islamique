@@ -9,7 +9,7 @@ export const inviteTeacherSchema = z.object({
 })
 
 export const updateTeacherSchema = z.object({
-  fullName:    z.string().min(1, 'Le nom complet est requis').optional(),
+  fullName:    z.string().transform(val => val === '' ? undefined : val).optional(),
   phone:       z.string().optional(),
   gender:      z.enum(['male', 'female']).optional(),
   teacherType: z.enum(['volunteer', 'paid']).optional(),

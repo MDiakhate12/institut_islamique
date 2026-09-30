@@ -31,7 +31,11 @@ export function calcAge(birthDate: string | null | undefined): string {
   if (birth > now) return '—'
   const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
   if (totalMonths < 0) return '—'
-  return `${Math.floor(totalMonths / 12)}a ${totalMonths % 12}m`
+  const years  = Math.floor(totalMonths / 12)
+  const months = totalMonths % 12
+  if (years === 0) return `${months} mois`
+  if (months === 0) return `${years} an${years > 1 ? 's' : ''}`
+  return `${years} an${years > 1 ? 's' : ''} et ${months} mois`
 }
 
 export type StudentEnrollment = {
@@ -67,6 +71,8 @@ export type StudentListItem = Pick<
   paymentT3:            boolean
   // true si les 3 sont payés via un seul paiement annuel (affichage distinct de 3 paiements séparés)
   paymentAnnual:        boolean
+  // Niveau scolaire actuel (issu de la dernière inscription, JSONB form_data)
+  schoolGrade:          string | null
 }
 
 export type StudentPayment = {

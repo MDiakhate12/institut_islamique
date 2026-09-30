@@ -38,6 +38,7 @@ export const studentsService = {
       paymentRows,
       attendanceStatRows,
       lastAttendanceRows,
+      registrationRows,
     ] = await Promise.all([
       // 1. Base students
       db
@@ -123,9 +124,26 @@ export const studentsService = {
           ),
         ))
         .groupBy(attendanceRecords.studentId),
+
+      // 7. Latest registration per student — schoolGrade from form_data JSONB
+      db
+        .select({
+          studentId: registrations.studentId,
+          formData:  registrations.formData,
+          submittedAt: registrations.submittedAt,
+        })
+        .from(registrations)
+        .where(eq(registrations.schoolId, schoolId))
+        .orderBy(desc(registrations.submittedAt)),
     ])
 
     // Build lookup maps
+    // Registration: keep only the most recent per student
+    const registrationByStudent = registrationRows.reduce<Record<string, Record<string, unknown>>>((acc, r) => {
+      if (!r.studentId || acc[r.studentId]) return acc
+      acc[r.studentId] = (r.formData as Record<string, unknown>) ?? {}
+      return acc
+    }, {})
     const guardiansByStudent = guardianRows.reduce<Record<string, GuardianSummary[]>>((acc, g) => {
       if (!acc[g.studentId]) acc[g.studentId] = []
       acc[g.studentId].push(g as GuardianSummary)
@@ -210,6 +228,7 @@ export const studentsService = {
         paymentT2: paidT2,
         paymentT3: paidT3,
         paymentAnnual: annually,
+        schoolGrade: (registrationByStudent[s.id]?.['sf-school-grade'] as string | undefined) ?? null,
       }
     })
   },
