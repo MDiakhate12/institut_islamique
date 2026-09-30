@@ -24,8 +24,10 @@ const COLUMNS = [
   { id: 'classes',          label: 'Classe(s)',               def: true  },
   { id: 'teacher',          label: 'Enseignant',              def: true  },
   { id: 'status',           label: 'Statut',                  def: true  },
-  { id: 'phone',            label: 'Téléphone tuteur',        def: false },
-  { id: 'regEmail',         label: 'Email (formulaire)',      def: false },
+  { id: 'fatherPhone',      label: 'Tél. du père',            def: false },
+  { id: 'motherPhone',      label: 'Tél. de la mère',         def: false },
+  { id: 'fatherEmail',      label: 'Email du père',           def: false },
+  { id: 'motherEmail',      label: 'Email de la mère',        def: false },
   { id: 'regFatherName',    label: 'Nom du père',             def: false },
   { id: 'regMotherName',    label: 'Nom de la mère',          def: false },
   { id: 'enrollmentYear',   label: "Année d'inscription",     def: false },
@@ -263,8 +265,10 @@ export function StudentsClient() {
                   {visibleCols.classes        && <th className="px-3 py-3 text-left min-w-[200px]">Classe(s)</th>}
                   {visibleCols.teacher        && <th className="px-3 py-3 text-left min-w-[140px]">Enseignant</th>}
                   {visibleCols.status         && <th className="px-3 py-3 text-left">Statut</th>}
-                  {visibleCols.phone           && <th className="px-3 py-3 text-left min-w-[140px]">Téléphone</th>}
-                  {visibleCols.regEmail        && <th className="px-3 py-3 text-left min-w-[180px]">Email</th>}
+                  {visibleCols.fatherPhone      && <th className="px-3 py-3 text-left min-w-[140px]">Tél. père</th>}
+                  {visibleCols.motherPhone      && <th className="px-3 py-3 text-left min-w-[140px]">Tél. mère</th>}
+                  {visibleCols.fatherEmail      && <th className="px-3 py-3 text-left min-w-[180px]">Email père</th>}
+                  {visibleCols.motherEmail      && <th className="px-3 py-3 text-left min-w-[180px]">Email mère</th>}
                   {visibleCols.regFatherName   && <th className="px-3 py-3 text-left min-w-[140px]">Père</th>}
                   {visibleCols.regMotherName   && <th className="px-3 py-3 text-left min-w-[140px]">Mère</th>}
                   {visibleCols.enrollmentYear  && <th className="px-3 py-3 text-left">Année</th>}
@@ -449,15 +453,27 @@ function StudentRow({ student: s, index, visibleCols, onEdit }: { student: Stude
         </td>
       )}
 
-      {visibleCols.phone && (
+      {visibleCols.fatherPhone && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.guardians[0]?.phone ?? <span className="italic">—</span>}
+          {s.guardians.find(g => g.relationship === 'father')?.phone ?? s.regPhone ?? <span className="italic">—</span>}
         </td>
       )}
 
-      {visibleCols.regEmail && (
+      {visibleCols.motherPhone && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.regEmail ?? <span className="italic">—</span>}
+          {s.guardians.find(g => g.relationship === 'mother')?.phone ?? <span className="italic">—</span>}
+        </td>
+      )}
+
+      {visibleCols.fatherEmail && (
+        <td className="px-3 py-3 text-sm text-muted-foreground">
+          {s.guardians.find(g => g.relationship === 'father')?.email ?? s.regEmail ?? <span className="italic">—</span>}
+        </td>
+      )}
+
+      {visibleCols.motherEmail && (
+        <td className="px-3 py-3 text-sm text-muted-foreground">
+          {s.guardians.find(g => g.relationship === 'mother')?.email ?? <span className="italic">—</span>}
         </td>
       )}
 

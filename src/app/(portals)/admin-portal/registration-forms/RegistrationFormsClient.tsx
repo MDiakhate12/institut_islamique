@@ -8,7 +8,12 @@ import { Button } from '@/components/ui/button'
 import { FormBuilder } from './FormBuilder'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
 import { AddSectionDialog } from './AddSectionDialog'
-import { Link, RefreshCw, ExternalLink, Plus, RotateCcw, Undo2, Redo2, Info, Users } from 'lucide-react'
+import { Link, RefreshCw, ExternalLink, Plus, RotateCcw, Undo2, Redo2, Info, Users, AlertTriangle } from 'lucide-react'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { nanoid } from 'nanoid'
 
@@ -85,7 +90,6 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
   }, [hist, formType, update])
 
   function handleReset() {
-    if (!confirm('Réinitialiser le formulaire aux valeurs par défaut ?')) return
     reset.mutate(formType, {
       onSuccess: (data) => hist.reset(data.formSchema),
     })
@@ -170,17 +174,40 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
             Ajouter une section
           </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleReset}
-            disabled={reset.isPending}
-            className="gap-1.5 text-xs h-8 text-[#2d6a4f] border-[#2d6a4f]/30 hover:bg-[#2d6a4f]/5"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Réinitialiser
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger render={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={reset.isPending}
+                className="gap-1.5 text-xs h-8 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Réinitialiser
+              </Button>
+            } />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  Réinitialiser le formulaire ?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Cette action supprime <strong>toutes les sections et champs personnalisés</strong> et restaure le formulaire par défaut. Cette opération est irréversible.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleReset}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Réinitialiser
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <Button
             type="button"
