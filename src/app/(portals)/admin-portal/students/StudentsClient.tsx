@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
 import type { StudentListItem } from '@/modules/students/students.types'
-import { calcAge } from '@/modules/students/students.types'
+import { calcAge, guardianDisplayName } from '@/modules/students/students.types'
 
 type GenderFilter  = 'all' | 'male' | 'female'
 type ActiveFilter  = 'all' | 'active' | 'inactive'
@@ -24,9 +24,7 @@ const COLUMNS = [
   { id: 'classes',          label: 'Classe(s)',               def: true  },
   { id: 'teacher',          label: 'Enseignant',              def: true  },
   { id: 'status',           label: 'Statut',                  def: true  },
-  { id: 'schoolGrade',      label: 'Niveau scolaire',         def: false },
-  { id: 'paymentFrequency', label: 'Fréquence de paiement',   def: false },
-  { id: 'phone',            label: 'Téléphone (formulaire)',  def: false },
+  { id: 'phone',            label: 'Téléphone tuteur',        def: false },
   { id: 'regEmail',         label: 'Email (formulaire)',      def: false },
   { id: 'regFatherName',    label: 'Nom du père',             def: false },
   { id: 'regMotherName',    label: 'Nom de la mère',          def: false },
@@ -265,8 +263,6 @@ export function StudentsClient() {
                   {visibleCols.classes        && <th className="px-3 py-3 text-left min-w-[200px]">Classe(s)</th>}
                   {visibleCols.teacher        && <th className="px-3 py-3 text-left min-w-[140px]">Enseignant</th>}
                   {visibleCols.status         && <th className="px-3 py-3 text-left">Statut</th>}
-                  {visibleCols.schoolGrade      && <th className="px-3 py-3 text-left min-w-[140px]">Niveau scolaire</th>}
-                  {visibleCols.paymentFrequency && <th className="px-3 py-3 text-left min-w-[140px]">Fréquence</th>}
                   {visibleCols.phone           && <th className="px-3 py-3 text-left min-w-[140px]">Téléphone</th>}
                   {visibleCols.regEmail        && <th className="px-3 py-3 text-left min-w-[180px]">Email</th>}
                   {visibleCols.regFatherName   && <th className="px-3 py-3 text-left min-w-[140px]">Père</th>}
@@ -448,26 +444,9 @@ function StudentRow({ student: s, index, visibleCols, onEdit }: { student: Stude
         </td>
       )}
 
-      {visibleCols.schoolGrade && (
-        <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.schoolGrade ?? <span className="italic">—</span>}
-        </td>
-      )}
-
-      {visibleCols.paymentFrequency && (
-        <td className="px-3 py-3">
-          {s.paymentFrequency ? (
-            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-              {s.paymentFrequency === 'annually' ? 'Annuel' :
-               s.paymentFrequency.startsWith('trimester') ? 'Trimestriel' : s.paymentFrequency}
-            </span>
-          ) : <span className="text-muted-foreground text-xs italic">—</span>}
-        </td>
-      )}
-
       {visibleCols.phone && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.regPhone ?? <span className="italic">—</span>}
+          {s.guardians[0]?.phone ?? <span className="italic">—</span>}
         </td>
       )}
 
@@ -479,13 +458,17 @@ function StudentRow({ student: s, index, visibleCols, onEdit }: { student: Stude
 
       {visibleCols.regFatherName && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.regFatherName ?? <span className="italic">—</span>}
+          {s.guardians.find(g => g.relationship === 'father')
+            ? guardianDisplayName(s.guardians.find(g => g.relationship === 'father')!)
+            : s.regFatherName ?? <span className="italic">—</span>}
         </td>
       )}
 
       {visibleCols.regMotherName && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.regMotherName ?? <span className="italic">—</span>}
+          {s.guardians.find(g => g.relationship === 'mother')
+            ? guardianDisplayName(s.guardians.find(g => g.relationship === 'mother')!)
+            : s.regMotherName ?? <span className="italic">—</span>}
         </td>
       )}
 

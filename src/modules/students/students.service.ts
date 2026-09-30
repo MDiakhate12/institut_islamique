@@ -229,7 +229,6 @@ export const studentsService = {
         paymentT3: paidT3,
         paymentAnnual: annually,
         schoolGrade:        (registrationByStudent[s.id]?.['sf-school-grade']    as string | undefined) ?? null,
-        paymentFrequency:   (registrationByStudent[s.id]?.['sf-payment-freq']   as string | undefined) ?? null,
         regFatherName:      (registrationByStudent[s.id]?.['sf-father-name']    as string | undefined) ?? null,
         regMotherName:      (registrationByStudent[s.id]?.['sf-mother-name']    as string | undefined) ?? null,
         regEmail:           (registrationByStudent[s.id]?.['sf-primary-email']  as string | undefined) ?? null,

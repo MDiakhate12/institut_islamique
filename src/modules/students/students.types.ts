@@ -73,7 +73,6 @@ export type StudentListItem = Pick<
   paymentAnnual:        boolean
   // Champs issus de form_data JSONB (dernière inscription)
   schoolGrade:          string | null
-  paymentFrequency:     string | null
   regFatherName:        string | null
   regMotherName:        string | null
   regEmail:             string | null
