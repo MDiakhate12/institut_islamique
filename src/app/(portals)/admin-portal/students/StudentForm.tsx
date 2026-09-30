@@ -227,6 +227,7 @@ export function StudentFormDialog({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [removeClassConfirm, setRemoveClassConfirm] = useState<{ classId: string; className: string; isNew: boolean } | null>(null)
   const [removeGuardianConfirm, setRemoveGuardianConfirm] = useState<LocalGuardian | null>(null)
+  const [viewingGuardian, setViewingGuardian]             = useState<LocalGuardian | null>(null)
   const [attendanceOpen, setAttendanceOpen] = useState(false)
   const [homeworkOpen, setHomeworkOpen]     = useState(false)
   const [reportCardOpen, setReportCardOpen] = useState(false)
@@ -522,65 +523,22 @@ export function StudentFormDialog({
               </div>
             )}
 
-            {/* Données du formulaire d'inscription (lecture seule) */}
-            {student && (() => {
-              const father = student.guardians.find(g => g.relationship === 'father')
-              const mother = student.guardians.find(g => g.relationship === 'mother')
-              const fatherLabel = father ? guardianDisplayName(father) : student.regFatherName
-              const motherLabel = mother ? guardianDisplayName(mother) : student.regMotherName
-              const paymentLabel = student.enrollments[0]?.paymentPlan === 'annually' ? 'Annuellement'
-                : student.enrollments[0]?.paymentPlan ? 'Trimestriellement' : null
-              const hasData = fatherLabel || motherLabel || student.regEmail || student.regPhone || student.schoolGrade || paymentLabel || student.regSponsorship
-              if (!hasData) return null
-              return (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Formulaire d&apos;inscription</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {fatherLabel && (
-                      <div>
-                        <label className="text-xs font-medium mb-1 block text-muted-foreground">Nom du père</label>
-                        <Input value={fatherLabel} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
-                      </div>
-                    )}
-                    {motherLabel && (
-                      <div>
-                        <label className="text-xs font-medium mb-1 block text-muted-foreground">Nom de la mère</label>
-                        <Input value={motherLabel} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
-                      </div>
-                    )}
-                    {student.regPhone && (
-                      <div>
-                        <label className="text-xs font-medium mb-1 block text-muted-foreground">Téléphone</label>
-                        <Input value={student.regPhone} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
-                      </div>
-                    )}
-                    {student.regEmail && (
-                      <div>
-                        <label className="text-xs font-medium mb-1 block text-muted-foreground">Email</label>
-                        <Input value={student.regEmail} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
-                      </div>
-                    )}
-                    {student.schoolGrade && (
-                      <div>
-                        <label className="text-xs font-medium mb-1 block text-muted-foreground">Niveau scolaire</label>
-                        <Input value={student.schoolGrade} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
-                      </div>
-                    )}
-                    {paymentLabel && (
-                      <div>
-                        <label className="text-xs font-medium mb-1 block text-muted-foreground">Fréquence paiement</label>
-                        <Input value={paymentLabel} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
-                      </div>
-                    )}
+            {/* Infos inscription uniques (non dupliquées dans les tuteurs) */}
+            {student && (student.schoolGrade || (student.regSponsorship && !student.regSponsorship.toLowerCase().startsWith('non'))) && (
+              <div className="space-y-2">
+                {student.schoolGrade && (
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Niveau scolaire</label>
+                    <Input value={student.schoolGrade} readOnly className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')} />
                   </div>
-                  {student.regSponsorship && !student.regSponsorship.toLowerCase().startsWith('non') && (
-                    <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
-                      <span className="font-semibold">Parrainage :</span> {student.regSponsorship}
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
+                )}
+                {student.regSponsorship && !student.regSponsorship.toLowerCase().startsWith('non') && (
+                  <div className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                    <span className="font-semibold">Parrainage :</span> {student.regSponsorship}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Genre + Année d'inscription */}
             <div className="grid grid-cols-2 gap-3">
@@ -657,10 +615,18 @@ export function StudentFormDialog({
                       onCancel={() => setGuardianFormMode('closed')}
                     />
                   ) : (
-                    <div className={cn(
-                      'h-full border rounded-lg p-3 space-y-1',
-                      g.linkedMemberId ? 'border-green-200 bg-green-50/30' : 'border-border'
-                    )}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setViewingGuardian(g)}
+                      onKeyDown={e => e.key === 'Enter' && setViewingGuardian(g)}
+                      className={cn(
+                        'h-full border rounded-lg p-3 space-y-1 cursor-pointer transition-colors',
+                        g.linkedMemberId
+                          ? 'border-green-200 bg-green-50/30 hover:bg-green-50/60'
+                          : 'border-border hover:bg-muted/20'
+                      )}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={cn(
@@ -683,7 +649,7 @@ export function StudentFormDialog({
                           <div className="flex gap-1 shrink-0">
                             <button
                               type="button"
-                              onClick={() => setGuardianFormMode(g._tempId)}
+                              onClick={e => { e.stopPropagation(); setGuardianFormMode(g._tempId) }}
                               className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium"
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -691,7 +657,7 @@ export function StudentFormDialog({
                             </button>
                             <button
                               type="button"
-                              onClick={() => setRemoveGuardianConfirm(g)}
+                              onClick={e => { e.stopPropagation(); setRemoveGuardianConfirm(g) }}
                               className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -923,6 +889,66 @@ export function StudentFormDialog({
             studentId={student.id}
             studentName={`${student.firstName} ${student.lastName}`}
           />
+
+          {/* Détail tuteur (lecture seule) */}
+          <Dialog open={!!viewingGuardian} onOpenChange={v => { if (!v) setViewingGuardian(null) }}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <span className={cn(
+                    'text-xs font-bold text-white px-2 py-0.5 rounded',
+                    viewingGuardian ? RELATIONSHIP_COLORS[viewingGuardian.relationship] : ''
+                  )}>
+                    {viewingGuardian ? RELATIONSHIP_LABELS[viewingGuardian.relationship] : ''}
+                  </span>
+                  {viewingGuardian?.linkedMemberName || viewingGuardian?.name || 'Tuteur'}
+                </DialogTitle>
+              </DialogHeader>
+              {viewingGuardian && (
+                <div className="space-y-3 pt-1">
+                  {viewingGuardian.linkedMemberId && (
+                    <div className="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 px-3 py-2 rounded-lg">
+                      <CheckCircle className="h-3.5 w-3.5 shrink-0" />
+                      Compte parent lié
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {viewingGuardian.phone && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Téléphone</p>
+                        <p className="font-medium">{viewingGuardian.phone}</p>
+                      </div>
+                    )}
+                    {viewingGuardian.email && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Email</p>
+                        <p className="font-medium break-all">{viewingGuardian.email}</p>
+                      </div>
+                    )}
+                    {viewingGuardian.emergencyPhone && (
+                      <div className="col-span-2">
+                        <p className="text-xs text-muted-foreground mb-0.5">Téléphone d&apos;urgence</p>
+                        <p className="font-medium">{viewingGuardian.emergencyPhone}</p>
+                      </div>
+                    )}
+                    {!viewingGuardian.phone && !viewingGuardian.email && !viewingGuardian.emergencyPhone && (
+                      <p className="col-span-2 text-muted-foreground text-xs italic">Aucune coordonnée enregistrée.</p>
+                    )}
+                  </div>
+                  {!viewingGuardian.linkedMemberId && (
+                    <div className="flex justify-end gap-2 pt-1 border-t border-border">
+                      <Button
+                        type="button" variant="outline" size="sm"
+                        onClick={() => { setViewingGuardian(null); setGuardianFormMode(viewingGuardian._tempId) }}
+                      >
+                        <Pencil className="w-3.5 h-3.5 mr-1" /> Modifier
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Confirmation retrait de tuteur */}
           <Dialog open={!!removeGuardianConfirm} onOpenChange={v => { if (!v) setRemoveGuardianConfirm(null) }}>
