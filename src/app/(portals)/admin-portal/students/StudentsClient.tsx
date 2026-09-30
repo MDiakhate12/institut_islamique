@@ -20,13 +20,15 @@ type PayFilter     = 'all' | 'paid' | 'unpaid'
 // ── Column visibility ──────────────────────────────────────────────────────────
 
 const COLUMNS = [
-  { id: 'age',            label: 'Âge',                  def: true  },
-  { id: 'classes',        label: 'Classe(s)',             def: true  },
-  { id: 'teacher',        label: 'Enseignant',            def: true  },
-  { id: 'status',         label: 'Statut',                def: true  },
-  { id: 'schoolGrade',    label: 'Niveau scolaire',       def: false },
-  { id: 'enrollmentYear', label: "Année d'inscription",   def: false },
-  { id: 'attendance',     label: 'Présences',             def: false },
+  { id: 'age',              label: 'Âge',                    def: true  },
+  { id: 'classes',          label: 'Classe(s)',               def: true  },
+  { id: 'teacher',          label: 'Enseignant',              def: true  },
+  { id: 'status',           label: 'Statut',                  def: true  },
+  { id: 'schoolGrade',      label: 'Niveau scolaire',         def: false },
+  { id: 'paymentFrequency', label: 'Fréquence de paiement',   def: false },
+  { id: 'phone',            label: 'Téléphone tuteur',        def: false },
+  { id: 'enrollmentYear',   label: "Année d'inscription",     def: false },
+  { id: 'attendance',       label: 'Présences',               def: false },
 ] as const
 
 type ColId = typeof COLUMNS[number]['id']
@@ -68,6 +70,7 @@ export function StudentsClient() {
   const [t3Filter, setT3Filter]         = useState<PayFilter>('all')
   const [sortKey, setSortKey]           = useState<SortKey>(null)
   const [sortAsc, setSortAsc]           = useState(true)
+  const [editingStudent, setEditingStudent] = useState<StudentListItem | null>(null)
   const [visibleCols, setVisibleCols]   = useState<VisibleCols>(() => {
     const defaults = Object.fromEntries(COLUMNS.map(c => [c.id, c.def])) as VisibleCols
     return defaults
@@ -259,20 +262,29 @@ export function StudentsClient() {
                   {visibleCols.classes        && <th className="px-3 py-3 text-left min-w-[200px]">Classe(s)</th>}
                   {visibleCols.teacher        && <th className="px-3 py-3 text-left min-w-[140px]">Enseignant</th>}
                   {visibleCols.status         && <th className="px-3 py-3 text-left">Statut</th>}
-                  {visibleCols.schoolGrade    && <th className="px-3 py-3 text-left min-w-[140px]">Niveau scolaire</th>}
-                  {visibleCols.enrollmentYear && <th className="px-3 py-3 text-left">Année</th>}
+                  {visibleCols.schoolGrade      && <th className="px-3 py-3 text-left min-w-[140px]">Niveau scolaire</th>}
+                  {visibleCols.paymentFrequency && <th className="px-3 py-3 text-left min-w-[140px]">Fréquence</th>}
+                  {visibleCols.phone           && <th className="px-3 py-3 text-left min-w-[140px]">Téléphone</th>}
+                  {visibleCols.enrollmentYear  && <th className="px-3 py-3 text-left">Année</th>}
                   {visibleCols.attendance     && <th className="px-3 py-3 text-left min-w-[120px]">Présences</th>}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((s, i) => (
-                  <StudentRow key={s.id} student={s} index={i} visibleCols={visibleCols} />
+                  <StudentRow key={s.id} student={s} index={i} visibleCols={visibleCols} onEdit={setEditingStudent} />
                 ))}
               </tbody>
             </table>
           </div>
         </div>
       )}
+
+      {/* Dialog édition — en dehors du tableau pour éviter le bubbling React portal */}
+      <StudentFormDialog
+        student={editingStudent ?? undefined}
+        open={!!editingStudent}
+        onOpenChange={v => { if (!v) setEditingStudent(null) }}
+      />
 
     </div>
   )
@@ -360,13 +372,13 @@ function SortTh({ label, onClick, className }: { label: string; onClick: () => v
   )
 }
 
-function StudentRow({ student: s, index, visibleCols }: { student: StudentListItem; index: number; visibleCols: VisibleCols }) {
-  const [editOpen, setEditOpen] = useState(false)
+function StudentRow({ student: s, index, visibleCols, onEdit }: { student: StudentListItem; index: number; visibleCols: VisibleCols; onEdit: (s: StudentListItem) => void }) {
   const teacherName = s.enrollments[0]?.teacherName ?? null
+  const primaryGuardian = s.guardians[0]
 
   return (
     <tr
-      onClick={() => setEditOpen(true)}
+      onClick={() => onEdit(s)}
       className="group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-middle cursor-pointer"
     >
       {/* Nom + pastille genre — figé au scroll horizontal */}
@@ -437,6 +449,23 @@ function StudentRow({ student: s, index, visibleCols }: { student: StudentListIt
         </td>
       )}
 
+      {visibleCols.paymentFrequency && (
+        <td className="px-3 py-3">
+          {s.paymentFrequency ? (
+            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+              {s.paymentFrequency === 'annually' ? 'Annuel' :
+               s.paymentFrequency.startsWith('trimester') ? 'Trimestriel' : s.paymentFrequency}
+            </span>
+          ) : <span className="text-muted-foreground text-xs italic">—</span>}
+        </td>
+      )}
+
+      {visibleCols.phone && (
+        <td className="px-3 py-3 text-sm text-muted-foreground">
+          {primaryGuardian?.phone ?? <span className="italic">—</span>}
+        </td>
+      )}
+
       {visibleCols.enrollmentYear && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
           {s.enrollmentYear ?? <span className="italic">—</span>}
@@ -468,8 +497,6 @@ function StudentRow({ student: s, index, visibleCols }: { student: StudentListIt
         </td>
       )}
 
-      {/* Sheet — ouvert au clic sur la ligne */}
-      <StudentFormDialog student={s} open={editOpen} onOpenChange={setEditOpen} />
     </tr>
   )
 }

@@ -522,15 +522,33 @@ export function StudentFormDialog({
               </div>
             )}
 
-            {/* Niveau scolaire (issu de l'inscription, lecture seule) */}
-            {student?.schoolGrade && (
-              <div>
-                <label className="text-sm font-medium mb-1 block">Niveau scolaire</label>
-                <Input
-                  value={student.schoolGrade}
-                  readOnly
-                  className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
-                />
+            {/* Niveau scolaire + fréquence paiement (issus de l'inscription, lecture seule) */}
+            {(student?.schoolGrade || student?.paymentFrequency) && (
+              <div className="grid grid-cols-2 gap-3">
+                {student?.schoolGrade && (
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Niveau scolaire</label>
+                    <Input
+                      value={student.schoolGrade}
+                      readOnly
+                      className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
+                    />
+                  </div>
+                )}
+                {student?.paymentFrequency && (
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Fréquence paiement</label>
+                    <Input
+                      value={
+                        student.paymentFrequency === 'annually' ? 'Annuellement' :
+                        student.paymentFrequency.startsWith('trimester') ? 'Trimestriellement' :
+                        student.paymentFrequency
+                      }
+                      readOnly
+                      className={cn(INPUT_SIZE_CLASS, 'bg-muted/30 text-muted-foreground')}
+                    />
+                  </div>
+                )}
               </div>
             )}
 

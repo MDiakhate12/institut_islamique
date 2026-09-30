@@ -228,7 +228,8 @@ export const studentsService = {
         paymentT2: paidT2,
         paymentT3: paidT3,
         paymentAnnual: annually,
-        schoolGrade: (registrationByStudent[s.id]?.['sf-school-grade'] as string | undefined) ?? null,
+        schoolGrade:       (registrationByStudent[s.id]?.['sf-school-grade'] as string | undefined) ?? null,
+        paymentFrequency:  (registrationByStudent[s.id]?.['sf-payment-freq'] as string | undefined) ?? null,
       }
     })
   },

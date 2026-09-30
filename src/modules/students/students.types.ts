@@ -73,6 +73,8 @@ export type StudentListItem = Pick<
   paymentAnnual:        boolean
   // Niveau scolaire actuel (issu de la dernière inscription, JSONB form_data)
   schoolGrade:          string | null
+  // Fréquence de paiement choisie à l'inscription (Annuellement / Semestriellement)
+  paymentFrequency:     string | null
 }
 
 export type StudentPayment = {
