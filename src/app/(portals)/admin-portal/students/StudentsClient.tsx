@@ -281,12 +281,17 @@ export function StudentsClient() {
         </div>
       )}
 
-      {/* Dialog édition — en dehors du tableau pour éviter le bubbling React portal */}
-      <StudentFormDialog
-        student={editingStudent ?? undefined}
-        open={!!editingStudent}
-        onOpenChange={v => { if (!v) setEditingStudent(null) }}
-      />
+      {/* Dialog édition — en dehors du tableau pour éviter le bubbling React portal.
+          Rendu conditionnel pour que useForm remonte avec les bonnes defaultValues
+          à chaque changement d'élève. */}
+      {editingStudent && (
+        <StudentFormDialog
+          key={editingStudent.id}
+          student={editingStudent}
+          open={true}
+          onOpenChange={v => { if (!v) setEditingStudent(null) }}
+        />
+      )}
 
     </div>
   )
