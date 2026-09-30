@@ -5,10 +5,11 @@ import { useStudents } from '@/modules/students/students.hooks'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Plus, Download, ArrowUpDown, Columns2, Check } from 'lucide-react'
+import { Users, Plus, Download, ArrowUpDown, Columns2, Check, BookOpen, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
+import { AssignClassDialog } from './AssignClassDialog'
 import type { StudentListItem } from '@/modules/students/students.types'
 import { calcAge, guardianDisplayName } from '@/modules/students/students.types'
 
@@ -74,6 +75,8 @@ export function StudentsClient() {
   const [sortKey, setSortKey]           = useState<SortKey>(null)
   const [sortAsc, setSortAsc]           = useState(true)
   const [editingStudent, setEditingStudent] = useState<StudentListItem | null>(null)
+  const [selectedIds, setSelectedIds]    = useState<Set<string>>(new Set())
+  const [assignOpen, setAssignOpen]      = useState(false)
   const [visibleCols, setVisibleCols]   = useState<VisibleCols>(() => {
     const defaults = Object.fromEntries(COLUMNS.map(c => [c.id, c.def])) as VisibleCols
     return defaults
@@ -141,7 +144,25 @@ export function StudentsClient() {
     else { setSortKey(key); setSortAsc(true) }
   }
 
+  function toggleSelectStudent(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filtered.length && filtered.length > 0) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(s => s.id)))
+    }
+  }
+
   const total = filtered.length
+  const allSelected = filtered.length > 0 && filtered.every(s => selectedIds.has(s.id))
   const visibleCount = COLUMNS.filter(c => visibleCols[c.id]).length
 
   return (
@@ -260,6 +281,19 @@ export function StudentsClient() {
             <table className="w-full text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
+                  {/* Checkbox select-all */}
+                  <th className="px-3 py-3 w-8 sticky left-0 z-10 bg-[#fefbf6] border-r border-border">
+                    <button
+                      type="button"
+                      onClick={toggleSelectAll}
+                      className={cn(
+                        'h-4 w-4 rounded border-2 flex items-center justify-center transition-colors',
+                        allSelected ? 'bg-[#c2440f] border-[#c2440f]' : 'border-border bg-white'
+                      )}
+                    >
+                      {allSelected && <Check className="h-2.5 w-2.5 text-white" />}
+                    </button>
+                  </th>
                   <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} className="sticky left-0 z-10 bg-[#fefbf6] border-r border-border" />
                   {visibleCols.age            && <SortTh label="Âge"                onClick={() => toggleSort('birthDate')} />}
                   {visibleCols.classes        && <th className="px-3 py-3 text-left min-w-[200px]">Classe(s)</th>}
@@ -277,11 +311,43 @@ export function StudentsClient() {
               </thead>
               <tbody>
                 {filtered.map((s, i) => (
-                  <StudentRow key={s.id} student={s} index={i} visibleCols={visibleCols} onEdit={setEditingStudent} />
+                  <StudentRow
+                    key={s.id}
+                    student={s}
+                    index={i}
+                    visibleCols={visibleCols}
+                    onEdit={setEditingStudent}
+                    selected={selectedIds.has(s.id)}
+                    onToggleSelect={toggleSelectStudent}
+                  />
                 ))}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* ── Barre flottante sélection ── */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-[#1a1a1a] text-white rounded-xl shadow-2xl">
+          <span className="text-sm font-medium">
+            {selectedIds.size} élève{selectedIds.size > 1 ? 's' : ''} sélectionné{selectedIds.size > 1 ? 's' : ''}
+          </span>
+          <Button
+            size="sm"
+            onClick={() => setAssignOpen(true)}
+            className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5 h-8"
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            Affecter à une classe
+          </Button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="p-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
@@ -296,6 +362,13 @@ export function StudentsClient() {
           onOpenChange={v => { if (!v) setEditingStudent(null) }}
         />
       )}
+
+      <AssignClassDialog
+        studentIds={Array.from(selectedIds)}
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        onDone={() => setSelectedIds(new Set())}
+      />
 
     </div>
   )
@@ -383,14 +456,38 @@ function SortTh({ label, onClick, className }: { label: string; onClick: () => v
   )
 }
 
-function StudentRow({ student: s, index, visibleCols, onEdit }: { student: StudentListItem; index: number; visibleCols: VisibleCols; onEdit: (s: StudentListItem) => void }) {
+function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggleSelect }: {
+  student: StudentListItem
+  index: number
+  visibleCols: VisibleCols
+  onEdit: (s: StudentListItem) => void
+  selected: boolean
+  onToggleSelect: (id: string) => void
+}) {
   const teacherName = s.enrollments[0]?.teacherName ?? null
 
   return (
     <tr
       onClick={() => onEdit(s)}
-      className="group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-middle cursor-pointer"
+      className={cn(
+        'group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-middle cursor-pointer',
+        selected && 'bg-[#c2440f]/5'
+      )}
     >
+      {/* Checkbox sélection */}
+      <td
+        className="px-3 py-3 w-8 sticky left-0 z-10 border-r border-border/50"
+        style={{ background: selected ? 'rgb(194 68 15 / 0.05)' : undefined }}
+        onClick={e => { e.stopPropagation(); onToggleSelect(s.id) }}
+      >
+        <span className={cn(
+          'h-4 w-4 rounded border-2 flex items-center justify-center transition-colors',
+          selected ? 'bg-[#c2440f] border-[#c2440f]' : 'border-border bg-white'
+        )}>
+          {selected && <Check className="h-2.5 w-2.5 text-white" />}
+        </span>
+      </td>
+
       {/* Nom + pastille genre — figé au scroll horizontal */}
       <td className="px-3 py-3 sticky left-0 z-10 bg-white group-hover:bg-[#fdfbf8] border-r border-border/50">
         <div className="flex items-center gap-2">

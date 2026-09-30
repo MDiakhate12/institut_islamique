@@ -76,7 +76,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
                   )}
                 </p>
               </div>
-              <div className="shrink-0 text-right">
+              <div className="shrink-0 text-right mr-7">
                 <div className="text-lg font-bold text-foreground leading-none">{count}</div>
                 <div className="text-xs text-muted-foreground">Inscrits</div>
               </div>
