@@ -99,6 +99,21 @@ export async function enrollStudentAction(
   }
 }
 
+export async function enrollStudentsAction(
+  classId: string,
+  studentIds: string[]
+): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  try {
+    await scheduledClassesService.enrollStudents(session.schoolId, classId, studentIds)
+    revalidatePath(CLASSES_PATH)
+    return ok(undefined)
+  } catch (e) {
+    console.error('[enrollStudentsAction]', e)
+    return err("Impossible d'inscrire les élèves")
+  }
+}
+
 export async function unenrollStudentAction(enrollmentId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
   if (!session.roles.includes('admin')) return unauthorized()

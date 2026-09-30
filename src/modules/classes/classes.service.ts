@@ -150,6 +150,13 @@ export const scheduledClassesService = {
     await db.insert(classEnrollments).values({ schoolId, classId, studentId })
   },
 
+  async enrollStudents(schoolId: string, classId: string, studentIds: string[]): Promise<void> {
+    if (studentIds.length === 0) return
+    await db.insert(classEnrollments).values(
+      studentIds.map(studentId => ({ schoolId, classId, studentId }))
+    )
+  },
+
   async unenrollStudent(enrollmentId: string): Promise<void> {
     await db
       .update(classEnrollments)
