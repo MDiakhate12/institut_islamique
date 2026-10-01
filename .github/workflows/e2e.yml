@@ -1,0 +1,49 @@
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Supabase local dans Docker — aucune base distante n'est jamais touchée (CLAUDE.md §7.19)
+      - name: Démarrer Supabase local
+        run: npx supabase start
+
+      - name: Écrire .env.test et pousser le schéma
+        run: |
+          npm run e2e:env
+          npm run e2e:db:push
+
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Le seed est relancé par e2e/global-setup.ts, le build Next par le webServer Playwright
+      - name: Tests E2E
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
