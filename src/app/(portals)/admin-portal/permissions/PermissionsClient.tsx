@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { ShieldCheck, Wallet, Briefcase, Mail, Phone, XCircle, Plus } from 'lucide-react'
+import { ShieldCheck, Wallet, Briefcase, Mail, Phone, XCircle, Plus, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { usePermissions } from '@/modules/permissions/permissions.hooks'
+import { usePermissions, useResendInvitation } from '@/modules/permissions/permissions.hooks'
 import { AddRoleDialog } from './AddRoleDialog'
 import { RevokeDialog } from './RevokeDialog'
 import type { AdminSubRole } from '@/lib/constants'
 import type { PermissionMember } from '@/modules/permissions/permissions.types'
+import { toast } from 'sonner'
 
 // ---------- Role badge colors ----------
 const PORTAL_ROLE_BADGES: Record<string, string> = {
@@ -39,6 +40,14 @@ function MemberCard({
   member: PermissionMember
   onRevoke: (m: PermissionMember) => void
 }) {
+  const resend = useResendInvitation()
+
+  async function handleResend() {
+    const res = await resend.mutateAsync(member.memberId)
+    if (!res.success) { toast.error(res.error); return }
+    toast.success('Email de rappel envoyé')
+  }
+
   return (
     <div className="relative rounded-xl border border-border bg-white p-4 space-y-3 shadow-sm">
       <button
@@ -70,9 +79,19 @@ function MemberCard({
       </div>
 
       {member.isPending && (
-        <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
-          En attente
-        </span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
+            En attente
+          </span>
+          <button
+            onClick={handleResend}
+            disabled={resend.isPending}
+            className="inline-flex items-center gap-1 text-xs text-[#2d6a4f] hover:text-[#1b4332] disabled:opacity-50 transition-colors"
+          >
+            <Send className="h-3 w-3" />
+            {resend.isPending ? 'Envoi…' : 'Renvoyer l\'invitation'}
+          </button>
+        </div>
       )}
 
       <div className="flex flex-wrap gap-1.5">

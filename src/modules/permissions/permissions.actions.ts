@@ -140,6 +140,72 @@ export async function grantRoleAction(
   }
 }
 
+export async function resendInvitationAction(
+  memberId: string,
+): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!session.roles.includes('admin')) return err('Non autorisé')
+
+  const [member] = await db
+    .select({
+      pendingEmail:  schoolMembers.pendingEmail,
+      adminSubRole:  schoolMembers.adminSubRole,
+      isPending:     schoolMembers.isPending,
+    })
+    .from(schoolMembers)
+    .where(and(eq(schoolMembers.id, memberId), eq(schoolMembers.schoolId, session.schoolId)))
+    .limit(1)
+
+  if (!member || !member.isPending || !member.pendingEmail) {
+    return err('Ce membre n\'est pas en attente ou n\'a pas d\'email enregistré')
+  }
+
+  const role = member.adminSubRole as AdminSubRole
+  const email = member.pendingEmail
+  const ROLE_LABELS: Record<string, string> = {
+    admin: 'Administrateur', treasurer: 'Trésorier', manager: 'Gestionnaire',
+  }
+
+  try {
+    const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
+    const ctaUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${session.schoolId}&email=${encodeURIComponent(email)}`
+    void sendEmail({
+      to: email,
+      fromName: schoolName,
+      subject: `${schoolName} — Rappel : Invitation ${ROLE_LABELS[role] ?? role}`,
+      html: `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
+  <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#2d6a4f,#2d6a4f);padding:36px 40px;text-align:center;">
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">${schoolName}</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">Gestion des accès</p>
+    </div>
+    <div style="padding:40px;">
+      <p style="color:#1e4535;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
+      <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
+        Vous avez été invité(e) à rejoindre <strong>${schoolName}</strong> en tant que
+        <strong>${ROLE_LABELS[role] ?? role}</strong>. Voici un rappel pour créer votre compte
+        et accéder au portail d&apos;administration.
+      </p>
+      <div style="text-align:center;">
+        <a href="${ctaUrl}" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+          Créer mon compte →
+        </a>
+      </div>
+    </div>
+    <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
+      <p style="color:#9ca3af;font-size:12px;margin:0;">${schoolName} — Jazakum Allahu Khayran</p>
+    </div>
+  </div>
+</body></html>`,
+    }).catch(() => {})
+    return ok(undefined)
+  } catch {
+    return err('Erreur lors de l\'envoi de l\'email')
+  }
+}
+
 export async function revokeRoleAction(
   memberId: string,
 ): Promise<ActionResult<void>> {

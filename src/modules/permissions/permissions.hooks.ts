@@ -7,6 +7,7 @@ import {
   searchMemberByEmailAction,
   grantRoleAction,
   revokeRoleAction,
+  resendInvitationAction,
 } from './permissions.actions'
 
 export function usePermissions(role: AdminSubRole) {
@@ -38,5 +39,11 @@ export function useRevokeRole() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['permissions'] })
     },
+  })
+}
+
+export function useResendInvitation() {
+  return useMutation({
+    mutationFn: (memberId: string) => resendInvitationAction(memberId),
   })
 }
