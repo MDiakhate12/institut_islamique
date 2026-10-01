@@ -22,9 +22,10 @@ export function isParent(session: Session): boolean {
 //
 // - admin     → tout
 // - treasurer → Budget, Dépenses, Élèves et Annonces uniquement (liste blanche)
-// - manager   → accès administrateur complet SAUF Budget & Dépenses (liste noire)
+// - manager   → accès administrateur complet SAUF Budget, Dépenses et Autorisations
+//               (sinon il pourrait se promouvoir admin et débloquer la finance)
 
-const FINANCE_RESOURCES = ['budget', 'expenses']
+const MANAGER_DENIED = ['budget', 'expenses', 'permissions']
 
 const TREASURER_RESOURCES = ['budget', 'expenses', 'students', 'announcements']
 
@@ -39,7 +40,7 @@ export function canAccess(session: AccessSubject, resource: string): boolean {
   switch (session.adminSubRole) {
     case 'admin':     return true
     case 'treasurer': return TREASURER_RESOURCES.includes(resource)
-    case 'manager':   return !FINANCE_RESOURCES.includes(resource)
+    case 'manager':   return !MANAGER_DENIED.includes(resource)
   }
 }
 
