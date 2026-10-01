@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
 import { AssignClassDialog } from './AssignClassDialog'
+import { ColumnFilter } from './ColumnFilter'
 import type { StudentListItem } from '@/modules/students/students.types'
 import { calcAge, guardianDisplayName } from '@/modules/students/students.types'
 
@@ -39,6 +40,7 @@ const COLUMNS = [
 type ColId = typeof COLUMNS[number]['id']
 type VisibleCols = Record<ColId, boolean>
 type SortKey     = 'name' | ColId
+type ColFilters  = Partial<Record<SortKey, string[]>>
 
 const STORAGE_KEY = 'qaf:students:columns'
 
@@ -112,6 +114,41 @@ function compareStudents(a: StudentListItem, b: StudentListItem, key: SortKey, a
   return asc ? diff : -diff
 }
 
+const EMPTY_VALUE = '(Vide)'
+
+// Valeur(s) proposée(s) dans le filtre de chaque colonne — telles qu'affichées.
+// Plusieurs valeurs possibles (ex. un élève dans 2 classes) : l'élève passe le
+// filtre si l'une d'elles est cochée.
+const FILTER_VALUES: Record<SortKey, (s: StudentListItem) => (string | null | undefined)[]> = {
+  name:            s => [`${s.lastName.toUpperCase()} ${s.firstName}`],
+  // Âge regroupé à l'année (« 10 ans »), sinon la liste serait inutilisable
+  age:             s => { const a = calcAge(s.birthDate); return [a === '—' ? null : a.split(' et ')[0]] },
+  classes:         s => s.enrollments.map(e => e.className ? `${e.classCode} — ${e.className}` : e.classCode),
+  teacher:         s => s.enrollments.map(e => e.teacherName),
+  previousTeacher: s => [s.previousTeacher],
+  status:          s => [s.isActive ? 'Inscrit' : 'Inactif'],
+  fatherPhone:     s => [SORT_VALUE.fatherPhone(s) as string | null],
+  motherPhone:     s => [SORT_VALUE.motherPhone(s) as string | null],
+  fatherEmail:     s => [SORT_VALUE.fatherEmail(s) as string | null],
+  motherEmail:     s => [SORT_VALUE.motherEmail(s) as string | null],
+  regFatherName:   s => [SORT_VALUE.regFatherName(s) as string | null],
+  regMotherName:   s => [SORT_VALUE.regMotherName(s) as string | null],
+  enrollmentYear:  s => [s.enrollmentYear],
+  createdAt:       s => [new Date(s.createdAt).toLocaleDateString('fr-FR')],
+  attendance:      s => [`${s.attendancePresent} présence${s.attendancePresent > 1 ? 's' : ''}`],
+}
+
+function filterValues(s: StudentListItem, key: SortKey): string[] {
+  const values = FILTER_VALUES[key](s).filter((v): v is string => !!v)
+  return values.length > 0 ? values : [EMPTY_VALUE]
+}
+
+// Options distinctes d'une colonne, dans l'ordre du tri croissant de cette colonne
+function buildFilterOptions(students: StudentListItem[], key: SortKey): string[] {
+  const ordered = [...students].sort((a, b) => compareStudents(a, b, key, true))
+  return Array.from(new Set(ordered.flatMap(s => filterValues(s, key))))
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function StudentsClient() {
@@ -127,6 +164,7 @@ export function StudentsClient() {
   const [t3Filter, setT3Filter]         = useState<PayFilter>('all')
   const [sortKey, setSortKey]           = useState<SortKey | null>(null)
   const [sortAsc, setSortAsc]           = useState(true)
+  const [colFilters, setColFilters]     = useState<ColFilters>({})
   const [editingStudent, setEditingStudent] = useState<StudentListItem | null>(null)
   const [selectedIds, setSelectedIds]    = useState<Set<string>>(new Set())
   const [assignOpen, setAssignOpen]      = useState(false)
@@ -141,12 +179,25 @@ export function StudentsClient() {
   }, [])
 
   function toggleCol(id: ColId) {
+    // Masquer une colonne retire aussi son filtre (sinon il agirait de façon invisible)
+    if (visibleCols[id]) setColFilter(id, [])
     setVisibleCols(prev => {
       const next = { ...prev, [id]: !prev[id] }
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch { /* noop */ }
       return next
     })
   }
+
+  function setColFilter(key: SortKey, values: string[]) {
+    setColFilters(prev => {
+      const next = { ...prev }
+      if (values.length > 0) next[key] = values
+      else delete next[key]
+      return next
+    })
+  }
+
+  const activeColFilters = Object.keys(colFilters).length
 
   const yearOptions  = useMemo(() => buildYearOptions(students ?? []), [students])
   const classOptions = useMemo(() => buildClassOptions(students ?? []), [students])
@@ -166,6 +217,9 @@ export function StudentsClient() {
       if (t2Filter === 'unpaid' &&  s.paymentT2) return false
       if (t3Filter === 'paid'   && !s.paymentT3) return false
       if (t3Filter === 'unpaid' &&  s.paymentT3) return false
+      for (const [key, selected] of Object.entries(colFilters) as [SortKey, string[]][]) {
+        if (!filterValues(s, key).some(v => selected.includes(v))) return false
+      }
       if (search) {
         const q = search.toLowerCase()
         const guardianMatch = s.guardians.some(g =>
@@ -184,7 +238,7 @@ export function StudentsClient() {
       return true
     })
     return sortKey ? list.sort((a, b) => compareStudents(a, b, sortKey, sortAsc)) : list
-  }, [students, search, genderFilter, activeFilter, yearFilter, classFilter, t1Filter, t2Filter, t3Filter, sortKey, sortAsc])
+  }, [students, search, genderFilter, activeFilter, yearFilter, classFilter, t1Filter, t2Filter, t3Filter, colFilters, sortKey, sortAsc])
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortAsc(p => !p)
@@ -206,6 +260,12 @@ export function StudentsClient() {
     } else {
       setSelectedIds(new Set(filtered.map(s => s.id)))
     }
+  }
+
+  const thProps = {
+    current: sortKey, asc: sortAsc, onSort: toggleSort,
+    filters: colFilters, onFilter: setColFilter,
+    filterOptions: (key: SortKey) => buildFilterOptions(students ?? [], key),
   }
 
   const total = filtered.length
@@ -317,15 +377,26 @@ export function StudentsClient() {
           <button onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')} title="Non inscrits"
             className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'inactive' ? 'bg-red-400 border-red-400' : 'border-red-400 bg-white')} />
         </div>
+
+        {activeColFilters > 0 && (
+          <button
+            type="button"
+            onClick={() => setColFilters({})}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-[#c2440f]/10 text-[#c2440f] hover:bg-[#c2440f]/20 transition-colors"
+          >
+            <X className="h-3 w-3" />
+            Réinitialiser les filtres de colonnes ({activeColFilters})
+          </button>
+        )}
       </div>
 
       {/* ── Tableau ── */}
-      {isLoading ? <StudentsSkeleton visibleCount={visibleCount} /> : filtered.length === 0 ? (
+      {isLoading ? <StudentsSkeleton visibleCount={visibleCount} /> : !students?.length ? (
         <EmptyState
           icon={Users}
-          title={search ? 'Aucun élève trouvé' : 'Aucun élève pour le moment'}
-          description={search ? 'Essayez un autre terme.' : 'Créez votre premier élève.'}
-          action={!search ? (
+          title="Aucun élève pour le moment"
+          description="Créez votre premier élève."
+          action={(
             <StudentFormDialog
               trigger={
                 <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#2d6a4f] hover:bg-[#1b4332] text-white rounded-md transition-colors">
@@ -333,7 +404,7 @@ export function StudentsClient() {
                 </button>
               }
             />
-          ) : undefined}
+          )}
         />
       ) : (
         <div className="rounded-lg border border-border bg-white overflow-hidden">
@@ -354,24 +425,31 @@ export function StudentsClient() {
                       {allSelected && <Check className="h-2.5 w-2.5 text-white" />}
                     </button>
                   </th>
-                  <SortTh label="Nom de l'élève" sortKey="name" current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[180px] sm:sticky sm:left-0 sm:z-10 bg-[#fefbf6] border-r border-border" />
-                  {visibleCols.age              && <SortTh label="Âge"               sortKey="age"             current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[120px]" />}
-                  {visibleCols.classes          && <SortTh label="Classe(s)"         sortKey="classes"         current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[200px]" />}
-                  {visibleCols.teacher          && <SortTh label="Enseignant"        sortKey="teacher"         current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[140px]" />}
-                  {visibleCols.previousTeacher  && <SortTh label="Ens. précédent(e)" sortKey="previousTeacher" current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[140px]" />}
-                  {visibleCols.status           && <SortTh label="Statut"            sortKey="status"          current={sortKey} asc={sortAsc} onSort={toggleSort} />}
-                  {visibleCols.fatherPhone      && <SortTh label="Tél. père"         sortKey="fatherPhone"     current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[140px]" />}
-                  {visibleCols.motherPhone      && <SortTh label="Tél. mère"         sortKey="motherPhone"     current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[140px]" />}
-                  {visibleCols.fatherEmail      && <SortTh label="Email père"        sortKey="fatherEmail"     current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[180px]" />}
-                  {visibleCols.motherEmail      && <SortTh label="Email mère"        sortKey="motherEmail"     current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[180px]" />}
-                  {visibleCols.regFatherName    && <SortTh label="Père"              sortKey="regFatherName"   current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[140px]" />}
-                  {visibleCols.regMotherName    && <SortTh label="Mère"              sortKey="regMotherName"   current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[140px]" />}
-                  {visibleCols.enrollmentYear   && <SortTh label="Année"             sortKey="enrollmentYear"  current={sortKey} asc={sortAsc} onSort={toggleSort} />}
-                  {visibleCols.createdAt        && <SortTh label="Date d'inscription" sortKey="createdAt"      current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[140px]" />}
-                  {visibleCols.attendance       && <SortTh label="Présences"         sortKey="attendance"      current={sortKey} asc={sortAsc} onSort={toggleSort} className="min-w-[120px]" />}
+                  <SortTh label="Nom de l'élève" sortKey="name" {...thProps} className="min-w-[180px] sm:sticky sm:left-0 sm:z-10 bg-[#fefbf6] border-r border-border" />
+                  {visibleCols.age              && <SortTh label="Âge"               sortKey="age"             {...thProps} className="min-w-[120px]" />}
+                  {visibleCols.classes          && <SortTh label="Classe(s)"         sortKey="classes"         {...thProps} className="min-w-[200px]" />}
+                  {visibleCols.teacher          && <SortTh label="Enseignant"        sortKey="teacher"         {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.previousTeacher  && <SortTh label="Ens. précédent(e)" sortKey="previousTeacher" {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.status           && <SortTh label="Statut"            sortKey="status"          {...thProps} />}
+                  {visibleCols.fatherPhone      && <SortTh label="Tél. père"         sortKey="fatherPhone"     {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.motherPhone      && <SortTh label="Tél. mère"         sortKey="motherPhone"     {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.fatherEmail      && <SortTh label="Email père"        sortKey="fatherEmail"     {...thProps} className="min-w-[180px]" />}
+                  {visibleCols.motherEmail      && <SortTh label="Email mère"        sortKey="motherEmail"     {...thProps} className="min-w-[180px]" />}
+                  {visibleCols.regFatherName    && <SortTh label="Père"              sortKey="regFatherName"   {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.regMotherName    && <SortTh label="Mère"              sortKey="regMotherName"   {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.enrollmentYear   && <SortTh label="Année"             sortKey="enrollmentYear"  {...thProps} />}
+                  {visibleCols.createdAt        && <SortTh label="Date d'inscription" sortKey="createdAt"      {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.attendance       && <SortTh label="Présences"         sortKey="attendance"      {...thProps} className="min-w-[120px]" />}
                 </tr>
               </thead>
               <tbody>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={2 + visibleCount} className="px-6 py-10 text-left text-sm text-muted-foreground">
+                      Aucun élève ne correspond à ces filtres.
+                    </td>
+                  </tr>
+                )}
                 {filtered.map((s, i) => (
                   <StudentRow
                     key={s.id}
@@ -508,28 +586,39 @@ function ColumnsMenu({ visibleCols, onToggle, visibleCount }: {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SortTh({ label, sortKey, current, asc, onSort, className }: {
+function SortTh({ label, sortKey, current, asc, onSort, filters, onFilter, filterOptions, className }: {
   label: string
   sortKey: SortKey
   current: SortKey | null
   asc: boolean
   onSort: (key: SortKey) => void
+  filters: ColFilters
+  onFilter: (key: SortKey, values: string[]) => void
+  filterOptions: (key: SortKey) => string[]
   className?: string
 }) {
   const active = current === sortKey
   const Icon = !active ? ArrowUpDown : asc ? ArrowUp : ArrowDown
   return (
     <th className={cn('px-3 py-3 text-left font-semibold', className)}>
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className={cn(
-          'flex items-center gap-1 hover:text-foreground transition-colors uppercase tracking-wide text-xs',
-          active && 'text-[#c2440f]'
-        )}
-      >
-        {label} <Icon className="h-3 w-3" />
-      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onSort(sortKey)}
+          className={cn(
+            'flex items-center gap-1 hover:text-foreground transition-colors uppercase tracking-wide text-xs',
+            active && 'text-[#c2440f]'
+          )}
+        >
+          {label} <Icon className="h-3 w-3" />
+        </button>
+        <ColumnFilter
+          label={label}
+          options={filterOptions(sortKey)}
+          selected={filters[sortKey] ?? []}
+          onChange={values => onFilter(sortKey, values)}
+        />
+      </div>
     </th>
   )
 }
