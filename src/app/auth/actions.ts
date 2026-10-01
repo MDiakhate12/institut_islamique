@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { profiles, schoolMembers } from '@/db/schema'
-import { and, eq, or } from 'drizzle-orm'
+import { and, eq, isNotNull, isNull, or } from 'drizzle-orm'
 import { getAppUrl } from '@/lib/email'
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000'
@@ -135,10 +135,11 @@ export async function signUpAction(input: {
         and(
           eq(schoolMembers.schoolId, input.schoolId),
           or(
-            // Pre-trigger: still NIL_UUID with pending email
+            // Pre-trigger: still NIL_UUID with pending email — target admin record specifically
             and(
               eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
               eq(schoolMembers.userId, NIL_UUID),
+              isNotNull(schoolMembers.adminSubRole),
             ),
             // Post-trigger: trigger already linked the user
             eq(schoolMembers.userId, userId),
@@ -156,6 +157,18 @@ export async function signUpAction(input: {
       .set({ userId, isPending: false, pendingEmail: null })
       .where(eq(schoolMembers.id, pendingRecord.id))
 
+    // Link any other pending NIL_UUID records for this email (e.g. teacher role) — keep their isPending
+    await db
+      .update(schoolMembers)
+      .set({ userId, pendingEmail: null })
+      .where(
+        and(
+          eq(schoolMembers.schoolId, input.schoolId),
+          eq(schoolMembers.userId, NIL_UUID),
+          eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
+        )
+      )
+
     if (!data.session) return { needsConfirmation: true }
     revalidatePath('/', 'layout')
     redirect('/admin-portal')
@@ -168,7 +181,7 @@ export async function signUpAction(input: {
   if (roles.length === 0) roles.push('parent')
 
   if (input.isTeacher) {
-    // Check for an admin-created pending record with this email
+    // Check for an admin-created pending teacher record with this email
     const [adminRecord] = await db
       .select({ id: schoolMembers.id })
       .from(schoolMembers)
@@ -176,8 +189,12 @@ export async function signUpAction(input: {
         and(
           eq(schoolMembers.schoolId, input.schoolId),
           or(
-            // Pre-trigger: still NIL_UUID with pending email
-            and(eq(schoolMembers.userId, NIL_UUID), eq(schoolMembers.pendingEmail, input.email.toLowerCase())),
+            // Pre-trigger: still NIL_UUID with pending email — target teacher record specifically
+            and(
+              eq(schoolMembers.userId, NIL_UUID),
+              eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
+              isNull(schoolMembers.adminSubRole),
+            ),
             // Post-trigger: trigger already linked the user
             eq(schoolMembers.userId, userId),
           ),
@@ -186,7 +203,7 @@ export async function signUpAction(input: {
       .limit(1)
 
     if (adminRecord) {
-      // Link the real user to the admin-created record
+      // Link the real user to the admin-created teacher record (keep isPending=true for activation)
       await db
         .update(schoolMembers)
         .set({ userId, pendingEmail: null })
@@ -200,6 +217,18 @@ export async function signUpAction(input: {
         isPending: true,
       })
     }
+
+    // Also link any remaining NIL_UUID records for this email (e.g. admin/gestionnaire role)
+    await db
+      .update(schoolMembers)
+      .set({ userId, isPending: false, pendingEmail: null })
+      .where(
+        and(
+          eq(schoolMembers.schoolId, input.schoolId),
+          eq(schoolMembers.userId, NIL_UUID),
+          eq(schoolMembers.pendingEmail, input.email.toLowerCase()),
+        )
+      )
 
     if (!data.session) return { needsConfirmation: true }
     revalidatePath('/', 'layout')
