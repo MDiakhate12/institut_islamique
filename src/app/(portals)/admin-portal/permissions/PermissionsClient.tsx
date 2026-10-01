@@ -132,7 +132,7 @@ const SECTIONS: SectionConfig[] = [
   {
     role: 'manager',
     label: 'Gestionnaires actuels',
-    description: 'Accès administrateur complet — sauf Budget & Dépenses.',
+    description: 'Accès administrateur complet — sauf Budget, Dépenses & Autorisations.',
     icon: <Briefcase className="h-4.5 w-4.5 text-blue-600" />,
     accentClass: 'text-blue-700',
     emptyText: 'Aucun gestionnaire assigné pour l\'instant.',

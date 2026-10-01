@@ -69,7 +69,12 @@ export async function grantRoleAction(
     manager: 'Gestionnaire',
   }
   try {
-    const { userExists } = await permissionsService.grantRole(session.schoolId, email, role)
+    const { userExists, alreadyHasRole } = await permissionsService.grantRole(session.schoolId, email, role)
+    if (alreadyHasRole) {
+      return err(userExists
+        ? `Cet utilisateur est déjà ${ROLE_LABELS[role] ?? role}`
+        : `Une invitation ${ROLE_LABELS[role] ?? role} est déjà en attente pour cet e-mail`)
+    }
     revalidatePath('/admin-portal/permissions')
     const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
     const ctaUrl = userExists
