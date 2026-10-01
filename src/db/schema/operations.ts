@@ -91,7 +91,7 @@ export const registrationClassSelections = pgTable('registration_class_selection
 
 export const otpCodes = pgTable('otp_codes', {
   id:        uuid('id').primaryKey().defaultRandom(),
-  phone:     text('phone').notNull(),
+  email:     text('email').notNull(),
   code:      text('code').notNull(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   usedAt:    timestamp('used_at', { withTimezone: true }),

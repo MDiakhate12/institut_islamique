@@ -3,7 +3,6 @@
 import { requireSession } from '@/lib/auth/session'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
-import { sendSmsOtp } from '@/lib/sms'
 import { sendEmail, getSchoolName } from '@/lib/email'
 import { parentsService } from './parents.service'
 import type { StudentParentInfo, ChildWithClasses } from './parents.types'
@@ -61,11 +60,48 @@ export async function sendDownloadReminderAction(
   }
 }
 
-export async function sendOtpAction(phone: string): Promise<ActionResult<void>> {
-  await requireSession()
+export async function sendOtpAction(email: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
   try {
-    const code = await parentsService.generateAndStoreOtp(phone)
-    await sendSmsOtp(phone, code)
+    const normalizedEmail = email.toLowerCase().trim()
+    const code = await parentsService.generateAndStoreOtp(normalizedEmail)
+    const schoolName = await getSchoolName(session.schoolId)
+
+    const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f9f5f0;font-family:Arial,sans-serif;">
+  <div style="max-width:480px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:#7a4f30;padding:32px 40px;text-align:center;">
+      <h1 style="color:#ffffff;font-size:24px;margin:0 0 6px;">${schoolName}</h1>
+      <p style="color:rgba(255,255,255,0.8);margin:0;font-size:13px;">Code de vérification</p>
+    </div>
+    <div style="padding:40px;text-align:center;">
+      <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 28px;">
+        Utilisez ce code pour lier vos enfants à votre compte parent.
+      </p>
+      <div style="background:#fdf6f0;border:2px solid #c2440f;border-radius:12px;padding:24px;display:inline-block;margin:0 auto;">
+        <span style="font-size:36px;font-weight:900;letter-spacing:10px;color:#c2440f;">${code}</span>
+      </div>
+      <p style="color:#6b7280;font-size:13px;margin:24px 0 0;">
+        Ce code expire dans <strong>10 minutes</strong>.
+      </p>
+    </div>
+    <div style="background:#f9f5f0;padding:16px 40px;text-align:center;">
+      <p style="color:#9ca3af;font-size:12px;margin:0;">${schoolName} — Jazakum Allahu Khayran</p>
+    </div>
+  </div>
+</body>
+</html>`
+
+    await sendEmail({
+      to: normalizedEmail,
+      fromName: schoolName,
+      subject: `${code} — Code de vérification ${schoolName}`,
+      html,
+    })
+
     return ok(undefined)
   } catch (e) {
     console.error('[sendOtpAction]', e)
@@ -74,20 +110,21 @@ export async function sendOtpAction(phone: string): Promise<ActionResult<void>> 
 }
 
 export async function verifyOtpAndLinkAction(
-  phone: string,
+  email: string,
   code: string,
 ): Promise<ActionResult<{ count: number }>> {
   const session = await requireSession()
   try {
-    const isValid = await parentsService.verifyOtp(phone, code)
+    const normalizedEmail = email.toLowerCase().trim()
+    const isValid = await parentsService.verifyOtp(normalizedEmail, code)
     if (!isValid) return err('Code invalide ou expiré. Veuillez réessayer.')
 
     const memberId = await parentsService.getMemberId(session.userId, session.schoolId)
     if (!memberId) return err('Compte parent introuvable dans cette école.')
 
-    const matched = await parentsService.findStudentsByGuardianPhone(phone, session.schoolId)
+    const matched = await parentsService.findStudentsByGuardianEmail(normalizedEmail, session.schoolId)
     if (matched.length === 0) {
-      return err('Aucun élève trouvé avec ce numéro. Vérifiez le numéro enregistré à l\'école.')
+      return err("Aucun élève trouvé avec cette adresse e-mail. Vérifiez l'adresse enregistrée à l'école.")
     }
 
     await parentsService.linkStudentsToParent(
