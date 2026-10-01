@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils'
 import type { Teacher } from '@/modules/teachers/teachers.types'
 
 const MAX_DOCUMENT_SIZE = 2 * 1024 * 1024 // 2MB
+const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -41,6 +42,8 @@ interface TeacherFormProps {
 export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormProps) {
   const [open, setOpen] = useState(false)
   const isEditing = !!teacher
+  // Email modifiable tant que l'enseignant n'a pas créé son compte (cf. teachersService.update)
+  const canEditEmail = teacher?.userId === NIL_UUID
   const queryClient = useQueryClient()
 
   // ── Tout l'état du formulaire ici (survit à la fermeture du dialog) ────────
@@ -104,6 +107,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
   const editForm = useForm<UpdateTeacherInput>({
     resolver: zodResolver(updateTeacherSchema),
     defaultValues: {
+      email:       canEditEmail ? teacher?.email : undefined,
       fullName:    teacher?.fullName ?? '',
       phone:       teacher?.phone   ?? '',
       gender:      (teacher?.gender as 'male' | 'female') ?? undefined,
@@ -139,7 +143,9 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
       })
       if (!result.success) { toast.error(result.error); return }
       queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
-      toast.success('Enseignant modifié avec succès')
+      toast.success(data.email && data.email !== teacher.email.toLowerCase()
+        ? `Email modifié — invitation renvoyée à ${data.email}`
+        : 'Enseignant modifié avec succès')
       setOpen(false)
       onSuccess?.()
     })
@@ -202,10 +208,21 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
 
           {/* Email + Téléphone */}
           <div className="grid grid-cols-2 gap-3">
-            {isEditing ? (
+            {isEditing && canEditEmail ? (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Email</label>
+                <Input type="email" placeholder="Entrez l'email" {...editForm.register('email')} />
+                {editForm.formState.errors.email ? (
+                  <p className="text-xs text-destructive mt-1">{editForm.formState.errors.email.message}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1">L&apos;invitation sera renvoyée à la nouvelle adresse.</p>
+                )}
+              </div>
+            ) : isEditing ? (
               <div>
                 <label className="text-sm font-medium mb-1 block">Email</label>
                 <Input value={teacher.email} readOnly className="bg-muted/30 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground mt-1">Compte déjà créé : seul l&apos;enseignant peut changer son email.</p>
               </div>
             ) : (
               <div>

@@ -226,9 +226,10 @@ export const teachersService = {
     }
   },
 
-  async update(schoolId: string, memberId: string, data: UpdateTeacherInput): Promise<void> {
+  /** Retourne le nouvel email si l'email d'invitation a changé (pour renvoyer l'invitation). */
+  async update(schoolId: string, memberId: string, data: UpdateTeacherInput): Promise<{ newEmail: string | null }> {
     const [member] = await db
-      .select({ userId: schoolMembers.userId })
+      .select({ userId: schoolMembers.userId, pendingEmail: schoolMembers.pendingEmail })
       .from(schoolMembers)
       .where(and(eq(schoolMembers.id, memberId), eq(schoolMembers.schoolId, schoolId)))
       .limit(1)
@@ -236,6 +237,27 @@ export const teachersService = {
     if (!member) throw new Error('Enseignant introuvable')
 
     const memberUpdate: Record<string, unknown> = {}
+
+    // L'email n'est modifiable que tant que l'enseignant n'a pas de compte : c'est
+    // pendingEmail qui sert à rattacher son inscription (signUpAction). Une fois le
+    // compte créé, l'email est son identifiant de connexion — à changer par lui-même.
+    const newEmail = data.email && data.email !== member.pendingEmail ? data.email : null
+    if (newEmail) {
+      if (member.userId !== NIL_UUID) throw new Error('EMAIL_LOCKED')
+
+      const rows = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${newEmail} LIMIT 1`)
+      if ((rows as unknown as { id: string }[]).length > 0) throw new Error('EMAIL_HAS_ACCOUNT')
+
+      const [duplicate] = await db
+        .select({ id: schoolMembers.id })
+        .from(schoolMembers)
+        .where(and(eq(schoolMembers.schoolId, schoolId), eq(schoolMembers.pendingEmail, newEmail)))
+        .limit(1)
+      if (duplicate) throw new Error('EMAIL_TAKEN')
+
+      memberUpdate.pendingEmail = newEmail
+    }
+
     if (data.teacherType !== undefined) memberUpdate.teacherType = data.teacherType
     if (data.isActive !== undefined) memberUpdate.isPending = !data.isActive
     // Tant que le compte réel (profiles) n'existe pas, school_members reste la source de vérité
@@ -263,6 +285,8 @@ export const teachersService = {
         })
         .where(eq(profiles.userId, member.userId))
     }
+
+    return { newEmail }
   },
 
   async removeFromSchool(schoolId: string, memberId: string): Promise<void> {
