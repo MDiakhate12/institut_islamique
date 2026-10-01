@@ -46,3 +46,10 @@ next-env.d.ts
 .claude/settings.local.json
 __pycache__/
 *.pyc
+
+# --- tests E2E (Playwright) ---
+/e2e/.auth/
+/playwright-report/
+/test-results/
+/blob-report/
+/.next-e2e/
