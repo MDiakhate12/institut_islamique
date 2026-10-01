@@ -9,7 +9,9 @@ export const inviteTeacherSchema = z.object({
 })
 
 export const updateTeacherSchema = z.object({
-  fullName:    z.string().transform(val => val === '' ? undefined : val).optional(),
+  // Modifiable uniquement tant que l'enseignant n'a pas créé son compte (NIL_UUID)
+  email:       z.string().trim().toLowerCase().email("L'email est invalide").optional(),
+  fullName:   z.string().transform(val => val === '' ? undefined : val).optional(),
   phone:       z.string().optional(),
   gender:      z.enum(['male', 'female']).optional(),
   teacherType: z.enum(['volunteer', 'paid']).optional(),

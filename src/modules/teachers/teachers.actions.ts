@@ -188,15 +188,29 @@ export async function updateTeacherAction(
   const parsed = updateTeacherSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
 
+  let newEmail: string | null
   try {
-    await teachersService.update(session.schoolId, memberId, parsed.data)
+    ({ newEmail } = await teachersService.update(session.schoolId, memberId, parsed.data))
     revalidatePath(ROUTES.admin.teachers)
     revalidatePath(`${ROUTES.admin.teachers}/${memberId}`)
-    return ok(undefined)
   } catch (e) {
+    const message = e instanceof Error ? e.message : ''
+    if (message === 'EMAIL_LOCKED') return err("L'enseignant a déjà créé son compte : lui seul peut changer son email depuis son profil.")
+    if (message === 'EMAIL_HAS_ACCOUNT') return err('Un compte Qaf existe déjà avec cet email. Supprimez cet enseignant puis ré-invitez-le avec cet email.')
+    if (message === 'EMAIL_TAKEN') return err('Un autre enseignant en attente utilise déjà cet email.')
     console.error('[updateTeacherAction]', e)
     return err("Impossible de modifier l'enseignant.")
   }
+
+  // Nouvel email → renvoyer l'invitation à la nouvelle adresse
+  if (newEmail) {
+    try {
+      await sendTeacherInviteEmail(newEmail, memberId, session.schoolId)
+    } catch {
+      return err("Email modifié, mais l'envoi de l'invitation a échoué. Utilisez « Renvoyer l'invitation ».")
+    }
+  }
+  return ok(undefined)
 }
 
 export async function removeTeacherAction(memberId: string): Promise<ActionResult<void>> {
