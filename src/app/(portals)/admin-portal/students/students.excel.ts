@@ -11,6 +11,7 @@ export function exportStudentsToExcel(students: StudentListItem[]) {
       : '',
     'Classe': s.enrollments.map(e => e.classCode || e.className).join(', '),
     'Statut': s.isActive ? 'Actif' : 'Inactif',
+    "Date d'inscription": new Date(s.createdAt).toLocaleDateString('fr-FR'),
   }))
 
   const ws = XLSX.utils.json_to_sheet(rows)
