@@ -70,7 +70,7 @@ function ClassCard({ cls }: { cls: AdminExamClassProgress }) {
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: 'Noté', value: cls.gradedCount, color: 'text-[#2d6a4f]' },
             { label: 'Total', value: cls.totalStudents, color: 'text-gray-800' },
@@ -336,7 +336,7 @@ export function TrackExamsClient({
     : `${totalStudents} Élève${totalStudents !== 1 ? 's' : ''}`
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       {/* Closed period banner */}
       {!examPeriodOpen && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
@@ -358,7 +358,7 @@ export function TrackExamsClient({
       )}
 
       {/* Page header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-[#2d6a4f]">Suivre les notes d&apos;examen</h1>
           <div className="flex items-center gap-3 flex-wrap">

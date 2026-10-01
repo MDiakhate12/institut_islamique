@@ -24,7 +24,7 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registe
         <p className="text-white/80 text-sm mt-1">Année scolaire {academicYear}</p>
       </div>
 
-      <div className="p-6 space-y-4 max-w-3xl mx-auto">
+      <div className="p-4 sm:p-6 space-y-4 max-w-3xl mx-auto">
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-gray-700" />

@@ -100,7 +100,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
   return (
     <div className="flex flex-col h-full bg-[#f4f9f3] min-h-screen">
       {/* Page header */}
-      <div className="px-8 pt-8 pb-4 flex items-start justify-between">
+      <div className="px-4 sm:px-8 pt-4 sm:pt-8 pb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestion des devoirs</h1>
           <p className="text-sm text-gray-500 mt-0.5">Gérer les devoirs pour vos classes</p>
@@ -115,9 +115,9 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
         </Button>
       </div>
 
-      <div className="flex flex-1 gap-6 px-8 pb-8">
+      <div className="flex flex-col lg:flex-row flex-1 gap-6 px-4 sm:px-8 pb-8">
         {/* ── Left: Class list ── */}
-        <div className="w-72 flex-shrink-0">
+        <div className="w-full lg:w-72 flex-shrink-0">
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Sélectionner une classe
           </h2>
@@ -203,7 +203,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
           ) : (
             <>
               {/* Class header */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-bold text-gray-900">
                     {selectedPinned?.catalogCode ?? '—'}

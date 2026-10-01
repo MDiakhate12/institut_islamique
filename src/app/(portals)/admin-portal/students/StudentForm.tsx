@@ -475,7 +475,7 @@ export function StudentFormDialog({
               </div>
 
               {/* Actions rapides */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setAttendanceOpen(true)}
@@ -858,13 +858,13 @@ export function StudentFormDialog({
           </div>
 
             {/* Boutons — toujours visibles, hors de la zone de défilement */}
-            <div className={cn('flex items-center gap-2 pt-3 pb-4 mt-1 border-t border-border shrink-0', isEditing ? 'justify-between' : 'justify-end')}>
+            <div className={cn('flex flex-wrap items-center gap-2 pt-3 pb-4 mt-1 border-t border-border shrink-0', isEditing ? 'justify-between' : 'justify-end')}>
               {isEditing && (
                 <Button type="button" variant="destructive" size="sm" onClick={() => setDeleteConfirmOpen(true)}>
                   Supprimer l&apos;élève
                 </Button>
               )}
-              <div className="flex gap-2">
+              <div className="flex gap-2 ml-auto">
                 <Button type="button" variant="outline" size="sm" onClick={resetAndClose}>
                   Annuler
                 </Button>

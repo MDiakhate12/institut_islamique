@@ -1,5 +1,6 @@
 import { Sidebar } from '@/components/layouts/Sidebar/Sidebar'
 import { TopBar } from '@/components/layouts/TopBar/TopBar'
+import { MobileNavShell } from '@/components/layouts/MobileNavShell/MobileNavShell'
 import type { Session } from '@/lib/auth/session'
 
 interface PortalLayoutProps {
@@ -12,15 +13,15 @@ interface PortalLayoutProps {
 
 export function PortalLayout({ children, session, schoolName, userFullName, isSuperAdmin }: PortalLayoutProps) {
   return (
-    // Pas d'overflow-hidden ici → le bouton collapse de la sidebar peut déborder
-    <div className="flex h-[100dvh]">
-      <Sidebar session={session} userFullName={userFullName} schoolName={schoolName} isSuperAdmin={isSuperAdmin} />
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <TopBar session={session} schoolName={schoolName} userFullName={userFullName} />
-        <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
-          {children}
-        </div>
+    <MobileNavShell
+      title="Portail d'administration"
+      subtitle={schoolName}
+      sidebar={<Sidebar session={session} userFullName={userFullName} schoolName={schoolName} isSuperAdmin={isSuperAdmin} />}
+    >
+      <TopBar session={session} schoolName={schoolName} userFullName={userFullName} />
+      <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
+        {children}
       </div>
-    </div>
+    </MobileNavShell>
   )
 }

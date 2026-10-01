@@ -8,7 +8,7 @@ export function TeacherAnnouncementsClient() {
   const { data: announcements = [], isLoading } = useAnnouncements('teachers')
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="h-9 w-9 rounded-full bg-[#f4f9f3] border border-[#cde6c8] flex items-center justify-center">

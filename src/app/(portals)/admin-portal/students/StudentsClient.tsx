@@ -167,10 +167,10 @@ export function StudentsClient() {
   const visibleCount = COLUMNS.filter(c => visibleCols[c.id]).length
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
 
       {/* ── En-tête ── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Élèves</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gérer les inscriptions et les profils des élèves</p>
@@ -283,7 +283,7 @@ export function StudentsClient() {
               <thead>
                 <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
                   {/* Checkbox select-all */}
-                  <th className="px-3 py-3 w-8 sticky left-0 z-10 bg-[#fefbf6] border-r border-border">
+                  <th className="px-3 py-3 w-8 sm:sticky sm:left-0 sm:z-10 bg-[#fefbf6] border-r border-border">
                     <button
                       type="button"
                       onClick={toggleSelectAll}
@@ -295,7 +295,7 @@ export function StudentsClient() {
                       {allSelected && <Check className="h-2.5 w-2.5 text-white" />}
                     </button>
                   </th>
-                  <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} className="sticky left-0 z-10 bg-[#fefbf6] border-r border-border" />
+                  <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} className="sm:sticky sm:left-0 sm:z-10 bg-[#fefbf6] border-r border-border" />
                   {visibleCols.age            && <SortTh label="Âge"                onClick={() => toggleSort('birthDate')} />}
                   {visibleCols.classes        && <th className="px-3 py-3 text-left min-w-[200px]">Classe(s)</th>}
                   {visibleCols.teacher          && <th className="px-3 py-3 text-left min-w-[140px]">Enseignant</th>}
@@ -478,7 +478,7 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
     >
       {/* Checkbox sélection */}
       <td
-        className="px-3 py-3 w-8 sticky left-0 z-10 border-r border-border/50"
+        className="px-3 py-3 w-8 sm:sticky sm:left-0 sm:z-10 border-r border-border/50"
         style={{ background: selected ? 'rgb(194 68 15 / 0.05)' : undefined }}
         onClick={e => { e.stopPropagation(); onToggleSelect(s.id) }}
       >
@@ -491,7 +491,7 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
       </td>
 
       {/* Nom + pastille genre — figé au scroll horizontal */}
-      <td className="px-3 py-3 sticky left-0 z-10 bg-white group-hover:bg-[#fdfbf8] border-r border-border/50">
+      <td className="px-3 py-3 sm:sticky sm:left-0 sm:z-10 bg-white group-hover:bg-[#fdfbf8] border-r border-border/50">
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground text-xs shrink-0">{index + 1}.</span>
           <span className={cn(

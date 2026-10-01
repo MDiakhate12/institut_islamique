@@ -51,9 +51,9 @@ export default function GradeDialog({ open, onClose, homework }: Props) {
         </div>
 
         {/* Body — split panel */}
-        <div className="flex flex-1 overflow-hidden min-h-0">
+        <div className="flex flex-col sm:flex-row flex-1 overflow-hidden min-h-0">
           {/* Left — student list */}
-          <div className="w-72 border-r border-gray-100 flex flex-col bg-gray-50 flex-shrink-0">
+          <div className="w-full sm:w-72 max-h-48 sm:max-h-none border-b sm:border-b-0 sm:border-r border-gray-100 flex flex-col bg-gray-50 flex-shrink-0">
             <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 ÉLÈVES ({students.length})

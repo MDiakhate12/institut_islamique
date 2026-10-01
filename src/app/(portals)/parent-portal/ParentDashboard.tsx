@@ -42,10 +42,10 @@ export function ParentDashboard({ userFullName }: Props) {
   const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Portail Parents</h1>
           <p className="text-muted-foreground mt-0.5">Bon retour, {displayName}</p>
@@ -96,7 +96,7 @@ export function ParentDashboard({ userFullName }: Props) {
       </div>
 
       {/* Grille de fonctionnalités */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {FEATURE_CARDS.map(card => (
           <Link
             key={card.href}

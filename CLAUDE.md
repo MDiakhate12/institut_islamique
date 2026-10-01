@@ -620,6 +620,11 @@ Source unique : `src/lib/auth/permissions.ts`. Une « ressource » = le segment 
 - Enforcé à 3 niveaux : `proxy.ts` (redirige vers `/admin-portal` toute URL non autorisée — pas dans le layout admin, qui ne se ré-exécute pas à la navigation client), Sidebar + tuiles du dashboard (`canAccessAdminPath`), et chaque Server Action admin (`canAccess(session, '<ressource>')`, **jamais** `session.roles.includes('admin')` seul).
 - Toute nouvelle page/action admin : la garde vient gratuitement côté page (proxy), mais l'action doit appeler `canAccess` avec le segment d'URL de sa page.
 
+### 7.18 Responsive mobile — `MobileNavShell`
+
+Les 3 layouts de portail (`PortalLayout` admin, `parent-portal/layout.tsx`, `teacher-portal/layout.tsx`) passent par `src/components/layouts/MobileNavShell/MobileNavShell.tsx`. ≥ `lg` : sidebar en colonne (inchangé). < `lg` : sidebar en tiroir off-canvas + barre mobile verte avec hamburger ; le tiroir se ferme à la navigation (état lié au `pathname` d'ouverture), au clic sur le fond et sur Échap. Ne jamais remettre une sidebar en colonne fixe directement dans un layout.
+Règles pour toute nouvelle page : padding racine `p-4 sm:p-6`, en-têtes titre + actions en `flex flex-wrap`, grilles KPI `grid-cols-2 sm:grid-cols-N` (jamais `grid-cols-4/5` nu), tableaux dans un conteneur `overflow-x-auto`, panneaux latéraux `w-full lg:w-[Npx]` empilés en `flex-col lg:flex-row`.
+
 ---
 
 ## 8. État d'avancement des modules

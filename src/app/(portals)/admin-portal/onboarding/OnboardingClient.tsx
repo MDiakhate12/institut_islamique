@@ -169,7 +169,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
 
           {/* ── Step 1: School identity + logo ── */}
           {step === 1 && (
-            <div className="p-8 space-y-6">
+            <div className="p-4 sm:p-8 space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-[#2d6a4f]">Identité de l'école</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">Ces informations seront visibles dans l'application.</p>
@@ -275,7 +275,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
 
           {/* ── Step 2: Opérations scolaires (conforme school-settings) ── */}
           {step === 2 && (
-            <div className="p-8 space-y-6">
+            <div className="p-4 sm:p-8 space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-[#2d6a4f]">Opérations scolaires</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">Définissez l'année académique, le trimestre en cours, puis activez l'inscription et les examens.</p>
@@ -465,7 +465,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
 
           {/* ── Step 3: Done ── */}
           {step === 3 && (
-            <div className="p-8 space-y-6 text-center">
+            <div className="p-4 sm:p-8 space-y-6 text-center">
               <div className="space-y-3">
                 <div className="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center mx-auto">
                   <Sparkles className="h-8 w-8 text-green-500" />

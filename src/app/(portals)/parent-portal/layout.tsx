@@ -1,5 +1,6 @@
 import { requireSession } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
+import { MobileNavShell } from '@/components/layouts/MobileNavShell/MobileNavShell'
 import { ParentSidebar } from '@/components/layouts/ParentSidebar/ParentSidebar'
 import { db } from '@/db'
 import { schools, profiles } from '@/db/schema'
@@ -21,13 +22,14 @@ export default async function ParentPortalLayout({ children }: { children: React
   const userFullName = profileResult[0]?.fullName ?? null
 
   return (
-    <div className="flex h-[100dvh]">
-      <ParentSidebar session={session} userFullName={userFullName} schoolName={schoolName} />
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
-          {children}
-        </div>
+    <MobileNavShell
+      title="Portail parents"
+      subtitle={schoolName}
+      sidebar={<ParentSidebar session={session} userFullName={userFullName} schoolName={schoolName} />}
+    >
+      <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
+        {children}
       </div>
-    </div>
+    </MobileNavShell>
   )
 }
