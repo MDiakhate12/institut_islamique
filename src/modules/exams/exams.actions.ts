@@ -1,6 +1,7 @@
 'use server'
 
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { examsService } from './exams.service'
@@ -105,7 +106,7 @@ export async function getAdminExamClassesAction(
   trimester: number,
 ): Promise<ActionResult<AdminExamClassProgress[]>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'track-exams')) return err('Non autorisé')
   try {
     const data = await examsService.getClassesWithProgress(session.schoolId, trimester)
     return ok(data)
@@ -118,7 +119,7 @@ export async function getAdminExamStudentsAction(
   trimester: number,
 ): Promise<ActionResult<AdminExamStudentProgress[]>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'track-exams')) return err('Non autorisé')
   try {
     const data = await examsService.getStudentsWithProgress(session.schoolId, trimester)
     return ok(data)

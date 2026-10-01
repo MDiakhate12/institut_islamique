@@ -130,13 +130,31 @@ export function AddRoleDialog({ open, onClose, role, schoolName }: Props) {
         </div>
 
         {/* Not found state */}
-        {result && !result.found && (
+        {result && !result.found && result.alreadyHasRole && (
+          <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
+            <span>
+              Une invitation {config.label} est déjà en attente pour <strong>{email}</strong>.
+            </span>
+          </div>
+        )}
+
+        {result && !result.found && !result.alreadyHasRole && (
           <div className="space-y-3">
             <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
               <span>
-                Aucun compte trouvé pour <strong>{email}</strong>. Vous pouvez quand même accorder
-                l&apos;accès — ils l&apos;auront dès qu&apos;ils rejoindront l&apos;école.
+                {result.pendingSubRole ? (
+                  <>
+                    Une invitation {ROLE_CONFIG[result.pendingSubRole].label} est déjà en attente
+                    pour <strong>{email}</strong>. Continuer la remplacera par {config.label}.
+                  </>
+                ) : (
+                  <>
+                    Aucun compte trouvé pour <strong>{email}</strong>. Vous pouvez quand même accorder
+                    l&apos;accès — ils l&apos;auront dès qu&apos;ils rejoindront l&apos;école.
+                  </>
+                )}
               </span>
             </div>
             <Button

@@ -58,7 +58,13 @@ export const permissionsService = {
     const authUser = users.find(u => (u.email ?? '').toLowerCase() === normalizedEmail)
 
     if (!authUser) {
-      return { found: false, email: normalizedEmail }
+      const pending = await this.findPendingInvite(schoolId, normalizedEmail)
+      return {
+        found: false,
+        email: normalizedEmail,
+        pendingSubRole: (pending?.adminSubRole as AdminSubRole | null) ?? null,
+        alreadyHasRole: pending?.adminSubRole === targetRole,
+      }
     }
 
     // Check if they have a school_members record
@@ -94,11 +100,27 @@ export const permissionsService = {
     }
   },
 
+  // Invitation créée avant que l'utilisateur ait un compte (userId = NIL_UUID)
+  async findPendingInvite(schoolId: string, normalizedEmail: string) {
+    const [row] = await db
+      .select({ id: schoolMembers.id, adminSubRole: schoolMembers.adminSubRole })
+      .from(schoolMembers)
+      .where(
+        and(
+          eq(schoolMembers.schoolId, schoolId),
+          eq(schoolMembers.userId, NIL_UUID),
+          sql`lower(${schoolMembers.pendingEmail}) = ${normalizedEmail}`,
+        )
+      )
+      .limit(1)
+    return row ?? null
+  },
+
   async grantRole(
     schoolId: string,
     email: string,
     role: AdminSubRole,
-  ): Promise<{ userExists: boolean }> {
+  ): Promise<{ userExists: boolean; alreadyHasRole: boolean }> {
     const normalizedEmail = email.toLowerCase().trim()
     const rows = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${normalizedEmail} LIMIT 1`)
     const authUserId = (rows as unknown as { id: string }[])[0]?.id ?? null
@@ -107,10 +129,12 @@ export const permissionsService = {
     if (authUser) {
       // User exists — check for existing school_members record
       const [existing] = await db
-        .select({ id: schoolMembers.id })
+        .select({ id: schoolMembers.id, adminSubRole: schoolMembers.adminSubRole })
         .from(schoolMembers)
         .where(and(eq(schoolMembers.schoolId, schoolId), eq(schoolMembers.userId, authUser.id)))
         .limit(1)
+
+      if (existing?.adminSubRole === role) return { userExists: true, alreadyHasRole: true }
 
       if (existing) {
         // Update adminSubRole and ensure 'admin' is in portalRoles
@@ -134,9 +158,26 @@ export const permissionsService = {
           isPending: false,
         })
       }
-      return { userExists: true }
+      return { userExists: true, alreadyHasRole: false }
     } else {
-      // User doesn't exist — create pending record
+      // User doesn't exist — reuse an existing pending invite rather than duplicating it
+      const pending = await this.findPendingInvite(schoolId, normalizedEmail)
+      if (pending?.adminSubRole === role) return { userExists: false, alreadyHasRole: true }
+
+      if (pending) {
+        await db
+          .update(schoolMembers)
+          .set({
+            adminSubRole: role,
+            portalRoles: sql`array_append(
+              array_remove(${schoolMembers.portalRoles}, 'admin'),
+              'admin'
+            )`,
+          })
+          .where(eq(schoolMembers.id, pending.id))
+        return { userExists: false, alreadyHasRole: false }
+      }
+
       await db.insert(schoolMembers).values({
         schoolId,
         userId: NIL_UUID,
@@ -145,7 +186,7 @@ export const permissionsService = {
         isPending: true,
         pendingEmail: normalizedEmail,
       })
-      return { userExists: false }
+      return { userExists: false, alreadyHasRole: false }
     }
   },
 

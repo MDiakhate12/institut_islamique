@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { teachersService } from './teachers.service'
 import { inviteTeacherSchema, updateTeacherSchema, uploadTeacherDocumentSchema } from './teachers.schema'
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import type { Teacher, TeacherListItem } from './teachers.types'
@@ -125,7 +126,7 @@ export async function getTeacherAction(memberId: string): Promise<ActionResult<T
 
 export async function inviteTeacherAction(input: unknown): Promise<ActionResult<Teacher>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'teachers')) return unauthorized()
 
   const parsed = inviteTeacherSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -147,7 +148,7 @@ export async function inviteTeacherAction(input: unknown): Promise<ActionResult<
 
 export async function resendTeacherInvitationAction(memberId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'teachers')) return unauthorized()
 
   const NIL_UUID = '00000000-0000-0000-0000-000000000000'
   const [member] = await db
@@ -173,7 +174,7 @@ export async function updateTeacherAction(
   input: unknown
 ): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'teachers')) return unauthorized()
 
   const parsed = updateTeacherSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -191,7 +192,7 @@ export async function updateTeacherAction(
 
 export async function removeTeacherAction(memberId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'teachers')) return unauthorized()
 
   try {
     await teachersService.removeFromSchool(session.schoolId, memberId)
@@ -215,7 +216,7 @@ export async function uploadTeacherDocumentAction(
   input: unknown
 ): Promise<ActionResult<{ documentUrl: string; documentName: string }>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'teachers')) return unauthorized()
 
   const parsed = uploadTeacherDocumentSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -244,7 +245,7 @@ export async function uploadTeacherDocumentAction(
 
 export async function removeTeacherDocumentAction(memberId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'teachers')) return unauthorized()
 
   try {
     await teachersService.removeDocument(session.schoolId, memberId)
@@ -341,7 +342,7 @@ export async function importTeachersAction(
   rows: ImportTeacherRow[]
 ): Promise<ActionResult<{ created: number; errors: { row: number; message: string }[] }>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'teachers')) return unauthorized()
 
   const errors: { row: number; message: string }[] = []
   let created = 0

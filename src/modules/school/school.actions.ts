@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import { schoolService } from './school.service'
 import { updateSchoolInfoSchema, updateSchoolSettingsSchema } from './school.schema'
@@ -27,7 +28,7 @@ export async function getSchoolAction(): Promise<ActionResult<School>> {
 // UPDATE identity + contact fields
 export async function updateSchoolInfoAction(input: unknown): Promise<ActionResult<School>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'school-settings')) return unauthorized()
 
   const parsed = updateSchoolInfoSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -45,7 +46,7 @@ export async function updateSchoolInfoAction(input: unknown): Promise<ActionResu
 // UPDATE settings (JSONB patch)
 export async function updateSchoolSettingsAction(input: UpdateSchoolSettingsInput): Promise<ActionResult<School>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'school-settings')) return unauthorized()
 
   const parsed = updateSchoolSettingsSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -66,7 +67,7 @@ export async function uploadSchoolLogoAction(
   fileName: string,
 ): Promise<ActionResult<string>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'school-settings')) return unauthorized()
 
   try {
     // Convert data URL to Buffer

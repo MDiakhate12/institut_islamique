@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import { calendarService } from './calendar.service'
 import { createEventSchema, updateEventSchema } from './calendar.schema'
@@ -39,7 +40,7 @@ export async function getEventsAction(opts?: {
 
 export async function createEventAction(input: unknown): Promise<ActionResult<AcademicEvent>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'academic-calendar')) return unauthorized()
 
   const parsed = createEventSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -57,7 +58,7 @@ export async function createEventAction(input: unknown): Promise<ActionResult<Ac
 
 export async function updateEventAction(input: unknown): Promise<ActionResult<AcademicEvent>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'academic-calendar')) return unauthorized()
 
   const parsed = updateEventSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -74,7 +75,7 @@ export async function updateEventAction(input: unknown): Promise<ActionResult<Ac
 
 export async function deleteEventAction(id: string): Promise<ActionResult<null>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'academic-calendar')) return unauthorized()
 
   try {
     await calendarService.delete(session.schoolId, id)
@@ -88,7 +89,7 @@ export async function deleteEventAction(id: string): Promise<ActionResult<null>>
 
 export async function duplicateEventAction(id: string): Promise<ActionResult<AcademicEvent>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'academic-calendar')) return unauthorized()
 
   try {
     const memberId = await getMemberId(session.userId, session.schoolId)
@@ -103,7 +104,7 @@ export async function duplicateEventAction(id: string): Promise<ActionResult<Aca
 
 export async function sendReminderAction(eventId: string): Promise<ActionResult<null>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'academic-calendar')) return unauthorized()
 
   try {
     const event = await calendarService.getById(session.schoolId, eventId)
