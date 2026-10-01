@@ -636,7 +636,7 @@ Règles pour toute nouvelle page : padding racine `p-4 sm:p-6`, en-têtes titre 
 | **Auth** | Login, callback, signOut, session guard + `/auth/signup` (parent + enseignant) |
 | **Layout** | Sidebar admin (UserProfileDialog), TeacherSidebar (gate activation), ParentSidebar, Header, PortalLayout |
 | **School** | `/admin-portal/school-settings` |
-| **Students** | `/admin-portal/students` (liste + détail + création/édition + export Excel) — sélecteur de colonnes persisté en localStorage (`qaf:students:columns`), colonnes optionnelles : téléphone/email/père/mère depuis `guardians` + présences ; drawer avec popup détail tuteur (clic sur carte), `schoolGrade` et `regSponsorship` depuis `form_data` JSONB de la dernière inscription |
+| **Students** | `/admin-portal/students` (liste + détail + création/édition + export Excel) — sélecteur de colonnes persisté en localStorage (`qaf:students:columns`), colonnes optionnelles : téléphone/email/père/mère depuis `guardians` + présences + date d'inscription (`students.created_at`) ; tri sur toutes les colonnes (`SORT_VALUE`, valeurs vides toujours en fin) ; filtre par classe (+ « Sans classe ») ; drawer avec popup détail tuteur (clic sur carte), `schoolGrade` et `regSponsorship` depuis `form_data` JSONB de la dernière inscription |
 | **Teachers** | `/admin-portal/teachers` (liste + détail + flow activation NIL_UUID) |
 | **Classes** | `/admin-portal/classes` |
 | **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante) + `/teacher-portal/catalog` + `/parent-portal/catalog` (readonly partagé) |

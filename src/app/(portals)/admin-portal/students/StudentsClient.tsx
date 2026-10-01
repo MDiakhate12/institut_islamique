@@ -83,8 +83,9 @@ function guardianName(s: StudentListItem, relationship: 'father' | 'mother', fal
 const SORT_VALUE: Record<SortKey, (s: StudentListItem) => string | number | null> = {
   name:            s => `${s.lastName} ${s.firstName}`,
   // Tri par âge : le plus jeune en premier en ordre croissant
-  age:             s => s.birthDate ? -new Date(s.birthDate).getTime() : null,
-  classes:         s => s.enrollments[0]?.classCode ?? null,
+  // (âge non calculable — date absente, invalide ou future — affiché « — » → en fin de liste)
+  age:             s => calcAge(s.birthDate) === '—' ? null : -new Date(s.birthDate!).getTime(),
+  classes:         s => s.enrollments[0] ? `${s.enrollments[0].classCode} ${s.enrollments[0].className}` : null,
   teacher:         s => s.enrollments[0]?.teacherName ?? null,
   previousTeacher: s => s.previousTeacher,
   status:          s => s.isActive ? 0 : 1,
