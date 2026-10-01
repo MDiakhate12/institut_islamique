@@ -625,6 +625,29 @@ Source unique : `src/lib/auth/permissions.ts`. Une « ressource » = le segment 
 Les 3 layouts de portail (`PortalLayout` admin, `parent-portal/layout.tsx`, `teacher-portal/layout.tsx`) passent par `src/components/layouts/MobileNavShell/MobileNavShell.tsx`. ≥ `lg` : sidebar en colonne (inchangé). < `lg` : sidebar en tiroir off-canvas + barre mobile verte avec hamburger ; le tiroir se ferme à la navigation (état lié au `pathname` d'ouverture), au clic sur le fond et sur Échap. Ne jamais remettre une sidebar en colonne fixe directement dans un layout.
 Règles pour toute nouvelle page : padding racine `p-4 sm:p-6`, en-têtes titre + actions en `flex flex-wrap`, grilles KPI `grid-cols-2 sm:grid-cols-N` (jamais `grid-cols-4/5` nu), tableaux dans un conteneur `overflow-x-auto`, panneaux latéraux `w-full lg:w-[Npx]` empilés en `flex-col lg:flex-row`.
 
+### 7.19 Tests E2E — Playwright sur Supabase LOCAL uniquement
+
+La base de `.env.local` est partagée et sert aussi à la prod (`.claude/rules/shared-remote-db.md`) : les tests E2E tournent **exclusivement** sur un Supabase local (Docker, `supabase/config.toml`). `e2e/support/env.ts` (`loadE2EEnv`) charge `.env.test` et **lève une erreur** si `DATABASE_URL` ou `NEXT_PUBLIC_SUPABASE_URL` ne pointent pas sur `localhost`/`127.0.0.1` — il est appelé par `playwright.config.ts`, `e2e/seed.ts` et `e2e/drizzle.e2e.config.ts`. Ne jamais contourner ce garde-fou.
+
+```bash
+# Une fois (Docker Desktop lancé)
+npm run e2e:db:start      # supabase start (ports 54321 API / 54322 DB / 54323 Studio)
+npm run e2e:env           # écrit .env.test (clés locales + E2E_PASSWORD aléatoire, gitignoré)
+npm run e2e:db:reset      # reset DB locale → drizzle-kit push du schéma → seed e2e/seed.ts
+# Ensuite
+npm run test:e2e          # build Next dans .next-e2e puis next start :3100 + tests
+npm run test:e2e:ui       # mode UI interactif
+```
+
+- **Seed** (`e2e/seed.ts`, idempotent) : école `e2e-school` + 5 comptes (`admin`, `treasurer`, `manager`, `teacher`, `parent` `@e2e.qaf.test`, définis dans `e2e/support/users.ts`), 1 classe, 1 élève inscrit lié au parent, buckets Storage. Toute donnée nécessaire à un nouveau test s'ajoute ici. **Relancé automatiquement avant chaque run** (`e2e/global-setup.ts`) : un test qui écrit (paiement, inscription…) part toujours de l'état initial — mais les tests d'un même run partagent la base, donc un test qui écrit doit cibler ses propres lignes (montant/nom unique) et ne pas dépendre de ce qu'un autre test écrit.
+- **CI** : `.github/workflows/e2e.yml` (PR + push sur `main`) — `supabase start` dans le runner, push du schéma, tests, rapport HTML en artefact.
+- **Parcours métier couverts** : sous-rôles (`e2e/admin/sub-roles.spec.ts`), smoke de toutes les pages construites (`e2e/smoke.spec.ts`), paiement parent → vérification admin (`e2e/finance/parent-payment.spec.ts`).
+- **Auth** : `e2e/auth.setup.ts` se connecte via le vrai formulaire pour chaque rôle et sauve `e2e/.auth/<role>.json` ; un test choisit son rôle avec `test.use({ storageState: storageStatePath('treasurer') })`.
+- **Fixtures** : importer `test`/`expect` depuis `e2e/support/fixtures.ts` (et non `@playwright/test`) — fait échouer le test sur toute exception JS de la page (erreurs d'hydratation, etc.).
+- **Mobile** : le projet `mobile` (Pixel 7) ne rejoue que les tests dont le titre contient `@mobile`.
+- **Env serveur** : les variables de `.env.test` sont passées au `webServer` et priment sur `.env.local` ; `SMTP_*`/`RESEND_API_KEY` y sont vides exprès pour ne jamais envoyer de vrai e-mail. `next.config.ts` lit `NEXT_DIST_DIR` (`.next-e2e`) pour ne pas écraser le `.next` du `npm run dev`.
+- **Sélecteurs** : `getByLabel` ne fonctionne pas sur les formulaires `Form` Shadcn — `FormControl` (`src/components/ui/form.tsx`) pose l'`id` sur un `<div>` wrapper et non sur l'`<input>`, donc le `<label htmlFor>` ne cible aucun champ (défaut d'accessibilité connu). Utiliser `getByPlaceholder`, `getByRole` ou `input[name="..."]`.
+
 ---
 
 ## 8. État d'avancement des modules

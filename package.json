@@ -12,7 +12,16 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:pull": "drizzle-kit introspect",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "e2e:db:start": "supabase start",
+    "e2e:db:stop": "supabase stop",
+    "e2e:env": "node e2e/scripts/write-env.mjs",
+    "e2e:db:push": "drizzle-kit push --force --config e2e/drizzle.e2e.config.ts",
+    "e2e:seed": "tsx e2e/seed.ts",
+    "e2e:db:reset": "supabase db reset --local --no-seed && npm run e2e:db:push && npm run e2e:seed",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -50,6 +59,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.1",
@@ -59,6 +69,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "supabase": "^2.119.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"
