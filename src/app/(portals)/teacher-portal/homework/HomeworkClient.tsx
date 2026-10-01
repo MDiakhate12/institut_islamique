@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   BookOpen, Plus, Trash2, Pencil, Star, Video, Copy, Check,
   Radio, Users, Paperclip, ExternalLink, ClipboardList, MoreVertical,
@@ -22,6 +22,11 @@ import type { PinnedClass, ClassOption, HomeworkItem } from '@/modules/homework/
 import AddClassDialog from './AddClassDialog'
 import HomeworkDialog from './HomeworkDialog'
 import GradeDialog from './GradeDialog'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 type Props = {
   initialPinnedClasses: PinnedClass[]
@@ -47,6 +52,8 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
   const [gradeDialogOpen, setGradeDialogOpen] = useState(false)
   const [gradingHomework, setGradingHomework] = useState<HomeworkItem | null>(null)
   const [copiedSessionId, setCopiedSessionId] = useState<string | null>(null)
+  const [pendingDeleteHwId, setPendingDeleteHwId] = useState<string | null>(null)
+  const [pendingRemovePinnedId, setPendingRemovePinnedId] = useState<{ pinnedId: string; classId: string } | null>(null)
 
   const { data: pinnedClasses = initialPinnedClasses } = usePinnedClasses()
   const { data: homeworkItems = [], isLoading: loadingHw } = useHomework(selectedClassId ?? '')
@@ -59,15 +66,19 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
 
   const selectedPinned = pinnedClasses.find(c => c.classId === selectedClassId)
 
-  async function handleDeleteHomework(id: string) {
-    if (!confirm('Supprimer ce devoir ? Cette action est irréversible.')) return
+  async function confirmDeleteHomework() {
+    if (!pendingDeleteHwId) return
+    const id = pendingDeleteHwId
+    setPendingDeleteHwId(null)
     const result = await deleteHw.mutateAsync(id)
     if (!result.success) { toast.error(result.error); return }
     toast.success('Devoir supprimé')
   }
 
-  async function handleRemoveClass(pinnedId: string, classId: string) {
-    if (!confirm('Retirer cette classe de votre liste ?')) return
+  async function confirmRemoveClass() {
+    if (!pendingRemovePinnedId) return
+    const { pinnedId, classId } = pendingRemovePinnedId
+    setPendingRemovePinnedId(null)
     const result = await removePinned.mutateAsync(pinnedId)
     if (!result.success) { toast.error(result.error); return }
     if (selectedClassId === classId) {
@@ -176,7 +187,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
                         {cls.homeworkCount} devoir{cls.homeworkCount !== 1 ? 's' : ''}
                       </span>
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleRemoveClass(cls.pinnedId, cls.classId) }}
+                        onClick={(e) => { e.stopPropagation(); setPendingRemovePinnedId({ pinnedId: cls.pinnedId, classId: cls.classId }) }}
                         className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-0.5 rounded"
                         title="Retirer la classe"
                       >
@@ -333,7 +344,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
                       isNewest={idx === 0}
                       homework={hw}
                       onEdit={() => { setEditingHomework(hw); setHomeworkDialogOpen(true) }}
-                      onDelete={() => handleDeleteHomework(hw.id)}
+                      onDelete={() => setPendingDeleteHwId(hw.id)}
                       onGrade={() => { setGradingHomework(hw); setGradeDialogOpen(true) }}
                     />
                   ))}
@@ -358,6 +369,36 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
         onClose={() => { setGradeDialogOpen(false); setGradingHomework(null) }}
         homework={gradingHomework}
       />
+
+      <AlertDialog open={!!pendingDeleteHwId} onOpenChange={v => { if (!v) setPendingDeleteHwId(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce devoir ?</AlertDialogTitle>
+            <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteHomework} className="bg-destructive text-white hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!pendingRemovePinnedId} onOpenChange={v => { if (!v) setPendingRemovePinnedId(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Retirer cette classe ?</AlertDialogTitle>
+            <AlertDialogDescription>La classe sera retirée de votre liste. Vous pourrez la rajouter à tout moment.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveClass}>
+              Retirer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
