@@ -5,17 +5,17 @@ import { useStudents } from '@/modules/students/students.hooks'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Plus, Download, ArrowUpDown, Columns2, Check, BookOpen, X } from 'lucide-react'
+import { Users, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Columns2, Check, BookOpen, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
 import { AssignClassDialog } from './AssignClassDialog'
+import { ColumnFilter } from './ColumnFilter'
 import type { StudentListItem } from '@/modules/students/students.types'
 import { calcAge, guardianDisplayName } from '@/modules/students/students.types'
 
 type GenderFilter  = 'all' | 'male' | 'female'
 type ActiveFilter  = 'all' | 'active' | 'inactive'
-type SortKey       = 'name' | 'birthDate' | null
 type PayFilter     = 'all' | 'paid' | 'unpaid'
 
 // ── Column visibility ──────────────────────────────────────────────────────────
@@ -33,11 +33,14 @@ const COLUMNS = [
   { id: 'regFatherName',    label: 'Nom du père',                   def: false },
   { id: 'regMotherName',    label: 'Nom de la mère',                def: false },
   { id: 'enrollmentYear',   label: "Année d'inscription",           def: false },
+  { id: 'createdAt',        label: "Date d'inscription",            def: true  },
   { id: 'attendance',       label: 'Présences',                     def: false },
 ] as const
 
 type ColId = typeof COLUMNS[number]['id']
 type VisibleCols = Record<ColId, boolean>
+type SortKey     = 'name' | ColId
+type ColFilters  = Partial<Record<SortKey, string[]>>
 
 const STORAGE_KEY = 'qaf:students:columns'
 
@@ -61,6 +64,91 @@ function buildYearOptions(students: StudentListItem[]): string[] {
   return Array.from(years).sort().reverse()
 }
 
+function buildClassOptions(students: StudentListItem[]): { id: string; code: string; name: string }[] {
+  const classes = new Map<string, { id: string; code: string; name: string }>()
+  students.forEach(s => s.enrollments.forEach(e => {
+    classes.set(e.classId, { id: e.classId, code: e.classCode, name: e.className })
+  }))
+  return Array.from(classes.values()).sort((a, b) => a.code.localeCompare(b.code, 'fr', { numeric: true }))
+}
+
+function findGuardian(s: StudentListItem, relationship: 'father' | 'mother') {
+  return s.guardians.find(g => g.relationship === relationship)
+}
+
+function guardianName(s: StudentListItem, relationship: 'father' | 'mother', fallback: string | null) {
+  const g = findGuardian(s, relationship)
+  return g ? guardianDisplayName(g) : fallback
+}
+
+// Valeur utilisée pour trier chaque colonne (null/'' = toujours en fin de liste)
+const SORT_VALUE: Record<SortKey, (s: StudentListItem) => string | number | null> = {
+  name:            s => `${s.lastName} ${s.firstName}`,
+  // Tri par âge : le plus jeune en premier en ordre croissant
+  // (âge non calculable — date absente, invalide ou future — affiché « — » → en fin de liste)
+  age:             s => calcAge(s.birthDate) === '—' ? null : -new Date(s.birthDate!).getTime(),
+  classes:         s => s.enrollments[0] ? `${s.enrollments[0].classCode} ${s.enrollments[0].className}` : null,
+  teacher:         s => s.enrollments[0]?.teacherName ?? null,
+  previousTeacher: s => s.previousTeacher,
+  status:          s => s.isActive ? 0 : 1,
+  fatherPhone:     s => findGuardian(s, 'father')?.phone ?? s.regPhone,
+  motherPhone:     s => findGuardian(s, 'mother')?.phone ?? null,
+  fatherEmail:     s => findGuardian(s, 'father')?.email ?? s.regEmail,
+  motherEmail:     s => findGuardian(s, 'mother')?.email ?? null,
+  regFatherName:   s => guardianName(s, 'father', s.regFatherName),
+  regMotherName:   s => guardianName(s, 'mother', s.regMotherName),
+  enrollmentYear:  s => s.enrollmentYear,
+  createdAt:       s => new Date(s.createdAt).getTime(),
+  attendance:      s => s.attendancePresent,
+}
+
+function compareStudents(a: StudentListItem, b: StudentListItem, key: SortKey, asc: boolean): number {
+  const va = SORT_VALUE[key](a)
+  const vb = SORT_VALUE[key](b)
+  const emptyA = va == null || va === '' || Number.isNaN(va)
+  const emptyB = vb == null || vb === '' || Number.isNaN(vb)
+  if (emptyA || emptyB) return emptyA === emptyB ? 0 : emptyA ? 1 : -1
+  const diff = typeof va === 'number' && typeof vb === 'number'
+    ? va - vb
+    : String(va).localeCompare(String(vb), 'fr', { sensitivity: 'base', numeric: true })
+  return asc ? diff : -diff
+}
+
+const EMPTY_VALUE = '(Vide)'
+
+// Valeur(s) proposée(s) dans le filtre de chaque colonne — telles qu'affichées.
+// Plusieurs valeurs possibles (ex. un élève dans 2 classes) : l'élève passe le
+// filtre si l'une d'elles est cochée.
+const FILTER_VALUES: Record<SortKey, (s: StudentListItem) => (string | null | undefined)[]> = {
+  name:            s => [`${s.lastName.toUpperCase()} ${s.firstName}`],
+  // Âge regroupé à l'année (« 10 ans »), sinon la liste serait inutilisable
+  age:             s => { const a = calcAge(s.birthDate); return [a === '—' ? null : a.split(' et ')[0]] },
+  classes:         s => s.enrollments.map(e => e.className ? `${e.classCode} — ${e.className}` : e.classCode),
+  teacher:         s => s.enrollments.map(e => e.teacherName),
+  previousTeacher: s => [s.previousTeacher],
+  status:          s => [s.isActive ? 'Inscrit' : 'Inactif'],
+  fatherPhone:     s => [SORT_VALUE.fatherPhone(s) as string | null],
+  motherPhone:     s => [SORT_VALUE.motherPhone(s) as string | null],
+  fatherEmail:     s => [SORT_VALUE.fatherEmail(s) as string | null],
+  motherEmail:     s => [SORT_VALUE.motherEmail(s) as string | null],
+  regFatherName:   s => [SORT_VALUE.regFatherName(s) as string | null],
+  regMotherName:   s => [SORT_VALUE.regMotherName(s) as string | null],
+  enrollmentYear:  s => [s.enrollmentYear],
+  createdAt:       s => [new Date(s.createdAt).toLocaleDateString('fr-FR')],
+  attendance:      s => [`${s.attendancePresent} présence${s.attendancePresent > 1 ? 's' : ''}`],
+}
+
+function filterValues(s: StudentListItem, key: SortKey): string[] {
+  const values = FILTER_VALUES[key](s).filter((v): v is string => !!v)
+  return values.length > 0 ? values : [EMPTY_VALUE]
+}
+
+// Options distinctes d'une colonne, dans l'ordre du tri croissant de cette colonne
+function buildFilterOptions(students: StudentListItem[], key: SortKey): string[] {
+  const ordered = [...students].sort((a, b) => compareStudents(a, b, key, true))
+  return Array.from(new Set(ordered.flatMap(s => filterValues(s, key))))
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function StudentsClient() {
@@ -70,11 +158,13 @@ export function StudentsClient() {
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all')
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all')
   const [yearFilter, setYearFilter]     = useState('all')
+  const [classFilter, setClassFilter]   = useState('all')
   const [t1Filter, setT1Filter]         = useState<PayFilter>('all')
   const [t2Filter, setT2Filter]         = useState<PayFilter>('all')
   const [t3Filter, setT3Filter]         = useState<PayFilter>('all')
-  const [sortKey, setSortKey]           = useState<SortKey>(null)
+  const [sortKey, setSortKey]           = useState<SortKey | null>(null)
   const [sortAsc, setSortAsc]           = useState(true)
+  const [colFilters, setColFilters]     = useState<ColFilters>({})
   const [editingStudent, setEditingStudent] = useState<StudentListItem | null>(null)
   const [selectedIds, setSelectedIds]    = useState<Set<string>>(new Set())
   const [assignOpen, setAssignOpen]      = useState(false)
@@ -89,6 +179,8 @@ export function StudentsClient() {
   }, [])
 
   function toggleCol(id: ColId) {
+    // Masquer une colonne retire aussi son filtre (sinon il agirait de façon invisible)
+    if (visibleCols[id]) setColFilter(id, [])
     setVisibleCols(prev => {
       const next = { ...prev, [id]: !prev[id] }
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch { /* noop */ }
@@ -96,21 +188,38 @@ export function StudentsClient() {
     })
   }
 
-  const yearOptions = useMemo(() => buildYearOptions(students ?? []), [students])
+  function setColFilter(key: SortKey, values: string[]) {
+    setColFilters(prev => {
+      const next = { ...prev }
+      if (values.length > 0) next[key] = values
+      else delete next[key]
+      return next
+    })
+  }
+
+  const activeColFilters = Object.keys(colFilters).length
+
+  const yearOptions  = useMemo(() => buildYearOptions(students ?? []), [students])
+  const classOptions = useMemo(() => buildClassOptions(students ?? []), [students])
 
   const filtered = useMemo(() => {
     if (!students) return []
-    let list = students.filter(s => {
+    const list = students.filter(s => {
       if (genderFilter !== 'all' && s.gender !== genderFilter) return false
       if (activeFilter === 'active'   && !s.isActive) return false
       if (activeFilter === 'inactive' &&  s.isActive) return false
       if (yearFilter   !== 'all' && s.enrollmentYear !== yearFilter) return false
+      if (classFilter === 'none' && s.enrollments.length > 0) return false
+      if (classFilter !== 'all' && classFilter !== 'none' && !s.enrollments.some(e => e.classId === classFilter)) return false
       if (t1Filter === 'paid'   && !s.paymentT1) return false
       if (t1Filter === 'unpaid' &&  s.paymentT1) return false
       if (t2Filter === 'paid'   && !s.paymentT2) return false
       if (t2Filter === 'unpaid' &&  s.paymentT2) return false
       if (t3Filter === 'paid'   && !s.paymentT3) return false
       if (t3Filter === 'unpaid' &&  s.paymentT3) return false
+      for (const [key, selected] of Object.entries(colFilters) as [SortKey, string[]][]) {
+        if (!filterValues(s, key).some(v => selected.includes(v))) return false
+      }
       if (search) {
         const q = search.toLowerCase()
         const guardianMatch = s.guardians.some(g =>
@@ -128,17 +237,8 @@ export function StudentsClient() {
       }
       return true
     })
-    if (sortKey === 'name') {
-      list = [...list].sort((a, b) =>
-        (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName) * (sortAsc ? 1 : -1)
-      )
-    } else if (sortKey === 'birthDate') {
-      list = [...list].sort((a, b) =>
-        ((a.birthDate ?? '') < (b.birthDate ?? '') ? -1 : 1) * (sortAsc ? 1 : -1)
-      )
-    }
-    return list
-  }, [students, search, genderFilter, activeFilter, yearFilter, t1Filter, t2Filter, t3Filter, sortKey, sortAsc])
+    return sortKey ? list.sort((a, b) => compareStudents(a, b, sortKey, sortAsc)) : list
+  }, [students, search, genderFilter, activeFilter, yearFilter, classFilter, t1Filter, t2Filter, t3Filter, colFilters, sortKey, sortAsc])
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortAsc(p => !p)
@@ -160,6 +260,12 @@ export function StudentsClient() {
     } else {
       setSelectedIds(new Set(filtered.map(s => s.id)))
     }
+  }
+
+  const thProps = {
+    current: sortKey, asc: sortAsc, onSort: toggleSort,
+    filters: colFilters, onFilter: setColFilter,
+    filterOptions: (key: SortKey) => buildFilterOptions(students ?? [], key),
   }
 
   const total = filtered.length
@@ -223,6 +329,19 @@ export function StudentsClient() {
           {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
 
+        {/* Classe */}
+        <select
+          value={classFilter}
+          onChange={e => setClassFilter(e.target.value)}
+          className="text-sm border border-border rounded-lg px-3 py-1.5 bg-white focus:outline-none cursor-pointer max-w-[260px]"
+        >
+          <option value="all">Toutes les classes</option>
+          {classOptions.map(c => (
+            <option key={c.id} value={c.id}>{c.name ? `${c.code} — ${c.name}` : c.code}</option>
+          ))}
+          <option value="none">Sans classe</option>
+        </select>
+
         {/* T1/T2/T3 filters */}
         {([
           { label: 'Trimestre 1', val: t1Filter, set: setT1Filter },
@@ -258,15 +377,26 @@ export function StudentsClient() {
           <button onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')} title="Non inscrits"
             className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'inactive' ? 'bg-red-400 border-red-400' : 'border-red-400 bg-white')} />
         </div>
+
+        {activeColFilters > 0 && (
+          <button
+            type="button"
+            onClick={() => setColFilters({})}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-[#c2440f]/10 text-[#c2440f] hover:bg-[#c2440f]/20 transition-colors"
+          >
+            <X className="h-3 w-3" />
+            Réinitialiser les filtres de colonnes ({activeColFilters})
+          </button>
+        )}
       </div>
 
       {/* ── Tableau ── */}
-      {isLoading ? <StudentsSkeleton visibleCount={visibleCount} /> : filtered.length === 0 ? (
+      {isLoading ? <StudentsSkeleton visibleCount={visibleCount} /> : !students?.length ? (
         <EmptyState
           icon={Users}
-          title={search ? 'Aucun élève trouvé' : 'Aucun élève pour le moment'}
-          description={search ? 'Essayez un autre terme.' : 'Créez votre premier élève.'}
-          action={!search ? (
+          title="Aucun élève pour le moment"
+          description="Créez votre premier élève."
+          action={(
             <StudentFormDialog
               trigger={
                 <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#2d6a4f] hover:bg-[#1b4332] text-white rounded-md transition-colors">
@@ -274,7 +404,7 @@ export function StudentsClient() {
                 </button>
               }
             />
-          ) : undefined}
+          )}
         />
       ) : (
         <div className="rounded-lg border border-border bg-white overflow-hidden">
@@ -295,23 +425,31 @@ export function StudentsClient() {
                       {allSelected && <Check className="h-2.5 w-2.5 text-white" />}
                     </button>
                   </th>
-                  <SortTh label="Nom de l'élève" onClick={() => toggleSort('name')} className="sm:sticky sm:left-0 sm:z-10 bg-[#fefbf6] border-r border-border" />
-                  {visibleCols.age            && <SortTh label="Âge"                onClick={() => toggleSort('birthDate')} />}
-                  {visibleCols.classes        && <th className="px-3 py-3 text-left min-w-[200px]">Classe(s)</th>}
-                  {visibleCols.teacher          && <th className="px-3 py-3 text-left min-w-[140px]">Enseignant</th>}
-                  {visibleCols.previousTeacher  && <th className="px-3 py-3 text-left min-w-[140px]">Ens. précédent(e)</th>}
-                  {visibleCols.status           && <th className="px-3 py-3 text-left">Statut</th>}
-                  {visibleCols.fatherPhone      && <th className="px-3 py-3 text-left min-w-[140px]">Tél. père</th>}
-                  {visibleCols.motherPhone      && <th className="px-3 py-3 text-left min-w-[140px]">Tél. mère</th>}
-                  {visibleCols.fatherEmail      && <th className="px-3 py-3 text-left min-w-[180px]">Email père</th>}
-                  {visibleCols.motherEmail      && <th className="px-3 py-3 text-left min-w-[180px]">Email mère</th>}
-                  {visibleCols.regFatherName   && <th className="px-3 py-3 text-left min-w-[140px]">Père</th>}
-                  {visibleCols.regMotherName   && <th className="px-3 py-3 text-left min-w-[140px]">Mère</th>}
-                  {visibleCols.enrollmentYear  && <th className="px-3 py-3 text-left">Année</th>}
-                  {visibleCols.attendance     && <th className="px-3 py-3 text-left min-w-[120px]">Présences</th>}
+                  <SortTh label="Nom de l'élève" sortKey="name" {...thProps} className="min-w-[180px] sm:sticky sm:left-0 sm:z-10 bg-[#fefbf6] border-r border-border" />
+                  {visibleCols.age              && <SortTh label="Âge"               sortKey="age"             {...thProps} className="min-w-[120px]" />}
+                  {visibleCols.classes          && <SortTh label="Classe(s)"         sortKey="classes"         {...thProps} className="min-w-[200px]" />}
+                  {visibleCols.teacher          && <SortTh label="Enseignant"        sortKey="teacher"         {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.previousTeacher  && <SortTh label="Ens. précédent(e)" sortKey="previousTeacher" {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.status           && <SortTh label="Statut"            sortKey="status"          {...thProps} />}
+                  {visibleCols.fatherPhone      && <SortTh label="Tél. père"         sortKey="fatherPhone"     {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.motherPhone      && <SortTh label="Tél. mère"         sortKey="motherPhone"     {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.fatherEmail      && <SortTh label="Email père"        sortKey="fatherEmail"     {...thProps} className="min-w-[180px]" />}
+                  {visibleCols.motherEmail      && <SortTh label="Email mère"        sortKey="motherEmail"     {...thProps} className="min-w-[180px]" />}
+                  {visibleCols.regFatherName    && <SortTh label="Père"              sortKey="regFatherName"   {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.regMotherName    && <SortTh label="Mère"              sortKey="regMotherName"   {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.enrollmentYear   && <SortTh label="Année"             sortKey="enrollmentYear"  {...thProps} />}
+                  {visibleCols.createdAt        && <SortTh label="Date d'inscription" sortKey="createdAt"      {...thProps} className="min-w-[140px]" />}
+                  {visibleCols.attendance       && <SortTh label="Présences"         sortKey="attendance"      {...thProps} className="min-w-[120px]" />}
                 </tr>
               </thead>
               <tbody>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={2 + visibleCount} className="px-6 py-10 text-left text-sm text-muted-foreground">
+                      Aucun élève ne correspond à ces filtres.
+                    </td>
+                  </tr>
+                )}
                 {filtered.map((s, i) => (
                   <StudentRow
                     key={s.id}
@@ -448,12 +586,39 @@ function ColumnsMenu({ visibleCols, onToggle, visibleCount }: {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SortTh({ label, onClick, className }: { label: string; onClick: () => void; className?: string }) {
+function SortTh({ label, sortKey, current, asc, onSort, filters, onFilter, filterOptions, className }: {
+  label: string
+  sortKey: SortKey
+  current: SortKey | null
+  asc: boolean
+  onSort: (key: SortKey) => void
+  filters: ColFilters
+  onFilter: (key: SortKey, values: string[]) => void
+  filterOptions: (key: SortKey) => string[]
+  className?: string
+}) {
+  const active = current === sortKey
+  const Icon = !active ? ArrowUpDown : asc ? ArrowUp : ArrowDown
   return (
-    <th className={cn('px-3 py-3 text-left font-semibold min-w-[180px]', className)}>
-      <button onClick={onClick} className="flex items-center gap-1 hover:text-foreground transition-colors uppercase tracking-wide text-xs">
-        {label} <ArrowUpDown className="h-3 w-3" />
-      </button>
+    <th className={cn('px-3 py-3 text-left font-semibold', className)}>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onSort(sortKey)}
+          className={cn(
+            'flex items-center gap-1 hover:text-foreground transition-colors uppercase tracking-wide text-xs',
+            active && 'text-[#c2440f]'
+          )}
+        >
+          {label} <Icon className="h-3 w-3" />
+        </button>
+        <ColumnFilter
+          label={label}
+          options={filterOptions(sortKey)}
+          selected={filters[sortKey] ?? []}
+          onChange={values => onFilter(sortKey, values)}
+        />
+      </div>
     </th>
   )
 }
@@ -558,49 +723,17 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
         </td>
       )}
 
-      {visibleCols.fatherPhone && (
-        <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.guardians.find(g => g.relationship === 'father')?.phone ?? s.regPhone ?? <span className="italic">—</span>}
-        </td>
-      )}
+      {(['fatherPhone', 'motherPhone', 'fatherEmail', 'motherEmail', 'regFatherName', 'regMotherName', 'enrollmentYear'] as const)
+        .filter(id => visibleCols[id])
+        .map(id => (
+          <td key={id} className="px-3 py-3 text-sm text-muted-foreground">
+            {SORT_VALUE[id](s) || <span className="italic">—</span>}
+          </td>
+        ))}
 
-      {visibleCols.motherPhone && (
+      {visibleCols.createdAt && (
         <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.guardians.find(g => g.relationship === 'mother')?.phone ?? <span className="italic">—</span>}
-        </td>
-      )}
-
-      {visibleCols.fatherEmail && (
-        <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.guardians.find(g => g.relationship === 'father')?.email ?? s.regEmail ?? <span className="italic">—</span>}
-        </td>
-      )}
-
-      {visibleCols.motherEmail && (
-        <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.guardians.find(g => g.relationship === 'mother')?.email ?? <span className="italic">—</span>}
-        </td>
-      )}
-
-      {visibleCols.regFatherName && (
-        <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.guardians.find(g => g.relationship === 'father')
-            ? guardianDisplayName(s.guardians.find(g => g.relationship === 'father')!)
-            : s.regFatherName ?? <span className="italic">—</span>}
-        </td>
-      )}
-
-      {visibleCols.regMotherName && (
-        <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.guardians.find(g => g.relationship === 'mother')
-            ? guardianDisplayName(s.guardians.find(g => g.relationship === 'mother')!)
-            : s.regMotherName ?? <span className="italic">—</span>}
-        </td>
-      )}
-
-      {visibleCols.enrollmentYear && (
-        <td className="px-3 py-3 text-sm text-muted-foreground">
-          {s.enrollmentYear ?? <span className="italic">—</span>}
+          {new Date(s.createdAt).toLocaleDateString('fr-FR')}
         </td>
       )}
 
