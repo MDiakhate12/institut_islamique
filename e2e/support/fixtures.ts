@@ -14,6 +14,7 @@ export const test = base.extend<{ pageErrors: Error[] }>({
 })
 
 export { expect }
+export type { Page }
 
 /** Attend que l'app ait fini de naviguer et vérifie qu'on n'est pas tombé sur une page d'erreur Next. */
 export async function expectPageOk(page: Page) {
