@@ -39,19 +39,20 @@ export async function signInAction(email: string, password: string) {
   let destination = '/admin-portal'
 
   if (userId) {
-    const [member] = await db
-      .select({ portalRoles: schoolMembers.portalRoles, isPending: schoolMembers.isPending })
+    const members = await db
+      .select({ portalRoles: schoolMembers.portalRoles })
       .from(schoolMembers)
-      .where(and(eq(schoolMembers.userId, userId)))
-      .limit(1)
+      .where(eq(schoolMembers.userId, userId))
 
-    const roles = member?.portalRoles ?? []
-    if (roles.includes('teacher')) {
-      destination = '/teacher-portal'
-    } else if (roles.includes('parent')) {
-      destination = '/parent-portal'
-    } else if (roles.includes('admin')) {
+    const allRoles = new Set(members.flatMap(m => m.portalRoles ?? []))
+
+    // Priority: admin > teacher > parent (admin is highest privilege)
+    if (allRoles.has('admin')) {
       destination = '/admin-portal'
+    } else if (allRoles.has('teacher')) {
+      destination = '/teacher-portal'
+    } else if (allRoles.has('parent')) {
+      destination = '/parent-portal'
     }
   }
 
