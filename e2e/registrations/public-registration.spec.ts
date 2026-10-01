@@ -57,11 +57,32 @@ test('inscription publique d\'un nouvel élève, visible côté admin', async ({
   await admin.close()
 })
 
-// Les champs marqués * ne sont validés NI côté client (PublicRegistrationForm) NI côté serveur
-// (submitRegistrationAction) : un formulaire vide est accepté et crée une registration sans élève.
-// À activer une fois la validation des champs requis ajoutée.
-test.fixme('le formulaire public refuse une soumission sans les champs requis', async ({ page }) => {
+test('le formulaire public refuse une soumission sans les champs requis', async ({ page, browser }) => {
   await page.goto(`/portal/register/${E2E_SCHOOL.slug}`)
+  const errors = page.getByText('Ce champ est requis')
+
   await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
+
+  // 12 champs requis dans le formulaire par défaut (identité, parents, contact, niveau,
+  // fréquence de paiement, 2 cases d'acceptation) — l'année, en lecture seule, est exclue
+  await expect(page.getByText('Veuillez remplir les 12 champs obligatoires')).toBeVisible()
+  await expect(errors).toHaveCount(12)
   await expect(page).toHaveURL(`/portal/register/${E2E_SCHOOL.slug}`)
+
+  // L'erreur d'un champ disparaît dès qu'il est rempli
+  await field(page, "Prénom de l'étudiant").fill('Partiel')
+  await page.getByRole('button', { name: 'Masculin' }).click()
+  await page.getByRole('checkbox', { name: /J'ai lu et j'accepte le règlement intérieur/ }).check()
+  await expect(errors).toHaveCount(9)
+
+  await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
+  await expect(page.getByText('Veuillez remplir les 9 champs obligatoires')).toBeVisible()
+
+  // Rien n'a été créé côté admin
+  const admin = await browser.newPage({ storageState: storageStatePath('admin') })
+  await admin.goto('/admin-portal/students')
+  await expect(admin.getByRole('heading').first()).toBeVisible()
+  await admin.getByPlaceholder(/Rechercher des élèves/).fill('Partiel')
+  await expect(admin.getByText('Aucun élève trouvé')).toBeVisible()
+  await admin.close()
 })
