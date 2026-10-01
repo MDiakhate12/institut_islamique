@@ -80,9 +80,13 @@ test('le formulaire public refuse une soumission sans les champs requis', async 
 
   // Rien n'a été créé côté admin
   const admin = await browser.newPage({ storageState: storageStatePath('admin') })
+  // On s'appuie sur le compteur « N élève(s) » de l'en-tête (résultat filtré), pas sur le
+  // libellé de l'état vide, qui change selon la version du tableau.
   await admin.goto('/admin-portal/students')
-  await expect(admin.getByRole('heading').first()).toBeVisible()
-  await admin.getByPlaceholder(/Rechercher des élèves/).fill('Partiel')
-  await expect(admin.getByText('Aucun élève trouvé')).toBeVisible()
+  const search = admin.getByPlaceholder(/Rechercher des élèves/)
+  await search.fill('TESTEUR') // contrôle positif : la recherche trouve bien l'élève du seed
+  await expect(admin.getByText('1 élève', { exact: true })).toBeVisible()
+  await search.fill('Partiel')
+  await expect(admin.getByText('0 élèves', { exact: true })).toBeVisible()
   await admin.close()
 })
