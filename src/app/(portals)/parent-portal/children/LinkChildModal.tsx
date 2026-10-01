@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useSendOtp, useVerifyOtpAndLink } from '@/modules/parents/parents.hooks'
 import { toast } from 'sonner'
-import { CheckCircle, Clock, Phone, ArrowLeft } from 'lucide-react'
+import { CheckCircle, Clock, Mail, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Step = 'phone' | 'verify'
@@ -20,7 +20,7 @@ interface LinkChildModalProps {
 export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<Step>('phone')
-  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', ''])
   const digitRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -32,7 +32,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
 
   function resetModal() {
     setStep('phone')
-    setPhone('')
+    setEmail('')
     setDigits(['', '', '', '', '', ''])
   }
 
@@ -42,8 +42,8 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
   }
 
   async function handleSendCode() {
-    if (!phone.trim()) return
-    const result = await sendOtp.mutateAsync(phone.trim())
+    if (!email.trim()) return
+    const result = await sendOtp.mutateAsync(email.trim())
     if (!result.success) {
       toast.error(result.error)
       return
@@ -54,7 +54,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
 
   async function handleVerifyAndLink() {
     if (!isCodeComplete) return
-    const result = await verifyAndLink.mutateAsync({ phone, code })
+    const result = await verifyAndLink.mutateAsync({ email, code })
     if (!result.success) {
       toast.error(result.error)
       setDigits(['', '', '', '', '', ''])
@@ -93,9 +93,9 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
     digitRefs.current[lastFilled]?.focus()
   }
 
-  const maskedPhone = phone.length > 4
-    ? phone.slice(0, 2) + ' ** ** ** ' + phone.slice(-2)
-    : phone
+  const maskedEmail = email.includes('@')
+    ? email.replace(/^(.{2}).*(@.*)$/, '$1***$2')
+    : email
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -104,7 +104,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
         {/* Stepper */}
         <div className="flex items-center gap-0 mb-2">
           {(['phone', 'verify'] as Step[]).map((s, i) => {
-            const labels = ['Téléphone', 'Vérifier']
+            const labels = ['E-mail', 'Vérifier']
             const isActive = step === s
             const isDone = (step === 'verify' && s === 'phone')
             return (
@@ -143,15 +143,15 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
             <div className="space-y-4 py-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-gray-700">
-                  Numéro de téléphone du parent
+                  Adresse e-mail du parent
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    type="tel"
-                    placeholder="0X XX XX XX XX"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
+                    type="email"
+                    placeholder="parent@exemple.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSendCode()}
                     className="pl-9"
                     autoFocus
@@ -160,11 +160,11 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
               </div>
 
               <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-700">
-                Utilisez le numéro de téléphone enregistré dans le compte scolaire de votre enfant.
+                Utilisez l'adresse e-mail enregistrée dans le dossier scolaire de votre enfant.
               </div>
 
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">
-                Nous enverrons un code de vérification pour confirmer votre accès.
+                Nous enverrons un code de vérification par e-mail pour confirmer votre accès.
               </div>
             </div>
 
@@ -174,7 +174,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
               </Button>
               <Button
                 onClick={handleSendCode}
-                disabled={!phone.trim() || sendOtp.isPending}
+                disabled={!email.trim() || sendOtp.isPending}
                 className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white"
               >
                 {sendOtp.isPending ? 'Envoi…' : 'Envoyer le code →'}
@@ -186,9 +186,9 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
         {step === 'verify' && (
           <>
             <DialogHeader>
-              <DialogTitle>Vérifier votre téléphone</DialogTitle>
+              <DialogTitle>Vérifier votre e-mail</DialogTitle>
               <DialogDescription>
-                Entrez le code envoyé sur votre téléphone
+                Entrez le code envoyé à votre adresse e-mail
               </DialogDescription>
             </DialogHeader>
 
@@ -221,7 +221,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
                 </div>
 
                 <p className="text-xs text-center text-gray-500">
-                  Entrez le code à 6 chiffres envoyé au {maskedPhone}
+                  Entrez le code à 6 chiffres envoyé à {maskedEmail}
                 </p>
               </div>
 
@@ -230,7 +230,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
                 className="flex items-center gap-1 text-xs text-[#2d6a4f] hover:underline"
               >
                 <ArrowLeft className="h-3 w-3" />
-                Changer de numéro
+                Changer d'adresse e-mail
               </button>
             </div>
 

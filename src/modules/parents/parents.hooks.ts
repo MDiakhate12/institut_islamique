@@ -28,15 +28,15 @@ export function useChildren() {
 
 export function useSendOtp() {
   return useMutation({
-    mutationFn: (phone: string) => sendOtpAction(phone),
+    mutationFn: (email: string) => sendOtpAction(email),
   })
 }
 
 export function useVerifyOtpAndLink() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ phone, code }: { phone: string; code: string }) =>
-      verifyOtpAndLinkAction(phone, code),
+    mutationFn: ({ email, code }: { email: string; code: string }) =>
+      verifyOtpAndLinkAction(email, code),
     onSuccess: (result) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['children'] })

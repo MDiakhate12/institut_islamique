@@ -72,21 +72,21 @@ export const parentsService = {
     return row?.id ?? null
   },
 
-  async generateAndStoreOtp(phone: string): Promise<string> {
+  async generateAndStoreOtp(email: string): Promise<string> {
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
-    await db.insert(otpCodes).values({ phone, code, expiresAt })
+    await db.insert(otpCodes).values({ email, code, expiresAt })
     return code
   },
 
-  async verifyOtp(phone: string, code: string): Promise<boolean> {
+  async verifyOtp(email: string, code: string): Promise<boolean> {
     const now = new Date()
     const [row] = await db
       .select({ id: otpCodes.id })
       .from(otpCodes)
       .where(
         and(
-          eq(otpCodes.phone, phone),
+          eq(otpCodes.email, email),
           eq(otpCodes.code, code),
           isNull(otpCodes.usedAt),
           gt(otpCodes.expiresAt, now),
@@ -101,20 +101,19 @@ export const parentsService = {
     return true
   },
 
-  async findStudentsByGuardianPhone(
-    phone: string,
+  async findStudentsByGuardianEmail(
+    email: string,
     schoolId: string,
   ): Promise<{ studentId: string; firstName: string; lastName: string }[]> {
-    const normalize = (p: string) => p.replace(/\D/g, '').slice(-9)
-    const normalizedInput = normalize(phone)
+    const normalizedEmail = email.toLowerCase().trim()
 
     const allGuardians = await db
-      .select({ studentId: guardians.studentId, phone: guardians.phone })
+      .select({ studentId: guardians.studentId, email: guardians.email })
       .from(guardians)
       .where(eq(guardians.schoolId, schoolId))
 
     const matchingIds = allGuardians
-      .filter(g => g.phone && normalize(g.phone) === normalizedInput)
+      .filter(g => g.email && g.email.toLowerCase().trim() === normalizedEmail)
       .map(g => g.studentId)
 
     if (matchingIds.length === 0) return []

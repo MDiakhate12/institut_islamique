@@ -23,7 +23,7 @@ type PayFilter     = 'all' | 'paid' | 'unpaid'
 const COLUMNS = [
   { id: 'age',              label: 'Âge',                          def: true  },
   { id: 'classes',          label: 'Classe(s)',                     def: true  },
-  { id: 'teacher',          label: 'Enseignant',                    def: true  },
+  { id: 'teacher',          label: 'Enseignant',                    def: false },
   { id: 'previousTeacher',  label: 'Enseignant(e) précédent(e)',    def: true  },
   { id: 'status',           label: 'Statut',                        def: true  },
   { id: 'fatherPhone',      label: 'Tél. du père',                  def: false },
