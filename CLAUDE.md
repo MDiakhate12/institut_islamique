@@ -637,7 +637,7 @@ Règles pour toute nouvelle page : padding racine `p-4 sm:p-6`, en-têtes titre 
 | **Layout** | Sidebar admin (UserProfileDialog), TeacherSidebar (gate activation), ParentSidebar, Header, PortalLayout |
 | **School** | `/admin-portal/school-settings` |
 | **Students** | `/admin-portal/students` (liste + détail + création/édition + export Excel) — sélecteur de colonnes persisté en localStorage (`qaf:students:columns`), colonnes optionnelles : téléphone/email/père/mère depuis `guardians` + présences ; drawer avec popup détail tuteur (clic sur carte), `schoolGrade` et `regSponsorship` depuis `form_data` JSONB de la dernière inscription |
-| **Teachers** | `/admin-portal/teachers` (liste + détail + flow activation NIL_UUID) |
+| **Teachers** | `/admin-portal/teachers` (liste + détail + flow activation NIL_UUID) — email modifiable par l'admin uniquement tant que `userId = NIL_UUID` (met à jour `pendingEmail` + renvoie l'invitation) ; une fois le compte créé, l'email est l'identifiant de connexion, modifiable seulement par l'enseignant depuis son profil |
 | **Classes** | `/admin-portal/classes` |
 | **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante) + `/teacher-portal/catalog` + `/parent-portal/catalog` (readonly partagé) |
 | **Calendar** | `/admin-portal/academic-calendar` (vues Année/Mois/Semaine/Jour) + `/teacher-portal/calendar` + `/parent-portal/calendar` (readonly partagé) |
