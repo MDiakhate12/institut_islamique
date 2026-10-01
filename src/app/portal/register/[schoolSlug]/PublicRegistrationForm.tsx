@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Info, AlertTriangle, CheckCircle, XCircle, Star, X, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { submitRegistrationAction } from '@/modules/registrations/registrations.actions'
+import { getMissingRequiredFields } from '@/modules/registrations/registrations.schema'
 import type { FormItem, FormSection, InfoBlock, FormField, FormType, InfoBlockStyle, RegistrationClassItem } from '@/modules/registrations/registrations.types'
 
 // ── Style config ───────────────────────────────────────────────────────────────
@@ -443,12 +444,13 @@ function InfoBlockRenderer({ block }: { block: InfoBlock }) {
 // ── Section renderer ───────────────────────────────────────────────────────────
 
 function SectionRenderer({
-  section, formType, formData, onFieldChange, gradeOptions, financialOptions, prefilledStudent, classes,
+  section, formType, formData, onFieldChange, gradeOptions, financialOptions, prefilledStudent, classes, errors,
 }: {
   section: FormSection
   formType: FormType
   formData: Record<string, unknown>
   onFieldChange: (key: string, value: unknown) => void
+  errors: Set<string>
   gradeOptions?: string[]
   financialOptions?: string[]
   prefilledStudent?: { name: string; id: string }
@@ -504,16 +506,25 @@ function SectionRenderer({
         )}
 
         {/* Regular fields */}
-        {!isClassSection && section.fields.map(field => (
-          <FieldRenderer
-            key={field.id}
-            field={field}
-            value={formData[field.id]}
-            onChange={v => onFieldChange(field.id, v)}
-            gradeOptions={field.kind === 'system_field' && field.fieldKey === 'schoolGrade' ? gradeOptions : undefined}
-            financialOptions={field.kind === 'system_field' && field.fieldKey === 'financialAid' ? financialOptions : undefined}
-          />
-        ))}
+        {!isClassSection && section.fields.map(field => {
+          const hasError = errors.has(field.id)
+          return (
+            <div
+              key={field.id}
+              id={`field-${field.id}`}
+              className={cn(hasError && '[&_input:not([type=checkbox])]:border-red-400 [&_select]:border-red-400 [&_textarea]:border-red-400')}
+            >
+              <FieldRenderer
+                field={field}
+                value={formData[field.id]}
+                onChange={v => onFieldChange(field.id, v)}
+                gradeOptions={field.kind === 'system_field' && field.fieldKey === 'schoolGrade' ? gradeOptions : undefined}
+                financialOptions={field.kind === 'system_field' && field.fieldKey === 'financialAid' ? financialOptions : undefined}
+              />
+              {hasError && <p className="text-xs text-red-600 mt-1">Ce champ est requis</p>}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -567,15 +578,26 @@ export function PublicRegistrationForm({
     return seeded
   })
   const [isPending, startTransition] = useTransition()
+  const [errors, setErrors] = useState<Set<string>>(new Set())
 
   function handleFieldChange(key: string, value: unknown) {
     setFormData(prev => ({ ...prev, [key]: value }))
+    if (errors.has(key)) setErrors(prev => { const next = new Set(prev); next.delete(key); return next })
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (isPreview) {
       toast.info("Mode aperçu — soumission désactivée")
+      return
+    }
+    const missing = getMissingRequiredFields(schema, formData, { gradeOptions, financialOptions })
+    if (missing.length > 0) {
+      setErrors(new Set(missing.map(f => f.id)))
+      toast.error(missing.length === 1
+        ? 'Veuillez remplir le champ obligatoire'
+        : `Veuillez remplir les ${missing.length} champs obligatoires`)
+      document.getElementById(`field-${missing[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     startTransition(async () => {
@@ -642,6 +664,7 @@ export function PublicRegistrationForm({
                 financialOptions={financialOptions}
                 prefilledStudent={prefilledStudent}
                 classes={classes}
+                errors={errors}
               />
             )
           })}

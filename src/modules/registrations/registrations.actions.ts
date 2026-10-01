@@ -6,6 +6,7 @@ import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { registrationsService, buildKeyToIdMap } from './registrations.service'
+import { getMissingRequiredFields } from './registrations.schema'
 import { studentsService } from '@/modules/students/students.service'
 import { scheduledClassesService } from '@/modules/classes/classes.service'
 import { parentsService } from '@/modules/parents/parents.service'
@@ -89,6 +90,16 @@ export async function submitRegistrationAction(
     // 2. Get the form (to read the field→id mapping)
     const form = await registrationsService.getOrCreateForm(school.id, formType)
     const keyToId = buildKeyToIdMap(form.formSchema)
+
+    // Garantie serveur : le client valide déjà, mais on ne crée jamais d'élève à partir d'un envoi incomplet
+    const settings = school.settings as SchoolSettings | null
+    const missing = getMissingRequiredFields(form.formSchema, formData, {
+      gradeOptions:     settings?.gradeLevels,
+      financialOptions: settings?.financialOptions,
+    })
+    if (missing.length > 0) {
+      return err(`Champs obligatoires manquants : ${missing.map(f => f.label).join(', ')}`)
+    }
 
     const get = (key: SystemFieldKey): string | undefined => {
       const fieldId = keyToId[key]

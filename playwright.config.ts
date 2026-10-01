@@ -15,6 +15,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   // Plafonné : au-delà, l'auth Supabase locale sature et des sessions sautent (redirect login)
   workers: process.env.CI ? 2 : 4,
+  // 5 s par défaut : trop juste quand plusieurs workers chargent en même temps le serveur
+  // Next et le Supabase local (Server Actions qui dépassent 5 s → faux échecs)
+  expect: { timeout: 10_000 },
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,

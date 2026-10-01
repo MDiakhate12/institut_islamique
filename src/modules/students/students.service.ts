@@ -359,7 +359,13 @@ export const studentsService = {
     // Update student fields
     const [updated] = await db
       .update(students)
-      .set({ ...studentData, enrollmentYear: enrollmentYear ?? undefined, updatedAt: new Date() })
+      .set({
+        ...studentData,
+        // Champ date vidé dans le formulaire → '' que Postgres refuse (DateTimeParseError) : on stocke null
+        birthDate: studentData.birthDate === '' ? null : studentData.birthDate,
+        enrollmentYear: enrollmentYear ?? undefined,
+        updatedAt: new Date(),
+      })
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
       .returning()
 

@@ -55,6 +55,7 @@ async function seed() {
       yearStartDate: '2025-09-01',
       yearEndDate: '2026-06-30',
       rooms: ['Salle 1'],
+      gradeLevels: ['CE2', 'CM1', 'CM2'],
     },
   }).returning()
 
