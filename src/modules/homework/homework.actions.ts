@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { homeworkService } from './homework.service'
@@ -252,6 +253,7 @@ export async function getAdminHomeworkOverviewAction(
   date: string,
 ): Promise<ActionResult<AdminHomeworkOverview>> {
   const session = await requireSession()
+  if (!canAccess(session, 'homework')) return err('Non autorisé')
   try {
     const data = await homeworkService.getAdminOverview(session.schoolId, date)
     return ok(data)

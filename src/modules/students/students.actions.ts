@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { studentsService } from './students.service'
 import { createStudentSchema, updateStudentSchema } from './students.schema'
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import type {
@@ -37,7 +38,7 @@ export async function getStudentAction(studentId: string): Promise<ActionResult<
 
 export async function createStudentAction(input: unknown): Promise<ActionResult<Student>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'students')) return unauthorized()
 
   const parsed = createStudentSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -57,7 +58,7 @@ export async function updateStudentAction(
   input: unknown
 ): Promise<ActionResult<Student>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'students')) return unauthorized()
 
   const parsed = updateStudentSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -75,7 +76,7 @@ export async function updateStudentAction(
 
 export async function deactivateStudentAction(studentId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'students')) return unauthorized()
 
   try {
     await studentsService.deactivate(session.schoolId, studentId)
@@ -89,7 +90,7 @@ export async function deactivateStudentAction(studentId: string): Promise<Action
 
 export async function deleteStudentAction(studentId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'students')) return unauthorized()
 
   try {
     await studentsService.delete(session.schoolId, studentId)
@@ -106,7 +107,7 @@ export async function updateStudentNoteAction(
   note: string
 ): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'students')) return unauthorized()
 
   try {
     await studentsService.updateNote(session.schoolId, studentId, note)
@@ -202,7 +203,7 @@ export async function importStudentsAction(
   rows: ImportStudentRow[]
 ): Promise<ActionResult<{ created: number; errors: { row: number; message: string }[] }>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'students')) return unauthorized()
 
   const errors: { row: number; message: string }[] = []
   let created = 0

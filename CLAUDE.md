@@ -613,6 +613,13 @@ React Hook Form initialise les `defaultValues` **une seule fois**, au montage du
 )}
 ```
 
+### 7.17 Sous-rôles admin — trésorier / gestionnaire
+
+Source unique : `src/lib/auth/permissions.ts`. Une « ressource » = le segment d'URL de la page admin (`students`, `track-exams`, `budget` pour `/finance/budget`…).
+- `admin` → tout ; `treasurer` → liste blanche `budget`, `expenses`, `students`, `announcements` ; `manager` → tout **sauf** `budget`, `expenses`. Accueil (`/admin-portal`) et `profile` toujours accessibles.
+- Enforcé à 3 niveaux : `proxy.ts` (redirige vers `/admin-portal` toute URL non autorisée — pas dans le layout admin, qui ne se ré-exécute pas à la navigation client), Sidebar + tuiles du dashboard (`canAccessAdminPath`), et chaque Server Action admin (`canAccess(session, '<ressource>')`, **jamais** `session.roles.includes('admin')` seul).
+- Toute nouvelle page/action admin : la garde vient gratuitement côté page (proxy), mais l'action doit appeler `canAccess` avec le segment d'URL de sa page.
+
 ---
 
 ## 8. État d'avancement des modules

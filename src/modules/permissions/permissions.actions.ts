@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { ADMIN_SUB_ROLES } from '@/lib/constants'
@@ -19,7 +20,7 @@ export async function getPermissionsByRoleAction(
   role: AdminSubRole,
 ): Promise<ActionResult<PermissionMember[]>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'permissions')) return err('Non autorisé')
   try {
     const data = await permissionsService.getByRole(session.schoolId, role)
     return ok(data)
@@ -38,7 +39,7 @@ export async function searchMemberByEmailAction(
   targetRole: AdminSubRole,
 ): Promise<ActionResult<SearchResult>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'permissions')) return err('Non autorisé')
   const parsed = searchSchema.safeParse({ email, targetRole })
   if (!parsed.success) return err(parsed.error.issues[0].message)
   try {
@@ -59,7 +60,7 @@ export async function grantRoleAction(
   role: AdminSubRole,
 ): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'permissions')) return err('Non autorisé')
   const parsed = grantSchema.safeParse({ email, role })
   if (!parsed.success) return err(parsed.error.issues[0].message)
   const ROLE_LABELS: Record<string, string> = {
@@ -144,7 +145,7 @@ export async function revokeRoleAction(
   memberId: string,
 ): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'permissions')) return err('Non autorisé')
   if (!memberId) return err('Identifiant membre manquant')
   try {
     void createNotificationInternal({

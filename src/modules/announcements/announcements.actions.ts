@@ -1,6 +1,7 @@
 'use server'
 
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { announcementsService } from './announcements.service'
@@ -49,7 +50,7 @@ export async function createAnnouncementAction(
   input: unknown,
 ): Promise<ActionResult<Announcement>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'announcements')) return err('Non autorisé')
 
   const parsed = createAnnouncementSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0]?.message ?? 'Données invalides')
@@ -88,7 +89,7 @@ export async function updateAnnouncementAction(
   input: unknown,
 ): Promise<ActionResult<Announcement>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'announcements')) return err('Non autorisé')
 
   const parsed = updateAnnouncementSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0]?.message ?? 'Données invalides')
@@ -105,7 +106,7 @@ export async function updateAnnouncementAction(
 
 export async function deleteAnnouncementAction(id: string): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return err('Non autorisé')
+  if (!canAccess(session, 'announcements')) return err('Non autorisé')
 
   try {
     await announcementsService.delete(id, session.schoolId)
