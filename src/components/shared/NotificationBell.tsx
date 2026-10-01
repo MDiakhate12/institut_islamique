@@ -57,7 +57,7 @@ export function NotificationBell() {
           {/* Backdrop */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
 
-          <div className="absolute bottom-10 left-0 z-50 w-80 bg-white rounded-xl shadow-xl border border-border overflow-hidden">
+          <div className="fixed left-2 bottom-24 w-[min(20rem,calc(100vw-1rem))] lg:absolute lg:left-0 lg:bottom-10 lg:w-80 z-50 bg-white rounded-xl shadow-xl border border-border overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <div className="flex items-center gap-2">

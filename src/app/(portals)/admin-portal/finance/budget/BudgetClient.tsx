@@ -121,7 +121,7 @@ export function BudgetClient() {
   const budgetRestant = (paymentKpis?.totalRevenue ?? 0) - dépensesPayées
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <PageHeader title="Budget" subtitle="Gérer et suivre tous les paiements" />
 
       <div className="flex flex-wrap gap-4">

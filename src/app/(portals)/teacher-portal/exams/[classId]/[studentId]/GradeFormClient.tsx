@@ -111,7 +111,7 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
       {/* Back link */}
       <button
         onClick={() => router.back()}
@@ -129,7 +129,7 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
             </h1>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-6">
             {/* Star ratings grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <StarRating label="Présence :" value={attendance} onChange={setAttendance} />

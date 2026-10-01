@@ -298,8 +298,8 @@ function SchoolSettingsForm({ school }: { school: School }) {
 
   return (
     <FormProvider {...form}>
-      <div className="p-6 space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-xl font-semibold">Paramètres de l&apos;école</h1>
           <ContactSupportDialog />
         </div>
@@ -729,7 +729,7 @@ function ClassPeriodsSection() {
           <Section icon={Clock} title="Emploi du temps — Périodes">
             <p className="text-xs text-muted-foreground">Définissez les créneaux horaires de la journée</p>
 
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-end">
+            <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_auto_auto] gap-2 items-end">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Nom</Label>
                 <Input
@@ -745,7 +745,7 @@ function ClassPeriodsSection() {
                   type="time"
                   value={form.startTime}
                   onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}
-                  className="h-9 text-sm w-28"
+                  className="h-9 text-sm w-full sm:w-28"
                 />
               </div>
               <div className="space-y-1">
@@ -754,7 +754,7 @@ function ClassPeriodsSection() {
                   type="time"
                   value={form.endTime}
                   onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}
-                  className="h-9 text-sm w-28"
+                  className="h-9 text-sm w-full sm:w-28"
                 />
               </div>
               <Button
@@ -1132,7 +1132,7 @@ function TvRulesSection() {
           <Section icon={Tv2} title="Règles — Mode TV">
             <p className="text-xs text-muted-foreground">Règles affichées sur l&apos;écran TV de l&apos;école</p>
 
-            <div className="grid grid-cols-[auto_1fr_2fr_auto] gap-2 items-end">
+            <div className="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_2fr_auto] gap-2 items-end">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Emoji</Label>
                 <Input
@@ -1499,7 +1499,7 @@ function FinancialSection() {
           <p className="text-xs text-muted-foreground">
             Mois du calendrier pour lesquels les frais de scolarité sont facturés (par ex. exclut juillet/août pour les vacances d&apos;été). Utilisé pour déterminer quels mois s&apos;affichent comme impayés pour les paiements mensuels. Par défaut, les 12 mois si aucun n&apos;est sélectionné.
           </p>
-          <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2">
             {MONTHS.map(m => (
               <label key={m.key} className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
@@ -1708,7 +1708,7 @@ function FinancialSection() {
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 function SettingsSkeleton() {
   return (
-    <div className="p-6 space-y-4 animate-pulse">
+    <div className="p-4 sm:p-6 space-y-4 animate-pulse">
       <div className="h-7 w-56 bg-muted rounded" />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
         <div className="space-y-5">

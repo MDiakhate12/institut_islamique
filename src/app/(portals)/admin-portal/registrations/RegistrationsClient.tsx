@@ -92,14 +92,14 @@ export function RegistrationsClient() {
   }, [registrations])
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       {/* ── En-tête ── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: '#2d6a4f' }}>Inscriptions des élèves</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Afficher et gérer toutes les inscriptions des élèves</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin-portal/registration-forms"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#2d6a4f] hover:bg-[#1b4332] text-white rounded-md transition-colors"
@@ -153,7 +153,7 @@ export function RegistrationsClient() {
       </div>
 
       {/* ── Tableau + panneau détail ── */}
-      <div className="flex gap-4 relative">
+      <div className="flex flex-col lg:flex-row gap-4 relative">
         <div className={cn('flex-1 min-w-0 rounded-lg border border-border bg-white overflow-hidden', selected && 'lg:max-w-[calc(100%-380px)]')}>
           {isLoading ? <RegistrationsSkeleton /> : filtered.length === 0 ? (
             <EmptyState
@@ -390,7 +390,7 @@ function RegistrationDetailPanel({
   const mother = r.parents[1]
 
   return (
-    <div className="w-[340px] shrink-0 rounded-lg border border-border bg-white overflow-y-auto max-h-[calc(100vh-200px)] sticky top-0">
+    <div className="w-full lg:w-[340px] shrink-0 rounded-lg border border-border bg-white overflow-y-auto lg:max-h-[calc(100vh-200px)] lg:sticky lg:top-0">
       {/* Header */}
       <div className="flex items-start justify-between p-4 border-b border-border">
         <div>

@@ -136,7 +136,7 @@ export function ChildrenClient({ initialChildren }: Props) {
   const activeChild = children.find(c => c.studentId === activeId) ?? children[0]
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -162,13 +162,13 @@ export function ChildrenClient({ initialChildren }: Props) {
         <>
           {/* Child selector pills */}
           {children.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-1.5 flex gap-1 w-full">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-1.5 flex gap-1 w-full overflow-x-auto scrollbar-hide">
               {children.map(child => (
                 <button
                   key={child.studentId}
                   onClick={() => setActiveId(child.studentId)}
                   className={cn(
-                    'flex-1 px-4 py-2 text-sm rounded-lg font-medium transition-all text-center',
+                    'flex-1 shrink-0 whitespace-nowrap px-4 py-2 text-sm rounded-lg font-medium transition-all text-center',
                     activeId === child.studentId
                       ? 'bg-[#f4f9f3] text-[#2d6a4f] border border-[#cde6c8] shadow-sm'
                       : 'text-gray-600 hover:text-[#2d6a4f] hover:bg-gray-50',

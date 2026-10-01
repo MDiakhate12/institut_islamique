@@ -334,7 +334,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Suivi des devoirs scolaires</h1>
@@ -342,7 +342,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
       </div>
 
       {/* Date banner */}
-      <div className="flex items-center justify-between rounded-xl border border-border bg-[#f4f9f3] px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-[#f4f9f3] px-4 sm:px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2d6a4f]/10">
             <CalendarDays className="h-5 w-5 text-[#2d6a4f]" />
@@ -352,7 +352,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
             <p className="font-semibold text-[#2d6a4f] capitalize">{fmtLongDate(date)}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <Button
             variant="outline"
             size="sm"
@@ -413,7 +413,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard
           icon={CheckCircle2}
           value={stats.submitted}

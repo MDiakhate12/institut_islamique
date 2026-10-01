@@ -272,7 +272,7 @@ export function AnnouncementDialog({ schoolName, announcement, onClose, onSaved 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5">
           {/* Title */}
           <input
             type="text"

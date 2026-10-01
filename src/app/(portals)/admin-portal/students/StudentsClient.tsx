@@ -167,10 +167,10 @@ export function StudentsClient() {
   const visibleCount = COLUMNS.filter(c => visibleCols[c.id]).length
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
 
       {/* ── En-tête ── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Élèves</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gérer les inscriptions et les profils des élèves</p>

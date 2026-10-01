@@ -60,7 +60,7 @@ export function AdminAttendanceClient() {
   const formattedDateCapitalized = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       {/* ── Page header ── */}
       {!selectedClass && (
         <div>
@@ -404,7 +404,7 @@ function ClassDetailView({
       </div>
 
       {/* Mini KPIs */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
         <MiniKpi label="Total"     value={students.length} color="neutral" />
         <MiniKpi label="Présent"   value={counts.present}  color="green"   />
         <MiniKpi label="En retard" value={counts.late}     color="amber"   />
@@ -577,7 +577,7 @@ function OverviewSkeleton() {
       </div>
       <div className="bg-white rounded-xl border border-border p-5 space-y-4">
         <div className="h-5 bg-muted rounded w-48" />
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="bg-muted rounded-lg h-16" />
           ))}

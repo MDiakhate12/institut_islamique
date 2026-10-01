@@ -320,8 +320,8 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
   return (
     <div className="flex flex-col min-h-full">
       {/* Page header */}
-      <div className="sticky top-0 z-10 bg-[#f4f9f3] border-b border-border/50 px-6 py-4">
-        <div className="flex items-start justify-between gap-4">
+      <div className="sticky top-0 z-10 bg-[#f4f9f3] border-b border-border/50 px-4 sm:px-6 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-[#2d6a4f]/10 p-2.5">
               <ClipboardList className="h-5 w-5 text-[#2d6a4f]" />
@@ -332,7 +332,7 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Count */}
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <ClipboardList className="h-4 w-4" />
@@ -373,14 +373,14 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
 
         {/* Child tabs */}
         {children.length > 0 && (
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             {children.map(child => (
               <button
                 key={child.studentId}
                 type="button"
                 onClick={() => setChild(child.studentId)}
                 className={cn(
-                  'rounded-full px-4 py-1.5 text-sm font-medium transition-colors border',
+                  'shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors border',
                   child.studentId === selectedChildId
                     ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]'
                     : 'bg-white text-muted-foreground border-border hover:border-[#2d6a4f]/50'
@@ -394,7 +394,7 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-6 py-6">
+      <div className="flex-1 px-4 sm:px-6 py-6">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <ClipboardList className="h-12 w-12 text-muted-foreground/30 mb-3" />

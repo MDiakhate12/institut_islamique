@@ -311,7 +311,7 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="sm:max-w-[480px] w-[480px] p-0 flex flex-col gap-0"
+        className="sm:max-w-[480px] w-[calc(100%-2rem)] p-0 flex flex-col gap-0"
       >
         {/* Header */}
         <div

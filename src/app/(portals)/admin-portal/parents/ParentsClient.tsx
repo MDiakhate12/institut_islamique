@@ -319,7 +319,7 @@ export function ParentsClient({
   return (
     <div className="p-6">
       {/* Page header */}
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Parents</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -382,8 +382,8 @@ export function ParentsClient({
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-border shadow-sm overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/20">
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs whitespace-nowrap">

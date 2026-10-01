@@ -613,6 +613,11 @@ React Hook Form initialise les `defaultValues` **une seule fois**, au montage du
 )}
 ```
 
+### 7.18 Responsive mobile — `MobileNavShell`
+
+Les 3 layouts de portail (`PortalLayout` admin, `parent-portal/layout.tsx`, `teacher-portal/layout.tsx`) passent par `src/components/layouts/MobileNavShell/MobileNavShell.tsx`. ≥ `lg` : sidebar en colonne (inchangé). < `lg` : sidebar en tiroir off-canvas + barre mobile verte avec hamburger ; le tiroir se ferme à la navigation (état lié au `pathname` d'ouverture), au clic sur le fond et sur Échap. Ne jamais remettre une sidebar en colonne fixe directement dans un layout.
+Règles pour toute nouvelle page : padding racine `p-4 sm:p-6`, en-têtes titre + actions en `flex flex-wrap`, grilles KPI `grid-cols-2 sm:grid-cols-N` (jamais `grid-cols-4/5` nu), tableaux dans un conteneur `overflow-x-auto`, panneaux latéraux `w-full lg:w-[Npx]` empilés en `flex-col lg:flex-row`.
+
 ---
 
 ## 8. État d'avancement des modules

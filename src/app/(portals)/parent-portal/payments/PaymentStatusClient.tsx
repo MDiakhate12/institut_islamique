@@ -37,7 +37,7 @@ export function PaymentStatusClient() {
   const academicYear = school?.settings?.academicYear ?? ''
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-6 max-w-2xl mx-auto">
       <PageHeader title="Statut de paiement" subtitle={`Année scolaire : ${academicYear}`} />
 
       {isLoading ? (

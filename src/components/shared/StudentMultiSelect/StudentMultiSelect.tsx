@@ -41,7 +41,7 @@ export function StudentMultiSelect({ options, selected, onChange, placeholder = 
             <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" />
           </button>
         } />
-        <PopoverContent className="w-96 p-0" align="start">
+        <PopoverContent className="w-[min(24rem,calc(100vw-2rem))] p-0" align="start">
           <div className="p-2 border-b">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />

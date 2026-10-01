@@ -174,7 +174,7 @@ function PermissionSection({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-start gap-2">
           <div className="mt-0.5">{config.icon}</div>
           <div>
@@ -229,7 +229,7 @@ function PermissionSection({
 // ---------- Main client ----------
 export function PermissionsClient({ schoolName }: { schoolName: string }) {
   return (
-    <div className="p-6 space-y-10 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-10 max-w-6xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-[#2d6a4f]">Autorisations</h1>
         <p className="text-sm text-muted-foreground mt-1">

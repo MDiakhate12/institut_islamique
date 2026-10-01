@@ -71,7 +71,7 @@ export function RefundsClient() {
     : { approved: expenseKpis?.approved ?? 0, pending: expenseKpis?.pending ?? 0, paid: expenseKpis?.paid ?? 0 }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6">
       <PageHeader
         title="Mes remboursements"
         subtitle="Suivez vos demandes de remboursement de dépenses"

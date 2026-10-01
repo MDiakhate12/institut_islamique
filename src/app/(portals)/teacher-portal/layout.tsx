@@ -1,5 +1,6 @@
 import { requireSession } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
+import { MobileNavShell } from '@/components/layouts/MobileNavShell/MobileNavShell'
 import { TeacherSidebar } from '@/components/layouts/TeacherSidebar/TeacherSidebar'
 import { TeacherActivationGate } from '@/components/layouts/TeacherSidebar/TeacherActivationGate'
 import { db } from '@/db'
@@ -47,17 +48,18 @@ export default async function TeacherPortalLayout({ children }: { children: Reac
   }
 
   return (
-    <div className="flex h-[100dvh]">
-      <TeacherSidebar session={session} userFullName={userFullName} schoolName={schoolName} />
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
-          {session.isPending ? (
-            <TeacherActivationGate adminEmails={adminEmails} />
-          ) : (
-            children
-          )}
-        </div>
+    <MobileNavShell
+      title="Portail enseignants"
+      subtitle={schoolName}
+      sidebar={<TeacherSidebar session={session} userFullName={userFullName} schoolName={schoolName} />}
+    >
+      <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
+        {session.isPending ? (
+          <TeacherActivationGate adminEmails={adminEmails} />
+        ) : (
+          children
+        )}
       </div>
-    </div>
+    </MobileNavShell>
   )
 }
