@@ -1,6 +1,7 @@
 'use server'
 
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { sendSmsOtp } from '@/lib/sms'
@@ -10,6 +11,7 @@ import type { StudentParentInfo, ChildWithClasses } from './parents.types'
 
 export async function getParentsAction(): Promise<ActionResult<StudentParentInfo[]>> {
   const session = await requireSession()
+  if (!canAccess(session, 'parents')) return err('Non autorisé')
   try {
     const data = await parentsService.getAll(session.schoolId)
     return ok(data)
@@ -24,6 +26,7 @@ export async function sendDownloadReminderAction(
   subject: string,
 ): Promise<ActionResult<{ sent: number }>> {
   const session = await requireSession()
+  if (!canAccess(session, 'parents')) return err('Non autorisé')
   try {
     const schoolName = await getSchoolName(session.schoolId)
     const html = `

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { scheduledClassesService } from './classes.service'
 import { createClassSchema, updateClassSchema } from './classes.schema'
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import type { ClassWithDetails, EnrolledStudentInClass } from './classes.types'
@@ -25,7 +26,7 @@ export async function getClassesAction(): Promise<ActionResult<ClassWithDetails[
 
 export async function createClassAction(input: unknown): Promise<ActionResult<string>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'classes')) return unauthorized()
 
   const parsed = createClassSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -42,7 +43,7 @@ export async function createClassAction(input: unknown): Promise<ActionResult<st
 
 export async function updateClassAction(id: string, input: unknown): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'classes')) return unauthorized()
 
   const parsed = updateClassSchema.safeParse(input)
   if (!parsed.success) return err(parsed.error.issues[0].message)
@@ -59,7 +60,7 @@ export async function updateClassAction(id: string, input: unknown): Promise<Act
 
 export async function deleteClassAction(id: string): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'classes')) return unauthorized()
 
   try {
     await scheduledClassesService.delete(session.schoolId, id)
@@ -116,7 +117,7 @@ export async function enrollStudentsAction(
 
 export async function unenrollStudentAction(enrollmentId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'classes')) return unauthorized()
   try {
     await scheduledClassesService.unenrollStudent(enrollmentId)
     revalidatePath(CLASSES_PATH)

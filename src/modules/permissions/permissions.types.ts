@@ -19,4 +19,6 @@ export type SearchResult = {
   email: string
   phone?: string | null
   alreadyHasRole?: boolean
+  // Invitation en attente (pas encore de compte) déjà présente pour cet e-mail
+  pendingSubRole?: AdminSubRole | null
 }

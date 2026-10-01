@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { registrationsService, buildKeyToIdMap } from './registrations.service'
@@ -37,7 +38,7 @@ export async function updateRegistrationFormAction(
   schema: FormItem[]
 ): Promise<ActionResult<RegistrationForm>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'registration-forms')) return unauthorized()
 
   try {
     const form = await registrationsService.updateFormSchema(session.schoolId, formType, schema)
@@ -53,7 +54,7 @@ export async function resetRegistrationFormAction(
   formType: FormType
 ): Promise<ActionResult<RegistrationForm>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'registration-forms')) return unauthorized()
 
   try {
     const form = await registrationsService.resetForm(session.schoolId, formType)
@@ -240,7 +241,7 @@ export async function getAdminRegistrationClassesAction(): Promise<ActionResult<
 
 export async function getRegistrationsAction(): Promise<ActionResult<RegistrationWithDetails[]>> {
   const session = await requireSession()
-  if (!session.roles.includes('admin')) return unauthorized()
+  if (!canAccess(session, 'registrations')) return unauthorized()
 
   try {
     const data = await registrationsService.getBySchoolWithDetails(session.schoolId)

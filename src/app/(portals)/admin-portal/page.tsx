@@ -16,6 +16,7 @@ import {
   Home,
 } from 'lucide-react'
 import { ROUTES } from '@/lib/constants'
+import { canAccess, canAccessAdminPath } from '@/lib/auth/permissions'
 import { AdminHomeClock } from './AdminHomeClock'
 import type { LucideIcon } from 'lucide-react'
 
@@ -99,7 +100,7 @@ export default async function AdminDashboardPage() {
 
   // Redirect to onboarding wizard if not yet completed
   const settings = { ...DEFAULT_SETTINGS, ...(schoolResult[0]?.settings ?? {}) }
-  if (session.roles.includes('admin') && !settings.onboardingCompleted) {
+  if (canAccess(session, 'school-settings') && !settings.onboardingCompleted) {
     redirect('/admin-portal/onboarding')
   }
 
@@ -108,6 +109,11 @@ export default async function AdminDashboardPage() {
   const displayName = userFullName ?? session.email.split('@')[0]
   // Only the first name for the welcome greeting
   const firstName = displayName.split(' ')[0]
+
+  // Trésorier / gestionnaire : ne montrer que les pages autorisées
+  const sections = SECTIONS
+    .map(s => ({ ...s, items: s.items.filter(item => canAccessAdminPath(session, item.href)) }))
+    .filter(s => s.items.length > 0)
 
   return (
     // Fond doré — remplace le bg-[#f4f9f3] du layout
@@ -175,7 +181,7 @@ export default async function AdminDashboardPage() {
 
       {/* ── Sections de navigation ── */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 pb-12">
-        {SECTIONS.map(section => (
+        {sections.map(section => (
           <div key={section.label} className="mb-12">
 
             {/* En-tête de section */}

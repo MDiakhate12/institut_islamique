@@ -1,5 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { canAccessAdminPath } from '@/lib/auth/permissions'
+import type { PortalRole, AdminSubRole } from '@/lib/constants'
 
 export async function proxy(request: NextRequest) {
   // Skip si Supabase n'est pas configuré (dev sans env vars)
@@ -42,6 +44,28 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Sous-rôles admin (trésorier / gestionnaire) : bloque les pages non autorisées.
+  // Le layout admin ne se ré-exécute pas lors d'une navigation client → le contrôle
+  // par URL doit vivre ici. Les Server Actions ont leur propre garde (canAccess).
+  if (user && pathname.startsWith('/admin-portal')) {
+    const { data: member } = await supabase
+      .from('school_members')
+      .select('portal_roles, admin_sub_role')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (member) {
+      const access = {
+        roles: (member.portal_roles ?? []) as PortalRole[],
+        adminSubRole: member.admin_sub_role as AdminSubRole | null,
+      }
+      // Pas de rôle admin → le layout admin redirige déjà vers /teacher-portal
+      if (access.roles.includes('admin') && !canAccessAdminPath(access, pathname)) {
+        return NextResponse.redirect(new URL('/admin-portal', request.url))
+      }
+    }
   }
 
   return supabaseResponse

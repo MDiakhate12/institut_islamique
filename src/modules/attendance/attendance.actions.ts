@@ -1,6 +1,7 @@
 'use server'
 
 import { requireSession } from '@/lib/auth/session'
+import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { attendanceService } from './attendance.service'
@@ -92,6 +93,7 @@ export async function submitAttendanceAction(input: SubmitAttendanceInput): Prom
 
 export async function getAdminDayOverviewAction(date: string): Promise<ActionResult<AdminDayOverview>> {
   const session = await requireSession()
+  if (!canAccess(session, 'attendance')) return err('Non autorisé')
   try {
     const data = await attendanceService.getAdminDayOverview(session.schoolId, date)
     return ok(data)

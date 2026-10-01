@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import type { Session } from '@/lib/auth/session'
+import { canAccessAdminPath } from '@/lib/auth/permissions'
 import { UserProfileDialog } from './UserProfileDialog'
 import { NotificationBell } from '@/components/shared/NotificationBell'
 
@@ -141,9 +142,9 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
     return pathname === href || pathname.startsWith(href + '/')
   }
 
-  // Hide wip items; filter by search
+  // Hide wip items and pages outside the admin sub-role; filter by search
   const visibleSections = NAV_SECTIONS
-    .map(s => ({ ...s, items: s.items.filter(item => !item.wip) }))
+    .map(s => ({ ...s, items: s.items.filter(item => !item.wip && canAccessAdminPath(session, item.href)) }))
     .filter(s => s.items.length > 0)
 
   const filteredSections = search.trim()
