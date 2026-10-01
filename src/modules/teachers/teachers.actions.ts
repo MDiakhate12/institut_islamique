@@ -11,7 +11,7 @@ import type { Teacher, TeacherListItem } from './teachers.types'
 import { ROUTES } from '@/lib/constants'
 import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { sendEmail, getAppUrl, getSchoolName } from '@/lib/email'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 import { createClient } from '@/lib/supabase/server'
@@ -133,13 +133,13 @@ export async function inviteTeacherAction(input: unknown): Promise<ActionResult<
   try {
     const teacher = await teachersService.invite(session.schoolId, parsed.data, session.userId)
     revalidatePath(ROUTES.admin.teachers)
-    void sendTeacherInviteEmail(teacher.email, teacher.id, session.schoolId).catch(() => {})
+    const hasAccount = teacher.userId !== '00000000-0000-0000-0000-000000000000'
+    void sendTeacherInviteEmail(teacher.email, teacher.id, session.schoolId, hasAccount).catch(() => {})
     return ok(teacher)
   } catch (e: any) {
     console.error('[inviteTeacherAction]', e)
-    // Gérer le cas où l'utilisateur existe déjà
-    if (e?.message?.includes('already been registered')) {
-      return err('Un compte existe déjà avec cet email')
+    if (e?.message === 'ALREADY_ACTIVE_TEACHER') {
+      return err('Cet enseignant est déjà actif dans votre école.')
     }
     return err("Impossible d'inviter cet enseignant. Réessayez.")
   }
@@ -157,11 +157,20 @@ export async function resendTeacherInvitationAction(memberId: string): Promise<A
     .limit(1)
 
   if (!member || member.schoolId !== session.schoolId) return err('Enseignant introuvable')
-  if (!member.isPending || !member.pendingEmail) return err('Ce compte est déjà activé')
+  if (!member.isPending) return err('Ce compte est déjà activé')
+
+  const hasAccount = member.userId !== NIL_UUID
+
+  // For users with an account, pendingEmail is null — get email from auth.users
+  let email = member.pendingEmail
+  if (!email && hasAccount) {
+    const rows = await db.execute(sql`SELECT email FROM auth.users WHERE id = ${member.userId} LIMIT 1`)
+    email = (rows as unknown as { email: string }[])[0]?.email ?? null
+  }
+  if (!email) return err('Email introuvable pour cet enseignant')
 
   try {
-    const hasAccount = member.userId !== NIL_UUID
-    await sendTeacherInviteEmail(member.pendingEmail, member.id, member.schoolId, hasAccount)
+    await sendTeacherInviteEmail(email, member.id, member.schoolId, hasAccount)
     return ok(undefined)
   } catch {
     return err("Erreur lors de l'envoi. Réessayez.")

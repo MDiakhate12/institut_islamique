@@ -111,8 +111,88 @@ export const teachersService = {
     }
   },
 
-  // Creates a pending teacher record (admin flow — no email invite, teacher self-registers)
   async invite(schoolId: string, data: InviteTeacherInput, invitedBy: string): Promise<Teacher> {
+    const normalizedEmail = data.email.toLowerCase().trim()
+
+    // Check if a Qaf account already exists for this email
+    const rows = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${normalizedEmail} LIMIT 1`)
+    const authUserId = (rows as unknown as { id: string }[])[0]?.id ?? null
+
+    if (authUserId) {
+      // User has an account — find their school_members record for this school
+      const [existing] = await db
+        .select({ id: schoolMembers.id, portalRoles: schoolMembers.portalRoles, isPending: schoolMembers.isPending, createdAt: schoolMembers.createdAt })
+        .from(schoolMembers)
+        .where(and(eq(schoolMembers.schoolId, schoolId), eq(schoolMembers.userId, authUserId)))
+        .limit(1)
+
+      if (existing) {
+        // Guard: already an active teacher → nothing to do
+        if (existing.portalRoles.includes('teacher') && !existing.isPending) {
+          throw new Error('ALREADY_ACTIVE_TEACHER')
+        }
+
+        // Update: add 'teacher' role + require activation
+        const newRoles = existing.portalRoles.includes('teacher')
+          ? existing.portalRoles
+          : [...existing.portalRoles, 'teacher']
+
+        await db
+          .update(schoolMembers)
+          .set({ portalRoles: newRoles, teacherType: data.teacherType, isPending: true, createdBy: invitedBy })
+          .where(eq(schoolMembers.id, existing.id))
+
+        return {
+          id: existing.id,
+          userId: authUserId,
+          schoolId,
+          teacherType: data.teacherType,
+          isPending: true,
+          createdAt: existing.createdAt,
+          fullName: data.fullName,
+          phone: data.phone ?? null,
+          gender: data.gender ?? null,
+          avatarUrl: null,
+          documentUrl: null,
+          documentName: null,
+          email: data.email,
+        }
+      }
+
+      // No record yet for this school — create with real userId (no NIL_UUID)
+      const [member] = await db
+        .insert(schoolMembers)
+        .values({
+          schoolId,
+          userId: authUserId,
+          portalRoles: ['teacher'],
+          teacherType: data.teacherType,
+          isPending: true,
+          fullName: data.fullName,
+          phone: data.phone ?? null,
+          gender: data.gender ?? null,
+          createdBy: invitedBy,
+        })
+        .returning()
+
+      return {
+        id: member.id,
+        userId: authUserId,
+        schoolId,
+        teacherType: data.teacherType,
+        isPending: true,
+        createdAt: member.createdAt,
+        fullName: data.fullName,
+        phone: data.phone ?? null,
+        gender: data.gender ?? null,
+        avatarUrl: null,
+        documentUrl: null,
+        documentName: null,
+        email: data.email,
+      }
+    }
+
+    // No account at all — create NIL_UUID record (user will sign up via email link)
     const [member] = await db
       .insert(schoolMembers)
       .values({
@@ -121,7 +201,7 @@ export const teachersService = {
         portalRoles: ['teacher'],
         teacherType: data.teacherType,
         isPending: true,
-        pendingEmail: data.email.toLowerCase(),
+        pendingEmail: normalizedEmail,
         fullName: data.fullName,
         phone: data.phone ?? null,
         gender: data.gender ?? null,
