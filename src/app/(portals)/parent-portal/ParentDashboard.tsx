@@ -1,5 +1,6 @@
 'use client'
 
+import { useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import {
   Users, BookMarked, Music2, UserCheck, CalendarOff, Star,
@@ -34,12 +35,22 @@ interface Props {
   userFullName: string | null
 }
 
+// Horloge à la minute. Snapshot serveur = null : le serveur (UTC sur Vercel) et le navigateur
+// n'ont pas le même fuseau → rendre l'heure côté serveur provoque une erreur d'hydratation (#418).
+function subscribeEveryMinute(onChange: () => void) {
+  const interval = setInterval(onChange, 60_000)
+  return () => clearInterval(interval)
+}
+const getCurrentMinute = () => Math.floor(Date.now() / 60_000) * 60_000
+const getServerMinute = () => null
+
 export function ParentDashboard({ userFullName }: Props) {
   const displayName = userFullName ?? 'Parent'
 
-  const now = new Date()
-  const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-  const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const minute = useSyncExternalStore(subscribeEveryMinute, getCurrentMinute, getServerMinute)
+  const now = minute === null ? null : new Date(minute)
+  const dateStr = now?.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const timeStr = now?.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
