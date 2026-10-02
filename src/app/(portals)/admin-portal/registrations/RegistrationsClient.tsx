@@ -647,9 +647,6 @@ function ReviewSection({ registration: r }: { registration: RegistrationWithDeta
               </Button>
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            La famille est prévenue par notification et par e-mail. L&apos;approbation est définitive.
-          </p>
         </>
       )}
 
