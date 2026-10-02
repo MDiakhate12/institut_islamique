@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '../support/fixtures'
 import { storageStatePath, E2E_USERS } from '../support/users'
-import { field } from '../support/registration-form'
+import { field, uniqueSuffix } from '../support/registration-form'
 
 // §7.4 — /parent-portal/enrollment réutilise le formulaire public. Un enfant a un badge de statut
 // (non cliquable) dès qu'une registration existe pour lui ; un nouvel élève créé par le parent
@@ -54,7 +54,9 @@ test('nouvel élève inscrit par le parent : lié immédiatement à son compte',
   // L'e-mail principal est pré-rempli avec celui du compte connecté
   await expect(field(page, 'E-mail principal')).toHaveValue(E2E_USERS.family.email)
 
-  await field(page, "Prénom de l'étudiant").fill('Lina')
+  // Prénom unique : une relance ne doit pas être refusée comme doublon de la 1re tentative
+  const first = `Lina${uniqueSuffix()}`
+  await field(page, "Prénom de l'étudiant").fill(first)
   await field(page, "Nom de famille de l'étudiant").fill('enfant')
   await field(page, 'Date de naissance').fill('2018-01-15')
   await page.getByRole('button', { name: 'Féminin' }).click()
@@ -70,9 +72,9 @@ test('nouvel élève inscrit par le parent : lié immédiatement à son compte',
 
   // L'enfant apparaît dans « Mes enfants » sans validation admin ni code OTP
   await page.goto('/parent-portal/children')
-  await expect(page.getByText('Lina ENFANT').first()).toBeVisible()
+  await expect(page.getByText(`${first} ENFANT`).first()).toBeVisible()
 
   // Et son inscription apparaît déjà dans le sélecteur, en attente de validation
   await page.goto('/parent-portal/enrollment')
-  await expect(childCard(page, 'Lina ENFANT')).toContainText('En attente de validation')
+  await expect(childCard(page, `${first} ENFANT`)).toContainText('En attente de validation')
 })

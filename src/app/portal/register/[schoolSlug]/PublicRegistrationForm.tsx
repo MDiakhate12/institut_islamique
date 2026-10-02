@@ -545,7 +545,6 @@ export interface PublicRegistrationFormProps {
   classes?: RegistrationClassItem[]
   initialFormData?: Record<string, unknown>
   studentId?: string
-  submitterMemberId?: string
   backHref?: string
   successHref?: string
 }
@@ -560,7 +559,6 @@ export function PublicRegistrationForm({
   classes = [],
   initialFormData,
   studentId,
-  submitterMemberId,
   backHref,
   successHref,
 }: PublicRegistrationFormProps) {
@@ -601,7 +599,7 @@ export function PublicRegistrationForm({
       return
     }
     startTransition(async () => {
-      const result = await submitRegistrationAction(schoolSlug, formType, formData, studentId, submitterMemberId)
+      const result = await submitRegistrationAction(schoolSlug, formType, formData, studentId)
       if (!result.success) { toast.error(result.error); return }
       router.push(successHref ?? `/portal/register/${schoolSlug}/success`)
     })

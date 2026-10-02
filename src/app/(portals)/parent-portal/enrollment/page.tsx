@@ -30,6 +30,7 @@ export default async function EnrollmentSelectPage() {
       schoolName={school?.name ?? ''}
       academicYear={academicYear}
       registrationStatuses={registrationStatuses}
+      allowNewRegistrations={school?.settings?.allowNewRegistrations !== false}
     />
   )
 }

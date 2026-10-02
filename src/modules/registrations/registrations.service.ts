@@ -1,6 +1,6 @@
 import { db } from '@/db'
-import { registrationForms, registrations, students, guardians, parentStudents, schoolMembers, profiles } from '@/db/schema'
-import { and, eq, desc, inArray } from 'drizzle-orm'
+import { registrationForms, registrations, students, guardians, parentStudents, schoolMembers, profiles, classes, classEnrollments } from '@/db/schema'
+import { and, eq, desc, inArray, isNull } from 'drizzle-orm'
 import type { FormType, FormItem, RegistrationForm, Registration, SystemFieldKey, RegistrationWithDetails } from './registrations.types'
 import { DEFAULT_NEW_STUDENT_SCHEMA, DEFAULT_REENROLLMENT_SCHEMA } from './registrations.types'
 
@@ -17,6 +17,32 @@ export function buildKeyToIdMap(schema: FormItem[]): Partial<Record<SystemFieldK
     }
   }
   return map
+}
+
+
+/**
+ * Découpe « Karim BENALI » / « Abdel Karim BEN ALI » en prénom + nom. Les mots entièrement en
+ * majuscules en fin de chaîne forment le nom ; à défaut, le dernier mot. Un seul mot → prénom seul.
+ * (Avant, tout le nom du tuteur était stocké dans first_name, last_name restant vide.)
+ */
+export function splitFullName(full: string): { firstName: string; lastName: string } {
+  const words = full.trim().split(/\s+/).filter(Boolean)
+  if (words.length <= 1) return { firstName: words[0] ?? '', lastName: '' }
+  const isUpper = (w: string) => w.length > 1 && w === w.toUpperCase() && w !== w.toLowerCase()
+  let i = words.length
+  while (i > 1 && isUpper(words[i - 1])) i--
+  if (i === words.length) i = words.length - 1 // pas de nom en majuscules : dernier mot
+  return { firstName: words.slice(0, i).join(' '), lastName: words.slice(i).join(' ') }
+}
+
+const normalizeName = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, ' ').toLowerCase()
+
+/** Les ids de classe choisis dans la section « Choix des classes » (clés `class_<matière>`). */
+export function selectedClassIds(formData: Record<string, unknown>): string[] {
+  return Object.entries(formData)
+    .filter(([k, v]) => k.startsWith('class_') && typeof v === 'string' && v.length > 0)
+    .map(([, v]) => v as string)
 }
 
 export const registrationsService = {
@@ -304,6 +330,7 @@ export const registrationsService = {
   ): Promise<{
     studentId: string | null
     studentName: string
+    formType: FormType | null
     formData: Record<string, unknown>
     formSchema: FormItem[]
     recipientMemberIds: string[]
@@ -325,7 +352,7 @@ export const registrationsService = {
         ? db.select({ firstName: students.firstName, lastName: students.lastName }).from(students).where(eq(students.id, row.studentId)).limit(1)
         : Promise.resolve([]),
       row.formId
-        ? db.select({ formSchema: registrationForms.formSchema }).from(registrationForms).where(eq(registrationForms.id, row.formId)).limit(1)
+        ? db.select({ formSchema: registrationForms.formSchema, formType: registrationForms.formType }).from(registrationForms).where(eq(registrationForms.id, row.formId)).limit(1)
         : Promise.resolve([]),
       row.studentId
         ? db.select({ memberId: parentStudents.schoolMemberId }).from(parentStudents)
@@ -342,9 +369,92 @@ export const registrationsService = {
     return {
       studentId: row.studentId,
       studentName: student ? `${student.firstName} ${student.lastName}` : 'votre enfant',
+      formType: (form?.formType as FormType | undefined) ?? null,
       formData: (row.formData as Record<string, unknown>) ?? {},
       formSchema: (form?.formSchema as FormItem[] | undefined) ?? [],
       recipientMemberIds,
     }
+  },
+
+  /** Élève déjà connu de l'école : même prénom, nom et date de naissance (accents/casse ignorés). */
+  async findDuplicateStudent(
+    schoolId: string, firstName: string, lastName: string, birthDate: string | undefined,
+  ): Promise<{ id: string } | null> {
+    if (!birthDate) return null // sans date de naissance, un homonyme n'est pas forcément un doublon
+    const rows = await db
+      .select({ id: students.id, firstName: students.firstName, lastName: students.lastName })
+      .from(students)
+      .where(and(eq(students.schoolId, schoolId), eq(students.birthDate, birthDate)))
+    const f = normalizeName(firstName), l = normalizeName(lastName)
+    const match = rows.find(r => normalizeName(r.firstName) === f && normalizeName(r.lastName) === l)
+    return match ? { id: match.id } : null
+  },
+
+  async isLinkedToParent(memberId: string, studentId: string, schoolId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ studentId: parentStudents.studentId })
+      .from(parentStudents)
+      .where(and(
+        eq(parentStudents.schoolMemberId, memberId),
+        eq(parentStudents.studentId, studentId),
+        eq(parentStudents.schoolId, schoolId),
+      ))
+      .limit(1)
+    return !!row
+  },
+
+  /**
+   * Effets d'une décision sur l'élève :
+   * - nouvel élève : actif seulement une fois approuvé (créé inactif à la soumission) ;
+   * - approbation : inscription dans les classes choisies par la famille (si la section existe).
+   * Une réinscription refusée ne désactive pas un élève déjà scolarisé.
+   */
+  async applyReviewToStudent(
+    schoolId: string,
+    studentId: string,
+    formType: FormType | null,
+    status: 'approved' | 'rejected',
+    formData: Record<string, unknown>,
+  ): Promise<{ enrolledClassIds: string[] }> {
+    if (formType === 'new_student') {
+      await db.update(students)
+        .set({ isActive: status === 'approved' })
+        .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
+    }
+    if (status !== 'approved') return { enrolledClassIds: [] }
+
+    const wanted = selectedClassIds(formData)
+    if (wanted.length === 0) return { enrolledClassIds: [] }
+    // Uniquement des classes actives de cette école (l'id vient des réponses du formulaire)
+    const valid = await db
+      .select({ id: classes.id })
+      .from(classes)
+      .where(and(eq(classes.schoolId, schoolId), eq(classes.isActive, true), inArray(classes.id, wanted)))
+    const already = await db
+      .select({ classId: classEnrollments.classId })
+      .from(classEnrollments)
+      .where(and(eq(classEnrollments.studentId, studentId), isNull(classEnrollments.unenrolledAt)))
+    const alreadySet = new Set(already.map(a => a.classId))
+    const toEnroll = valid.map(v => v.id).filter(id => !alreadySet.has(id))
+    if (toEnroll.length > 0) {
+      await db.insert(classEnrollments)
+        .values(toEnroll.map(classId => ({ classId, studentId, schoolId })))
+        .onConflictDoNothing()
+    }
+    return { enrolledClassIds: toEnroll }
+  },
+
+  /** Rattache au compte du parent le tuteur qui le représente (nom identique, sinon le tuteur principal). */
+  async linkGuardianToParent(studentId: string, parentMemberId: string, parentFullName: string | null): Promise<void> {
+    const rows = await db
+      .select({ id: guardians.id, firstName: guardians.firstName, lastName: guardians.lastName, isPrimary: guardians.isPrimary })
+      .from(guardians)
+      .where(eq(guardians.studentId, studentId))
+    if (rows.length === 0) return
+    const target = parentFullName
+      ? rows.find(g => normalizeName(`${g.firstName ?? ''} ${g.lastName}`) === normalizeName(parentFullName))
+      : undefined
+    const chosen = target ?? rows.find(g => g.isPrimary) ?? rows[0]
+    await db.update(guardians).set({ linkedMemberId: parentMemberId }).where(eq(guardians.id, chosen.id))
   },
 }

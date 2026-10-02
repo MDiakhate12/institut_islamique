@@ -12,9 +12,10 @@ interface Props {
   schoolName: string
   academicYear: string
   registrationStatuses: Record<string, RegistrationStatus>
+  allowNewRegistrations: boolean
 }
 
-export function EnrollmentSelector({ students, schoolName, academicYear, registrationStatuses }: Props) {
+export function EnrollmentSelector({ students, schoolName, academicYear, registrationStatuses, allowNewRegistrations }: Props) {
   const router = useRouter()
 
   return (
@@ -110,6 +111,11 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registr
           )}
         </div>
 
+        {!allowNewRegistrations ? (
+          <p className="text-center text-sm text-muted-foreground border border-dashed border-gray-300 rounded-xl py-4 px-3">
+            L&apos;école n&apos;accepte pas de nouvelles inscriptions pour le moment. Vous pouvez toujours réinscrire vos enfants ci-dessus.
+          </p>
+        ) : (
         <Link
           href="/parent-portal/enrollment/new"
           className="flex items-center justify-center gap-2 w-full py-4 rounded-xl text-white font-semibold
@@ -118,6 +124,7 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registr
           <Plus className="h-4 w-4" />
           Ajouter un nouvel élève à l&apos;école
         </Link>
+        )}
       </div>
     </div>
   )

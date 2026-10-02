@@ -1,5 +1,6 @@
 import { getPublicRegistrationFormAction } from '@/modules/registrations/registrations.actions'
 import { PublicRegistrationForm } from '../PublicRegistrationForm'
+import { RegistrationNotice } from '../RegistrationNotice'
 import { notFound } from 'next/navigation'
 
 interface Props {
@@ -16,7 +17,23 @@ export default async function ReenrollmentPage({ params, searchParams }: Props) 
 
   const { form, schoolName, gradeOptions, financialOptions, academicYear, classes } = result.data
 
-  // In preview mode, show mock student data
+  // Hors aperçu admin : la réinscription se fait depuis le portail parent, où l'élève est identifié
+  // (ici on ne sait pas de quel élève il s'agit — l'envoi créait une inscription sans élève)
+  if (preview !== 'true') {
+    return (
+      <RegistrationNotice
+        schoolName={schoolName}
+        title="Réinscription depuis le portail parent"
+        message="Pour réinscrire votre enfant, connectez-vous au portail parent : il apparaîtra dans votre liste et le formulaire sera pré-rempli. Pas encore de compte ? Créez-le, puis liez votre enfant avec le numéro de téléphone donné à l'école."
+        links={[
+          { href: '/auth/login?redirect=/parent-portal/enrollment', label: 'Se connecter' },
+          { href: '/auth/signup', label: 'Créer un compte' },
+        ]}
+      />
+    )
+  }
+
+  // Aperçu admin (form builder) : élève fictif
   const prefilledStudent = preview === 'true'
     ? { name: 'Mock Student (Preview)', id: '12345' }
     : undefined

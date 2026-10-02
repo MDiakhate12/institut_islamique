@@ -19,7 +19,7 @@ const loginSchema = z.object({
 
 type LoginInput = z.infer<typeof loginSchema>
 
-export function LoginForm() {
+export function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const [isPending, startTransition] = useTransition()
   const [showPassword, setShowPassword] = useState(false)
 
@@ -30,7 +30,7 @@ export function LoginForm() {
 
   function onSubmit(data: LoginInput) {
     startTransition(async () => {
-      const result = await signInAction(data.email, data.password)
+      const result = await signInAction(data.email, data.password, redirectTo)
       if (result?.error) {
         toast.error(result.error)
       }

@@ -11,10 +11,11 @@ import postgres from 'postgres'
 import { eq } from 'drizzle-orm'
 import {
   schools, profiles, schoolMembers, students, guardians, parentStudents, classes, classEnrollments,
-  teacherAttendanceClasses, teacherHomeworkClasses,
+  teacherAttendanceClasses, teacherHomeworkClasses, registrationForms,
 } from '../src/db/schema'
+import { DEFAULT_NEW_STUDENT_SCHEMA, type FormItem } from '../src/modules/registrations/registrations.types'
 import { DEFAULT_SETTINGS } from '../src/db/schema/schools'
-import { E2E_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, type E2ERole } from './support/users'
+import { E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, type E2ERole } from './support/users'
 
 const env = loadE2EEnv() // lève une erreur si la base n'est pas locale
 
@@ -30,6 +31,7 @@ const BUCKETS = ['public', 'school-assets', 'expense-receipts', 'teacher-documen
 async function seed() {
   // 1. Nettoyage — l'école en cascade, puis les comptes Auth du domaine de test
   await db.delete(schools).where(eq(schools.slug, E2E_SCHOOL.slug))
+  await db.delete(schools).where(eq(schools.slug, E2E_CLOSED_SCHOOL.slug))
   const { data: existing, error: listError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
   if (listError) throw listError
   for (const u of existing.users.filter(u => u.email?.endsWith(`@${E2E_EMAIL_DOMAIN}`))) {
@@ -136,6 +138,26 @@ async function seed() {
   const pin = { schoolId: school.id, schoolMemberId: memberIds.teacher, classId: klass.id }
   await db.insert(teacherAttendanceClasses).values(pin)
   await db.insert(teacherHomeworkClasses).values(pin)
+
+  // Formulaire « nouvel élève » avec la section « Choix des classes » (absente du formulaire par
+  // défaut) : à l'approbation, l'élève est inscrit dans la classe choisie par la famille
+  const classSection: FormItem = {
+    kind: 'section', id: 'section-classes', title: 'Choix des classes',
+    isSystem: true, systemKey: 'class_selection', fields: [],
+  }
+  await db.insert(registrationForms).values({
+    schoolId: school.id,
+    formType: 'new_student',
+    formSchema: [DEFAULT_NEW_STUDENT_SCHEMA[0], classSection, ...DEFAULT_NEW_STUDENT_SCHEMA.slice(1)],
+  })
+
+  // Seconde école, sans compte, inscriptions fermées (réglage « Autoriser les nouvelles inscriptions »)
+  await db.insert(schools).values({
+    name: E2E_CLOSED_SCHOOL.name,
+    slug: E2E_CLOSED_SCHOOL.slug,
+    timezone: 'Europe/Paris',
+    settings: { ...DEFAULT_SETTINGS, onboardingCompleted: true, allowNewRegistrations: false },
+  })
 
   console.log(`✅ Seed E2E OK — école ${E2E_SCHOOL.slug} (${school.id}), ${Object.keys(memberIds).length} comptes`)
 }

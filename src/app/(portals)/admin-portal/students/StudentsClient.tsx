@@ -82,6 +82,12 @@ function guardianName(s: StudentListItem, relationship: 'father' | 'mother', fal
 }
 
 // Valeur utilisée pour trier chaque colonne (null/'' = toujours en fin de liste)
+// Un nouvel élève reste inactif tant que son inscription n'est pas approuvée (§7.4)
+function studentStatusLabel(s: StudentListItem): string {
+  if (s.isActive) return 'Inscrit'
+  return s.registrationStatus === 'pending' ? 'En attente' : 'Inactif'
+}
+
 const SORT_VALUE: Record<SortKey, (s: StudentListItem) => string | number | null> = {
   name:            s => `${s.lastName} ${s.firstName}`,
   // Tri par âge : le plus jeune en premier en ordre croissant
@@ -126,7 +132,7 @@ const FILTER_VALUES: Record<SortKey, (s: StudentListItem) => (string | null | un
   classes:         s => s.enrollments.map(e => e.className ? `${e.classCode} — ${e.className}` : e.classCode),
   teacher:         s => s.enrollments.map(e => e.teacherName),
   previousTeacher: s => [s.previousTeacher],
-  status:          s => [s.isActive ? 'Inscrit' : 'Inactif'],
+  status:          s => [studentStatusLabel(s)],
   fatherPhone:     s => [SORT_VALUE.fatherPhone(s) as string | null],
   motherPhone:     s => [SORT_VALUE.motherPhone(s) as string | null],
   fatherEmail:     s => [SORT_VALUE.fatherEmail(s) as string | null],
@@ -718,9 +724,11 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
         <td className="px-3 py-3">
           <span className={cn(
             'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
-            s.isActive ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
+            s.isActive ? 'bg-green-100 text-green-700 border border-green-200'
+              : s.registrationStatus === 'pending' ? 'bg-orange-100 text-orange-700 border border-orange-200'
+              : 'bg-gray-100 text-gray-500 border border-gray-200'
           )}>
-            {s.isActive ? 'Inscrit' : 'Inactif'}
+            {studentStatusLabel(s)}
           </span>
         </td>
       )}

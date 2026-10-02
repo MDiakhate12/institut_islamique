@@ -1,17 +1,19 @@
 import { test, expect } from '../support/fixtures'
 import { storageStatePath, E2E_SCHOOL } from '../support/users'
-import { field } from '../support/registration-form'
+import { field, uniqueSuffix } from '../support/registration-form'
 
 // §7.4 — le formulaire public crée immédiatement l'élève + ses tuteurs, puis la
 // registration 'pending'. L'admin la retrouve dans Inscriptions, et l'élève dans Étudiants.
 
 test('inscription publique d\'un nouvel élève, visible côté admin', async ({ page, browser }) => {
+  // Nom unique : une relance ne doit pas être refusée comme doublon de la 1re tentative
+  const last = `BENALI${uniqueSuffix().toUpperCase()}`
   await page.goto(`/portal/register/${E2E_SCHOOL.slug}`)
   await expect(page.getByRole('heading', { name: `Inscription à ${E2E_SCHOOL.name}` })).toBeVisible()
 
   await field(page, "Prénom de l'étudiant").fill('Inès')
-  await field(page, "Nom de famille de l'étudiant").fill('benali')
-  await expect(field(page, "Nom de famille de l'étudiant")).toHaveValue('BENALI') // mis en majuscules à la saisie
+  await field(page, "Nom de famille de l'étudiant").fill(last.toLowerCase())
+  await expect(field(page, "Nom de famille de l'étudiant")).toHaveValue(last) // mis en majuscules à la saisie
   await field(page, 'Date de naissance').fill('2016-03-08')
   await page.getByRole('button', { name: 'Féminin' }).click()
   await field(page, 'Nom du père ou du tuteur').fill('Karim BENALI')
@@ -32,14 +34,14 @@ test('inscription publique d\'un nouvel élève, visible côté admin', async ({
 
   // L'inscription apparaît dans la liste admin avec l'élève et le parent
   await admin.goto('/admin-portal/registrations')
-  const registration = admin.getByRole('row').filter({ hasText: 'Inès BENALI' })
+  const registration = admin.getByRole('row').filter({ hasText: `Inès ${last}` })
   await expect(registration).toBeVisible()
   await expect(registration).toContainText('Karim BENALI')
   await expect(registration).toContainText('karim.benali@example.com')
 
   // L'élève a été créé immédiatement (sans attendre de validation)
   await admin.goto('/admin-portal/students')
-  await admin.getByPlaceholder(/Rechercher des élèves/).fill('BENALI')
+  await admin.getByPlaceholder(/Rechercher des élèves/).fill(last)
   await expect(admin.getByRole('row').filter({ hasText: 'Inès' })).toBeVisible()
 
   expect(adminErrors).toEqual([])

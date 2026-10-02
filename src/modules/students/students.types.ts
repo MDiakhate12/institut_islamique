@@ -71,6 +71,8 @@ export type StudentListItem = Pick<
   paymentT3:            boolean
   // true si les 3 sont payés via un seul paiement annuel (affichage distinct de 3 paiements séparés)
   paymentAnnual:        boolean
+  // Statut de la dernière inscription (null si l'élève a été créé à la main)
+  registrationStatus:   'pending' | 'approved' | 'rejected' | null
   // Champs issus de form_data JSONB (dernière inscription)
   schoolGrade:          string | null
   regFatherName:        string | null
