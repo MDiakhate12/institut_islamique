@@ -743,6 +743,7 @@ Règles (source unique : `examsService.getExamFlags`) :
 ### Git
 - **Une branche par feature** : `feature/module-attendance`, `fix/exams-period`, etc.
 - **Jamais de push direct sur `main`** — toujours une PR
+- **Une PR cible toujours `main`** — jamais une autre branche de feature (pas de PR « empilées »). Chaque branche part de `main` à jour (`git checkout main && git pull && git checkout -b ...`). Si un travail dépend d'une PR pas encore mergée, attendre son merge (ou intégrer `main` une fois qu'elle y est) plutôt que de cibler sa branche. Raison : deux PR empilées (#21, #23) ont été mergées dans la branche parente *après* que celle-ci avait déjà rejoint `main` — leur contenu n'est jamais arrivé dans `main` et a dû être repris dans de nouvelles PR.
 - **Chaque dev prend un module de A à Z** (types → service → actions → hooks → UI), pas de découpage par layer
 
 ### Mettre à jour ce fichier
