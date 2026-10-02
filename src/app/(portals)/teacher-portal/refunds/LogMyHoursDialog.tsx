@@ -1,5 +1,6 @@
 'use client'
 
+import { localTodayISO } from '@/lib/dates'
 import { useState } from 'react'
 import { Clock } from 'lucide-react'
 import {
@@ -14,7 +15,7 @@ import { useMyClassOptions, useLogMyHours } from '@/modules/wages/wages.hooks'
 export function LogMyHoursDialog() {
   const [open, setOpen] = useState(false)
   const [classId, setClassId] = useState<string | null>(null)
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localTodayISO())
   const [hours, setHours] = useState('')
 
   const { data: school } = useSchool()
@@ -26,7 +27,7 @@ export function LogMyHoursDialog() {
 
   function reset() {
     setClassId(null)
-    setDate(new Date().toISOString().slice(0, 10))
+    setDate(localTodayISO())
     setHours('')
   }
 

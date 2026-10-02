@@ -246,14 +246,15 @@ function HomeworkCard({
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 import { SURAHS } from '@/modules/homework/surahs.data'
+import { addDaysISO } from '@/lib/dates'
 
 function getSurahNumber(name: string): number {
   return SURAHS.find(s => s.name === name)?.number ?? 1
 }
 
-function groupByDate(items: ParentHomeworkItem[]): [string, ParentHomeworkItem[]][] {
-  const today = new Date().toISOString().split('T')[0]
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+// `today` vient du serveur (fuseau de l'école) : identique au rendu SSR et côté navigateur
+function groupByDate(items: ParentHomeworkItem[], today: string): [string, ParentHomeworkItem[]][] {
+  const yesterday = addDaysISO(today, -1)
   const map = new Map<string, ParentHomeworkItem[]>()
 
   for (const item of items) {
@@ -267,7 +268,7 @@ function groupByDate(items: ParentHomeworkItem[]): [string, ParentHomeworkItem[]
     let label: string
     if (key === today) label = "Aujourd'hui"
     else if (key === yesterday) label = 'Hier'
-    else label = new Date(key).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    else label = new Date(`${key}T00:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     return [label, val] as [string, ParentHomeworkItem[]]
   })
 }
@@ -287,9 +288,10 @@ function groupByClass(items: ParentHomeworkItem[]): [string, { subjectCode: stri
 interface Props {
   initialChildren: ParentChild[]
   initialHomework: ParentHomeworkItem[]
+  today: string
 }
 
-export function HomeworkClient({ initialChildren, initialHomework }: Props) {
+export function HomeworkClient({ initialChildren, initialHomework, today }: Props) {
   const [children] = useState(initialChildren)
   const [homework, setHomework] = useState(initialHomework)
   const [selectedChildId, setChild] = useState(children[0]?.studentId ?? '')
@@ -404,7 +406,7 @@ export function HomeworkClient({ initialChildren, initialHomework }: Props) {
         ) : view === 'chronologie' ? (
           // ── Chronologie view ─────────────────────────────────────────────
           <div className="space-y-8 max-w-2xl">
-            {groupByDate(filtered).map(([dateLabel, items]) => (
+            {groupByDate(filtered, today).map(([dateLabel, items]) => (
               <div key={dateLabel}>
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-bold text-foreground capitalize">{dateLabel}</h2>
