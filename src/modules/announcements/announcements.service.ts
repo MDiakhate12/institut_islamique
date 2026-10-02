@@ -133,13 +133,15 @@ export const announcementsService = {
   async getEmailsByAudience(schoolId: string, audience: AnnouncementAudience): Promise<string[]> {
     const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
-    // Filtre sur portal_roles selon l'audience
+    // Filtre sur portal_roles selon l'audience. `sm.portal_roles` et non ${schoolMembers.portalRoles} :
+    // Drizzle rendrait "school_members"."portal_roles", invalide une fois la table aliasée en `sm`
+    // (la requête échouait → aucun e-mail pour les annonces Parents/Personnel)
     const roleFilter = audience === 'parents'
-      ? sql`'parent' = ANY(${schoolMembers.portalRoles})`
+      ? sql`'parent' = ANY(sm.portal_roles)`
       : audience === 'teachers'
-        ? sql`'teacher' = ANY(${schoolMembers.portalRoles})`
+        ? sql`'teacher' = ANY(sm.portal_roles)`
         : audience === 'admins'
-          ? sql`'admin' = ANY(${schoolMembers.portalRoles})`
+          ? sql`'admin' = ANY(sm.portal_roles)`
           : sql`true` // 'everyone'
 
     const rows = await db.execute(sql`

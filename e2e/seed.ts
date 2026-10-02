@@ -11,6 +11,7 @@ import postgres from 'postgres'
 import { eq } from 'drizzle-orm'
 import {
   schools, profiles, schoolMembers, students, guardians, parentStudents, classes, classEnrollments,
+  teacherAttendanceClasses, teacherHomeworkClasses,
 } from '../src/db/schema'
 import { DEFAULT_SETTINGS } from '../src/db/schema/schools'
 import { E2E_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, type E2ERole } from './support/users'
@@ -54,6 +55,9 @@ async function seed() {
       onboardingCompleted: true,
       yearStartDate: '2025-09-01',
       yearEndDate: '2026-06-30',
+      // Tous les jours : la chronologie de présence du parent n'affiche que les jours de classe,
+      // le test présences doit donc trouver « aujourd'hui » quel que soit le jour du run
+      schoolDays: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
       rooms: ['Salle 1'],
       gradeLevels: ['CE2', 'CM1', 'CM2'],
     },
@@ -113,6 +117,23 @@ async function seed() {
   })
   await db.insert(parentStudents).values({ schoolMemberId: memberIds.parent, studentId: student.id, schoolId: school.id })
   await db.insert(classEnrollments).values({ classId: klass.id, studentId: student.id, schoolId: school.id })
+
+  // Enfant de « family », lié mais sans inscription : le test d'inscription parent le réinscrit
+  const [sami] = await db.insert(students).values({
+    schoolId: school.id,
+    firstName: 'Sami',
+    lastName: 'ENFANT',
+    gender: 'male',
+    birthDate: '2016-09-20',
+    createdBy: memberIds.admin,
+  }).returning()
+  await db.insert(parentStudents).values({ schoolMemberId: memberIds.family, studentId: sami.id, schoolId: school.id })
+
+  // Classe déjà épinglée par l'enseignant (Présences + Devoirs) : l'épinglage via l'UI exclut
+  // ensuite la classe des options, ce qui casserait le test au moindre retry
+  const pin = { schoolId: school.id, schoolMemberId: memberIds.teacher, classId: klass.id }
+  await db.insert(teacherAttendanceClasses).values(pin)
+  await db.insert(teacherHomeworkClasses).values(pin)
 
   console.log(`✅ Seed E2E OK — école ${E2E_SCHOOL.slug} (${school.id}), ${Object.keys(memberIds).length} comptes`)
 }

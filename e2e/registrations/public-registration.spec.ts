@@ -1,20 +1,9 @@
-import { test, expect, type Page } from '../support/fixtures'
+import { test, expect } from '../support/fixtures'
 import { storageStatePath, E2E_SCHOOL } from '../support/users'
+import { field } from '../support/registration-form'
 
 // §7.4 — le formulaire public crée immédiatement l'élève + ses tuteurs, puis la
 // registration 'pending'. L'admin la retrouve dans Inscriptions, et l'élève dans Étudiants.
-
-/**
- * Champ du formulaire public par son libellé. Les <label> de PublicRegistrationForm n'ont
- * pas de htmlFor → getByLabel ne marche pas ; on prend le champ du même bloc que le label.
- */
-function field(page: Page, label: string) {
-  return page
-    .locator('div')
-    .filter({ has: page.locator(':scope > label', { hasText: label }) })
-    .locator('input, select, textarea')
-    .first()
-}
 
 test('inscription publique d\'un nouvel élève, visible côté admin', async ({ page, browser }) => {
   await page.goto(`/portal/register/${E2E_SCHOOL.slug}`)

@@ -12,6 +12,9 @@ export const E2E_USERS = {
   manager:   { email: `manager@${E2E_EMAIL_DOMAIN}`,   fullName: 'Gestionnaire E2E', portalRoles: ['admin'],   adminSubRole: 'manager' },
   teacher:   { email: `teacher@${E2E_EMAIL_DOMAIN}`,   fullName: 'Enseignant E2E',   portalRoles: ['teacher'], adminSubRole: null },
   parent:    { email: `parent@${E2E_EMAIL_DOMAIN}`,    fullName: 'Parent E2E',       portalRoles: ['parent'],  adminSubRole: null },
+  // Parent réservé aux tests d'inscription (ajoute des enfants) : « parent » garde un seul enfant,
+  // dont dépendent les tests qui prennent le premier enfant affiché (présences, devoirs)
+  family:    { email: `family@${E2E_EMAIL_DOMAIN}`,    fullName: 'Famille E2E',      portalRoles: ['parent'],  adminSubRole: null },
 } as const
 
 export type E2ERole = keyof typeof E2E_USERS

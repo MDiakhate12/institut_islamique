@@ -9,6 +9,7 @@ const HOME = {
   manager: '/admin-portal',
   teacher: '/teacher-portal',
   parent: '/parent-portal',
+  family: '/parent-portal',
 } as const
 
 for (const role of E2E_ROLES) {
