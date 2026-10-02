@@ -11,8 +11,7 @@ import type { AcademicEvent } from './calendar.types'
 import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
-import { sql } from 'drizzle-orm'
-import { sendEmail, getSchoolName } from '@/lib/email'
+import { sendEmail, getSchoolName, getMemberEmails } from '@/lib/email'
 import { EVENT_TYPE_CONFIG } from './calendar.types'
 
 /** Resolve school_members.id from auth userId + schoolId */
@@ -110,16 +109,7 @@ export async function sendReminderAction(eventId: string): Promise<ActionResult<
     const event = await calendarService.getById(session.schoolId, eventId)
     if (!event) return err('Événement introuvable')
 
-    const NIL_UUID = '00000000-0000-0000-0000-000000000000'
-    const rows = await db.execute<{ email: string }>(sql`
-      SELECT au.email
-      FROM school_members sm
-      JOIN auth.users au ON au.id = sm.user_id
-      WHERE sm.school_id = ${session.schoolId}
-        AND sm.is_pending = false
-        AND sm.user_id != ${NIL_UUID}::uuid
-    `)
-    const emails = (rows as unknown as { email: string }[]).map(r => r.email).filter(Boolean)
+    const emails = await getMemberEmails(session.schoolId)
 
     const config = EVENT_TYPE_CONFIG[event.type as keyof typeof EVENT_TYPE_CONFIG]
     const emoji = config?.emoji ?? '📅'

@@ -2,6 +2,7 @@ import { db } from '@/db'
 import { schoolMembers, profiles } from '@/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { getAuthUserIdByEmail } from '@/db/auth-users'
 import type { InviteTeacherInput, UpdateTeacherInput } from './teachers.schema'
 import type { Teacher, TeacherListItem } from './teachers.types'
 
@@ -115,8 +116,7 @@ export const teachersService = {
     const normalizedEmail = data.email.toLowerCase().trim()
 
     // Check if a Qaf account already exists for this email
-    const rows = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${normalizedEmail} LIMIT 1`)
-    const authUserId = (rows as unknown as { id: string }[])[0]?.id ?? null
+    const authUserId = await getAuthUserIdByEmail(normalizedEmail)
 
     if (authUserId) {
       // User has an account — find their school_members record for this school
@@ -245,8 +245,7 @@ export const teachersService = {
     if (newEmail) {
       if (member.userId !== NIL_UUID) throw new Error('EMAIL_LOCKED')
 
-      const rows = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${newEmail} LIMIT 1`)
-      if ((rows as unknown as { id: string }[]).length > 0) throw new Error('EMAIL_HAS_ACCOUNT')
+      if (await getAuthUserIdByEmail(newEmail)) throw new Error('EMAIL_HAS_ACCOUNT')
 
       const [duplicate] = await db
         .select({ id: schoolMembers.id })
