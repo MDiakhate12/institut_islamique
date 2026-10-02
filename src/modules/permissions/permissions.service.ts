@@ -2,6 +2,7 @@ import { db } from '@/db'
 import { schoolMembers, profiles } from '@/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { getAuthUserIdByEmail } from '@/db/auth-users'
 import type { PermissionMember, SearchResult } from './permissions.types'
 import type { AdminSubRole } from '@/lib/constants'
 
@@ -122,8 +123,7 @@ export const permissionsService = {
     role: AdminSubRole,
   ): Promise<{ userExists: boolean; alreadyHasRole: boolean }> {
     const normalizedEmail = email.toLowerCase().trim()
-    const rows = await db.execute(sql`SELECT id FROM auth.users WHERE email = ${normalizedEmail} LIMIT 1`)
-    const authUserId = (rows as unknown as { id: string }[])[0]?.id ?? null
+    const authUserId = await getAuthUserIdByEmail(normalizedEmail)
     const authUser = authUserId ? { id: authUserId } : null
 
     if (authUser) {
