@@ -18,7 +18,7 @@ export default async function EnrollmentSelectPage() {
     ? await parentsService.getChildrenWithClasses(memberId, session.schoolId)
     : []
 
-  const registeredStudentIds = await registrationsService.getRegisteredStudentIds(
+  const registrationStatuses = await registrationsService.getRegistrationStatuses(
     session.schoolId,
     children.map(c => c.studentId),
     academicYear,
@@ -29,7 +29,7 @@ export default async function EnrollmentSelectPage() {
       students={children}
       schoolName={school?.name ?? ''}
       academicYear={academicYear}
-      registeredStudentIds={Array.from(registeredStudentIds)}
+      registrationStatuses={registrationStatuses}
     />
   )
 }

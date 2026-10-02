@@ -57,3 +57,10 @@ export function getMissingRequiredFields(
   }
   return missing
 }
+
+export const reviewRegistrationSchema = z.object({
+  registrationId: z.string().uuid(),
+  status: z.enum(['approved', 'rejected']),
+  notes: z.string().trim().max(1000).nullable(),
+})
+export type ReviewRegistrationInput = z.infer<typeof reviewRegistrationSchema>

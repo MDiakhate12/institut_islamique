@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer'
 import { headers } from 'next/headers'
 import { db } from '@/db'
-import { and, arrayContains, eq, isNull, ne } from 'drizzle-orm'
+import { and, arrayContains, eq, inArray, isNull, ne } from 'drizzle-orm'
 import { schools, schoolMembers, parentStudents, classEnrollments } from '@/db/schema'
 import { authUsers } from '@/db/auth-users'
 
@@ -70,6 +70,17 @@ export async function getMemberEmails(schoolId: string, role?: 'admin' | 'teache
       hasAccount,
       role ? arrayContains(schoolMembers.portalRoles, [role]) : undefined,
     ))
+  return emails(rows)
+}
+
+/** E-mails de membres précis (school_members.id). */
+export async function getEmailsForMembers(memberIds: string[]): Promise<string[]> {
+  if (memberIds.length === 0) return []
+  const rows = await db
+    .selectDistinct({ email: authUsers.email })
+    .from(schoolMembers)
+    .innerJoin(authUsers, eq(authUsers.id, schoolMembers.userId))
+    .where(and(inArray(schoolMembers.id, memberIds), hasAccount))
   return emails(rows)
 }
 

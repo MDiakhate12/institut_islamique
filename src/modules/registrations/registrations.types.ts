@@ -113,6 +113,9 @@ export type RegistrationWithDetails = {
   formType: FormType | null
   status: RegistrationStatus
   submittedAt: Date
+  reviewedAt: Date | null
+  reviewNotes: string | null
+  reviewedByName: string | null
   grade: string | null
   regularSchool: string | null
   paymentFrequency: string | null
