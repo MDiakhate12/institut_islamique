@@ -118,6 +118,17 @@ async function seed() {
   await db.insert(parentStudents).values({ schoolMemberId: memberIds.parent, studentId: student.id, schoolId: school.id })
   await db.insert(classEnrollments).values({ classId: klass.id, studentId: student.id, schoolId: school.id })
 
+  // Enfant de « family », lié mais sans inscription : le test d'inscription parent le réinscrit
+  const [sami] = await db.insert(students).values({
+    schoolId: school.id,
+    firstName: 'Sami',
+    lastName: 'ENFANT',
+    gender: 'male',
+    birthDate: '2016-09-20',
+    createdBy: memberIds.admin,
+  }).returning()
+  await db.insert(parentStudents).values({ schoolMemberId: memberIds.family, studentId: sami.id, schoolId: school.id })
+
   // Classe déjà épinglée par l'enseignant (Présences + Devoirs) : l'épinglage via l'UI exclut
   // ensuite la classe des options, ce qui casserait le test au moindre retry
   const pin = { schoolId: school.id, schoolMemberId: memberIds.teacher, classId: klass.id }
