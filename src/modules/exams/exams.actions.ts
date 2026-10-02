@@ -10,7 +10,7 @@ import { sendEmail, getAdminEmails, getAppUrl, getSchoolName } from '@/lib/email
 import type {
   TeacherExamClass, ExamResult, GradeFormStudent,
   AdminExamClassProgress, AdminExamStudentProgress,
-  ParentChildExamData,
+  ParentExamView,
 } from './exams.types'
 
 export async function getTeacherExamClassesAction(
@@ -138,11 +138,11 @@ export async function getAdminExamStudentsAction(
 
 export async function getParentChildrenGradesAction(
   trimester: number,
-): Promise<ActionResult<ParentChildExamData[]>> {
+): Promise<ActionResult<ParentExamView>> {
   const session = await requireSession()
   if (!session.roles.includes('parent')) return err('Non autorisé')
   try {
-    const data = await examsService.getChildrenGrades(session.memberId, session.schoolId, trimester)
+    const data = await examsService.getParentExamView(session.memberId, session.schoolId, trimester)
     return ok(data)
   } catch {
     return err('Erreur lors du chargement des bulletins')
@@ -159,8 +159,9 @@ export async function signExamGradeAction(
   if (!parsed.success) return err(parsed.error.issues[0].message)
   try {
     // Un parent ne signe que les bulletins de ses propres enfants
-    const signed = await examsService.signGrade(examResultId, parentSignature, session.schoolId, session.memberId)
-    if (!signed) return err('Non autorisé')
+    const status = await examsService.signGrade(examResultId, parentSignature, session.schoolId, session.memberId)
+    if (status === 'forbidden') return err('Non autorisé')
+    if (status === 'closed') return err("La période d'examens de ce trimestre est fermée")
     return ok(undefined)
   } catch {
     return err('Erreur lors de la signature')

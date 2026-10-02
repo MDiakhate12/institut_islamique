@@ -3,7 +3,8 @@ import { storageStatePath, E2E_USERS } from '../support/users'
 
 // Bulletin d'examen de bout en bout : l'admin ouvre la période du trimestre (Paramètres) →
 // l'enseignant note → l'admin suit la progression → le parent consulte et signe → l'admin
-// referme la période, et le formulaire de notation n'est plus accessible, même par URL directe.
+// referme la période : le formulaire de notation n'est plus accessible (même par URL directe)
+// et le parent ne voit plus le bulletin.
 // Un seul test (il bascule un réglage d'école) : rien d'autre dans la suite ne dépend de la période.
 
 const CLASS_NAME = 'Classe Coran E2E'
@@ -40,6 +41,10 @@ test('bulletin : période ouverte par l\'admin, note de l\'enseignant, signature
   await expect(teacher.getByText("Période d'examens fermée")).toBeVisible()
   await expect(teacher.getByText(STUDENT)).toBeVisible()
   await expect(studentLink).toHaveCount(0)
+
+  // … et le parent ne voit pas encore de bulletin (le réglage vaut aussi pour son portail)
+  await parent.goto('/parent-portal/exams')
+  await expect(parent.getByText("Période d'examens fermée")).toBeVisible()
 
   // 2. L'admin ouvre la période du Trimestre 1
   await setExamPeriod(admin, true)
@@ -99,6 +104,11 @@ test('bulletin : période ouverte par l\'admin, note de l\'enseignant, signature
   await teacher.goto(gradeUrl!)
   await expect(teacher).toHaveURL('/teacher-portal/exams')
   await expect(teacher.getByText("Période d'examens fermée")).toBeVisible()
+
+  // … et le bulletin (pourtant signé) disparaît du portail parent
+  await parent.reload()
+  await expect(parent.getByText("Période d'examens fermée")).toBeVisible()
+  await expect(parent.getByText('85/100')).toHaveCount(0)
 
   expect(errors).toEqual([])
   await Promise.all([admin.close(), teacher.close(), parent.close()])

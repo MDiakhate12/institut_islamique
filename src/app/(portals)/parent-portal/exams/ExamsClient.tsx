@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { GraduationCap, Star, User } from 'lucide-react'
+import { AlertTriangle, GraduationCap, Star, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useParentChildrenGrades, useSignExamGrade } from '@/modules/exams/exams.hooks'
-import type { ParentChildExamData, ParentExamGrade } from '@/modules/exams/exams.types'
+import type { ParentChildExamData, ParentExamGrade, ParentExamView } from '@/modules/exams/exams.types'
 
 interface Props {
-  initialChildren: ParentChildExamData[]
+  initialView: ParentExamView
   initialTrimester: number
   academicYear: string
   parentName: string
@@ -147,10 +147,11 @@ function ChildGrades({ child, parentName }: { child: ParentChildExamData; parent
   )
 }
 
-export function ExamsClient({ initialChildren, initialTrimester, academicYear, parentName }: Props) {
+export function ExamsClient({ initialView, initialTrimester, academicYear, parentName }: Props) {
   const [trimester, setTrimester] = useState(initialTrimester)
-  const { data: children = initialChildren } = useParentChildrenGrades(trimester)
-  const [activeId, setActiveId] = useState(initialChildren[0]?.studentId ?? '')
+  const { data: view = initialView } = useParentChildrenGrades(trimester)
+  const { children, periodOpen } = view
+  const [activeId, setActiveId] = useState(initialView.children[0]?.studentId ?? '')
 
   const activeChild = children.find(c => c.studentId === activeId) ?? children[0]
 
@@ -228,7 +229,19 @@ export function ExamsClient({ initialChildren, initialTrimester, academicYear, p
               <h2 className="text-lg font-bold text-[#2d6a4f]">
                 Élève : {activeChild.firstName} {activeChild.lastName}
               </h2>
-              <ChildGrades child={activeChild} parentName={parentName} />
+              {periodOpen ? (
+                <ChildGrades child={activeChild} parentName={parentName} />
+              ) : (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800">Période d&apos;examens fermée</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Les bulletins du Trimestre {trimester} seront visibles dès que l&apos;école ouvrira la période d&apos;examens.
+                    </p>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>

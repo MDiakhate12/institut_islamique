@@ -80,6 +80,12 @@ export type ParentChildExamData = {
   grades: ParentExamGrade[]
 }
 
+/** Vue parent d'un trimestre : bulletins masqués (grades vides) tant que la période est fermée */
+export type ParentExamView = {
+  periodOpen: boolean
+  children: ParentChildExamData[]
+}
+
 export type ParentExamGrade = {
   classId: string
   className: string

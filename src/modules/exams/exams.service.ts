@@ -7,7 +7,7 @@ import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import type {
   ExamResult, TeacherExamClass, StudentGradeStatus,
   AdminExamClassProgress, AdminExamStudentProgress,
-  ParentChildExamData, ParentExamGrade, GradeFormStudent,
+  ParentChildExamData, ParentExamGrade, GradeFormStudent, ParentExamView,
 } from './exams.types'
 import type { SubmitExamInput } from './exams.schema'
 
@@ -586,15 +586,28 @@ export const examsService = {
         : !!s?.examPeriodT3Open
   },
 
-  /** Signe le bulletin — uniquement si l'élève est lié à ce parent. Renvoie false sinon. */
+  // Le réglage « Ouvrir les examens » s'applique aussi au portail parent : période fermée,
+  // on renvoie les enfants (pour l'en-tête) mais aucun bulletin
+  async getParentExamView(schoolMemberId: string, schoolId: string, trimester: number): Promise<ParentExamView> {
+    const [periodOpen, children] = await Promise.all([
+      this.isExamPeriodOpen(schoolId, trimester),
+      this.getChildrenGrades(schoolMemberId, schoolId, trimester),
+    ])
+    return {
+      periodOpen,
+      children: periodOpen ? children : children.map(c => ({ ...c, grades: [] })),
+    }
+  },
+
+  /** Signe le bulletin — uniquement si l'élève est lié à ce parent et la période du trimestre ouverte. */
   async signGrade(
     examResultId: string,
     parentSignature: string,
     schoolId: string,
     parentMemberId: string,
-  ): Promise<boolean> {
+  ): Promise<'ok' | 'forbidden' | 'closed'> {
     const [result] = await db
-      .select({ id: examResults.id })
+      .select({ id: examResults.id, trimester: examResults.trimester })
       .from(examResults)
       .innerJoin(parentStudents, and(
         eq(parentStudents.studentId, examResults.studentId),
@@ -603,12 +616,13 @@ export const examsService = {
       ))
       .where(and(eq(examResults.id, examResultId), eq(examResults.schoolId, schoolId)))
       .limit(1)
-    if (!result) return false
+    if (!result) return 'forbidden'
+    if (!await this.isExamPeriodOpen(schoolId, result.trimester)) return 'closed'
 
     await db
       .update(examResults)
       .set({ parentSignature })
       .where(eq(examResults.id, result.id))
-    return true
+    return 'ok'
   },
 }
