@@ -26,7 +26,7 @@ interface Props {
   initialName: string
 }
 
-export function OnboardingClient({ schoolId, initialName }: Props) {
+export function OnboardingClient({ initialName }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [step, setStep] = useState(1)
@@ -137,7 +137,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
           <div className="h-14 w-14 rounded-2xl bg-[#2d6a4f] flex items-center justify-center mx-auto mb-4 shadow-lg">
             <School className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-[#1e4535]">Configuration de l'école</h1>
+          <h1 className="text-2xl font-bold text-[#1e4535]">Configuration de l&apos;école</h1>
           <p className="text-sm text-muted-foreground mt-1">Quelques étapes pour préparer votre portail</p>
         </div>
 
@@ -171,8 +171,8 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
           {step === 1 && (
             <div className="p-4 sm:p-8 space-y-6">
               <div>
-                <h2 className="text-lg font-bold text-[#2d6a4f]">Identité de l'école</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Ces informations seront visibles dans l'application.</p>
+                <h2 className="text-lg font-bold text-[#2d6a4f]">Identité de l&apos;école</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">Ces informations seront visibles dans l&apos;application.</p>
               </div>
 
               {/* Logo upload */}
@@ -186,7 +186,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <p className="text-sm font-medium text-gray-700">Logo de l'école</p>
+                  <p className="text-sm font-medium text-gray-700">Logo de l&apos;école</p>
                   <p className="text-xs text-gray-400">PNG ou JPG, max 2 Mo. Optionnel — vous pourrez le modifier plus tard.</p>
                   <input
                     ref={fileRef}
@@ -210,7 +210,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                    <School className="h-3.5 w-3.5 text-gray-400" /> Nom de l'école *
+                    <School className="h-3.5 w-3.5 text-gray-400" /> Nom de l&apos;école *
                   </label>
                   <input
                     value={schoolName}
@@ -278,7 +278,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
             <div className="p-4 sm:p-8 space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-[#2d6a4f]">Opérations scolaires</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Définissez l'année académique, le trimestre en cours, puis activez l'inscription et les examens.</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Définissez l&apos;année académique, le trimestre en cours, puis activez l&apos;inscription et les examens.</p>
               </div>
 
               <div className="space-y-5">
@@ -351,7 +351,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                         Autoriser les nouvelles inscriptions pour {academicYear}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Autoriser les nouvelles inscriptions d'élèves
+                        Autoriser les nouvelles inscriptions d&apos;élèves
                       </p>
                     </div>
                   </label>
@@ -371,7 +371,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                         Ouvrir les examens pour Trimestre {currentTrimester} {academicYear}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Activer l'affichage des examens et notes dans les portails parents et enseignants
+                        Activer l&apos;affichage des examens et notes dans les portails parents et enseignants
                       </p>
                     </div>
                   </label>
@@ -470,7 +470,7 @@ export function OnboardingClient({ schoolId, initialName }: Props) {
                 <div className="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center mx-auto">
                   <Sparkles className="h-8 w-8 text-green-500" />
                 </div>
-                <h2 className="text-xl font-bold text-[#2d6a4f]">L'école est prête !</h2>
+                <h2 className="text-xl font-bold text-[#2d6a4f]">L&apos;école est prête !</h2>
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                   La configuration de base est terminée. Vous pouvez maintenant accéder à votre portail et ajouter des enseignants, des élèves et des classes.
                 </p>

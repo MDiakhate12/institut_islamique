@@ -1,15 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCurrentMinute } from '@/lib/use-current-minute'
 
 export function AdminHomeClock() {
-  const [now, setNow] = useState<Date | null>(null)
-
-  useEffect(() => {
-    setNow(new Date())
-    const interval = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(interval)
-  }, [])
+  const now = useCurrentMinute()
 
   if (!now) return null
 

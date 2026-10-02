@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, timestamp, pgEnum, integer } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, boolean, timestamp, pgEnum } from 'drizzle-orm/pg-core'
 import { schools } from './schools'
 
 export const adminSubRoleEnum = pgEnum('admin_sub_role', ['admin', 'treasurer', 'manager'])

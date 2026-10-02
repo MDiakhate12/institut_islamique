@@ -6,7 +6,7 @@ import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { createClient } from '@/lib/supabase/server'
 import { expensesService } from './expenses.service'
-import { createExpenseSchema, updateExpenseStatusSchema } from './expenses.schema'
+import { createExpenseSchema } from './expenses.schema'
 import type { ExpenseListItem, ExpenseKpis } from './expenses.types'
 
 export async function getExpensesAction(): Promise<ActionResult<ExpenseListItem[]>> {

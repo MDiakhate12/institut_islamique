@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { format, addDays, subDays, isToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -11,15 +11,14 @@ import {
 } from '@/modules/attendance/attendance.hooks'
 import type {
   AdminDayOverview, AdminClassOverview,
-  AttendanceStatus, AdminStudentEntry,
-} from '@/modules/attendance/attendance.types'
+  AttendanceStatus, } from '@/modules/attendance/attendance.types'
 import type { AttendanceStudent } from '@/modules/attendance/attendance.types'
 import { StudentListDialog } from './StudentListDialog'
 import type { DialogStatusFilter } from './StudentListDialog'
 import { getSubjectColor } from '@/modules/classes/classes.types'
 import {
   Bell, ChevronLeft, ChevronRight, Calendar, Users,
-  Check, Clock, X, FileText, ArrowLeft,
+  Check, X, FileText, ArrowLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -336,19 +335,13 @@ function ClassDetailView({
   const { data: existing } = useExistingAttendance(cls.classId, dateStr)
   const { mutateAsync: submit, isPending } = useAdminSubmitAttendance()
 
-  const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({})
-  const [initialized, setInitialized] = useState(false)
-
-  // Init from existing attendance
-  useEffect(() => {
-    if (existing !== undefined && !initialized) {
-      setStatuses(existing?.records ?? {})
-      setInitialized(true)
-    }
-  }, [existing, initialized])
+  // Brouillon des modifications de l'admin ; tant qu'il n'y en a pas, on affiche la saisie existante
+  // (état dérivé plutôt que recopié dans un useEffect)
+  const [draft, setDraft] = useState<Record<string, AttendanceStatus> | null>(null)
+  const statuses = useMemo(() => draft ?? existing?.records ?? {}, [draft, existing])
 
   const setStatus = (studentId: string, status: AttendanceStatus) => {
-    setStatuses(prev => ({ ...prev, [studentId]: status }))
+    setDraft(prev => ({ ...(prev ?? existing?.records ?? {}), [studentId]: status }))
   }
 
   const counts = useMemo(() => {

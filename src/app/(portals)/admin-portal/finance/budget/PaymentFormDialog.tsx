@@ -1,7 +1,7 @@
 'use client'
 
 import { localTodayISO } from '@/lib/dates'
-import { useEffect, useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus } from 'lucide-react'
@@ -49,28 +49,27 @@ export function PaymentFormDialog({ editing, onClose }: Props) {
   const createPayment = useCreatePayment()
   const updatePayment = useUpdatePayment()
 
+  // Mode édition : `values` réinitialise le formulaire quand le paiement édité change, et le
+  // dialogue est ouvert tant qu'il y a un paiement à éditer — plus de useEffect qui recopie l'état.
+  const editValues = useMemo<CreatePaymentInput | undefined>(() => editing ? {
+    studentIds: editing.studentId ? [editing.studentId] : [],
+    parentName: editing.parentName,
+    amount: editing.amount / 100,
+    category: editing.category as CreatePaymentInput['category'],
+    period: editing.period as CreatePaymentInput['period'],
+    method: editing.method as CreatePaymentInput['method'],
+    financialOption: editing.financialOption,
+    status: editing.status as CreatePaymentInput['status'],
+    paymentDate: editing.date,
+    notes: editing.notes,
+  } : undefined, [editing])
+
   const { control, register, handleSubmit, reset, formState: { isSubmitting } } = useForm<CreatePaymentInput>({
     resolver: zodResolver(createPaymentSchema),
     defaultValues: DEFAULT_VALUES,
+    values: editValues,
   })
-
-  useEffect(() => {
-    if (editing) {
-      reset({
-        studentIds: editing.studentId ? [editing.studentId] : [],
-        parentName: editing.parentName,
-        amount: editing.amount / 100,
-        category: editing.category as CreatePaymentInput['category'],
-        period: editing.period as CreatePaymentInput['period'],
-        method: editing.method as CreatePaymentInput['method'],
-        financialOption: editing.financialOption,
-        status: editing.status as CreatePaymentInput['status'],
-        paymentDate: editing.date,
-        notes: editing.notes,
-      })
-      setOpen(true)
-    }
-  }, [editing, reset])
+  const isOpen = open || !!editing
 
   function handleOpenChange(v: boolean) {
     setOpen(v)
@@ -92,7 +91,7 @@ export function PaymentFormDialog({ editing, onClose }: Props) {
   const financialOptions = school?.settings?.financialOptions ?? []
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {!editing && (
         <DialogTrigger render={
           <Button className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5 flex-1">

@@ -41,7 +41,7 @@ function WaveformBars({ active }: { active: boolean }) {
           )}
           style={{
             height: active
-              ? `${20 + Math.sin((i / 3) + Date.now() / 200) * 20 + Math.random() * 20}%`
+              ? `${30 + ((i * 37) % 50)}%` // motif fixe : le mouvement vient d'animate-pulse (pas de Date.now/Math.random au rendu)
               : '20%',
             animationDelay: `${i * 50}ms`,
             animationDuration: `${400 + i * 60}ms`,

@@ -1,0 +1,28 @@
+name: CI
+
+# Contrôles statiques rapides (~1-2 min), indépendants des tests E2E (e2e.yml) :
+# toute erreur OU tout avertissement ESLint, et toute erreur TypeScript, bloque la PR.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: ESLint (0 avertissement toléré)
+        run: npm run lint
+      - name: TypeScript
+        run: npm run typecheck

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useSendReminder } from '@/modules/calendar/calendar.hooks'
@@ -23,7 +22,6 @@ interface Props {
 function formatTime(t: string) {
   const [h, m] = t.split(':')
   const hour = parseInt(h)
-  const suffix = hour >= 12 ? 'AM' : 'AM'
   const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
   return `${h12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`
 }

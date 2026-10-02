@@ -194,7 +194,7 @@ export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: Sid
         ) : (
           <>
             <p className="font-bold text-white text-[15px] leading-tight">
-              Portail d'administration
+              Portail d&apos;administration
             </p>
             <p className="text-white/70 text-sm mt-1 truncate">
               Bienvenue, {displayName}

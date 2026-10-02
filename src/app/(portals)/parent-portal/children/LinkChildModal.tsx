@@ -160,7 +160,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
               </div>
 
               <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-700">
-                Utilisez l'adresse e-mail enregistrée dans le dossier scolaire de votre enfant.
+                Utilisez l&apos;adresse e-mail enregistrée dans le dossier scolaire de votre enfant.
               </div>
 
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700">
@@ -230,7 +230,7 @@ export function LinkChildModal({ children, onLinked }: LinkChildModalProps) {
                 className="flex items-center gap-1 text-xs text-[#2d6a4f] hover:underline"
               >
                 <ArrowLeft className="h-3 w-3" />
-                Changer d'adresse e-mail
+                Changer d&apos;adresse e-mail
               </button>
             </div>
 

@@ -77,9 +77,7 @@ function FileRow({ url, name, size }: { url: string; name: string; size: number 
 // ── Single homework card ────────────────────────────────────────────────────────
 function HomeworkCard({
   item,
-  childName,
   onSubmit,
-  onReload,
 }: {
   item: ParentHomeworkItem
   childName: string
@@ -247,10 +245,6 @@ function HomeworkCard({
 // ── Helpers ────────────────────────────────────────────────────────────────────
 import { SURAHS } from '@/modules/homework/surahs.data'
 import { addDaysISO } from '@/lib/dates'
-
-function getSurahNumber(name: string): number {
-  return SURAHS.find(s => s.name === name)?.number ?? 1
-}
 
 // `today` vient du serveur (fuseau de l'école) : identique au rendu SSR et côté navigateur
 function groupByDate(items: ParentHomeworkItem[], today: string): [string, ParentHomeworkItem[]][] {

@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { academicEvents } from '@/db/schema'
-import { eq, and, gte, lte, desc } from 'drizzle-orm'
+import { eq, and, gte, lte } from 'drizzle-orm'
 import type { AcademicEvent } from './calendar.types'
 import type { CreateEventInput, UpdateEventInput } from './calendar.schema'
 

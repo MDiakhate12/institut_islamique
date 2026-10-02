@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, ArrowUpDown, Pencil, Trash2, Check, X, Download } from 'lucide-react'
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, Check, X, Download } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge'
@@ -61,7 +61,9 @@ function SortTh({ label, sortKey, active, asc, onSort }: {
     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">
       <button type="button" onClick={() => onSort(sortKey)} className="flex items-center gap-1 hover:text-gray-800">
         {label}
-        <ArrowUpDown className={cn('h-3 w-3', active && 'text-[#2d6a4f]')} />
+        {!active ? <ArrowUpDown className="h-3 w-3" />
+          : asc ? <ArrowUp className="h-3 w-3 text-[#2d6a4f]" />
+          : <ArrowDown className="h-3 w-3 text-[#2d6a4f]" />}
       </button>
     </th>
   )

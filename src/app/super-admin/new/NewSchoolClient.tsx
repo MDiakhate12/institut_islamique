@@ -13,12 +13,11 @@ export function NewSchoolClient() {
   const [isPending, startTransition] = useTransition()
   const [created, setCreated] = useState<{ schoolId: string; schoolName: string; inviteUrl: string; emailSent: boolean } | null>(null)
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<CreateSchoolInput>({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<CreateSchoolInput>({
     resolver: zodResolver(createSchoolSchema),
     defaultValues: { schoolName: '', schoolSlug: '', adminEmail: '' },
   })
 
-  const schoolName = watch('schoolName')
 
   function autoSlug(name: string) {
     return name
@@ -68,7 +67,7 @@ export function NewSchoolClient() {
 
           {/* Invite URL — toujours visible */}
           <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Lien d'invitation</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Lien d&apos;invitation</p>
             <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5">
               <span className="text-xs text-gray-600 flex-1 break-all font-mono">{created.inviteUrl}</span>
               <button
@@ -79,7 +78,7 @@ export function NewSchoolClient() {
                 Copier
               </button>
             </div>
-            <p className="text-xs text-gray-400">L'admin clique ce lien → crée son compte → accède au wizard de configuration.</p>
+            <p className="text-xs text-gray-400">L&apos;admin clique ce lien → crée son compte → accède au wizard de configuration.</p>
           </div>
 
           <div className="flex gap-3 pt-1">
@@ -123,7 +122,7 @@ export function NewSchoolClient() {
           </p>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">Nom de l'école *</label>
+            <label className="text-sm font-medium text-gray-700">Nom de l&apos;école *</label>
             <input
               {...register('schoolName')}
               onChange={onNameChange}
@@ -170,12 +169,12 @@ export function NewSchoolClient() {
               className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]/20 focus:border-[#2d6a4f]"
             />
             {errors.adminEmail && <p className="text-xs text-red-500">{errors.adminEmail.message}</p>}
-            <p className="text-xs text-gray-400">L'admin renseignera son nom lors de la création de son compte.</p>
+            <p className="text-xs text-gray-400">L&apos;admin renseignera son nom lors de la création de son compte.</p>
           </div>
         </div>
 
         <div className="bg-[#f4f9f3] border border-[#cde6c8] rounded-lg px-4 py-3 text-sm text-[#2d6a4f]">
-          Un email d'invitation sera envoyé automatiquement à l'administrateur avec un lien pour créer son compte.
+          Un email d&apos;invitation sera envoyé automatiquement à l&apos;administrateur avec un lien pour créer son compte.
         </div>
 
         <button
@@ -188,7 +187,7 @@ export function NewSchoolClient() {
           ) : (
             <>
               <School className="h-4 w-4" />
-              Créer l'école et envoyer l'invitation
+              Créer l&apos;école et envoyer l&apos;invitation
             </>
           )}
         </button>

@@ -3,7 +3,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, Clock, XCircle } from 'lucide-react'
-import type { AttendanceStatus } from '@/modules/attendance/attendance.types'
 
 type Props = {
   open: boolean

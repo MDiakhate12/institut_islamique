@@ -539,7 +539,7 @@ function ClassSelectionPreview({ formType, classes = [] }: { formType: FormType;
         <div>
           <p className="text-sm font-medium text-foreground">Le placement en classe est géré automatiquement par le système.</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Nous vous déplacerons automatiquement ou enregistrerons les classes en fonction de vos antécédents académiques précédents. Aucune sélection manuelle n'est requise.
+            Nous vous déplacerons automatiquement ou enregistrerons les classes en fonction de vos antécédents académiques précédents. Aucune sélection manuelle n&apos;est requise.
           </p>
         </div>
       </div>

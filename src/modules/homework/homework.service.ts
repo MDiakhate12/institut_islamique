@@ -68,10 +68,11 @@ export const homeworkService = {
       .onConflictDoNothing()
   },
 
-  async removePinnedClass(pinnedId: string): Promise<void> {
+  // Filtré sur l'enseignant : un id seul permettait de retirer l'épinglage de n'importe qui
+  async removePinnedClass(pinnedId: string, memberId: string): Promise<void> {
     await db
       .delete(teacherHomeworkClasses)
-      .where(eq(teacherHomeworkClasses.id, pinnedId))
+      .where(and(eq(teacherHomeworkClasses.id, pinnedId), eq(teacherHomeworkClasses.schoolMemberId, memberId)))
   },
 
   // ── Class options (for AddClassDialog) ──────────────────────────
@@ -136,7 +137,7 @@ export const homeworkService = {
     return rows.map(r => ({
       ...r,
       isFullSurah: r.isFullSurah ?? false,
-      revisionSurahs: (r.revisionSurahs as any[]) ?? [],
+      revisionSurahs: r.revisionSurahs ?? [],
       createdByName: r.createdByName ?? null,
     }))
   },
@@ -175,7 +176,7 @@ export const homeworkService = {
       ...row,
       assignedDate: row.assignedDate as string,
       isFullSurah: row.isFullSurah ?? false,
-      revisionSurahs: (row.revisionSurahs as any[]) ?? [],
+      revisionSurahs: row.revisionSurahs ?? [],
       createdByName: null,
     }
   },
@@ -405,7 +406,7 @@ export const homeworkService = {
           fromVerse:    row.fromVerse ?? null,
           toVerse:      row.toVerse ?? null,
           isFullSurah:  row.isFullSurah ?? false,
-          revisionSurahs: (row.revisionSurahs as any[]) ?? [],
+          revisionSurahs: row.revisionSurahs ?? [],
           description:  row.description ?? null,
           fileUrl:      row.fileUrl ?? null,
           fileName:     row.fileName ?? null,

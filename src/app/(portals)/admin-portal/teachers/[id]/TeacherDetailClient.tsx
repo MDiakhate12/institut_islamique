@@ -92,7 +92,7 @@ export function TeacherDetailClient({ teacher, classCount }: TeacherDetailClient
           <div>
             <h2 className="text-lg font-semibold">{teacher.fullName ?? '—'}</h2>
             {teacher.isPending && (
-              <span className="text-sm text-orange-600 font-medium">En attente d'activation du compte</span>
+              <span className="text-sm text-orange-600 font-medium">En attente d&apos;activation du compte</span>
             )}
           </div>
         </div>
@@ -158,7 +158,7 @@ export function TeacherDetailClient({ teacher, classCount }: TeacherDetailClient
                 name="teacherType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type d'enseignant</FormLabel>
+                    <FormLabel>Type d&apos;enseignant</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>

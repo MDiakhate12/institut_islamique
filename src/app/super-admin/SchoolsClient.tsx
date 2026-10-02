@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import {
   Plus, School, Users, CheckCircle, Clock,
-  Copy, Mail, Pencil, Trash2, Eye, X,
-  Hash, Calendar, AlertTriangle, ExternalLink,
+  Copy, Mail, Pencil, Trash2, Eye, Hash, Calendar, AlertTriangle, ExternalLink,
 } from 'lucide-react'
 import {
   Dialog,
@@ -322,7 +321,7 @@ export function SchoolsClient({ initialSchools }: Props) {
               {/* Pending admin */}
               {detailsTarget.pendingAdminEmail && (
                 <div className="space-y-1.5">
-                  <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Lien d'invitation (admin en attente)</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Lien d&apos;invitation (admin en attente)</p>
                   <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
                     Admin attendu : <strong>{detailsTarget.pendingAdminEmail}</strong>
                   </p>
@@ -357,7 +356,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
                     <Mail className="h-3.5 w-3.5" />
-                    Renvoyer l'email
+                    Renvoyer l&apos;email
                   </button>
                 )}
               </div>
@@ -370,15 +369,15 @@ export function SchoolsClient({ initialSchools }: Props) {
       <Dialog open={!!editTarget} onOpenChange={open => { if (!open) setEditTarget(null) }}>
         <DialogContent className="max-w-md">
           <DialogTitle className="text-lg font-bold text-gray-900 mb-4">
-            Modifier l'école
+            Modifier l&apos;école
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Modifier le nom et le slug de l'école
+            Modifier le nom et le slug de l&apos;école
           </DialogDescription>
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Nom de l'école *</label>
+              <label className="text-sm font-medium text-gray-700">Nom de l&apos;école *</label>
               <input
                 value={editName}
                 onChange={e => {
@@ -402,7 +401,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                 />
               </div>
               <p className="text-xs text-amber-600">
-                Modifier le slug change l'URL d'inscription publique.
+                Modifier le slug change l&apos;URL d&apos;inscription publique.
               </p>
             </div>
 
@@ -434,7 +433,7 @@ export function SchoolsClient({ initialSchools }: Props) {
             </div>
             <div>
               <DialogTitle className="text-lg font-bold text-gray-900">
-                Supprimer l'école ?
+                Supprimer l&apos;école ?
               </DialogTitle>
               <DialogDescription className="text-sm text-gray-500 mt-1">
                 Cette action est irréversible. Tous les élèves, enseignants, classes et données associés seront définitivement supprimés.

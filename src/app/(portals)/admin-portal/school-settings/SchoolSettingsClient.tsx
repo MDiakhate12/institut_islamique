@@ -26,8 +26,7 @@ import {
 import {
   Save, Plus, Trash2, Upload, GripVertical, Phone, Mail, Globe,
   Share2, MapPin, Clock, BookOpen, Link, Tv2, Users,
-  FileSpreadsheet, Settings, AlertTriangle, MessageCircle,
-  Check, HelpCircle, CreditCard,
+  FileSpreadsheet, Settings, AlertTriangle, Check, HelpCircle, CreditCard,
 } from 'lucide-react'
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -921,7 +920,7 @@ function SchoolStaffSection() {
         return (
           <Section icon={Users} title="Personnel de l'école">
             <div className="flex items-center justify-between -mt-2 mb-1">
-              <p className="text-xs text-muted-foreground">La liste des administrateurs et membres du personnel de l'école avec leurs rôles.</p>
+              <p className="text-xs text-muted-foreground">La liste des administrateurs et membres du personnel de l&apos;école avec leurs rôles.</p>
               <button
                 type="button"
                 onClick={() => setAdding(true)}

@@ -61,7 +61,7 @@ export function PaymentStatusClient() {
 
       {children.length > 0 && (
         <div className="space-y-2">
-          <MarkAsPaidDialog children={children} academicYear={academicYear} />
+          <MarkAsPaidDialog linkedChildren={children} academicYear={academicYear} />
           <p className="text-xs text-center text-muted-foreground">Votre paiement sera vérifié par un administrateur.</p>
         </div>
       )}

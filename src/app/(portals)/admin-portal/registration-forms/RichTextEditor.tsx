@@ -25,7 +25,6 @@ export function RichTextEditor({ value, onChange, placeholder = 'Saisissez le co
 
   const exec = useCallback((cmd: string, val?: string) => {
     ref.current?.focus()
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     document.execCommand(cmd, false, val)
     const html = ref.current?.innerHTML ?? ''
     lastValue.current = html

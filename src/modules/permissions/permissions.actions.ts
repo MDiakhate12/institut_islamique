@@ -5,7 +5,6 @@ import { requireSession } from '@/lib/auth/session'
 import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
-import { ADMIN_SUB_ROLES } from '@/lib/constants'
 import type { AdminSubRole } from '@/lib/constants'
 import { permissionsService } from './permissions.service'
 import type { PermissionMember, SearchResult } from './permissions.types'
@@ -25,7 +24,7 @@ export async function getPermissionsByRoleAction(
   try {
     const data = await permissionsService.getByRole(session.schoolId, role)
     return ok(data)
-  } catch (e) {
+  } catch {
     return err('Erreur lors du chargement des autorisations')
   }
 }
@@ -46,7 +45,7 @@ export async function searchMemberByEmailAction(
   try {
     const result = await permissionsService.searchByEmail(session.schoolId, email, targetRole)
     return ok(result)
-  } catch (e) {
+  } catch {
     return err('Erreur lors de la recherche')
   }
 }
@@ -141,7 +140,7 @@ export async function grantRoleAction(
     }
 
     return ok(undefined)
-  } catch (e) {
+  } catch {
     return err('Erreur lors de l\'attribution du rôle')
   }
 }
@@ -230,7 +229,7 @@ export async function revokeRoleAction(
     await permissionsService.revokeRole(memberId, session.schoolId)
     revalidatePath('/admin-portal/permissions')
     return ok(undefined)
-  } catch (e) {
+  } catch {
     return err('Erreur lors de la révocation du rôle')
   }
 }

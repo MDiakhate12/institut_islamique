@@ -71,7 +71,7 @@ export function AddInfoBlockDialog({ open, onOpenChange, onAdd, existing }: Prop
           {/* Style selector */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-sm">Style d'affichage</Label>
+              <Label className="text-sm">Style d&apos;affichage</Label>
               <button type="button" className="text-xs text-[#2d6a4f] hover:underline">Thème de couleur</button>
             </div>
             <div className="grid grid-cols-4 gap-2">

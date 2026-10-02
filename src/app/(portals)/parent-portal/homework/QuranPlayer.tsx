@@ -126,6 +126,7 @@ export function QuranPlayer({ surahNumber, surahName, surahArabic, fromVerse, to
   }, [fromVerse, toVerse, loadAyah])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- charge le verset dans l'élément <audio> (système externe) ; loadAyah met à jour le verset affiché
     loadAyah(fromVerse, false)
   }, [fromVerse, reciterId, loadAyah])
 

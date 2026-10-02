@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition, useState, useRef } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
@@ -88,9 +88,10 @@ export function ClassFormDialog({
     },
   })
 
-  const teacherId          = form.watch('teacherId')
-  const assistantTeacherId = form.watch('assistantTeacherId')
-  const selectedSubject    = form.watch('subject')
+  const teacherId          = useWatch({ control: form.control, name: 'teacherId' })
+  const assistantTeacherId = useWatch({ control: form.control, name: 'assistantTeacherId' })
+  const selectedSubject    = useWatch({ control: form.control, name: 'subject' })
+  const curriculum         = useWatch({ control: form.control, name: 'curriculum' })
 
   const currentRoom = scheduledClass?.room
   const roomOptions = currentRoom && !rooms.includes(currentRoom)
@@ -236,7 +237,7 @@ export function ClassFormDialog({
           {/* Programme — collapsible */}
           {(() => {
             const { ref: regRef, ...curriculumRest } = form.register('curriculum')
-            const hasCurriculum = !!form.watch('curriculum')
+            const hasCurriculum = !!curriculum
             return (
               <div className="border border-border rounded-lg overflow-hidden">
                 <button
@@ -262,13 +263,15 @@ export function ClassFormDialog({
                     {/* Barre d'outils */}
                     <div className="px-2 py-2 border-b border-border flex flex-wrap items-center gap-1.5 bg-muted/20">
                       {/* Formatage */}
-                      {[
-                        { label: 'H1', title: 'Titre 1',   action: () => insertLinePrefix('# '),       cls: 'font-bold' },
-                        { label: 'H2', title: 'Titre 2',   action: () => insertLinePrefix('## '),      cls: 'font-semibold' },
-                        { label: 'B',  title: 'Gras',      action: () => insertAtCursor('**', '**'),   cls: 'font-bold' },
-                        { label: 'I',  title: 'Italique',  action: () => insertAtCursor('*', '*'),     cls: 'italic' },
-                      ].map(btn => (
-                        <button key={btn.label} type="button" title={btn.title} onClick={btn.action}
+                      {/* Données seulement : l'action (qui lit le ref du textarea) est résolue dans le handler */}
+                      {([
+                        { label: 'H1', title: 'Titre 1',  prefix: '# ',  cls: 'font-bold' },
+                        { label: 'H2', title: 'Titre 2',  prefix: '## ', cls: 'font-semibold' },
+                        { label: 'B',  title: 'Gras',     wrap: '**',    cls: 'font-bold' },
+                        { label: 'I',  title: 'Italique', wrap: '*',     cls: 'italic' },
+                      ] as { label: string; title: string; prefix?: string; wrap?: string; cls: string }[]).map(btn => (
+                        <button key={btn.label} type="button" title={btn.title}
+                          onClick={() => { if (btn.prefix) insertLinePrefix(btn.prefix); else if (btn.wrap) insertAtCursor(btn.wrap, btn.wrap) }}
                           className={cn('px-2 py-0.5 text-xs rounded border border-border hover:bg-muted bg-white transition-colors', btn.cls)}>
                           {btn.label}
                         </button>

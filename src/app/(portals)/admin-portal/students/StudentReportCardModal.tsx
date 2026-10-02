@@ -4,7 +4,6 @@ import { useRef } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useStudentReportCard } from '@/modules/students/students.hooks'
 import { Loader2, Printer } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import type { StudentListItem } from '@/modules/students/students.types'
 import type { StudentExamResult } from '@/modules/students/students.types'
 

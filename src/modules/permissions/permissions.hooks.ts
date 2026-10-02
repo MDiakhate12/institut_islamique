@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AdminSubRole } from '@/lib/constants'
 import {
   getPermissionsByRoleAction,
-  searchMemberByEmailAction,
   grantRoleAction,
   revokeRoleAction,
   resendInvitationAction,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -69,8 +69,9 @@ export function SignupForm({
     },
   })
 
-  const password = form.watch('password')
-  const confirmPassword = form.watch('confirmPassword')
+  const password = useWatch({ control: form.control, name: 'password' })
+  const confirmPassword = useWatch({ control: form.control, name: 'confirmPassword' })
+  const acceptedTerms = useWatch({ control: form.control, name: 'acceptedTerms' })
   const passwordsMatch = password.length > 0 && password === confirmPassword
 
   function onSubmit(data: SignupInput) {
@@ -170,7 +171,7 @@ export function SignupForm({
               </FormControl>
               {isInvite && (
                 <p className="text-xs text-muted-foreground">
-                  Adresse enregistrée par l'administrateur — non modifiable.
+                  Adresse enregistrée par l&apos;administrateur — non modifiable.
                 </p>
               )}
               <FormMessage />
@@ -234,7 +235,7 @@ export function SignupForm({
               </FormControl>
               {isTeacherInvite && prefilledPhone && (
                 <p className="text-xs text-muted-foreground">
-                  Numéro enregistré par l'administrateur — non modifiable.
+                  Numéro enregistré par l&apos;administrateur — non modifiable.
                 </p>
               )}
               <FormMessage />
@@ -366,9 +367,9 @@ export function SignupForm({
                   className="mt-0.5 h-4 w-4 accent-[#2d6a4f] cursor-pointer shrink-0"
                 />
                 <span className="text-sm text-muted-foreground leading-snug">
-                  J'accepte les{' '}
+                  J&apos;accepte les{' '}
                   <span className="text-[#2d6a4f] underline cursor-pointer">
-                    Conditions Générales d'Utilisation
+                    Conditions Générales d&apos;Utilisation
                   </span>{' '}
                   et la{' '}
                   <span className="text-[#2d6a4f] underline cursor-pointer">
@@ -383,7 +384,7 @@ export function SignupForm({
 
         <Button
           type="submit"
-          disabled={isPending || !form.watch('acceptedTerms')}
+          disabled={isPending || !acceptedTerms}
           className="w-full bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-2"
         >
           {isPending ? (

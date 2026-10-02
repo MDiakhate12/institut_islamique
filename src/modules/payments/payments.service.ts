@@ -4,7 +4,7 @@ import {
 } from '@/db/schema'
 import { and, eq, inArray, desc } from 'drizzle-orm'
 import { authUsers } from '@/db/auth-users'
-import type { CreatePaymentInput, CreateParentPaymentInput } from './payments.schema'
+import type { CreatePaymentInput } from './payments.schema'
 import type { PaymentListItem, PaymentKpis, ChildPaymentStatus, UnpaidParent } from './payments.types'
 
 const PAID_PERIODS = new Set(['trimester_1', 'trimester_2', 'trimester_3', 'annually'])

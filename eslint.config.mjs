@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Artefacts générés (build E2E, rapports Playwright, état d'auth) — pas du code source
+    ".next-e2e/**",
+    "playwright-report/**",
+    "test-results/**",
+    "blob-report/**",
+    "e2e/.auth/**",
+    // Exemples de code archivés (anciennes conversations), pas du code de l'application
+    "docs/**",
   ]),
 ]);
 

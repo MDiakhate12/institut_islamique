@@ -1,5 +1,6 @@
 'use client'
 
+import type { CreateHomeworkInput } from './homework.schema'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getPinnedClassesAction, getClassOptionsAction,
@@ -65,8 +66,8 @@ export function useHomework(classId: string) {
 export function useCreateHomework() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: unknown) => createHomeworkAction(input),
-    onSuccess: (_, vars: any) => {
+    mutationFn: (input: CreateHomeworkInput) => createHomeworkAction(input),
+    onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: hwKeys.homework(vars.classId) })
       qc.invalidateQueries({ queryKey: hwKeys.pinnedClasses() })
     },

@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, timestamp, date, pgEnum, boolean } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, integer, timestamp, date, pgEnum } from 'drizzle-orm/pg-core'
 import { schools } from './schools'
 import { students, classEnrollments, classes } from './academic'
 import { schoolMembers } from './auth'

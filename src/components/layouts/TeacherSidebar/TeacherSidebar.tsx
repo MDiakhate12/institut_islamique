@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   BookMarked, CalendarCheck, Megaphone, Music2,
@@ -149,7 +149,7 @@ export function TeacherSidebar({ session, userFullName, schoolName }: TeacherSid
                        text-white/80 text-xs font-medium hover:bg-white/10 transition-colors"
           >
             <Shield className="h-3.5 w-3.5 shrink-0" />
-            Portail d'administration
+            Portail d&apos;administration
           </Link>
         </div>
       )}

@@ -71,7 +71,7 @@ export function TeacherInviteForm({ onSuccess, onCancel }: TeacherInviteFormProp
           <div>
             <h3 className="font-semibold text-gray-900">Enseignant créé</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Partagez ce code avec l'enseignant pour qu'il active son compte.
+              Partagez ce code avec l&apos;enseignant pour qu&apos;il active son compte.
             </p>
           </div>
         </div>
@@ -79,7 +79,7 @@ export function TeacherInviteForm({ onSuccess, onCancel }: TeacherInviteFormProp
         <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 space-y-3">
           <div className="flex items-center gap-2 text-amber-800">
             <Key className="h-4 w-4 shrink-0" />
-            <span className="text-xs font-semibold uppercase tracking-wide">Code d'activation</span>
+            <span className="text-xs font-semibold uppercase tracking-wide">Code d&apos;activation</span>
           </div>
           <div className="flex items-center gap-2">
             <code className="flex-1 font-mono text-xs bg-white border border-amber-200 rounded px-3 py-2 text-gray-800 break-all">
@@ -101,7 +101,7 @@ export function TeacherInviteForm({ onSuccess, onCancel }: TeacherInviteFormProp
             </div>
           </div>
           <p className="text-xs text-amber-700">
-            L'enseignant doit créer un compte sur <strong>/auth/signup</strong> avec l'email{' '}
+            L&apos;enseignant doit créer un compte sur <strong>/auth/signup</strong> avec l&apos;email{' '}
             <strong>{form.getValues('email')}</strong>, puis entrer ce code pour activer son accès.
           </p>
         </div>
@@ -167,7 +167,7 @@ export function TeacherInviteForm({ onSuccess, onCancel }: TeacherInviteFormProp
           name="teacherType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Type d'enseignant *</FormLabel>
+              <FormLabel>Type d&apos;enseignant *</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -187,7 +187,7 @@ export function TeacherInviteForm({ onSuccess, onCancel }: TeacherInviteFormProp
         />
 
         <p className="text-xs text-muted-foreground">
-          L'enseignant devra créer son compte avec cet email et entrer le code d'activation que vous recevrez.
+          L&apos;enseignant devra créer son compte avec cet email et entrer le code d&apos;activation que vous recevrez.
         </p>
 
         <div className="flex justify-end gap-3 pt-2">

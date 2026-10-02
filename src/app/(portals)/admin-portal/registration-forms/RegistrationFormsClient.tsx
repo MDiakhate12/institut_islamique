@@ -161,7 +161,7 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
             className="gap-1.5 text-xs h-8"
           >
             <Plus className="h-3.5 w-3.5" />
-            Ajouter un bloc d'info
+            Ajouter un bloc d&apos;info
           </Button>
 
           <Button
@@ -229,7 +229,7 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
       <div className="mb-4 flex items-start gap-2.5 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
         <Info className="h-4 w-4 shrink-0 mt-0.5" />
         <p>
-          Ce formulaire est conçu pour l'inscription d'<strong>un seul étudiant</strong>. Si vous avez plus d'un étudiant à inscrire, veuillez soumettre des formulaires séparés pour chacun d'eux.
+          Ce formulaire est conçu pour l&apos;inscription d&apos;<strong>un seul étudiant</strong>. Si vous avez plus d&apos;un étudiant à inscrire, veuillez soumettre des formulaires séparés pour chacun d&apos;eux.
         </p>
       </div>
 
@@ -323,7 +323,7 @@ export function RegistrationFormsClient({ schoolSlug, classes }: { schoolSlug: s
     <div className="p-4 sm:p-6 space-y-0">
       {/* Page header */}
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-foreground">Créateur de formulaires d'inscription</h1>
+        <h1 className="text-2xl font-bold text-foreground">Créateur de formulaires d&apos;inscription</h1>
         <p className="text-sm text-muted-foreground mt-1">Faites glisser pour réorganiser, cliquez pour modifier</p>
       </div>
 
