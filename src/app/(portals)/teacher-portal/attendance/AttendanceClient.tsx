@@ -153,11 +153,21 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
                 const isSelected = cls.classId === selectedClassId
                 const code = cls.catalogCode || `${cls.subjectCode}`
                 return (
-                  <button
+                  // div et non <button> : il contient le bouton « Retirer », et un button imbriqué
+                  // dans un button est du HTML invalide (erreur d'hydratation)
+                  <div
                     key={cls.classId}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedClassId(cls.classId)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setSelectedClassId(cls.classId)
+                      }
+                    }}
                     className={cn(
-                      'group relative text-left rounded-xl border-2 p-4 w-52 transition-all',
+                      'group relative text-left rounded-xl border-2 p-4 w-52 transition-all cursor-pointer',
                       isSelected
                         ? 'border-blue-400 bg-blue-50 shadow-sm'
                         : 'border-border bg-white hover:border-gray-300 hover:shadow-sm'
@@ -180,7 +190,7 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
                     >
                       <X className="h-3.5 w-3.5 text-gray-400" />
                     </button>
-                  </button>
+                  </div>
                 )
               })}
             </div>
