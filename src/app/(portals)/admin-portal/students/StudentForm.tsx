@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
@@ -18,7 +18,7 @@ import {
 import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText, CalendarDays, ClipboardList, BookOpen, ChevronDown, ChevronUp, ClipboardCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { StudentListItem, GuardianSummary } from '@/modules/students/students.types'
-import { guardianDisplayName, calcAge } from '@/modules/students/students.types'
+import { calcAge } from '@/modules/students/students.types'
 import { studentsKeys } from '@/modules/students/students.hooks'
 import { AddClassDialog } from './AddClassDialog'
 import { StudentPaymentsModal } from './StudentPaymentsModal'
@@ -154,7 +154,7 @@ function GuardianForm({ initial, existingRelationships, onSave, onCancel }: Guar
           />
         </div>
         <div>
-          <label className="text-xs font-medium mb-1 block">Téléphone <span className="text-muted-foreground font-normal">(pour l'OTP)</span></label>
+          <label className="text-xs font-medium mb-1 block">Téléphone <span className="text-muted-foreground font-normal">(pour l&apos;OTP)</span></label>
           <Input
             className={INPUT_SIZE_CLASS}
             type="tel"
@@ -174,7 +174,7 @@ function GuardianForm({ initial, existingRelationships, onSave, onCancel }: Guar
           />
         </div>
         <div className="col-span-2">
-          <label className="text-xs font-medium mb-1 block">Téléphone d'urgence <span className="text-muted-foreground font-normal">(optionnel)</span></label>
+          <label className="text-xs font-medium mb-1 block">Téléphone d&apos;urgence <span className="text-muted-foreground font-normal">(optionnel)</span></label>
           <Input
             className={INPUT_SIZE_CLASS}
             type="tel"
@@ -301,8 +301,8 @@ export function StudentFormDialog({
     },
   })
 
-  const isActive = form.watch('isActive')
-  const birthDate = form.watch('birthDate')
+  const isActive = useWatch({ control: form.control, name: 'isActive' })
+  const birthDate = useWatch({ control: form.control, name: 'birthDate' })
 
   function resetAndClose() {
     form.reset()
@@ -421,9 +421,6 @@ export function StudentFormDialog({
   }
 
   const excludedIds = localEnrollments.map(e => e.id)
-  const editingGuardian = guardianFormMode !== 'closed' && guardianFormMode !== 'add'
-    ? localGuardians.find(g => g._tempId === guardianFormMode)
-    : undefined
 
   const lastAttendanceLabel = student?.lastAttendanceDate
     ? new Date(student.lastAttendanceDate).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })

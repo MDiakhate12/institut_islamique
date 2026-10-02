@@ -28,7 +28,6 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
 
   const exec = useCallback((cmd: string, val?: string) => {
     ref.current?.focus()
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     document.execCommand(cmd, false, val)
     const html = ref.current?.innerHTML ?? ''
     lastValue.current = html
@@ -45,7 +44,6 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
 
   const insertAtCursor = useCallback((html: string) => {
     ref.current?.focus()
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     document.execCommand('insertHTML', false, html)
     const newHtml = ref.current?.innerHTML ?? ''
     lastValue.current = newHtml
@@ -56,7 +54,6 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
     ref.current?.focus()
     const sel = window.getSelection()
     if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
       document.execCommand('hiliteColor', false, '#fef08a')
     }
     const html = ref.current?.innerHTML ?? ''
@@ -67,13 +64,15 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
   const now = new Date()
   const monthYear = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
-  const PRESETS = [
-    { label: 'Surligner', action: applyHighlight },
-    { label: 'Important', action: () => insertAtCursor('<p><span style="color:#2d6a4f"><strong>⚠️ Important:</strong></span></p>') },
-    { label: 'Rappel', action: () => insertAtCursor('<p><span style="color:#2d6a4f"><strong>🔔 Rappel :</strong></span></p>') },
-    { label: 'Action requise', action: () => insertAtCursor('<p><span style="color:#16a34a"><strong>✅ Action requise :</strong></span></p>') },
-    { label: 'Date et heure', action: () => insertAtCursor(`<p><span style="color:#2d6a4f">📅 Date : <em>${monthYear.charAt(0).toUpperCase() + monthYear.slice(1)}</em> ⏰ Heure : <em>12h 00</em></span></p>`) },
-    { label: 'Séparateur', action: () => insertAtCursor('<hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0"/>') },
+  // Données seulement (pas de closures qui touchent le ref créées pendant le rendu) :
+  // l'action est résolue dans le handler. html = null → surlignage de la sélection.
+  const PRESETS: { label: string; html: string | null }[] = [
+    { label: 'Surligner', html: null },
+    { label: 'Important', html: '<p><span style="color:#2d6a4f"><strong>⚠️ Important:</strong></span></p>' },
+    { label: 'Rappel', html: '<p><span style="color:#2d6a4f"><strong>🔔 Rappel :</strong></span></p>' },
+    { label: 'Action requise', html: '<p><span style="color:#16a34a"><strong>✅ Action requise :</strong></span></p>' },
+    { label: 'Date et heure', html: `<p><span style="color:#2d6a4f">📅 Date : <em>${monthYear.charAt(0).toUpperCase() + monthYear.slice(1)}</em> ⏰ Heure : <em>12h 00</em></span></p>` },
+    { label: 'Séparateur', html: '<hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0"/>' },
   ]
 
   return (
@@ -124,7 +123,7 @@ function AnnouncementEditor({ value, onChange }: EditorProps) {
       <div className="flex items-center flex-wrap gap-1 px-2 py-1.5 border-b border-border bg-muted/10">
         {PRESETS.map(p => (
           <button key={p.label} type="button"
-            onMouseDown={e => { e.preventDefault(); p.action() }}
+            onMouseDown={e => { e.preventDefault(); if (p.html) insertAtCursor(p.html); else applyHighlight() }}
             className="text-xs px-2 py-0.5 rounded border border-border hover:border-[#2d6a4f] hover:text-[#2d6a4f] text-muted-foreground transition-colors">
             {p.label}
           </button>

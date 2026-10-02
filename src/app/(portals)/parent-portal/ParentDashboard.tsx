@@ -1,11 +1,10 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
+import { useCurrentMinute } from '@/lib/use-current-minute'
 import Link from 'next/link'
 import {
   Users, BookMarked, Music2, UserCheck, CalendarOff, Star,
-  Megaphone, Library, CalendarDays, FileText, Clock, UserPlus,
-  CalendarCheck, ExternalLink, Download,
+  Megaphone, Library, CalendarDays, FileText, Clock, CalendarCheck, ExternalLink, Download,
 } from 'lucide-react'
 
 interface FeatureCard {
@@ -37,18 +36,10 @@ interface Props {
 
 // Horloge à la minute. Snapshot serveur = null : le serveur (UTC sur Vercel) et le navigateur
 // n'ont pas le même fuseau → rendre l'heure côté serveur provoque une erreur d'hydratation (#418).
-function subscribeEveryMinute(onChange: () => void) {
-  const interval = setInterval(onChange, 60_000)
-  return () => clearInterval(interval)
-}
-const getCurrentMinute = () => Math.floor(Date.now() / 60_000) * 60_000
-const getServerMinute = () => null
-
 export function ParentDashboard({ userFullName }: Props) {
   const displayName = userFullName ?? 'Parent'
 
-  const minute = useSyncExternalStore(subscribeEveryMinute, getCurrentMinute, getServerMinute)
-  const now = minute === null ? null : new Date(minute)
+  const now = useCurrentMinute()
   const dateStr = now?.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const timeStr = now?.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
@@ -72,8 +63,8 @@ export function ParentDashboard({ userFullName }: Props) {
         <div className="relative z-10 max-w-lg">
           <h2 className="text-xl font-bold">Les inscriptions pour 2026-2027 sont ouvertes !</h2>
           <p className="text-white/80 text-sm mt-1">
-            Réservez la place de votre enfant pour la prochaine année scolaire. L'inscription anticipée garantit
-            une priorité de placement et l'accès à toutes les classes disponibles.
+            Réservez la place de votre enfant pour la prochaine année scolaire. L&apos;inscription anticipée garantit
+            une priorité de placement et l&apos;accès à toutes les classes disponibles.
           </p>
           <Link
             href="/parent-portal/enrollment"

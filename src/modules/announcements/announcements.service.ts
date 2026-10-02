@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { announcements, schoolMembers, profiles } from '@/db/schema'
-import { eq, and, or, desc, ne } from 'drizzle-orm'
+import { eq, and, or, desc } from 'drizzle-orm'
 import { getMemberEmails } from '@/lib/email'
 import type { Announcement } from './announcements.types'
 import type { CreateAnnouncementInput, UpdateAnnouncementInput } from './announcements.schema'

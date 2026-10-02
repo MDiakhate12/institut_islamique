@@ -50,7 +50,7 @@ export async function addPinnedAttendanceClassAction(classId: string): Promise<A
 export async function removePinnedAttendanceClassAction(pinnedId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
   try {
-    await attendanceService.removePinnedClass(pinnedId)
+    await attendanceService.removePinnedClass(pinnedId, session.memberId)
     return ok(undefined)
   } catch (e) {
     console.error('[removePinnedAttendanceClassAction]', e)

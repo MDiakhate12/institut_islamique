@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { ClipboardList, X, Search, BookOpen, RefreshCw, FileText, Paperclip, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -47,33 +47,39 @@ export default function HomeworkDialog({ open, onClose, classId, homework }: Pro
   const create = useCreateHomework()
   const update = useUpdateHomework(classId)
 
-  useEffect(() => {
-    if (!open) return
-    if (isEdit && homework) {
-      setHasHifz(!!homework.surahName)
-      setHasRevision((homework.revisionSurahs ?? []).length > 0)
-      const surah = homework.surahName
-        ? SURAHS.find(s => s.name === homework.surahName) ?? null
-        : null
-      setSelectedSurahNumber(surah?.number ?? null)
-      setIsFullSurah(homework.isFullSurah)
-      setFromVerse(homework.fromVerse ?? 1)
-      setToVerse(homework.toVerse ?? 1)
-      setRevisionSurahs((homework.revisionSurahs as RevisionSurah[]) ?? [])
-      setDescription(homework.description ?? '')
-      setFile(null)
-    } else {
-      setHasHifz(false)
-      setHasRevision(false)
-      setSelectedSurahNumber(null)
-      setIsFullSurah(true)
-      setFromVerse(1)
-      setToVerse(1)
-      setRevisionSurahs([])
-      setDescription('')
-      setFile(null)
+  // Réinitialise les champs à chaque ouverture (ou changement de devoir édité) — ajusté pendant le
+  // rendu plutôt que dans un useEffect. 'closed' au départ : la 1re ouverture initialise aussi.
+  const resetKey = open ? `open|${isEdit ? homework?.id : 'new'}` : 'closed'
+  const [prevResetKey, setPrevResetKey] = useState('closed')
+  if (resetKey !== prevResetKey) {
+    setPrevResetKey(resetKey)
+    if (open) {
+      if (isEdit && homework) {
+        setHasHifz(!!homework.surahName)
+        setHasRevision((homework.revisionSurahs ?? []).length > 0)
+        const surah = homework.surahName
+          ? SURAHS.find(s => s.name === homework.surahName) ?? null
+          : null
+        setSelectedSurahNumber(surah?.number ?? null)
+        setIsFullSurah(homework.isFullSurah)
+        setFromVerse(homework.fromVerse ?? 1)
+        setToVerse(homework.toVerse ?? 1)
+        setRevisionSurahs((homework.revisionSurahs as RevisionSurah[]) ?? [])
+        setDescription(homework.description ?? '')
+        setFile(null)
+      } else {
+        setHasHifz(false)
+        setHasRevision(false)
+        setSelectedSurahNumber(null)
+        setIsFullSurah(true)
+        setFromVerse(1)
+        setToVerse(1)
+        setRevisionSurahs([])
+        setDescription('')
+        setFile(null)
+      }
     }
-  }, [open, isEdit, homework])
+  }
 
   const selectedSurah = selectedSurahNumber
     ? SURAHS.find(s => s.number === selectedSurahNumber) ?? null

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Users, Plus, CheckCircle2, Clock, XCircle, Copy, Info, ClipboardList, X, BadgeCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -46,8 +46,9 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
   )
   const [addClassOpen, setAddClassOpen] = useState(false)
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
-  // Map of studentId → status (null = not marked)
-  const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({})
+  // Brouillon de l'enseignant pour la classe sélectionnée (studentId → statut). Sans brouillon,
+  // on affiche la saisie existante du serveur — état dérivé, pas recopié dans un useEffect.
+  const [draft, setDraft] = useState<{ classId: string; records: Record<string, AttendanceStatus> } | null>(null)
 
   const { data: pinnedClasses = initialPinnedClasses } = usePinnedAttendanceClasses()
   const { data: students = [], isLoading: loadingStudents } = useAttendanceStudents(selectedClassId ?? '')
@@ -57,29 +58,16 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
 
   const selectedClass = pinnedClasses.find(c => c.classId === selectedClassId)
 
-  // Reset on class change (runs first, before existing updates)
-  useEffect(() => {
-    setStatuses({})
-  }, [selectedClassId])
-
-  // Populate from server when existing loads or refreshes after submit
-  // Never clears — clearing is the class-change effect's responsibility
-  useEffect(() => {
-    if (existing?.records) {
-      setStatuses(existing.records)
-    }
-  }, [existing])
+  const serverRecords = existing?.records ?? {}
+  const statuses = draft && draft.classId === selectedClassId ? draft.records : serverRecords
 
   function setStatus(studentId: string, status: AttendanceStatus) {
-    setStatuses(prev => {
-      // Toggle off if clicking the already-active status
-      if (prev[studentId] === status) {
-        const next = { ...prev }
-        delete next[studentId]
-        return next
-      }
-      return { ...prev, [studentId]: status }
-    })
+    if (!selectedClassId) return
+    const next = { ...statuses }
+    // Re-cliquer sur le statut actif le retire
+    if (next[studentId] === status) delete next[studentId]
+    else next[studentId] = status
+    setDraft({ classId: selectedClassId, records: next })
   }
 
   const isSubmitted  = !!existing
@@ -159,7 +147,7 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
                     key={cls.classId}
                     role="button"
                     tabIndex={0}
-                    onClick={() => setSelectedClassId(cls.classId)}
+                    onClick={() => { setSelectedClassId(cls.classId); setDraft(null) }}
                     onKeyDown={e => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()

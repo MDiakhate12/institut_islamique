@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, DollarSign, Paperclip, Clock } from 'lucide-react'
 import {
@@ -62,13 +62,13 @@ export function ExpenseFormDialog({ triggerLabel = 'Nouvelle dépense', teacherS
   const classes = teacherSelectable ? adminClasses : myClasses
   const rate = school?.settings?.teacherHourlyRate ?? 0
 
-  const { control, register, handleSubmit, reset, setValue, watch, formState: { isSubmitting, errors } } = useForm<CreateExpenseInput>({
+  const { control, register, handleSubmit, reset, setValue, formState: { isSubmitting, errors } } = useForm<CreateExpenseInput>({
     resolver: zodResolver(createExpenseSchema),
     defaultValues: DEFAULT_VALUES,
   })
 
-  const category = watch('category')
-  const date = watch('date')
+  const category = useWatch({ control, name: 'category' })
+  const date = useWatch({ control, name: 'date' })
   const isSalary = category === 'salaries'
   const hoursNum = parseInt(wageHours, 10) || 0
 

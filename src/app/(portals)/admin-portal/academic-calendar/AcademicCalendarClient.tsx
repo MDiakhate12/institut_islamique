@@ -5,8 +5,7 @@ import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar'
 import {
   format, parse, startOfWeek, getDay,
   parseISO, startOfDay, endOfDay, addHours,
-  isSameMonth, formatISO,
-} from 'date-fns'
+  isSameMonth, } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useEvents } from '@/modules/calendar/calendar.hooks'
 import { EVENT_TYPE_CONFIG, EVENT_TYPES } from '@/modules/calendar/calendar.types'
@@ -203,7 +202,8 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
   }, [events])
 
   // ── Type filter dropdown ───────────────────────────────────────────────────
-  const TypeFilterDropdown = () => (
+  // Élément JSX, pas un composant défini dans le rendu (sinon remonté à chaque rendu)
+  const typeFilterDropdown = (
     <div className="relative">
       <button
         type="button"
@@ -285,7 +285,7 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
           </div>
 
           {/* Event type filter */}
-          <TypeFilterDropdown />
+          {typeFilterDropdown}
 
           {/* Create button — admin only */}
           {!readonly && (
@@ -398,7 +398,7 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
 
 // ── List view ─────────────────────────────────────────────────────────────────
 function ListViewContent({
-  events, listContent, showEmpty, setShowEmpty, showPast, setShowPast,
+  listContent, showEmpty, setShowEmpty, showPast, setShowPast,
   activeDays, setActiveDays, onEventClick,
 }: {
   events: AcademicEvent[]

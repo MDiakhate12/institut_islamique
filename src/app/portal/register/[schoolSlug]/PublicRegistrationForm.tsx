@@ -340,7 +340,7 @@ function ClassSelectionCards({
   if (subjects.length === 0) {
     return (
       <p className="text-sm text-muted-foreground italic">
-        Aucune classe disponible pour l'inscription.
+        Aucune classe disponible pour l&apos;inscription.
       </p>
     )
   }
@@ -490,7 +490,7 @@ function SectionRenderer({
             <div>
               <p className="text-sm font-medium">Le placement en classe est géré automatiquement par le système.</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Nous vous déplacerons automatiquement ou enregistrerons les classes en fonction de vos antécédents académiques précédents. Aucune sélection manuelle n'est requise.
+                Nous vous déplacerons automatiquement ou enregistrerons les classes en fonction de vos antécédents académiques précédents. Aucune sélection manuelle n&apos;est requise.
               </p>
             </div>
           </div>
@@ -642,7 +642,7 @@ export function PublicRegistrationForm({
             </div>
             <div>
               <p className="text-sm font-semibold">Réinscription : {prefilledStudent.name}</p>
-              <p className="text-xs text-muted-foreground">Numéro d'élève : {prefilledStudent.id}</p>
+              <p className="text-xs text-muted-foreground">Numéro d&apos;élève : {prefilledStudent.id}</p>
             </div>
           </div>
         )}

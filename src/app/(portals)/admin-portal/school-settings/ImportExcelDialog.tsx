@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -143,12 +143,12 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
     reader.readAsBinaryString(file)
   }
 
-  const onDrop = useCallback((e: React.DragEvent) => {
+  function onDrop(e: React.DragEvent) {
     e.preventDefault()
     setDragging(false)
     const file = e.dataTransfer.files[0]
     if (file) processFile(file)
-  }, [type])
+  }
 
   async function runImport() {
     setLoading(true)

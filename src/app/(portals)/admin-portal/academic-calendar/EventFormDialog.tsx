@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useForm, useWatch, Controller } from 'react-hook-form'
 import { format } from 'date-fns'
 import {
   useCreateEvent, useUpdateEvent, useDeleteEvent, useDuplicateEvent,
 } from '@/modules/calendar/calendar.hooks'
-import { EVENT_TYPE_CONFIG, EVENT_TYPES } from '@/modules/calendar/calendar.types'
+import { EVENT_TYPE_CONFIG } from '@/modules/calendar/calendar.types'
 import type { AcademicEvent, EventType } from '@/modules/calendar/calendar.types'
 import type { CreateEventInput } from '@/modules/calendar/calendar.schema'
 import {
@@ -53,7 +53,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
     isHidden:    event?.isHidden ?? false,
   }
 
-  const { register, control, watch, handleSubmit, reset, setValue, formState: { errors } } =
+  const { register, control, handleSubmit, reset, formState: { errors } } =
     useForm<CreateEventInput>({ defaultValues })
 
   useEffect(() => {
@@ -61,8 +61,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, event?.id])
 
-  const selectedType = watch('type')
-  const isAllDay     = watch('isAllDay')
+  const isAllDay     = useWatch({ control, name: 'isAllDay' })
 
   async function onSubmit(data: CreateEventInput) {
     if (isEdit && event) {
@@ -184,7 +183,7 @@ export function EventFormDialog({ open, onOpenChange, event, defaultDate }: Prop
           {/* Event Type */}
           <div className="space-y-2">
             <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-              <span>🏷️</span> Type d'événement
+              <span>🏷️</span> Type d&apos;événement
             </div>
             <Controller
               control={control}

@@ -27,8 +27,8 @@ export default async function RegistrationSuccessPage({ params }: Props) {
           <div>
             <h2 className="text-2xl font-bold text-foreground">Inscription reçue !</h2>
             <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-              Votre demande d'inscription a été soumise avec succès.
-              L'équipe de l'école examinera votre dossier et vous contactera prochainement.
+              Votre demande d&apos;inscription a été soumise avec succès.
+              L&apos;équipe de l&apos;école examinera votre dossier et vous contactera prochainement.
             </p>
           </div>
 
@@ -36,8 +36,8 @@ export default async function RegistrationSuccessPage({ params }: Props) {
             <p className="text-sm font-medium text-foreground">Prochaines étapes :</p>
             <ul className="text-sm text-muted-foreground space-y-1">
               <li className="flex items-start gap-2"><span className="text-[#2d6a4f] mt-0.5">•</span>Vous recevrez une confirmation par e-mail</li>
-              <li className="flex items-start gap-2"><span className="text-[#2d6a4f] mt-0.5">•</span>L'école examinera votre demande sous 5-7 jours ouvrables</li>
-              <li className="flex items-start gap-2"><span className="text-[#2d6a4f] mt-0.5">•</span>Vous serez contacté pour finaliser l'inscription</li>
+              <li className="flex items-start gap-2"><span className="text-[#2d6a4f] mt-0.5">•</span>L&apos;école examinera votre demande sous 5-7 jours ouvrables</li>
+              <li className="flex items-start gap-2"><span className="text-[#2d6a4f] mt-0.5">•</span>Vous serez contacté pour finaliser l&apos;inscription</li>
             </ul>
           </div>
 

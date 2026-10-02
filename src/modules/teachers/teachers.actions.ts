@@ -138,9 +138,9 @@ export async function inviteTeacherAction(input: unknown): Promise<ActionResult<
     const hasAccount = teacher.userId !== '00000000-0000-0000-0000-000000000000'
     void sendTeacherInviteEmail(teacher.email, teacher.id, session.schoolId, hasAccount).catch(() => {})
     return ok(teacher)
-  } catch (e: any) {
+  } catch (e) {
     console.error('[inviteTeacherAction]', e)
-    if (e?.message === 'ALREADY_ACTIVE_TEACHER') {
+    if (e instanceof Error && e.message === 'ALREADY_ACTIVE_TEACHER') {
       return err('Cet enseignant est déjà actif dans votre école.')
     }
     return err("Impossible d'inviter cet enseignant. Réessayez.")

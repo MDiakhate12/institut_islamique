@@ -33,11 +33,11 @@ const DEFAULT_VALUES: CreateParentPaymentInput = {
 }
 
 interface Props {
-  children: ChildPaymentStatus[]
+  linkedChildren: ChildPaymentStatus[]
   academicYear: string
 }
 
-export function MarkAsPaidDialog({ children, academicYear }: Props) {
+export function MarkAsPaidDialog({ linkedChildren, academicYear }: Props) {
   const [open, setOpen] = useState(false)
   const { data: school } = useSchool()
   const createPayment = useCreateParentPayment()
@@ -58,7 +58,7 @@ export function MarkAsPaidDialog({ children, academicYear }: Props) {
     if (result.success) handleOpenChange(false)
   }
 
-  const studentOptions = children.map(c => ({ id: c.studentId, name: c.studentName }))
+  const studentOptions = linkedChildren.map(c => ({ id: c.studentId, name: c.studentName }))
   const financialOptions = school?.settings?.financialOptions ?? []
 
   return (

@@ -49,7 +49,7 @@ export function TeacherActivationGate({ adminEmails }: Props) {
             <div className="h-14 w-14 rounded-full bg-white/20 border border-white/30 flex items-center justify-center mb-4">
               <Shield className="h-7 w-7" />
             </div>
-            <h2 className="text-xl font-bold">Vérification de l'enseignant</h2>
+            <h2 className="text-xl font-bold">Vérification de l&apos;enseignant</h2>
             <p className="text-white/70 text-xs tracking-widest mt-1 uppercase">Contrôle de sécurité</p>
           </div>
 
@@ -57,12 +57,12 @@ export function TeacherActivationGate({ adminEmails }: Props) {
           <div className="bg-white p-8 space-y-6">
             <p className="text-sm text-gray-600 text-center leading-relaxed">
               Pour accéder aux ressources des enseignants, veuillez vérifier votre identité en
-              entrant votre identifiant unique d'enseignant.
+              entrant votre identifiant unique d&apos;enseignant.
             </p>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Code d'identifiant enseignant
+                Code d&apos;identifiant enseignant
               </label>
               <Input
                 placeholder="Entrez votre identifiant enseignant"
@@ -88,7 +88,7 @@ export function TeacherActivationGate({ adminEmails }: Props) {
                 <span className="text-xs font-semibold">Recevoir mon code par email</span>
               </div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Vous n'avez pas encore reçu votre code d'activation ? Demandez un renvoi directement sur votre adresse email.
+                Vous n&apos;avez pas encore reçu votre code d&apos;activation ? Demandez un renvoi directement sur votre adresse email.
               </p>
               <Button
                 variant="outline"

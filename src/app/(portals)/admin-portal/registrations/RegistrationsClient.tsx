@@ -504,7 +504,7 @@ function RegistrationDetailPanel({
   )
 }
 
-function Row({ icon, label, value, highlight, dot }: {
+function Row({ label, value, highlight, dot }: {
   icon: string
   label: string
   value: string

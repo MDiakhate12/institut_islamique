@@ -369,7 +369,7 @@ export function ExpensesClient() {
         </DialogContent>
       </Dialog>
 
-      <EditWageRecordDialog entry={editingWage} onClose={() => setEditingWage(null)} />
+      <EditWageRecordDialog key={editingWage?.id ?? 'none'} entry={editingWage} onClose={() => setEditingWage(null)} />
     </div>
   )
 }

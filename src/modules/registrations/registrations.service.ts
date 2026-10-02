@@ -199,12 +199,6 @@ export const registrationsService = {
                           : null
 
       // Custom fields: any field not system/class/consent
-      const systemOrKnownKeys = new Set([
-        ...Object.values(schema).flatMap(item =>
-          item.kind === 'section' ? item.fields.map(f => f.id) : []
-        ),
-        'cf-photo-consent', 'cf-acknowledge', 'cf-comments',
-      ])
       const customFields: { label: string; value: string }[] = []
       for (const item of schema) {
         if (item.kind !== 'section') continue

@@ -173,8 +173,10 @@ export function StudentsClient() {
     return defaults
   })
 
-  // Hydrate from localStorage after mount
+  // Lecture de localStorage après l'hydratation : la lire dès le premier rendu ferait diverger
+  // le HTML serveur (colonnes par défaut) et le navigateur → erreur d'hydratation.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchro avec localStorage (système externe), une fois au montage
     setVisibleCols(loadCols())
   }, [])
 

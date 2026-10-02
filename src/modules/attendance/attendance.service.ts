@@ -53,8 +53,12 @@ export const attendanceService = {
       .onConflictDoNothing()
   },
 
-  async removePinnedClass(pinnedId: string): Promise<void> {
-    await db.delete(teacherAttendanceClasses).where(eq(teacherAttendanceClasses.id, pinnedId))
+  // Filtré sur l'enseignant : un id seul permettait de retirer l'épinglage de n'importe qui
+  async removePinnedClass(pinnedId: string, memberId: string): Promise<void> {
+    await db.delete(teacherAttendanceClasses).where(and(
+      eq(teacherAttendanceClasses.id, pinnedId),
+      eq(teacherAttendanceClasses.schoolMemberId, memberId),
+    ))
   },
 
   // ── Class options ───────────────────────────────────────────────

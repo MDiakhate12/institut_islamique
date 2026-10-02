@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useClasses } from '@/modules/classes/classes.hooks'
 import { useTeachers } from '@/modules/teachers/teachers.hooks'
@@ -353,11 +353,9 @@ export function ClassesClient() {
 // ── Single class card ─────────────────────────────────────────────────────────
 function ClassCard({
   scheduledClass: c,
-  allClasses,
   teachers,
   rooms,
   onEditStudents,
-  onViewSyllabus,
 }: {
   scheduledClass: ClassWithDetails
   allClasses: ClassWithDetails[]
@@ -493,7 +491,15 @@ function ManageRoomsDialog({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const qc = useQueryClient()
 
-  useEffect(() => { setRooms(currentRooms) }, [currentRooms])
+  // Resynchronise la liste quand les salles enregistrées changent — ajusté pendant le rendu.
+  // Comparaison par contenu : le parent passe `rooms ?? []`, un nouveau tableau à chaque rendu
+  // quand l'école n'a pas de salle (l'ancien useEffect sur la référence bouclait dans ce cas).
+  const roomsKey = currentRooms.join('\u0000')
+  const [prevRoomsKey, setPrevRoomsKey] = useState(roomsKey)
+  if (roomsKey !== prevRoomsKey) {
+    setPrevRoomsKey(roomsKey)
+    setRooms(currentRooms)
+  }
 
   async function handleSave() {
     if (!school) return

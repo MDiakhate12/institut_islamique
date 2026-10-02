@@ -77,9 +77,7 @@ function FileRow({ url, name, size }: { url: string; name: string; size: number 
 // ── Single homework card ────────────────────────────────────────────────────────
 function HomeworkCard({
   item,
-  childName,
   onSubmit,
-  onReload,
 }: {
   item: ParentHomeworkItem
   childName: string
@@ -246,10 +244,6 @@ function HomeworkCard({
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 import { SURAHS } from '@/modules/homework/surahs.data'
-
-function getSurahNumber(name: string): number {
-  return SURAHS.find(s => s.name === name)?.number ?? 1
-}
 
 function groupByDate(items: ParentHomeworkItem[]): [string, ParentHomeworkItem[]][] {
   const today = new Date().toISOString().split('T')[0]

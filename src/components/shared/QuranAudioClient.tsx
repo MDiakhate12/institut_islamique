@@ -162,6 +162,7 @@ export default function QuranAudioClient() {
 
   // Reset when selection changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- charge le verset dans l'élément <audio> (système externe) ; loadAyah met à jour le verset affiché
     loadAyah(selectedNumber, fromVerse, false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNumber, fromVerse, toVerse, reciterId])

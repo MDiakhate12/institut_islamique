@@ -10,7 +10,7 @@ import { eq } from 'drizzle-orm'
 import { sendEmail, getSchoolName } from '@/lib/email'
 import { paymentsService } from './payments.service'
 import { createPaymentSchema, createParentPaymentSchema } from './payments.schema'
-import type { CreatePaymentInput, CreateParentPaymentInput } from './payments.schema'
+import type { CreatePaymentInput } from './payments.schema'
 import type { PaymentListItem, PaymentKpis, ChildPaymentStatus } from './payments.types'
 
 export async function getPaymentsAction(): Promise<ActionResult<PaymentListItem[]>> {

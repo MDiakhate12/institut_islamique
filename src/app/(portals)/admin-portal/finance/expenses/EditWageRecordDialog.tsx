@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,16 +20,10 @@ interface Props {
 }
 
 export function EditWageRecordDialog({ entry, onClose }: Props) {
-  const [status, setStatus] = useState('pending')
-  const [rate, setRate] = useState('0')
+  // Valeurs initiales lues une fois au montage : le parent passe key={entry.id} (§7.16)
+  const [status, setStatus] = useState(entry?.status ?? 'pending')
+  const [rate, setRate] = useState(entry ? (entry.hourlyRateCents / 100).toString() : '0')
   const updateStatus = useUpdateWageStatus()
-
-  useEffect(() => {
-    if (entry) {
-      setStatus(entry.status)
-      setRate((entry.hourlyRateCents / 100).toString())
-    }
-  }, [entry])
 
   if (!entry) return null
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState, useRef, useEffect } from 'react'
+import { useTransition, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -54,7 +54,13 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
     teacher ? teacher.teacherType === 'volunteer' : true
   )
   const [isActive, setIsActive] = useState(teacher ? !teacher.isPending : true)
-  useEffect(() => { setIsActive(teacher ? !teacher.isPending : true) }, [open, teacher?.isPending])
+  // Resynchronisé à chaque ouverture / changement de statut — ajusté pendant le rendu, pas dans un useEffect
+  const isActiveSyncKey = `${open}|${teacher?.isPending}`
+  const [prevIsActiveSyncKey, setPrevIsActiveSyncKey] = useState(isActiveSyncKey)
+  if (isActiveSyncKey !== prevIsActiveSyncKey) {
+    setPrevIsActiveSyncKey(isActiveSyncKey)
+    setIsActive(teacher ? !teacher.isPending : true)
+  }
   const [teacherDoc, setTeacherDoc] = useState<{ url: string; name: string } | null>(
     teacher?.documentUrl ? { url: teacher.documentUrl, name: teacher.documentName ?? 'Document' } : null
   )

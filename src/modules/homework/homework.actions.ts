@@ -52,7 +52,7 @@ export async function addPinnedClassAction(classId: string): Promise<ActionResul
 export async function removePinnedClassAction(pinnedId: string): Promise<ActionResult<void>> {
   const session = await requireSession()
   try {
-    await homeworkService.removePinnedClass(pinnedId)
+    await homeworkService.removePinnedClass(pinnedId, session.memberId)
     revalidatePath(path)
     return ok(undefined)
   } catch (e) {
