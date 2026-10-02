@@ -1,7 +1,7 @@
 import { db } from '@/db'
 import {
   examResults, classes, classEnrollments,
-  students, schoolMembers, profiles, parentStudents,
+  students, schoolMembers, profiles, parentStudents, schools,
 } from '@/db/schema'
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import type {
@@ -557,16 +557,58 @@ export const examsService = {
     })
   },
 
+  // L'enseignant (titulaire ou assistant) de la classe, et l'élève y est inscrit
+  async canTeacherGrade(memberId: string, classId: string, studentId: string, schoolId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: classEnrollments.id })
+      .from(classEnrollments)
+      .innerJoin(classes, eq(classes.id, classEnrollments.classId))
+      .where(and(
+        eq(classEnrollments.classId, classId),
+        eq(classEnrollments.studentId, studentId),
+        isNull(classEnrollments.unenrolledAt),
+        eq(classes.schoolId, schoolId),
+        or(eq(classes.teacherId, memberId), eq(classes.assistantTeacherId, memberId)),
+      ))
+      .limit(1)
+    return !!row
+  },
+
+  async isExamPeriodOpen(schoolId: string, trimester: number): Promise<boolean> {
+    const [school] = await db
+      .select({ settings: schools.settings })
+      .from(schools)
+      .where(eq(schools.id, schoolId))
+      .limit(1)
+    const s = school?.settings
+    return trimester === 1 ? !!s?.examPeriodT1Open
+      : trimester === 2 ? !!s?.examPeriodT2Open
+        : !!s?.examPeriodT3Open
+  },
+
+  /** Signe le bulletin — uniquement si l'élève est lié à ce parent. Renvoie false sinon. */
   async signGrade(
     examResultId: string,
     parentSignature: string,
     schoolId: string,
-  ): Promise<void> {
+    parentMemberId: string,
+  ): Promise<boolean> {
+    const [result] = await db
+      .select({ id: examResults.id })
+      .from(examResults)
+      .innerJoin(parentStudents, and(
+        eq(parentStudents.studentId, examResults.studentId),
+        eq(parentStudents.schoolMemberId, parentMemberId),
+        eq(parentStudents.schoolId, schoolId),
+      ))
+      .where(and(eq(examResults.id, examResultId), eq(examResults.schoolId, schoolId)))
+      .limit(1)
+    if (!result) return false
+
     await db
       .update(examResults)
       .set({ parentSignature })
-      .where(
-        and(eq(examResults.id, examResultId), eq(examResults.schoolId, schoolId))
-      )
+      .where(eq(examResults.id, result.id))
+    return true
   },
 }

@@ -1,7 +1,7 @@
 import { requireSession } from '@/lib/auth/session'
 import { examsService } from '@/modules/exams/exams.service'
 import { schoolService } from '@/modules/school/school.service'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { GradeFormClient } from './GradeFormClient'
 
 interface Props {
@@ -14,6 +14,11 @@ export default async function GradeFormPage({ params }: Props) {
   const school = await schoolService.getById(session.schoolId)
   const trimester = school?.settings?.currentTrimester ?? 1
   const academicYear = school?.settings?.academicYear ?? null
+
+  // Période fermée : la liste n'affiche pas de lien, mais l'URL reste accessible directement
+  const s = school?.settings
+  const examPeriodOpen = trimester === 1 ? s?.examPeriodT1Open : trimester === 2 ? s?.examPeriodT2Open : s?.examPeriodT3Open
+  if (!examPeriodOpen) redirect('/teacher-portal/exams')
 
   const [info, existing] = await Promise.all([
     examsService.getStudentForGradeForm(studentId, classId, session.schoolId),

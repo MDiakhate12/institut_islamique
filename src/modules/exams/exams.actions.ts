@@ -62,6 +62,14 @@ export async function submitExamResultAction(
   if (!session.roles.includes('teacher')) return err('Non autorisé')
   const parsed = submitExamSchema.safeParse(raw)
   if (!parsed.success) return err(parsed.error.issues[0].message)
+  // L'UI masque déjà ces cas, mais l'action est appelable directement (URL du formulaire, requête forgée)
+  const { classId, studentId, trimester } = parsed.data
+  if (!await examsService.canTeacherGrade(session.memberId, classId, studentId, session.schoolId)) {
+    return err('Non autorisé')
+  }
+  if (!await examsService.isExamPeriodOpen(session.schoolId, trimester)) {
+    return err(`La période d'examens du Trimestre ${trimester} est fermée`)
+  }
   try {
     await examsService.submitExamResult(session.schoolId, session.memberId, parsed.data)
     const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
@@ -150,7 +158,9 @@ export async function signExamGradeAction(
   const parsed = signGradeSchema.safeParse({ examResultId, parentSignature })
   if (!parsed.success) return err(parsed.error.issues[0].message)
   try {
-    await examsService.signGrade(examResultId, parentSignature, session.schoolId)
+    // Un parent ne signe que les bulletins de ses propres enfants
+    const signed = await examsService.signGrade(examResultId, parentSignature, session.schoolId, session.memberId)
+    if (!signed) return err('Non autorisé')
     return ok(undefined)
   } catch {
     return err('Erreur lors de la signature')

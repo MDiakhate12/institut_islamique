@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { submitExamResultAction } from '@/modules/exams/exams.actions'
+import { useSubmitExamResult } from '@/modules/exams/exams.hooks'
 import type { GradeFormStudent, ExamResult } from '@/modules/exams/exams.types'
 
 interface Props {
@@ -71,7 +71,8 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
   const [coveredContent, setCoveredContent] = useState(existing?.coveredContent ?? '')
   const [generalComments, setGeneralComments] = useState(existing?.generalComments ?? '')
   const [score, setScore] = useState<string>(existing?.score?.toString() ?? '')
-  const [loading, setLoading] = useState(false)
+  const submit = useSubmitExamResult()
+  const loading = submit.isPending
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -82,8 +83,9 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
       return
     }
 
-    setLoading(true)
-    const result = await submitExamResultAction({
+    // Via le hook (et non l'action directement) : il invalide ['teacher-exam-classes'],
+    // sinon la liste affichait encore « Non noté » pendant le staleTime (30 s) au retour
+    const result = await submit.mutateAsync({
       classId: info.classId,
       studentId: info.studentId,
       trimester,
@@ -98,16 +100,10 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
       generalComments: generalComments || null,
       score: score ? parseInt(score, 10) : null,
     })
-    setLoading(false)
+    if (!result.success) return // toast d'erreur affiché par le hook
 
-    if (!result.success) {
-      toast.error(result.error)
-      return
-    }
-
-    toast.success('Note soumise avec succès !')
+    // Pas de router.refresh() ici : lancé juste après push, il annulait parfois la navigation
     router.push('/teacher-portal/exams')
-    router.refresh()
   }
 
   return (
