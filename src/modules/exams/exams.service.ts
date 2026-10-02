@@ -200,7 +200,7 @@ export const examsService = {
     schoolId: string,
     memberId: string,
     data: SubmitExamInput,
-  ): Promise<void> {
+  ): Promise<{ signatureReset: boolean }> {
     const existing = await this.getExamResult(data.classId, data.studentId, schoolId, data.trimester)
 
     const values = {
@@ -233,8 +233,22 @@ export const examsService = {
         .update(examResults)
         .set(contentChanged ? { ...values, parentSignature: null } : values)
         .where(eq(examResults.id, existing.id))
-    } else {
-      await db.insert(examResults).values(values)
+      return { signatureReset: contentChanged && !!existing.parentSignature }
+    }
+    await db.insert(examResults).values(values)
+    return { signatureReset: false }
+  },
+
+  /** Parents liés à l'élève (school_members.id) + nom de l'élève, pour les notifications. */
+  async getStudentParents(studentId: string, schoolId: string): Promise<{ studentName: string; parentMemberIds: string[] }> {
+    const rows = await db
+      .select({ memberId: parentStudents.schoolMemberId, firstName: students.firstName, lastName: students.lastName })
+      .from(students)
+      .leftJoin(parentStudents, and(eq(parentStudents.studentId, students.id), eq(parentStudents.schoolId, schoolId)))
+      .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
+    return {
+      studentName: rows[0] ? `${rows[0].firstName} ${rows[0].lastName}` : 'votre enfant',
+      parentMemberIds: rows.map(r => r.memberId).filter((id): id is string => !!id),
     }
   },
 

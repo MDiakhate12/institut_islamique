@@ -122,6 +122,11 @@ test('bulletin : saisie ouverte, publication, signature du parent, lecture seule
   await expect(teacher).toHaveURL('/teacher-portal/exams')
 
   await parent.reload()
+  // Le parent est prévenu (cloche) — l'e-mail part aussi, mais SMTP est désactivé en E2E
+  await parent.getByRole('button', { name: 'Notifications' }).click()
+  await expect(parent.getByText(`Bulletin modifié — ${STUDENT}`)).toBeVisible()
+  await parent.keyboard.press('Escape')
+  await parent.reload()
   await expect(bulletin).toContainText('90/100')
   await bulletin.getByRole('button', { name: 'Signer avec mon nom' }).click() // nouvelle signature requise
   await expect(bulletin).toContainText(E2E_USERS.parent.fullName)

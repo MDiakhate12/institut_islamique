@@ -30,9 +30,25 @@ export async function getParentEmailsForClass(classId: string): Promise<string[]
     SELECT DISTINCT au.email
     FROM class_enrollments ce
     JOIN parent_students ps ON ps.student_id = ce.student_id
-    JOIN school_members sm ON sm.id = ps.parent_member_id
+    JOIN school_members sm ON sm.id = ps.school_member_id
     JOIN auth.users au ON au.id = sm.user_id
     WHERE ce.class_id = ${classId}
+      AND ce.unenrolled_at IS NULL
+      AND sm.is_pending = false
+      AND sm.user_id != ${NIL_UUID}::uuid
+  `)
+  // (la colonne s'appelait ps.parent_member_id ici, inexistante → requête en échec, aucun e-mail
+  // « nouveau devoir » n'était jamais envoyé aux parents)
+  return (rows as unknown as { email: string }[]).map(r => r.email).filter(Boolean)
+}
+
+export async function getParentEmailsForStudent(studentId: string): Promise<string[]> {
+  const rows = await db.execute(sql`
+    SELECT DISTINCT au.email
+    FROM parent_students ps
+    JOIN school_members sm ON sm.id = ps.school_member_id
+    JOIN auth.users au ON au.id = sm.user_id
+    WHERE ps.student_id = ${studentId}
       AND sm.is_pending = false
       AND sm.user_id != ${NIL_UUID}::uuid
   `)

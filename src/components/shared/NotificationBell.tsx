@@ -16,6 +16,7 @@ const TYPE_ICON: Record<string, string> = {
   registration_approved:  '✅',
   registration_rejected:  '❌',
   teacher_invitation:     '📩',
+  exam_signature_reset:   '✍️',
 }
 
 export function NotificationBell() {
