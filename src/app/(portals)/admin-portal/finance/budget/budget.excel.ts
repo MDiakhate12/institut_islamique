@@ -1,3 +1,4 @@
+import { localTodayISO } from '@/lib/dates'
 import * as XLSX from 'xlsx'
 import type { PaymentListItem } from '@/modules/payments/payments.types'
 import { PAYMENT_CATEGORY_LABELS, PAYMENT_PERIOD_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '@/modules/payments/payments.labels'
@@ -19,5 +20,5 @@ export function exportPaymentsToExcel(payments: PaymentListItem[]) {
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Budget')
-  XLSX.writeFile(wb, `budget-${new Date().toISOString().slice(0, 10)}.xlsx`)
+  XLSX.writeFile(wb, `budget-${localTodayISO()}.xlsx`)
 }

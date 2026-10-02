@@ -1,5 +1,6 @@
 'use client'
 
+import { localTodayISO } from '@/lib/dates'
 import { useState } from 'react'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -23,7 +24,7 @@ import { createExpenseSchema, type CreateExpenseInput } from '@/modules/expenses
 import { EXPENSE_CATEGORY_LABELS } from '@/lib/constants'
 
 const DEFAULT_VALUES: CreateExpenseInput = {
-  date: new Date().toISOString().slice(0, 10),
+  date: localTodayISO(),
   amount: 0,
   category: null,
   description: '',

@@ -50,6 +50,8 @@ async function seed() {
   const [school] = await db.insert(schools).values({
     name: E2E_SCHOOL.name,
     slug: E2E_SCHOOL.slug,
+    // Serveur E2E en UTC, navigateur en Europe/Paris : « aujourd'hui » doit suivre l'école (src/lib/dates.ts)
+    timezone: 'Europe/Paris',
     settings: {
       ...DEFAULT_SETTINGS,
       onboardingCompleted: true,

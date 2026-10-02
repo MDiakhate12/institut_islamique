@@ -17,7 +17,9 @@ test('budget : créer puis modifier un paiement', async ({ page }) => {
   await page.getByRole('button', { name: 'Enregistrer un revenu' }).click()
   const create = page.getByRole('dialog', { name: 'Ajouter un nouveau paiement' })
   await create.getByRole('button', { name: 'Sélectionner des étudiants...' }).click()
-  await page.getByRole('button', { name: 'Yassine TESTEUR' }).click()
+  // Sami (enfant du compte « family ») et non Yassine : un paiement sur Yassine ferait passer son
+  // trimestre à « Payé » et casserait le test parent-payment qui tourne en parallèle
+  await page.getByRole('button', { name: 'Sami ENFANT' }).click()
   await page.keyboard.press('Escape') // ferme le popover de sélection, pas le dialogue
   await create.getByPlaceholder('Nom du parent').fill(parentName)
   await create.locator('input[name="amount"]').fill('123.45')

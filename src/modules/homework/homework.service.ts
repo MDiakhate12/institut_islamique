@@ -1,8 +1,9 @@
 import { db } from '@/db'
+import { todayInTimeZone } from '@/lib/dates'
 import {
   homework, homeworkSubmissions, teacherHomeworkClasses, virtualSessions,
   classes, schoolMembers, profiles,
-  classEnrollments, students, parentStudents,
+  classEnrollments, students, parentStudents, schools,
 } from '@/db/schema'
 import { eq, and, sql, or, notInArray, desc, inArray, isNull, asc } from 'drizzle-orm'
 import type { HomeworkItem, PinnedClass, ClassOption, VirtualSession, HomeworkStudent, ParentChild, ParentHomeworkItem, AdminClassHomework, AdminHomeworkOverview } from './homework.types'
@@ -147,7 +148,8 @@ export const homeworkService = {
     input: CreateHomeworkInput,
   ): Promise<HomeworkItem> {
     const title = buildTitle(input)
-    const today = new Date().toISOString().split('T')[0]
+    const [school] = await db.select({ timezone: schools.timezone }).from(schools).where(eq(schools.id, schoolId)).limit(1)
+    const today = todayInTimeZone(school?.timezone)
 
     const [row] = await db
       .insert(homework)

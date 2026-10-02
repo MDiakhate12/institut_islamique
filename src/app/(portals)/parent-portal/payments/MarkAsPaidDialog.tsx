@@ -1,5 +1,6 @@
 'use client'
 
+import { localTodayISO } from '@/lib/dates'
 import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -28,7 +29,7 @@ const DEFAULT_VALUES: CreateParentPaymentInput = {
   period: 'trimester_1',
   method: 'cash',
   financialOption: null,
-  paymentDate: new Date().toISOString().slice(0, 10),
+  paymentDate: localTodayISO(),
   notes: null,
 }
 

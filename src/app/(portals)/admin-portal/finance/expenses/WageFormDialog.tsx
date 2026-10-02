@@ -1,5 +1,6 @@
 'use client'
 
+import { localTodayISO } from '@/lib/dates'
 import { useState } from 'react'
 import { Clock } from 'lucide-react'
 import {
@@ -15,7 +16,7 @@ export function WageFormDialog() {
   const [open, setOpen] = useState(false)
   const [teacherId, setTeacherId] = useState<string | null>(null)
   const [classId, setClassId] = useState<string | null>(null)
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(localTodayISO())
   const [hours, setHours] = useState('')
 
   const { data: school } = useSchool()
@@ -29,7 +30,7 @@ export function WageFormDialog() {
   function reset() {
     setTeacherId(null)
     setClassId(null)
-    setDate(new Date().toISOString().slice(0, 10))
+    setDate(localTodayISO())
     setHours('')
   }
 
