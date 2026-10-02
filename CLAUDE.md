@@ -663,6 +663,8 @@ Règles (source unique : `examsService.getExamFlags`) :
 - `signGrade` exige élève lié au parent (`parent_students`) + publiés + période ouverte.
 - Ne jamais se contenter de masquer un lien/bouton côté UI : toute Server Action d'examens revérifie rôle + lien + réglages.
 - Après une soumission, passer par les hooks de `exams.hooks.ts` (ils invalident le cache TanStack) plutôt que par l'action directe.
+- Libellés des critères en étoiles : `EXAM_CRITERIA` (`src/modules/exams/exams.labels.ts`), partagés formulaire enseignant / bulletin parent — ne pas les redéfinir localement.
+- Modifier le contenu d'un bulletin signé (étoiles, commentaires, note) remet `parentSignature` à `null` dans `submitExamResult` : le parent doit re-signer ; le formulaire enseignant l'avertit avant.
 
 ---
 

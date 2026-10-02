@@ -223,9 +223,15 @@ export const examsService = {
     }
 
     if (existing) {
+      // Le parent a signé une version précise : si le contenu change, la signature n'est plus valable
+      const contentChanged = (
+        ['attendance', 'respectTeachers', 'respectOthers', 'bringBooks', 'participation',
+          'eagerness', 'coveredContent', 'generalComments', 'score'] as const
+      ).some(k => (existing[k] ?? null) !== (values[k] ?? null))
+
       await db
         .update(examResults)
-        .set(values)
+        .set(contentChanged ? { ...values, parentSignature: null } : values)
         .where(eq(examResults.id, existing.id))
     } else {
       await db.insert(examResults).values(values)

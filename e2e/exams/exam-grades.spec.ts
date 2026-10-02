@@ -67,6 +67,7 @@ test('bulletin : saisie ouverte, publication, signature du parent, lecture seule
   await star(teacher, 'Présence :', 4).click()
   await star(teacher, 'Respect des enseignants :', 5).click()
   await star(teacher, 'Respect des autres :', 5).click()
+  await star(teacher, 'Apporter les livres :', 2).click()
   await star(teacher, 'Participation :', 3).click()
   await star(teacher, "Désir d'apprendre :", 4).click()
   await teacher.locator('textarea').first().fill("Sourates Al-Ikhlas à An-Nas")
@@ -97,6 +98,9 @@ test('bulletin : saisie ouverte, publication, signature du parent, lecture seule
   await expect(bulletin).toContainText('85/100')
   await expect(bulletin).toContainText('Élève appliqué, bonne mémorisation.')
   await expect(bulletin).toContainText(`Enseignant : ${E2E_USERS.teacher.fullName}`)
+  // Mêmes libellés que le formulaire enseignant (exams.labels.ts)
+  await expect(bulletin).toContainText('Apporter les livres')
+  await expect(bulletin).not.toContainText('Performance académique')
   await bulletin.getByRole('button', { name: 'Signer avec mon nom' }).click()
   await expect(bulletin).toContainText(E2E_USERS.parent.fullName)
   await expect(bulletin.getByRole('button', { name: 'Signer avec mon nom' })).toHaveCount(0)
@@ -110,7 +114,19 @@ test('bulletin : saisie ouverte, publication, signature du parent, lecture seule
   await expect(classCard.locator('div').filter({ hasText: STUDENT }).last()).toContainText('Signé')
   await expect(classCard.locator('div').filter({ hasText: STUDENT }).last()).not.toContainText('Non signé')
 
-  // 8. L'admin referme la saisie : le formulaire n'est plus accessible, même par son URL
+  // 8. L'enseignant corrige le bulletin signé : avertissement, puis la signature est annulée
+  await teacher.goto(gradeUrl!)
+  await expect(teacher.getByText(/Bulletin déjà signé par .* toute modification annulera la signature/)).toBeVisible()
+  await teacher.locator('input[type="number"]').fill('90')
+  await teacher.getByRole('button', { name: 'Mettre à jour la note' }).click()
+  await expect(teacher).toHaveURL('/teacher-portal/exams')
+
+  await parent.reload()
+  await expect(bulletin).toContainText('90/100')
+  await bulletin.getByRole('button', { name: 'Signer avec mon nom' }).click() // nouvelle signature requise
+  await expect(bulletin).toContainText(E2E_USERS.parent.fullName)
+
+  // 9. L'admin referme la saisie : le formulaire n'est plus accessible, même par son URL
   await setExamSettings(admin, { open: false })
   await teacher.goto(gradeUrl!)
   await expect(teacher).toHaveURL('/teacher-portal/exams')
@@ -119,7 +135,7 @@ test('bulletin : saisie ouverte, publication, signature du parent, lecture seule
   // … le parent garde son bulletin signé, en lecture seule
   await parent.reload()
   await expect(parent.getByText("Période d'examens fermée — signature indisponible")).toBeVisible()
-  await expect(bulletin).toContainText('85/100')
+  await expect(bulletin).toContainText('90/100')
   await expect(bulletin).toContainText(E2E_USERS.parent.fullName)
 
   expect(errors).toEqual([])

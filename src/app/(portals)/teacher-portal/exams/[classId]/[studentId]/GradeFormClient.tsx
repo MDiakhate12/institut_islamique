@@ -6,6 +6,7 @@ import { Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useSubmitExamResult } from '@/modules/exams/exams.hooks'
+import { EXAM_CRITERIA } from '@/modules/exams/exams.labels'
 import type { GradeFormStudent, ExamResult } from '@/modules/exams/exams.types'
 
 interface Props {
@@ -33,7 +34,7 @@ function StarRating({
     <div className="space-y-1.5">
       <p className="text-sm text-gray-700">
         {label}
-        {optional && <span className="ml-1.5 text-xs text-muted-foreground">(Optional)</span>}
+        {optional && <span className="ml-1.5 text-xs text-muted-foreground">(Optionnel)</span>}
       </p>
       <div className="flex gap-0.5">
         {[1, 2, 3, 4, 5].map(star => (
@@ -72,6 +73,11 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
   const [generalComments, setGeneralComments] = useState(existing?.generalComments ?? '')
   const [score, setScore] = useState<string>(existing?.score?.toString() ?? '')
   const submit = useSubmitExamResult()
+  const ratings = { attendance, respectTeachers, respectOthers, bringBooks, participation, eagerness }
+  const ratingSetters = {
+    attendance: setAttendance, respectTeachers: setRespectTeachers, respectOthers: setRespectOthers,
+    bringBooks: setBringBooks, participation: setParticipation, eagerness: setEagerness,
+  }
   const loading = submit.isPending
 
   async function handleSubmit(e: React.FormEvent) {
@@ -128,12 +134,15 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
           <div className="p-4 sm:p-6 space-y-6">
             {/* Star ratings grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <StarRating label="Présence :" value={attendance} onChange={setAttendance} />
-              <StarRating label="Respect des enseignants :" value={respectTeachers} onChange={setRespectTeachers} />
-              <StarRating label="Respect des autres :" value={respectOthers} onChange={setRespectOthers} />
-              <StarRating label="Apporter les livres" optional value={bringBooks} onChange={setBringBooks} />
-              <StarRating label="Participation :" value={participation} onChange={setParticipation} />
-              <StarRating label="Désir d'apprendre :" value={eagerness} onChange={setEagerness} />
+              {EXAM_CRITERIA.map(({ key, label, optional }) => (
+                <StarRating
+                  key={key}
+                  label={`${label} :`}
+                  optional={optional}
+                  value={ratings[key]}
+                  onChange={v => ratingSetters[key](v)}
+                />
+              ))}
             </div>
 
             {/* Textareas */}
@@ -187,6 +196,12 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
                 <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-0.5 text-xs text-blue-600">
                   Modification de la note existante
                 </span>
+              )}
+              {existing?.parentSignature && (
+                <p className="text-xs text-amber-700 text-center">
+                  Bulletin déjà signé par {existing.parentSignature} : toute modification annulera la signature,
+                  le parent devra signer à nouveau.
+                </p>
               )}
             </div>
           </div>

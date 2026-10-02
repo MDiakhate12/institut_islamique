@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AlertTriangle, GraduationCap, Star, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useParentChildrenGrades, useSignExamGrade } from '@/modules/exams/exams.hooks'
+import { EXAM_CRITERIA } from '@/modules/exams/exams.labels'
 import type { ParentChildExamData, ParentExamGrade, ParentExamView } from '@/modules/exams/exams.types'
 
 interface Props {
@@ -31,14 +32,6 @@ function StarDisplay({ value }: { value: number | null }) {
   )
 }
 
-const STAR_LABELS = [
-  { key: 'attendance' as const, label: 'Présence' },
-  { key: 'respectTeachers' as const, label: 'Respect des enseignants' },
-  { key: 'respectOthers' as const, label: 'Respect des autres' },
-  { key: 'participation' as const, label: 'Participation' },
-  { key: 'eagerness' as const, label: 'Envie d\'apprendre' },
-  { key: 'bringBooks' as const, label: 'Performance académique' },
-]
 
 function GradeCard({ grade, parentName, canSign }: { grade: ParentExamGrade; parentName: string; canSign: boolean }) {
   const { mutate: sign, isPending } = useSignExamGrade()
@@ -59,7 +52,7 @@ function GradeCard({ grade, parentName, canSign }: { grade: ParentExamGrade; par
       <div className="p-5 space-y-4">
         {/* Star ratings */}
         <div className="space-y-3">
-          {STAR_LABELS.map(({ key, label }) => {
+          {EXAM_CRITERIA.map(({ key, label }) => {
             const val = grade[key]
             if (val === null && key === 'bringBooks') return null
             return (
