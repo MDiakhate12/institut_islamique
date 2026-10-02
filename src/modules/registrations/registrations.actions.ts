@@ -371,7 +371,7 @@ export async function reviewRegistrationAction(raw: unknown): Promise<ActionResu
 
   try {
     const result = await registrationsService.review(session.schoolId, registrationId, session.memberId, status, notes || null)
-    if (!result) return err('Inscription introuvable')
+    if (!result) return err('Inscription introuvable ou déjà approuvée (une approbation est définitive).')
     // Nouvel élève activé/désactivé selon la décision ; classes choisies inscrites à l'approbation
     if (result.studentId) {
       await registrationsService.applyReviewToStudent(session.schoolId, result.studentId, result.formType, status, result.formData)

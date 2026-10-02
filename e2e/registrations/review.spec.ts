@@ -55,7 +55,10 @@ test('inscription approuvée : la famille la voit « Inscrit » et est notifiée
   await expect(admin.getByText('Inscription approuvée')).toBeVisible()
   await expect(row).toContainText('Approuvée')
   await expect(panel).toContainText(/Approuvée le .* par Admin E2E/)
+  // Approbation définitive : plus aucune action possible (ni rejet, ni nouvelle approbation)
   await expect(panel.getByRole('button', { name: 'Approuver' })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: 'Rejeter' })).toHaveCount(0)
+  await expect(panel).toContainText('Décision définitive')
 
   await family.reload()
   await expect(childCard(family, name)).toContainText('Inscrit')

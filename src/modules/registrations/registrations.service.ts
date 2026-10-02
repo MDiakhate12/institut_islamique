@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { registrationForms, registrations, students, guardians, parentStudents, schoolMembers, profiles, classes, classEnrollments } from '@/db/schema'
-import { and, eq, desc, inArray, isNull } from 'drizzle-orm'
+import { and, eq, desc, inArray, isNull, ne } from 'drizzle-orm'
 import type { FormType, FormItem, RegistrationForm, Registration, SystemFieldKey, RegistrationWithDetails } from './registrations.types'
 import { DEFAULT_NEW_STUDENT_SCHEMA, DEFAULT_REENROLLMENT_SCHEMA } from './registrations.types'
 
@@ -323,7 +323,13 @@ export const registrationsService = {
     const [row] = await db
       .update(registrations)
       .set({ status, notes, reviewedBy: reviewerMemberId, reviewedAt: new Date() })
-      .where(and(eq(registrations.id, registrationId), eq(registrations.schoolId, schoolId)))
+      // Une approbation est définitive : une inscription déjà approuvée n'est plus modifiable
+      // (condition dans l'UPDATE même, pour qu'aucune requête concurrente ne puisse la contourner)
+      .where(and(
+        eq(registrations.id, registrationId),
+        eq(registrations.schoolId, schoolId),
+        ne(registrations.status, 'approved'),
+      ))
       .returning({
         studentId: registrations.studentId,
         formId: registrations.formId,

@@ -630,21 +630,28 @@ function ReviewSection({ registration: r }: { registration: RegistrationWithDeta
         <p className="text-xs p-2 rounded bg-red-50 border border-red-100 text-red-800">Motif : {r.reviewNotes}</p>
       )}
 
-      <div className="flex gap-2">
-        {r.status !== 'approved' && (
-          <Button size="sm" disabled={review.isPending} onClick={() => decide('approved', null)}
-            className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
-            <Check className="h-4 w-4" /> Approuver
-          </Button>
-        )}
-        {r.status !== 'rejected' && (
-          <Button size="sm" variant="outline" disabled={review.isPending} onClick={() => setRejectOpen(true)}
-            className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50">
-            <Ban className="h-4 w-4" /> Rejeter
-          </Button>
-        )}
-      </div>
-      <p className="text-[11px] text-muted-foreground">La famille est prévenue par notification et par e-mail.</p>
+      {/* Une approbation est définitive : plus aucune action une fois l'inscription approuvée */}
+      {r.status === 'approved' ? (
+        <p className="text-[11px] text-muted-foreground">Décision définitive : l&apos;élève fait partie de l&apos;école.</p>
+      ) : (
+        <>
+          <div className="flex gap-2">
+            <Button size="sm" disabled={review.isPending} onClick={() => decide('approved', null)}
+              className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+              <Check className="h-4 w-4" /> Approuver
+            </Button>
+            {r.status !== 'rejected' && (
+              <Button size="sm" variant="outline" disabled={review.isPending} onClick={() => setRejectOpen(true)}
+                className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50">
+                <Ban className="h-4 w-4" /> Rejeter
+              </Button>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            La famille est prévenue par notification et par e-mail. L&apos;approbation est définitive.
+          </p>
+        </>
+      )}
 
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogContent className="max-w-md">
