@@ -7,8 +7,10 @@ import {
   updateRegistrationFormAction,
   resetRegistrationFormAction,
   getRegistrationsAction,
+  reviewRegistrationAction,
 } from './registrations.actions'
 import type { FormType, FormItem } from './registrations.types'
+import type { ReviewRegistrationInput } from './registrations.schema'
 
 export const registrationKeys = {
   form: (formType: FormType) => ['registration-form', formType] as const,
@@ -67,5 +69,18 @@ export function useResetRegistrationForm() {
       toast.success('Formulaire réinitialisé')
     },
     onError: (e) => toast.error(e.message),
+  })
+}
+
+export function useReviewRegistration() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ReviewRegistrationInput) => reviewRegistrationAction(input),
+    onSuccess: (result, vars) => {
+      if (!result.success) { toast.error(result.error); return }
+      toast.success(vars.status === 'approved' ? 'Inscription approuvée' : 'Inscription rejetée')
+      qc.invalidateQueries({ queryKey: registrationKeys.list })
+    },
+    onError: () => toast.error("Impossible d'enregistrer la décision"),
   })
 }

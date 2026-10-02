@@ -2,7 +2,7 @@ import { test, expect, type Page } from '../support/fixtures'
 import { storageStatePath, E2E_USERS } from '../support/users'
 import { field } from '../support/registration-form'
 
-// §7.4 — /parent-portal/enrollment réutilise le formulaire public. Un enfant est « Inscrit »
+// §7.4 — /parent-portal/enrollment réutilise le formulaire public. Un enfant a un badge de statut
 // (non cliquable) dès qu'une registration existe pour lui ; un nouvel élève créé par le parent
 // lui est lié tout de suite (submitterMemberId), sans passer par le flux OTP.
 // Compte « family » : ces tests ajoutent des inscriptions et des enfants, « parent » reste intact.
@@ -17,7 +17,7 @@ async function acceptPolicies(page: Page) {
   await page.getByRole('checkbox', { name: /J'ai lu et j'accepte le règlement intérieur/ }).check()
 }
 
-test('réinscription d\'un enfant lié : il passe « Inscrit »', async ({ page }) => {
+test('réinscription d\'un enfant lié : il passe « En attente de validation »', async ({ page }) => {
   await page.goto('/parent-portal/enrollment')
   const sami = page.getByRole('link', { name: /Sami ENFANT/ })
   await expect(sami).toBeVisible()
@@ -36,9 +36,9 @@ test('réinscription d\'un enfant lié : il passe « Inscrit »', async ({ page 
   await expect(page).toHaveURL('/parent-portal/enrollment/success')
   await expect(page.getByRole('heading', { name: 'Inscription soumise !' })).toBeVisible()
 
-  // De retour au sélecteur : badge « Inscrit », plus de lien vers le formulaire
+  // De retour au sélecteur : badge « En attente de validation », plus de lien vers le formulaire
   await page.getByRole('link', { name: 'Soumettre une autre inscription' }).click()
-  await expect(childCard(page, 'Sami ENFANT')).toContainText('Inscrit')
+  await expect(childCard(page, 'Sami ENFANT')).toContainText('En attente de validation')
   await expect(page.getByRole('link', { name: /Sami ENFANT/ })).toHaveCount(0)
 
   // Et l'URL directe du formulaire renvoie au sélecteur (pas de double inscription)
@@ -72,7 +72,7 @@ test('nouvel élève inscrit par le parent : lié immédiatement à son compte',
   await page.goto('/parent-portal/children')
   await expect(page.getByText('Lina ENFANT').first()).toBeVisible()
 
-  // Et il est déjà « Inscrit » dans le sélecteur
+  // Et son inscription apparaît déjà dans le sélecteur, en attente de validation
   await page.goto('/parent-portal/enrollment')
-  await expect(childCard(page, 'Lina ENFANT')).toContainText('Inscrit')
+  await expect(childCard(page, 'Lina ENFANT')).toContainText('En attente de validation')
 })

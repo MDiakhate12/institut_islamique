@@ -1,5 +1,5 @@
 import { db } from '@/db'
-import { registrationForms, registrations, students, guardians } from '@/db/schema'
+import { registrationForms, registrations, students, guardians, parentStudents, schoolMembers, profiles } from '@/db/schema'
 import { and, eq, desc, inArray } from 'drizzle-orm'
 import type { FormType, FormItem, RegistrationForm, Registration, SystemFieldKey, RegistrationWithDetails } from './registrations.types'
 import { DEFAULT_NEW_STUDENT_SCHEMA, DEFAULT_REENROLLMENT_SCHEMA } from './registrations.types'
@@ -107,6 +107,23 @@ export const registrationsService = {
     return new Set(rows.map(r => r.studentId).filter((id): id is string => !!id))
   },
 
+  /** Statut de la dernière inscription de chaque élève pour l'année (élèves sans inscription absents). */
+  async getRegistrationStatuses(schoolId: string, studentIds: string[], academicYear: string): Promise<Record<string, Registration['status']>> {
+    if (studentIds.length === 0) return {}
+    const rows = await db
+      .select({ studentId: registrations.studentId, status: registrations.status })
+      .from(registrations)
+      .where(and(
+        eq(registrations.schoolId, schoolId),
+        eq(registrations.academicYear, academicYear),
+        inArray(registrations.studentId, studentIds),
+      ))
+      .orderBy(registrations.submittedAt) // la plus récente écrase les précédentes
+    const out: Record<string, Registration['status']> = {}
+    for (const r of rows) if (r.studentId) out[r.studentId] = r.status as Registration['status']
+    return out
+  },
+
   async getBySchool(schoolId: string): Promise<Registration[]> {
     const rows = await db
       .select()
@@ -137,6 +154,9 @@ export const registrationsService = {
         formData:         registrations.formData,
         status:           registrations.status,
         submittedAt:      registrations.submittedAt,
+        reviewedAt:       registrations.reviewedAt,
+        reviewNotes:      registrations.notes,
+        reviewedByName:   profiles.fullName,
         formType:         registrationForms.formType,
         formSchema:       registrationForms.formSchema,
         studentFirstName: students.firstName,
@@ -148,6 +168,8 @@ export const registrationsService = {
       .from(registrations)
       .leftJoin(registrationForms, eq(registrations.formId, registrationForms.id))
       .leftJoin(students, eq(registrations.studentId, students.id))
+      .leftJoin(schoolMembers, eq(schoolMembers.id, registrations.reviewedBy))
+      .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
       .where(eq(registrations.schoolId, schoolId))
       .orderBy(desc(registrations.submittedAt))
 
@@ -224,6 +246,9 @@ export const registrationsService = {
         studentGender:    r.studentGender ?? null,
         formType:         (r.formType as FormType | null) ?? null,
         status:           r.status as Registration['status'],
+        reviewedAt:       r.reviewedAt ?? null,
+        reviewNotes:      r.reviewNotes ?? null,
+        reviewedByName:   r.reviewedByName ?? null,
         submittedAt:      r.submittedAt,
         grade:            get('schoolGrade'),
         regularSchool:    get('regularSchool'),
@@ -244,10 +269,15 @@ export const registrationsService = {
     formData: Record<string, unknown>,
     studentId?: string,
     academicYear?: string,
+    submittedByMemberId?: string,
   ): Promise<Registration> {
     const [row] = await db
       .insert(registrations)
-      .values({ schoolId, formId, formData, status: 'pending', studentId: studentId ?? null, academicYear: academicYear ?? '' })
+      .values({
+        schoolId, formId, formData, status: 'pending',
+        studentId: studentId ?? null, academicYear: academicYear ?? '',
+        submittedByMemberId: submittedByMemberId ?? null,
+      })
       .returning()
 
     return {
@@ -261,6 +291,60 @@ export const registrationsService = {
       reviewedBy: row.reviewedBy ?? null,
       reviewedAt: row.reviewedAt ?? null,
       notes: row.notes ?? null,
+    }
+  },
+
+  /** Décision de l'admin. Renvoie de quoi notifier la famille, ou null si l'inscription n'est pas dans l'école. */
+  async review(
+    schoolId: string,
+    registrationId: string,
+    reviewerMemberId: string,
+    status: 'approved' | 'rejected',
+    notes: string | null,
+  ): Promise<{
+    studentId: string | null
+    studentName: string
+    formData: Record<string, unknown>
+    formSchema: FormItem[]
+    recipientMemberIds: string[]
+  } | null> {
+    const [row] = await db
+      .update(registrations)
+      .set({ status, notes, reviewedBy: reviewerMemberId, reviewedAt: new Date() })
+      .where(and(eq(registrations.id, registrationId), eq(registrations.schoolId, schoolId)))
+      .returning({
+        studentId: registrations.studentId,
+        formId: registrations.formId,
+        formData: registrations.formData,
+        submittedByMemberId: registrations.submittedByMemberId,
+      })
+    if (!row) return null
+
+    const [[student], [form], parents] = await Promise.all([
+      row.studentId
+        ? db.select({ firstName: students.firstName, lastName: students.lastName }).from(students).where(eq(students.id, row.studentId)).limit(1)
+        : Promise.resolve([]),
+      row.formId
+        ? db.select({ formSchema: registrationForms.formSchema }).from(registrationForms).where(eq(registrationForms.id, row.formId)).limit(1)
+        : Promise.resolve([]),
+      row.studentId
+        ? db.select({ memberId: parentStudents.schoolMemberId }).from(parentStudents)
+            .where(and(eq(parentStudents.studentId, row.studentId), eq(parentStudents.schoolId, schoolId)))
+        : Promise.resolve([]),
+    ])
+
+    // Parents liés à l'élève + parent qui a soumis l'inscription depuis son portail (dédoublonnés)
+    const recipientMemberIds = Array.from(new Set([
+      ...parents.map(p => p.memberId),
+      ...(row.submittedByMemberId ? [row.submittedByMemberId] : []),
+    ]))
+
+    return {
+      studentId: row.studentId,
+      studentName: student ? `${student.firstName} ${student.lastName}` : 'votre enfant',
+      formData: (row.formData as Record<string, unknown>) ?? {},
+      formSchema: (form?.formSchema as FormItem[] | undefined) ?? [],
+      recipientMemberIds,
     }
   },
 }

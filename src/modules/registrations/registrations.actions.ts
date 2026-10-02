@@ -6,7 +6,7 @@ import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { registrationsService, buildKeyToIdMap } from './registrations.service'
-import { getMissingRequiredFields } from './registrations.schema'
+import { getMissingRequiredFields, reviewRegistrationSchema } from './registrations.schema'
 import { studentsService } from '@/modules/students/students.service'
 import { scheduledClassesService } from '@/modules/classes/classes.service'
 import { parentsService } from '@/modules/parents/parents.service'
@@ -15,7 +15,8 @@ import { db } from '@/db'
 import { schools, guardians } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import type { SchoolSettings } from '@/db/schema/schools'
-import { sendEmail, getAdminEmails, getAppUrl, getSchoolName } from '@/lib/email'
+import { sendEmail, getAdminEmails, getAppUrl, getSchoolName, getEmailsForMembers } from '@/lib/email'
+import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 
 const PATH = '/admin-portal/registration-forms'
 
@@ -159,7 +160,7 @@ export async function submitRegistrationAction(
     }
 
     // 4. Save registration with proper studentId FK
-    const registration = await registrationsService.submit(school.id, form.id, formData, studentId, academicYear)
+    const registration = await registrationsService.submit(school.id, form.id, formData, studentId, academicYear, submitterMemberId)
 
     const studentFirstName = get('firstName')?.trim() ?? ''
     const studentLastName  = get('lastName')?.trim()  ?? ''
@@ -261,4 +262,92 @@ export async function getRegistrationsAction(): Promise<ActionResult<Registratio
     console.error('[getRegistrationsAction]', e)
     return err('Impossible de charger les inscriptions')
   }
+}
+
+// ── Admin : approuver / rejeter une inscription ───────────────────────────────
+
+export async function reviewRegistrationAction(raw: unknown): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!canAccess(session, 'registrations')) return unauthorized()
+  const parsed = reviewRegistrationSchema.safeParse(raw)
+  if (!parsed.success) return err(parsed.error.issues[0].message)
+  const { registrationId, status, notes } = parsed.data
+
+  try {
+    const result = await registrationsService.review(session.schoolId, registrationId, session.memberId, status, notes || null)
+    if (!result) return err('Inscription introuvable')
+    revalidatePath('/admin-portal/registrations')
+
+    // Hors du chemin critique : un échec d'envoi ne doit pas annuler la décision
+    const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
+    notifyFamilyOfReview(session.schoolId, status, notes || null, result, appUrl, schoolName)
+      .catch(e => console.warn('[reviewRegistrationAction] notification famille :', e))
+    return ok(undefined)
+  } catch (e) {
+    console.error('[reviewRegistrationAction]', e)
+    return err("Impossible d'enregistrer la décision")
+  }
+}
+
+async function notifyFamilyOfReview(
+  schoolId: string,
+  status: 'approved' | 'rejected',
+  notes: string | null,
+  r: NonNullable<Awaited<ReturnType<typeof registrationsService.review>>>,
+  appUrl: string,
+  schoolName: string,
+): Promise<void> {
+  const approved = status === 'approved'
+  const title = approved ? `Inscription acceptée — ${r.studentName}` : `Inscription refusée — ${r.studentName}`
+  const body = approved
+    ? `L'inscription de ${r.studentName} a été acceptée par l'école.`
+    : `L'inscription de ${r.studentName} n'a pas été retenue.${notes ? ` Motif : ${notes}` : ''}`
+
+  // 1. Notification dans la cloche des parents qui ont un compte
+  await Promise.all(r.recipientMemberIds.map(recipientMemberId => createNotificationInternal({
+    schoolId, recipientMemberId, type: approved ? 'registration_approved' : 'registration_rejected',
+    title, body, link: '/parent-portal/enrollment',
+  })))
+
+  // 2. E-mail : adresse saisie dans le formulaire (le formulaire public ne demande pas de compte)
+  //    + comptes des parents liés
+  const primaryEmailFieldId = buildKeyToIdMap(r.formSchema).primaryEmail
+  const formEmail = primaryEmailFieldId ? String(r.formData[primaryEmailFieldId] ?? '').trim() : ''
+  const recipients = Array.from(new Set([
+    ...(formEmail.includes('@') ? [formEmail.toLowerCase()] : []),
+    ...(await getEmailsForMembers(r.recipientMemberIds)).map(e => e.toLowerCase()),
+  ]))
+  const accent = approved ? '#2d6a4f' : '#b91c1c'
+  // Le motif est saisi librement par l'admin et le nom vient du formulaire public : échappés dans le HTML
+  const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  const htmlBody = esc(body)
+
+  await Promise.allSettled(recipients.map(to => sendEmail({
+    to,
+    fromName: schoolName,
+    subject: `${schoolName} — ${title}`,
+    html: `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
+  <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:${accent};padding:36px 40px;text-align:center;">
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px;">${schoolName}</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:0;font-size:14px;">${approved ? 'Inscription acceptée' : 'Inscription non retenue'}</p>
+    </div>
+    <div style="padding:40px;">
+      <p style="color:#1e4535;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
+      <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">${htmlBody}</p>
+      ${!approved && !notes ? '<p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">N\'hésitez pas à contacter l\'école pour plus d\'informations.</p>' : ''}
+      <div style="text-align:center;margin-top:24px;">
+        <a href="${appUrl}/parent-portal/enrollment" style="display:inline-block;background:${accent};color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
+          Voir mes inscriptions →
+        </a>
+      </div>
+    </div>
+    <div style="background:#f4f9f3;padding:20px 40px;text-align:center;">
+      <p style="color:#9ca3af;font-size:12px;margin:0;">${schoolName} — Jazakum Allahu Khayran</p>
+    </div>
+  </div>
+</body></html>`,
+  })))
 }

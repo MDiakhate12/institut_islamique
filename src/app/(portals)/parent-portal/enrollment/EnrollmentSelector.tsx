@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { ChildWithClasses } from '@/modules/parents/parents.types'
+import type { RegistrationStatus } from '@/modules/registrations/registrations.types'
 import { LinkChildModal } from '../children/LinkChildModal'
 import { Phone, UserPlus, Users, ArrowRight, CheckCircle, Plus } from 'lucide-react'
 
@@ -10,12 +11,11 @@ interface Props {
   students: ChildWithClasses[]
   schoolName: string
   academicYear: string
-  registeredStudentIds: string[]
+  registrationStatuses: Record<string, RegistrationStatus>
 }
 
-export function EnrollmentSelector({ students, schoolName, academicYear, registeredStudentIds }: Props) {
+export function EnrollmentSelector({ students, schoolName, academicYear, registrationStatuses }: Props) {
   const router = useRouter()
-  const registeredSet = new Set(registeredStudentIds)
 
   return (
     <div>
@@ -57,7 +57,8 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registe
           ) : (
             <div className="space-y-3">
               {students.map(child => {
-                const isRegistered = registeredSet.has(child.studentId)
+                const status = registrationStatuses[child.studentId]
+                const isRegistered = !!status
                 const idLabel = child.studentCustomId ?? child.studentId
 
                 if (isRegistered) {
@@ -73,8 +74,13 @@ export function EnrollmentSelector({ students, schoolName, academicYear, registe
                         <p className="font-medium text-gray-900 text-sm">{child.firstName} {child.lastName}</p>
                         <p className="text-xs text-muted-foreground">ID : {idLabel}</p>
                       </div>
-                      <span className="text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full shrink-0">
-                        Inscrit
+                      {/* Déjà soumis = non cliquable (§7.4) ; le badge reflète la décision de l'école */}
+                      <span className={
+                        status === 'approved' ? 'text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full shrink-0'
+                        : status === 'rejected' ? 'text-xs font-medium text-red-700 bg-red-100 px-2 py-1 rounded-full shrink-0'
+                        : 'text-xs font-medium text-orange-700 bg-orange-100 px-2 py-1 rounded-full shrink-0'
+                      }>
+                        {status === 'approved' ? 'Inscrit' : status === 'rejected' ? 'Inscription refusée' : 'En attente de validation'}
                       </span>
                     </div>
                   )

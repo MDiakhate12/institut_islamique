@@ -2,15 +2,30 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { useRegistrations } from '@/modules/registrations/registrations.hooks'
+import { useRegistrations, useReviewRegistration } from '@/modules/registrations/registrations.hooks'
+import { useSchool } from '@/modules/school/school.hooks'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ClipboardList, Pencil, Download, X, Trash2, ArrowUpDown } from 'lucide-react'
+import { ClipboardList, Pencil, Download, X, Trash2, ArrowUpDown, Check, Ban } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportRegistrationsToExcel } from './registrations.excel'
-import type { RegistrationWithDetails } from '@/modules/registrations/registrations.types'
+import type { RegistrationWithDetails, RegistrationStatus } from '@/modules/registrations/registrations.types'
 
 type TypeFilter = 'all' | 'new_student' | 'reenrollment'
+type StatusFilter = 'all' | RegistrationStatus
+
+const STATUS_META: Record<RegistrationStatus, { label: string; cls: string }> = {
+  pending:  { label: 'En attente', cls: 'bg-orange-100 text-orange-700 border-orange-200' },
+  approved: { label: 'Approuvée',  cls: 'bg-green-100 text-green-700 border-green-200' },
+  rejected: { label: 'Rejetée',    cls: 'bg-red-100 text-red-700 border-red-200' },
+}
+
+function RegistrationStatusBadge({ status }: { status: RegistrationStatus }) {
+  const m = STATUS_META[status]
+  return <span className={cn('inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium border', m.cls)}>{m.label}</span>
+}
 
 function ConsentBadge({ value, label }: { value: boolean | null; label: string }) {
   return (
@@ -51,7 +66,11 @@ export function RegistrationsClient() {
   const [gradeFilter, setGradeFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [yearFilter, setYearFilter] = useState('all')
-  const [selected, setSelected]     = useState<RegistrationWithDetails | null>(null)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  // On garde l'id (pas l'objet) : après une décision, le panneau relit la ligne rafraîchie
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selected = registrations?.find(r => r.id === selectedId) ?? null
+  const pendingCount = (registrations ?? []).filter(r => r.status === 'pending').length
 
   const grades = useMemo(() => {
     const set = new Set((registrations ?? []).map(r => r.grade).filter((g): g is string => !!g))
@@ -72,6 +91,7 @@ export function RegistrationsClient() {
     return registrations.filter(r => {
       if (gradeFilter !== 'all' && r.grade !== gradeFilter) return false
       if (typeFilter !== 'all' && r.formType !== typeFilter) return false
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false
       if (search) {
         const q = search.toLowerCase()
         const name = `${r.studentFirstName ?? ''} ${r.studentLastName ?? ''}`.toLowerCase()
@@ -79,7 +99,7 @@ export function RegistrationsClient() {
       }
       return true
     })
-  }, [registrations, search, gradeFilter, typeFilter])
+  }, [registrations, search, gradeFilter, typeFilter, statusFilter])
 
   const total = registrations?.length ?? 0
 
@@ -152,6 +172,29 @@ export function RegistrationsClient() {
         )}
       </div>
 
+      {/* ── Filtre par statut ── */}
+      <div className="flex flex-wrap items-center gap-2">
+        {(['all', 'pending', 'approved', 'rejected'] as const).map(s => {
+          const count = s === 'all' ? total : (registrations ?? []).filter(r => r.status === s).length
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatusFilter(s)}
+              className={cn(
+                'px-3 py-1 rounded-full text-xs font-medium border transition-colors',
+                statusFilter === s ? 'bg-[#2d6a4f] text-white border-[#2d6a4f]' : 'bg-white text-muted-foreground border-border hover:border-[#2d6a4f]/40',
+              )}
+            >
+              {s === 'all' ? 'Toutes' : STATUS_META[s].label} ({count})
+            </button>
+          )
+        })}
+        {pendingCount > 0 && (
+          <span className="text-xs text-orange-700">{pendingCount} inscription{pendingCount > 1 ? 's' : ''} à traiter</span>
+        )}
+      </div>
+
       {/* ── Tableau + panneau détail ── */}
       <div className="flex flex-col lg:flex-row gap-4 relative">
         <div className={cn('flex-1 min-w-0 rounded-lg border border-border bg-white overflow-hidden', selected && 'lg:max-w-[calc(100%-380px)]')}>
@@ -168,6 +211,7 @@ export function RegistrationsClient() {
                   <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
                     <SortableTh label="ID" />
                     <SortableTh label="Élève" />
+                    <th className="px-3 py-3 text-left">Statut</th>
                     <SortableTh label="Inscrit le" />
                     <th className="px-3 py-3 text-left">Parents</th>
                     <th className="px-3 py-3 text-left">Contact</th>
@@ -191,7 +235,7 @@ export function RegistrationsClient() {
                       registration={r}
                       customFieldLabels={customFieldLabels}
                       isSelected={selected?.id === r.id}
-                      onClick={() => setSelected(prev => prev?.id === r.id ? null : r)}
+                      onClick={() => setSelectedId(prev => prev === r.id ? null : r.id)}
                     />
                   ))}
                 </tbody>
@@ -204,7 +248,7 @@ export function RegistrationsClient() {
         {selected && (
           <RegistrationDetailPanel
             registration={selected}
-            onClose={() => setSelected(null)}
+            onClose={() => setSelectedId(null)}
           />
         )}
       </div>
@@ -259,6 +303,9 @@ function RegistrationRow({
           )}
         </div>
       </td>
+
+      {/* Statut */}
+      <td className="px-3 py-2.5"><RegistrationStatusBadge status={r.status} /></td>
 
       {/* Registered At */}
       <td className="px-3 py-2.5 text-xs text-muted-foreground">
@@ -388,6 +435,8 @@ function RegistrationDetailPanel({
 }) {
   const father = r.parents[0]
   const mother = r.parents[1]
+  const { data: school } = useSchool()
+  const schoolName = school?.name ?? '—' // était « Attawba » en dur, quelle que soit l'école
 
   return (
     <div className="w-full lg:w-[340px] shrink-0 rounded-lg border border-border bg-white overflow-y-auto lg:max-h-[calc(100vh-200px)] lg:sticky lg:top-0">
@@ -402,8 +451,9 @@ function RegistrationDetailPanel({
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Registered {new Date(r.submittedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+            Inscrit le {new Date(r.submittedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
+          <div className="mt-2"><RegistrationStatusBadge status={r.status} /></div>
         </div>
         <button onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted transition-colors text-muted-foreground">
           <X className="h-4 w-4" />
@@ -411,6 +461,8 @@ function RegistrationDetailPanel({
       </div>
 
       <div className="p-4 space-y-5 text-sm">
+
+        <ReviewSection registration={r} />
 
         {/* Student Info */}
         <section>
@@ -478,9 +530,9 @@ function RegistrationDetailPanel({
 
         {/* Enrollment Info */}
         <section>
-          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Enrollment Info</h3>
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Inscription</h3>
           <div className="space-y-1.5">
-            <Row icon="🏫" label="School" value="Attawba" />
+            <Row icon="🏫" label="École" value={schoolName} />
             <Row icon="#" label="Année" value={`${new Date(r.submittedAt).getFullYear()}-${new Date(r.submittedAt).getFullYear() + 1}`} />
           </div>
         </section>
@@ -548,5 +600,77 @@ function RegistrationsSkeleton() {
         </tbody>
       </table>
     </div>
+  )
+}
+
+// ── Décision de l'admin ───────────────────────────────────────────────────────
+
+function ReviewSection({ registration: r }: { registration: RegistrationWithDetails }) {
+  const review = useReviewRegistration()
+  const [rejectOpen, setRejectOpen] = useState(false)
+  const [reason, setReason] = useState('')
+
+  async function decide(status: 'approved' | 'rejected', notes: string | null) {
+    const result = await review.mutateAsync({ registrationId: r.id, status, notes })
+    if (result.success) { setRejectOpen(false); setReason('') }
+  }
+
+  return (
+    <section className="rounded-lg border border-border bg-muted/10 p-3 space-y-2">
+      <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Décision</h3>
+
+      {r.status !== 'pending' && (
+        <p className="text-xs text-muted-foreground">
+          {r.status === 'approved' ? 'Approuvée' : 'Rejetée'}
+          {r.reviewedAt && ` le ${new Date(r.reviewedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+          {r.reviewedByName && ` par ${r.reviewedByName}`}
+        </p>
+      )}
+      {r.status === 'rejected' && r.reviewNotes && (
+        <p className="text-xs p-2 rounded bg-red-50 border border-red-100 text-red-800">Motif : {r.reviewNotes}</p>
+      )}
+
+      <div className="flex gap-2">
+        {r.status !== 'approved' && (
+          <Button size="sm" disabled={review.isPending} onClick={() => decide('approved', null)}
+            className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+            <Check className="h-4 w-4" /> Approuver
+          </Button>
+        )}
+        {r.status !== 'rejected' && (
+          <Button size="sm" variant="outline" disabled={review.isPending} onClick={() => setRejectOpen(true)}
+            className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50">
+            <Ban className="h-4 w-4" /> Rejeter
+          </Button>
+        )}
+      </div>
+      <p className="text-[11px] text-muted-foreground">La famille est prévenue par notification et par e-mail.</p>
+
+      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rejeter l&apos;inscription</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {r.studentFirstName} {r.studentLastName} — le motif (facultatif) est transmis à la famille.
+          </p>
+          <textarea
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            rows={3}
+            maxLength={1000}
+            placeholder="Motif du refus (facultatif)"
+            className="w-full text-sm border border-border rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-red-300"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setRejectOpen(false)}>Annuler</Button>
+            <Button disabled={review.isPending} onClick={() => decide('rejected', reason.trim() || null)}
+              className="bg-red-600 hover:bg-red-700 text-white">
+              Rejeter l&apos;inscription
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </section>
   )
 }
