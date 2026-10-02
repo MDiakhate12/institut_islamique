@@ -12,9 +12,10 @@ import type { PermissionMember, SearchResult } from './permissions.types'
 import { z } from 'zod'
 import { sendEmail, getAppUrl, getSchoolName } from '@/lib/email'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
+import { getAuthUserIdByEmail } from '@/db/auth-users'
 import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
-import { and, eq, sql as drizzleSql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 
 export async function getPermissionsByRoleAction(
   role: AdminSubRole,
@@ -117,8 +118,7 @@ export async function grantRoleAction(
       void (async () => {
         try {
           const normalizedEmail = email.toLowerCase().trim()
-          const rows = await db.execute(drizzleSql`SELECT id FROM auth.users WHERE email = ${normalizedEmail} LIMIT 1`)
-          const authUserId = (rows as unknown as { id: string }[])[0]?.id ?? null
+          const authUserId = await getAuthUserIdByEmail(normalizedEmail)
           if (authUserId) {
             const [member] = await db
               .select({ id: schoolMembers.id })

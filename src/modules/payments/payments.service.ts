@@ -2,7 +2,8 @@ import { db } from '@/db'
 import {
   payments, students, guardians, parentStudents, schoolMembers, profiles,
 } from '@/db/schema'
-import { and, eq, inArray, desc, sql } from 'drizzle-orm'
+import { and, eq, inArray, desc } from 'drizzle-orm'
+import { authUsers } from '@/db/auth-users'
 import type { CreatePaymentInput, CreateParentPaymentInput } from './payments.schema'
 import type { PaymentListItem, PaymentKpis, ChildPaymentStatus, UnpaidParent } from './payments.types'
 
@@ -43,16 +44,13 @@ export const paymentsService = {
 
     let emailByMember = new Map<string, string>()
     if (parentMemberIds.length > 0) {
-      const emailRows = await db.execute(sql`
-        SELECT sm.id AS member_id, au.email
-        FROM school_members sm
-        LEFT JOIN auth.users au ON au.id = sm.user_id
-        WHERE sm.id IN (${sql.join(parentMemberIds.map(id => sql`${id}`), sql`, `)})
-      `)
+      const emailRows = await db
+        .select({ memberId: schoolMembers.id, email: authUsers.email })
+        .from(schoolMembers)
+        .innerJoin(authUsers, eq(authUsers.id, schoolMembers.userId))
+        .where(inArray(schoolMembers.id, parentMemberIds))
       emailByMember = new Map(
-        (emailRows as unknown as { member_id: string; email: string | null }[])
-          .filter(r => r.email)
-          .map(r => [r.member_id, r.email as string])
+        emailRows.filter(r => r.email).map(r => [r.memberId, r.email as string])
       )
     }
 

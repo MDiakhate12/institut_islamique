@@ -341,6 +341,7 @@ if (!result.success) { toast.error(result.error); return }
 ### 4.4 Règles DB / Drizzle — absolues
 - ❌ Jamais importer Supabase/Drizzle directement dans un composant React ou un hook
 - ❌ Jamais de SQL brut en dehors des migrations
+- ✅ Pour lire `auth.users` (e-mails, recherche par e-mail), utiliser la table typée `authUsers` et ses helpers (`getAuthUserIdByEmail`, `getAuthEmailByUserId`) de `src/db/auth-users.ts` — **jamais** `db.execute(sql\`... auth.users ...\`)`. Ce fichier est volontairement hors de `src/db/schema/` pour que drizzle-kit ne touche jamais au schéma `auth`. E-mails de destinataires : helpers de `src/lib/email.ts` (`getAdminEmails`, `getMemberEmails(schoolId, role?)`, `getParentEmailsForClass`, `getParentEmailsForStudent`). Deux requêtes SQL brutes à colonne erronée (`ps.parent_member_id`, `"school_members"."portal_roles"` sous alias) ont empêché pendant des mois l'envoi des e-mails de devoirs et d'annonces sans qu'aucune erreur ne remonte.
 - ✅ Tout accès DB passe par `src/modules/[module]/[module].service.ts`
 - ✅ Toutes les tables ont une colonne `school_id`
 - ✅ Le schéma Drizzle (`src/db/schema/`) est la source de vérité absolue

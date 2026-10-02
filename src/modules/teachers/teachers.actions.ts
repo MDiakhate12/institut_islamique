@@ -12,8 +12,9 @@ import type { Teacher, TeacherListItem } from './teachers.types'
 import { ROUTES } from '@/lib/constants'
 import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
-import { eq, sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { sendEmail, getAppUrl, getSchoolName } from '@/lib/email'
+import { getAuthEmailByUserId } from '@/db/auth-users'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 import { createClient } from '@/lib/supabase/server'
 
@@ -165,8 +166,7 @@ export async function resendTeacherInvitationAction(memberId: string): Promise<A
   // For users with an account, pendingEmail is null — get email from auth.users
   let email = member.pendingEmail
   if (!email && hasAccount) {
-    const rows = await db.execute(sql`SELECT email FROM auth.users WHERE id = ${member.userId} LIMIT 1`)
-    email = (rows as unknown as { email: string }[])[0]?.email ?? null
+    email = await getAuthEmailByUserId(member.userId)
   }
   if (!email) return err('Email introuvable pour cet enseignant')
 

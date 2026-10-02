@@ -1,7 +1,7 @@
 import { db } from '@/db'
 import { announcements, schoolMembers, profiles } from '@/db/schema'
 import { eq, and, or, desc, ne } from 'drizzle-orm'
-import { sql } from 'drizzle-orm'
+import { getMemberEmails } from '@/lib/email'
 import type { Announcement } from './announcements.types'
 import type { CreateAnnouncementInput, UpdateAnnouncementInput } from './announcements.schema'
 import type { AnnouncementAudience } from '@/lib/constants'
@@ -131,29 +131,10 @@ export const announcementsService = {
   },
 
   async getEmailsByAudience(schoolId: string, audience: AnnouncementAudience): Promise<string[]> {
-    const NIL_UUID = '00000000-0000-0000-0000-000000000000'
-
-    // Filtre sur portal_roles selon l'audience. `sm.portal_roles` et non ${schoolMembers.portalRoles} :
-    // Drizzle rendrait "school_members"."portal_roles", invalide une fois la table aliasée en `sm`
-    // (la requête échouait → aucun e-mail pour les annonces Parents/Personnel)
-    const roleFilter = audience === 'parents'
-      ? sql`'parent' = ANY(sm.portal_roles)`
-      : audience === 'teachers'
-        ? sql`'teacher' = ANY(sm.portal_roles)`
-        : audience === 'admins'
-          ? sql`'admin' = ANY(sm.portal_roles)`
-          : sql`true` // 'everyone'
-
-    const rows = await db.execute(sql`
-      SELECT au.email
-      FROM school_members sm
-      JOIN auth.users au ON au.id = sm.user_id
-      WHERE sm.school_id = ${schoolId}
-        AND sm.is_pending = false
-        AND sm.user_id != ${NIL_UUID}::uuid
-        AND ${roleFilter}
-    `)
-
-    return (rows as unknown as { email: string }[]).map(r => r.email).filter(Boolean)
+    const role = audience === 'parents' ? 'parent'
+      : audience === 'teachers' ? 'teacher'
+        : audience === 'admins' ? 'admin'
+          : undefined // 'everyone'
+    return getMemberEmails(schoolId, role)
   },
 }
