@@ -36,6 +36,8 @@ interface Props {
    * false : formulaire public — le tuteur 1 est le contact principal, saisi par la famille.
    */
   accountHolder: boolean
+  /** Titre « Tuteurs » + phrase d'explication. Masqué dans l'aperçu du constructeur, qui a déjà son titre. */
+  showHeader?: boolean
 }
 
 /**
@@ -43,20 +45,20 @@ interface Props {
  * formulaire public et l'aperçu du constructeur admin. Tuteur 1 obligatoire, tuteur 2 optionnel.
  * Remplace les champs système père/mère/e-mails/téléphones (GUARDIAN_FIELD_KEYS).
  */
-export function GuardiansInput({ value, onChange, errors, accountHolder }: Props) {
+export function GuardiansInput({ value, onChange, errors, accountHolder, showHeader = true }: Props) {
   const update = (i: number, patch: Partial<RegistrationGuardianInput>) =>
     onChange(value.map((g, j) => (j === i ? { ...g, ...patch } : g)))
 
   return (
     <div id="field-guardians" className="space-y-3">
-      <div>
+      {showHeader && <div>
         <p className="text-sm font-medium text-foreground">Tuteurs</p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {accountHolder
             ? <>Vous êtes le premier tuteur de l&apos;élève. Vous pouvez ajouter un second tuteur (l&apos;autre parent par exemple).</>
             : <>Le tuteur principal est le contact de l&apos;école pour cette inscription. Vous pouvez ajouter un second tuteur (l&apos;autre parent par exemple).</>}
         </p>
-      </div>
+      </div>}
 
       {value.map((g, i) => (
         <GuardianCard

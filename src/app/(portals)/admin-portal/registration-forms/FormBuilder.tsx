@@ -301,7 +301,7 @@ function SortableGuardiansGroup({ id }: { id: string }) {
           </p>
           {/* Aperçu non interactif du bloc vu par les familles (formulaire public) */}
           <div className="pointer-events-none select-none opacity-80" aria-hidden>
-            <GuardiansInput value={[emptyGuardian()]} onChange={() => {}} errors={{}} accountHolder={false} />
+            <GuardiansInput value={[emptyGuardian()]} onChange={() => {}} errors={{}} accountHolder={false} showHeader={false} />
           </div>
         </div>
         <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 shrink-0 mt-0.5">Système</span>
