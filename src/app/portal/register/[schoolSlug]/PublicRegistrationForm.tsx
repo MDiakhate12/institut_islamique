@@ -7,7 +7,7 @@ import { Info, AlertTriangle, CheckCircle, XCircle, Star, X, BookOpen } from 'lu
 import { cn } from '@/lib/utils'
 import { submitRegistrationAction } from '@/modules/registrations/registrations.actions'
 import { getMissingRequiredFields, getGuardianErrors } from '@/modules/registrations/registrations.schema'
-import { GuardiansInput } from './GuardiansInput'
+import { GuardiansInput, emptyGuardian } from '@/components/shared/GuardiansInput/GuardiansInput'
 import type { FormItem, FormSection, InfoBlock, FormField, FormType, InfoBlockStyle, RegistrationClassItem, RegistrationGuardianInput } from '@/modules/registrations/registrations.types'
 import { GUARDIAN_FIELD_KEYS } from '@/modules/registrations/registrations.types'
 
@@ -555,7 +555,7 @@ export interface PublicRegistrationFormProps {
   financialOptions?: string[]
   classes?: RegistrationClassItem[]
   initialFormData?: Record<string, unknown>
-  /** Portail parent, nouvel élève : bloc « Tuteurs » (tuteur 1 = parent connecté) au lieu des champs père/mère/contact */
+  /** Portail parent : tuteur 1 = le parent connecté (pré-rempli). Absent = formulaire public, tuteurs saisis par la famille */
   initialGuardians?: RegistrationGuardianInput[]
   studentId?: string
   backHref?: string
@@ -591,14 +591,17 @@ export function PublicRegistrationForm({
   })
   const [isPending, startTransition] = useTransition()
   const [errors, setErrors] = useState<Set<string>>(new Set())
-  const [guardians, setGuardians] = useState<RegistrationGuardianInput[]>(initialGuardians ?? [])
+  // Bloc « Tuteurs » à la place des champs père/mère/contact (si l'école les a dans son formulaire)
+  const accountHolder = !!initialGuardians
+  const withGuardians = formType === 'new_student' && schema.some(item =>
+    item.kind === 'section' && item.fields.some(f => f.kind === 'system_field' && GUARDIAN_FIELD_KEYS.includes(f.fieldKey)))
+  const [guardians, setGuardians] = useState<RegistrationGuardianInput[]>(initialGuardians ?? [emptyGuardian()])
   const [guardianErrors, setGuardianErrors] = useState<Record<string, string>>({})
-  const withGuardians = !!initialGuardians && formType === 'new_student'
 
   function handleGuardiansChange(next: RegistrationGuardianInput[]) {
     setGuardians(next)
     // Les erreurs affichées suivent la saisie (elles disparaissent dès que le champ est corrigé)
-    if (Object.keys(guardianErrors).length > 0) setGuardianErrors(getGuardianErrors(next))
+    if (Object.keys(guardianErrors).length > 0) setGuardianErrors(getGuardianErrors(next, { accountHolder }))
   }
 
   function handleFieldChange(key: string, value: unknown) {
@@ -616,7 +619,7 @@ export function PublicRegistrationForm({
       gradeOptions, financialOptions,
       skipFieldKeys: withGuardians ? GUARDIAN_FIELD_KEYS : undefined,
     })
-    const gErrors = withGuardians ? getGuardianErrors(guardians) : {}
+    const gErrors = withGuardians ? getGuardianErrors(guardians, { accountHolder }) : {}
     const errorCount = missing.length + Object.keys(gErrors).length
     if (errorCount > 0) {
       setErrors(new Set(missing.map(f => f.id)))
@@ -694,7 +697,7 @@ export function PublicRegistrationForm({
                 classes={classes}
                 errors={errors}
                 guardiansSlot={withGuardians && item.systemKey === 'student_info'
-                  ? <GuardiansInput value={guardians} onChange={handleGuardiansChange} errors={guardianErrors} />
+                  ? <GuardiansInput value={guardians} onChange={handleGuardiansChange} errors={guardianErrors} accountHolder={accountHolder} />
                   : undefined}
               />
             )

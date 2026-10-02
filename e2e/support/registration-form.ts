@@ -17,22 +17,15 @@ export function field(page: Page, label: string) {
 export const uniqueSuffix = () =>
   Array.from({ length: 5 }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join('')
 
-/** Remplit le formulaire « nouvel élève » (champs obligatoires du formulaire par défaut). */
+/** Remplit le formulaire « nouvel élève » hors bloc « Tuteurs » (voir fillGuardians). */
 export async function fillNewStudentForm(page: Page, child: {
   firstName: string; lastName: string; birthDate?: string; gender?: 'Masculin' | 'Féminin'
-  father?: string; mother?: string; email?: string; phone?: string; grade?: string; className?: string
+  grade?: string; className?: string
 }) {
   await field(page, "Prénom de l'étudiant").fill(child.firstName)
   await field(page, "Nom de famille de l'étudiant").fill(child.lastName)
   await field(page, 'Date de naissance').fill(child.birthDate ?? '2017-05-04')
   await page.getByRole('button', { name: child.gender ?? 'Masculin', exact: true }).click()
-  if (child.father !== undefined) await field(page, 'Nom du père ou du tuteur').fill(child.father)
-  if (child.mother !== undefined) await field(page, 'Nom de la mère ou du tuteur').fill(child.mother)
-  if (child.email !== undefined) await field(page, 'E-mail principal').fill(child.email)
-  // Formulaire public uniquement : côté portail parent, ces champs sont remplacés par le bloc « Tuteurs »
-  if (child.father !== undefined || child.email !== undefined) {
-    await field(page, 'Téléphone principal').fill(child.phone ?? '0699887766')
-  }
   await field(page, 'Niveau scolaire actuel').selectOption(child.grade ?? 'CM1')
   if (child.className) await page.getByRole('button', { name: new RegExp(child.className) }).first().click()
   await page.getByRole('button', { name: 'Annuellement' }).click()
@@ -46,10 +39,15 @@ export async function fillNewStudentForm(page: Page, child: {
  */
 export async function fillGuardians(page: Page, opts: {
   relation?: 'Père' | 'Mère' | 'Tuteur légal' | 'Autre'
+  /** Formulaire public uniquement (au portail parent, nom et e-mail viennent du compte) */
+  name?: string
+  email?: string
   phone?: string
   second?: { relation: 'Père' | 'Mère' | 'Tuteur légal' | 'Autre'; name: string; phone?: string; email?: string }
 } = {}) {
   await page.locator('#guardian-0-relationship').selectOption({ label: opts.relation ?? 'Père' })
+  if (opts.name !== undefined) await page.locator('#guardian-0-name').fill(opts.name)
+  if (opts.email !== undefined) await page.locator('#guardian-0-email').fill(opts.email)
   await page.locator('#guardian-0-phone').fill(opts.phone ?? '0699887766')
   if (opts.second) {
     await page.getByRole('button', { name: /Ajouter un second tuteur/ }).click()

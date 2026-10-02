@@ -1,6 +1,6 @@
 import { test, expect } from '../support/fixtures'
 import { storageStatePath, E2E_SCHOOL } from '../support/users'
-import { field, uniqueSuffix } from '../support/registration-form'
+import { field, fillGuardians, uniqueSuffix } from '../support/registration-form'
 
 // §7.4 — le formulaire public crée immédiatement l'élève + ses tuteurs, puis la
 // registration 'pending'. L'admin la retrouve dans Inscriptions, et l'élève dans Étudiants.
@@ -16,10 +16,11 @@ test('inscription publique d\'un nouvel élève, visible côté admin', async ({
   await expect(field(page, "Nom de famille de l'étudiant")).toHaveValue(last) // mis en majuscules à la saisie
   await field(page, 'Date de naissance').fill('2016-03-08')
   await page.getByRole('button', { name: 'Féminin' }).click()
-  await field(page, 'Nom du père ou du tuteur').fill('Karim BENALI')
-  await field(page, 'Nom de la mère ou du tuteur').fill('Samia BENALI')
-  await field(page, 'E-mail principal').fill('karim.benali@example.com')
-  await field(page, 'Téléphone principal').fill('0611223344')
+  // Bloc « Tuteurs » (même composant que le portail parent) : tuteur principal + second tuteur
+  await fillGuardians(page, {
+    relation: 'Père', name: 'Karim BENALI', phone: '0611223344', email: 'karim.benali@example.com',
+    second: { relation: 'Mère', name: 'Samia BENALI' },
+  })
   await field(page, 'Niveau scolaire actuel').selectOption('CM1')
   await page.getByRole('button', { name: 'Annuellement' }).click()
   await page.getByRole('checkbox', { name: /J'ai lu et accepte les politiques/ }).check()
@@ -54,17 +55,19 @@ test('le formulaire public refuse une soumission sans les champs requis', async 
 
   await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
 
-  // 12 champs requis dans le formulaire par défaut (identité, parents, contact, niveau,
-  // fréquence de paiement, 2 cases d'acceptation) — l'année, en lecture seule, est exclue
+  // 12 champs à compléter : 8 du formulaire (identité, niveau, fréquence de paiement, 2 cases
+  // d'acceptation — l'année, en lecture seule, est exclue) + 4 du tuteur principal (relation, nom,
+  // téléphone, e-mail). La relation a son propre message, d'où 11 « Ce champ est requis ».
   await expect(page.getByText('Veuillez compléter les 12 champs obligatoires')).toBeVisible()
-  await expect(errors).toHaveCount(12)
+  await expect(errors).toHaveCount(11)
+  await expect(page.getByText("Choisissez la relation avec l'élève")).toBeVisible()
   await expect(page).toHaveURL(`/portal/register/${E2E_SCHOOL.slug}`)
 
   // L'erreur d'un champ disparaît dès qu'il est rempli
   await field(page, "Prénom de l'étudiant").fill('Partiel')
   await page.getByRole('button', { name: 'Masculin' }).click()
   await page.getByRole('checkbox', { name: /J'ai lu et j'accepte le règlement intérieur/ }).check()
-  await expect(errors).toHaveCount(9)
+  await expect(errors).toHaveCount(8)
 
   await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
   await expect(page.getByText('Veuillez compléter les 9 champs obligatoires')).toBeVisible()

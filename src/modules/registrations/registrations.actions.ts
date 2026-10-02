@@ -80,7 +80,7 @@ export async function submitRegistrationAction(
   // parent connecté. Le parent soumetteur n'est plus un paramètre : il vient de la session
   // (un appel direct à cette action publique permettait de lier l'élève à n'importe quel compte).
   knownStudentId?: string,
-  // Bloc « Tuteurs » du portail parent (nouvel élève) : tuteur 1 = parent connecté, tuteur 2 optionnel
+  // Bloc « Tuteurs » (nouvel élève) : portail parent (tuteur 1 = parent connecté) ou formulaire public
   guardiansInput?: RegistrationGuardianInput[],
 ): Promise<ActionResult<{ id: string; studentId?: string }>> {
   try {
@@ -121,16 +121,17 @@ export async function submitRegistrationAction(
     const form = await registrationsService.getOrCreateForm(school.id, formType)
     const keyToId = buildKeyToIdMap(form.formSchema)
 
-    // Parent connecté qui inscrit un nouvel élève : les tuteurs viennent du bloc « Tuteurs »
-    // (les champs père/mère/contact du formulaire ne sont pas affichés)
-    const parentGuardians = formType === 'new_student' && submitterMemberId && session
+    // Nouvel élève : les tuteurs viennent du bloc « Tuteurs » (les champs père/mère/contact du
+    // formulaire ne sont plus affichés). Sans bloc (ancienne page encore ouverte) : champs historiques.
+    const parentGuardians = formType === 'new_student' && guardiansInput !== undefined
+    const isAccountHolder = !!(submitterMemberId && session)
     let guardianList: RegistrationGuardianInput[] = []
     if (parentGuardians) {
       const parsedGuardians = registrationGuardiansSchema.safeParse(guardiansInput)
       if (!parsedGuardians.success) return err('Renseignez au moins un tuteur.')
-      // Le tuteur 1 est le titulaire du compte : son e-mail est celui de la session, pas celui envoyé
-      guardianList = parsedGuardians.data.map((g, i) => (i === 0 ? { ...g, email: session.email } : g))
-      const guardianErrors = getGuardianErrors(guardianList)
+      // Portail parent : le tuteur 1 est le titulaire du compte, son e-mail est celui de la session
+      guardianList = parsedGuardians.data.map((g, i) => (i === 0 && isAccountHolder ? { ...g, email: session!.email } : g))
+      const guardianErrors = getGuardianErrors(guardianList, { accountHolder: isAccountHolder })
       if (Object.keys(guardianErrors).length > 0) {
         return err(`Tuteurs incomplets : ${Object.values(guardianErrors)[0]}`)
       }
@@ -211,8 +212,8 @@ export async function submitRegistrationAction(
               email:          g.email.trim() || null,
               phone:          g.phone.trim() || null,
               emergencyPhone: g.emergencyPhone.trim() || null,
-              // Tuteur 1 = le parent connecté : rattaché à son compte
-              linkedMemberId: i === 0 ? submitterMemberId : null,
+              // Portail parent : tuteur 1 = le parent connecté, rattaché à son compte
+              linkedMemberId: i === 0 && isAccountHolder ? submitterMemberId : null,
             })
           }
         } else {

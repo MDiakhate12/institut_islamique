@@ -27,6 +27,8 @@ import { Label } from '@/components/ui/label'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
 import { AddSectionDialog } from './AddSectionDialog'
 import { AddFieldDialog } from './AddFieldDialog'
+import { GuardiansInput, emptyGuardian } from '@/components/shared/GuardiansInput/GuardiansInput'
+import { GUARDIAN_FIELD_KEYS } from '@/modules/registrations/registrations.types'
 import type {
   FormItem, FormSection, InfoBlock, FormField, CustomField, FormType,
   InfoBlockStyle, RegistrationClassItem, SystemField, FieldType,
@@ -264,6 +266,46 @@ function SortableFieldRow({ field, onDelete, onEdit }: { field: FormField; onDel
         attributes={attributes}
         isOver={isOver}
       />
+    </div>
+  )
+}
+
+// ── Bloc « Tuteurs » (champs père/mère/contact regroupés) ──────────────────────
+
+const isGuardianField = (f: FormField) =>
+  f.kind === 'system_field' && GUARDIAN_FIELD_KEYS.includes(f.fieldKey)
+
+/**
+ * Les 6 champs système père/mère/e-mails/téléphones sont affichés aux familles sous la forme d'un
+ * bloc « Tuteurs » unique (portail parent et formulaire public). Le constructeur les montre donc
+ * de la même façon : un bloc verrouillé, déplaçable d'un seul tenant, avec l'aperçu réel.
+ */
+function SortableGuardiansGroup({ id }: { id: string }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isOver } = useSortable({ id })
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}>
+      <div className={cn('group relative flex items-start gap-3 px-4 py-3 border-b border-border/50 last:border-b-0', isOver && 'bg-[#2d6a4f]/5')}>
+        <button {...listeners} {...attributes} type="button"
+          className="mt-1 text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0">
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-sm font-medium text-foreground">Tuteurs</span>
+            <span className="text-[#2d6a4f] text-sm font-medium">*</span>
+            <Lock className="h-3 w-3 text-amber-500 shrink-0" />
+          </div>
+          <p className="text-xs text-muted-foreground/70 italic">
+            Tuteur principal obligatoire (nom, téléphone, e-mail), second tuteur optionnel. Dans le portail
+            parent, le tuteur principal est le parent connecté, pré-rempli depuis son compte.
+          </p>
+          {/* Aperçu non interactif du bloc vu par les familles (formulaire public) */}
+          <div className="pointer-events-none select-none opacity-80" aria-hidden>
+            <GuardiansInput value={[emptyGuardian()]} onChange={() => {}} errors={{}} accountHolder={false} />
+          </div>
+        </div>
+        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 shrink-0 mt-0.5">Système</span>
+      </div>
     </div>
   )
 }
@@ -619,7 +661,16 @@ function SectionBlock({
   const [editingField,      setEditingField]      = useState<CustomField | null>(null)
   const [editingSystemField, setEditingSystemField] = useState<SystemField | null>(null)
 
-  const fieldCount = section.fields.length
+  // Les champs tuteurs sont regroupés en un seul élément « Tuteurs », à la place du premier d'entre eux
+  const guardiansGroupId = `${section.id}__guardians`
+  const guardianFields = section.fields.filter(isGuardianField)
+  const displayIds: string[] = []
+  for (const f of section.fields) {
+    if (!isGuardianField(f)) displayIds.push(f.id)
+    else if (!displayIds.includes(guardiansGroupId)) displayIds.push(guardiansGroupId)
+  }
+
+  const fieldCount = displayIds.length
   const isClassSection = section.systemKey === 'class_selection'
   const classCount = (classes ?? []).length
   const totalCount = isClassSection
@@ -631,9 +682,10 @@ function SectionBlock({
   function handleFieldDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (over && active.id !== over.id) {
-      const oldIndex = section.fields.findIndex(f => f.id === active.id)
-      const newIndex = section.fields.findIndex(f => f.id === over.id)
-      onUpdateFields(arrayMove(section.fields, oldIndex, newIndex))
+      // Réordonne la liste affichée (bloc « Tuteurs » = un élément), puis la redéplie en champs
+      const moved = arrayMove(displayIds, displayIds.indexOf(String(active.id)), displayIds.indexOf(String(over.id)))
+      const byId = new Map(section.fields.map(f => [f.id, f]))
+      onUpdateFields(moved.flatMap(id => (id === guardiansGroupId ? guardianFields : [byId.get(id)!])))
     }
   }
 
@@ -744,8 +796,11 @@ function SectionBlock({
           {/* Fields */}
           {!isClassSection && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFieldDragEnd}>
-              <SortableContext items={section.fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                {section.fields.map(field => (
+              <SortableContext items={displayIds} strategy={verticalListSortingStrategy}>
+                {displayIds.map(id => {
+                  if (id === guardiansGroupId) return <SortableGuardiansGroup key={id} id={id} />
+                  const field = section.fields.find(f => f.id === id)!
+                  return (
                   <SortableFieldRow
                     key={field.id}
                     field={field}
@@ -756,7 +811,8 @@ function SectionBlock({
                         : () => setEditingSystemField(field as SystemField)
                     }
                   />
-                ))}
+                  )
+                })}
               </SortableContext>
             </DndContext>
           )}

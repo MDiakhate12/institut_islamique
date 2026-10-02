@@ -31,13 +31,19 @@ interface Props {
   onChange: (next: RegistrationGuardianInput[]) => void
   /** Clés `<index>.<champ>` → message (getGuardianErrors) */
   errors: Record<string, string>
+  /**
+   * true  : portail parent — le tuteur 1 est le parent connecté (e-mail de son compte, verrouillé) ;
+   * false : formulaire public — le tuteur 1 est le contact principal, saisi par la famille.
+   */
+  accountHolder: boolean
 }
 
 /**
- * Bloc « Tuteurs » du formulaire « nouvel élève » du portail parent : le tuteur 1 est le parent
- * connecté (données de son compte, il choisit Père/Mère…), le tuteur 2 est optionnel.
+ * Bloc « Tuteurs » du formulaire « nouvel élève » : un seul composant pour le portail parent, le
+ * formulaire public et l'aperçu du constructeur admin. Tuteur 1 obligatoire, tuteur 2 optionnel.
+ * Remplace les champs système père/mère/e-mails/téléphones (GUARDIAN_FIELD_KEYS).
  */
-export function GuardiansInput({ value, onChange, errors }: Props) {
+export function GuardiansInput({ value, onChange, errors, accountHolder }: Props) {
   const update = (i: number, patch: Partial<RegistrationGuardianInput>) =>
     onChange(value.map((g, j) => (j === i ? { ...g, ...patch } : g)))
 
@@ -46,7 +52,9 @@ export function GuardiansInput({ value, onChange, errors }: Props) {
       <div>
         <p className="text-sm font-medium text-foreground">Tuteurs</p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Vous êtes le premier tuteur de l&apos;élève. Vous pouvez ajouter un second tuteur (l&apos;autre parent par exemple).
+          {accountHolder
+            ? <>Vous êtes le premier tuteur de l&apos;élève. Vous pouvez ajouter un second tuteur (l&apos;autre parent par exemple).</>
+            : <>Le tuteur principal est le contact de l&apos;école pour cette inscription. Vous pouvez ajouter un second tuteur (l&apos;autre parent par exemple).</>}
         </p>
       </div>
 
@@ -55,7 +63,8 @@ export function GuardiansInput({ value, onChange, errors }: Props) {
           key={i}
           index={i}
           guardian={g}
-          isAccountHolder={i === 0}
+          isFirst={i === 0}
+          accountHolder={accountHolder}
           takenRelations={value.filter((_, j) => j !== i).map(o => o.relationship)}
           errors={errors}
           onChange={patch => update(i, patch)}
@@ -77,10 +86,11 @@ export function GuardiansInput({ value, onChange, errors }: Props) {
   )
 }
 
-function GuardianCard({ index, guardian: g, isAccountHolder, takenRelations, errors, onChange, onRemove }: {
+function GuardianCard({ index, guardian: g, isFirst, accountHolder, takenRelations, errors, onChange, onRemove }: {
   index: number
   guardian: RegistrationGuardianInput
-  isAccountHolder: boolean
+  isFirst: boolean
+  accountHolder: boolean
   takenRelations: RegistrationGuardianInput['relationship'][]
   errors: Record<string, string>
   onChange: (patch: Partial<RegistrationGuardianInput>) => void
@@ -89,6 +99,7 @@ function GuardianCard({ index, guardian: g, isAccountHolder, takenRelations, err
   const id = (f: string) => `guardian-${index}-${f}`
   const err = (f: string) => errors[`${index}.${f}`]
   const errCls = (f: string) => err(f) && 'border-red-400'
+  const isAccountHolder = isFirst && accountHolder
 
   return (
     <div className="border border-[#2d6a4f]/30 rounded-lg p-3 space-y-3 bg-orange-50/30">
@@ -98,11 +109,11 @@ function GuardianCard({ index, guardian: g, isAccountHolder, takenRelations, err
             {index + 1}
           </span>
           <span className="text-sm font-semibold text-foreground">
-            {isAccountHolder ? 'Vous' : 'Second tuteur'}
+            {isAccountHolder ? 'Vous' : isFirst ? 'Tuteur principal' : 'Second tuteur'}
           </span>
-          {isAccountHolder ? (
+          {isFirst ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-[#2d6a4f]/10 px-2 py-0.5 text-[11px] font-medium text-[#2d6a4f]">
-              <UserRound className="h-3 w-3" /> Votre compte
+              <UserRound className="h-3 w-3" /> {isAccountHolder ? 'Votre compte' : 'Contact principal'}
             </span>
           ) : (
             <span className="text-xs text-muted-foreground">(optionnel)</span>
@@ -145,16 +156,19 @@ function GuardianCard({ index, guardian: g, isAccountHolder, takenRelations, err
 
         <div>
           <label htmlFor={id('phone')} className="text-xs font-medium mb-1 block">
-            Téléphone {isAccountHolder ? '*' : <span className="text-muted-foreground font-normal">(optionnel)</span>}
+            Téléphone {isFirst ? '*' : <span className="text-muted-foreground font-normal">(optionnel)</span>}
           </label>
           <Input id={id('phone')} type="tel" className={cn(INPUT_CLASS, errCls('phone'))} value={g.phone}
             onChange={e => onChange({ phone: e.target.value })} placeholder="0X XX XX XX XX" />
+          {isFirst && !isAccountHolder && (
+            <p className="text-[11px] text-muted-foreground mt-1">Ce numéro permettra de lier l&apos;élève à votre compte dans l&apos;application de l&apos;école.</p>
+          )}
           {err('phone') && <p className="text-xs text-red-600 mt-1">{err('phone')}</p>}
         </div>
 
         <div>
           <label htmlFor={id('email')} className="text-xs font-medium mb-1 block">
-            Email {!isAccountHolder && <span className="text-muted-foreground font-normal">(optionnel)</span>}
+            Email {isFirst ? (isAccountHolder ? null : '*') : <span className="text-muted-foreground font-normal">(optionnel)</span>}
           </label>
           <Input id={id('email')} type="email" value={g.email}
             readOnly={isAccountHolder}
@@ -173,7 +187,7 @@ function GuardianCard({ index, guardian: g, isAccountHolder, takenRelations, err
         </div>
       </div>
 
-      {!isAccountHolder && (
+      {!isFirst && (
         <p className="text-xs text-muted-foreground">
           Avec ce numéro de téléphone, ce tuteur pourra lier l&apos;élève à son propre compte.
         </p>

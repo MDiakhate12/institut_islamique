@@ -84,12 +84,19 @@ export const registrationGuardiansSchema = z.array(registrationGuardianSchema).m
  * relation obligatoire, un seul père et une seule mère ; tuteur 1 (le parent connecté) : nom et
  * téléphone obligatoires ; tuteur 2 (optionnel) : nom obligatoire s'il est ajouté.
  */
-export function getGuardianErrors(guardians: RegistrationGuardianInput[]): Record<string, string> {
+export function getGuardianErrors(
+  guardians: RegistrationGuardianInput[],
+  // Formulaire public : l'e-mail du tuteur principal est obligatoire (contact de l'école,
+  // décision envoyée par e-mail). Portail parent : c'est celui du compte, toujours présent.
+  opts: { accountHolder: boolean } = { accountHolder: true },
+): Record<string, string> {
   const errors: Record<string, string> = {}
+  if (guardians.length === 0) errors['0.name'] = 'Renseignez au moins un tuteur'
   guardians.forEach((g, i) => {
     if (!g.relationship) errors[`${i}.relationship`] = 'Choisissez la relation avec l\'élève'
     if (!g.name.trim()) errors[`${i}.name`] = 'Ce champ est requis'
     if (i === 0 && !g.phone.trim()) errors[`${i}.phone`] = 'Ce champ est requis'
+    if (i === 0 && !opts.accountHolder && !g.email.trim()) errors[`${i}.email`] = 'Ce champ est requis'
     if (g.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email.trim())) errors[`${i}.email`] = 'E-mail invalide'
   })
   for (const rel of ['father', 'mother'] as const) {

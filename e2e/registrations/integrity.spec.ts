@@ -62,10 +62,8 @@ test.describe('doublons', () => {
   test('le formulaire public refuse un élève déjà inscrit à l\'école', async ({ page }) => {
     // Yassine TESTEUR, né le 12/04/2015, existe dans le seed
     await page.goto(`/portal/register/${E2E_SCHOOL.slug}`)
-    await fillNewStudentForm(page, {
-      firstName: 'Yassine', lastName: 'testeur', birthDate: '2015-04-12',
-      father: 'Un PÈRE', mother: 'Une MÈRE', email: 'inconnu@example.com',
-    })
+    await fillNewStudentForm(page, { firstName: 'Yassine', lastName: 'testeur', birthDate: '2015-04-12' })
+    await fillGuardians(page, { relation: 'Père', name: 'Un PÈRE', email: 'inconnu@example.com' })
     await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
     await expect(page.getByText(/déjà inscrit à l'école/)).toBeVisible()
     await expect(page).toHaveURL(`/portal/register/${E2E_SCHOOL.slug}`)
@@ -124,4 +122,13 @@ test('bloc « Tuteurs » : validation, second tuteur, tuteur 1 rattaché au comp
   await expect(sheet.getByText('Papa TUTEURS')).toBeVisible()
 
   await Promise.all([family.close(), admin.close()])
+})
+
+test('constructeur admin : les champs parents/contact apparaissent comme le bloc « Tuteurs »', async ({ browser }) => {
+  const admin = await browser.newPage({ storageState: storageStatePath('admin') })
+  await admin.goto('/admin-portal/registration-forms')
+  await expect(admin.getByText('Tuteur principal obligatoire (nom, téléphone, e-mail)')).toBeVisible()
+  await expect(admin.getByText('Nom du père ou du tuteur')).toHaveCount(0)
+  await expect(admin.getByText('Téléphone principal')).toHaveCount(0)
+  await admin.close()
 })
