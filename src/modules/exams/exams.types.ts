@@ -80,9 +80,11 @@ export type ParentChildExamData = {
   grades: ParentExamGrade[]
 }
 
-/** Vue parent d'un trimestre : bulletins masqués (grades vides) tant que la période est fermée */
+/** Vue parent d'un trimestre : bulletins masqués (grades vides) tant qu'ils ne sont pas publiés ;
+ *  signature possible seulement période ouverte */
 export type ParentExamView = {
   periodOpen: boolean
+  published: boolean
   children: ParentChildExamData[]
 }
 

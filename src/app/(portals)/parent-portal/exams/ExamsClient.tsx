@@ -40,7 +40,7 @@ const STAR_LABELS = [
   { key: 'bringBooks' as const, label: 'Performance académique' },
 ]
 
-function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: string }) {
+function GradeCard({ grade, parentName, canSign }: { grade: ParentExamGrade; parentName: string; canSign: boolean }) {
   const { mutate: sign, isPending } = useSignExamGrade()
 
   return (
@@ -110,6 +110,8 @@ function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: 
                 <path d="M9 12l2 2 4-4" />
               </svg>
             </span>
+          ) : !canSign ? (
+            <span className="text-xs text-muted-foreground">Signature indisponible (période fermée)</span>
           ) : (
             <button
               onClick={() => sign({ examResultId: grade.examResultId, parentSignature: parentName })}
@@ -125,7 +127,7 @@ function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: 
   )
 }
 
-function ChildGrades({ child, parentName }: { child: ParentChildExamData; parentName: string }) {
+function ChildGrades({ child, parentName, canSign }: { child: ParentChildExamData; parentName: string; canSign: boolean }) {
   if (child.grades.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -141,7 +143,7 @@ function ChildGrades({ child, parentName }: { child: ParentChildExamData; parent
   return (
     <div className="space-y-4">
       {child.grades.map(grade => (
-        <GradeCard key={grade.classId} grade={grade} parentName={parentName} />
+        <GradeCard key={grade.classId} grade={grade} parentName={parentName} canSign={canSign} />
       ))}
     </div>
   )
@@ -150,7 +152,7 @@ function ChildGrades({ child, parentName }: { child: ParentChildExamData; parent
 export function ExamsClient({ initialView, initialTrimester, academicYear, parentName }: Props) {
   const [trimester, setTrimester] = useState(initialTrimester)
   const { data: view = initialView } = useParentChildrenGrades(trimester)
-  const { children, periodOpen } = view
+  const { children, periodOpen, published } = view
   const [activeId, setActiveId] = useState(initialView.children[0]?.studentId ?? '')
 
   const activeChild = children.find(c => c.studentId === activeId) ?? children[0]
@@ -229,15 +231,23 @@ export function ExamsClient({ initialView, initialTrimester, academicYear, paren
               <h2 className="text-lg font-bold text-[#2d6a4f]">
                 Élève : {activeChild.firstName} {activeChild.lastName}
               </h2>
-              {periodOpen ? (
-                <ChildGrades child={activeChild} parentName={parentName} />
+              {published && !periodOpen && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-sm font-medium text-amber-800">
+                    Période d&apos;examens fermée — signature indisponible
+                  </p>
+                </div>
+              )}
+              {published ? (
+                <ChildGrades child={activeChild} parentName={parentName} canSign={periodOpen} />
               ) : (
                 <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
                   <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-amber-800">Période d&apos;examens fermée</p>
+                    <p className="text-sm font-medium text-amber-800">Bulletins pas encore publiés</p>
                     <p className="text-xs text-amber-700 mt-0.5">
-                      Les bulletins du Trimestre {trimester} seront visibles dès que l&apos;école ouvrira la période d&apos;examens.
+                      Les bulletins du Trimestre {trimester} seront visibles dès que l&apos;école les publiera.
                     </p>
                   </div>
                 </div>

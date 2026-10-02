@@ -574,32 +574,39 @@ export const examsService = {
     return !!row
   },
 
-  async isExamPeriodOpen(schoolId: string, trimester: number): Promise<boolean> {
+  async getExamFlags(schoolId: string, trimester: number): Promise<{ periodOpen: boolean; published: boolean }> {
     const [school] = await db
       .select({ settings: schools.settings })
       .from(schools)
       .where(eq(schools.id, schoolId))
       .limit(1)
     const s = school?.settings
-    return trimester === 1 ? !!s?.examPeriodT1Open
-      : trimester === 2 ? !!s?.examPeriodT2Open
-        : !!s?.examPeriodT3Open
+    const t = trimester === 1 || trimester === 2 ? trimester : 3
+    return {
+      periodOpen: !!s?.[`examPeriodT${t}Open`],
+      published:  s?.[`examResultsPublishedT${t}`] ?? true, // écoles existantes : visibles
+    }
   },
 
-  // Le réglage « Ouvrir les examens » s'applique aussi au portail parent : période fermée,
-  // on renvoie les enfants (pour l'en-tête) mais aucun bulletin
+  async isExamPeriodOpen(schoolId: string, trimester: number): Promise<boolean> {
+    return (await this.getExamFlags(schoolId, trimester)).periodOpen
+  },
+
+  // Visibilité parent = « Bulletins publiés » ; signature = période ouverte (§7.20).
+  // Non publiés : on renvoie les enfants (pour l'en-tête) mais aucun bulletin.
   async getParentExamView(schoolMemberId: string, schoolId: string, trimester: number): Promise<ParentExamView> {
-    const [periodOpen, children] = await Promise.all([
-      this.isExamPeriodOpen(schoolId, trimester),
+    const [{ periodOpen, published }, children] = await Promise.all([
+      this.getExamFlags(schoolId, trimester),
       this.getChildrenGrades(schoolMemberId, schoolId, trimester),
     ])
     return {
       periodOpen,
-      children: periodOpen ? children : children.map(c => ({ ...c, grades: [] })),
+      published,
+      children: published ? children : children.map(c => ({ ...c, grades: [] })),
     }
   },
 
-  /** Signe le bulletin — uniquement si l'élève est lié à ce parent et la période du trimestre ouverte. */
+  /** Signe le bulletin — élève lié à ce parent, bulletins publiés et période du trimestre ouverte. */
   async signGrade(
     examResultId: string,
     parentSignature: string,
@@ -617,7 +624,9 @@ export const examsService = {
       .where(and(eq(examResults.id, examResultId), eq(examResults.schoolId, schoolId)))
       .limit(1)
     if (!result) return 'forbidden'
-    if (!await this.isExamPeriodOpen(schoolId, result.trimester)) return 'closed'
+    const { periodOpen, published } = await this.getExamFlags(schoolId, result.trimester)
+    if (!published) return 'forbidden'
+    if (!periodOpen) return 'closed'
 
     await db
       .update(examResults)

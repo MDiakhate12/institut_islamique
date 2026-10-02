@@ -1,19 +1,24 @@
 import { test, expect, type Page } from '../support/fixtures'
 import { storageStatePath, E2E_USERS } from '../support/users'
 
-// Bulletin d'examen de bout en bout : l'admin ouvre la période du trimestre (Paramètres) →
-// l'enseignant note → l'admin suit la progression → le parent consulte et signe → l'admin
-// referme la période : le formulaire de notation n'est plus accessible (même par URL directe)
-// et le parent ne voit plus le bulletin.
-// Un seul test (il bascule un réglage d'école) : rien d'autre dans la suite ne dépend de la période.
+// Bulletin d'examen de bout en bout (§7.20) : l'admin ouvre la période du trimestre et retient la
+// publication → l'enseignant note → le parent ne voit rien → l'admin publie → le parent consulte
+// et signe → l'admin referme la période : formulaire de notation inaccessible (même par URL),
+// bulletin toujours visible par le parent mais en lecture seule.
+// Un seul test (il bascule des réglages d'école) : rien d'autre dans la suite n'en dépend.
 
 const CLASS_NAME = 'Classe Coran E2E'
 const STUDENT = 'Yassine TESTEUR'
 
-async function setExamPeriod(admin: Page, open: boolean) {
+/** Réglages du Trimestre 1 dans Paramètres de l'école (seuls ceux passés sont modifiés). */
+async function setExamSettings(admin: Page, settings: { open?: boolean; published?: boolean }) {
   await admin.goto('/admin-portal/school-settings')
-  const toggle = admin.getByRole('checkbox', { name: /Ouvrir les examens pour Trimestre 1/ })
-  await toggle.setChecked(open)
+  if (settings.open !== undefined) {
+    await admin.getByRole('checkbox', { name: /Ouvrir les examens pour Trimestre 1/ }).setChecked(settings.open)
+  }
+  if (settings.published !== undefined) {
+    await admin.getByRole('checkbox', { name: /Bulletins publiés pour Trimestre 1/ }).setChecked(settings.published)
+  }
   await admin.getByRole('button', { name: 'Enregistrer les modifications' }).click()
   await expect(admin.getByText('Paramètres sauvegardés')).toBeVisible()
 }
@@ -26,7 +31,7 @@ function star(page: Page, criterion: string, n: number) {
     .nth(n - 1)
 }
 
-test('bulletin : période ouverte par l\'admin, note de l\'enseignant, signature du parent', async ({ browser }) => {
+test('bulletin : saisie ouverte, publication, signature du parent, lecture seule après fermeture', async ({ browser }) => {
   const errors: Error[] = []
   const open = async (role: 'admin' | 'teacher' | 'parent') => {
     const page = await browser.newPage({ storageState: storageStatePath(role) })
@@ -42,12 +47,12 @@ test('bulletin : période ouverte par l\'admin, note de l\'enseignant, signature
   await expect(teacher.getByText(STUDENT)).toBeVisible()
   await expect(studentLink).toHaveCount(0)
 
-  // … et le parent ne voit pas encore de bulletin (le réglage vaut aussi pour son portail)
+  // … et le parent n'a encore aucun bulletin (publiés par défaut, mais rien n'est noté)
   await parent.goto('/parent-portal/exams')
-  await expect(parent.getByText("Période d'examens fermée")).toBeVisible()
+  await expect(parent.getByText('Aucune note disponible')).toBeVisible()
 
-  // 2. L'admin ouvre la période du Trimestre 1
-  await setExamPeriod(admin, true)
+  // 2. L'admin ouvre la saisie du Trimestre 1 et retient la publication jusqu'à la fin
+  await setExamSettings(admin, { open: true, published: false })
 
   // 3. Enseignant : critères obligatoires, puis notation complète
   await teacher.reload()
@@ -80,8 +85,14 @@ test('bulletin : période ouverte par l\'admin, note de l\'enseignant, signature
   await classCard.getByRole('button', { name: 'Voir les détails' }).click()
   await expect(classCard.locator('div').filter({ hasText: STUDENT }).last()).toContainText('Non signé')
 
-  // 5. Parent : consulte le bulletin et le signe
-  await parent.goto('/parent-portal/exams')
+  // 5. Parent : bulletins non publiés → rien, même si la note existe
+  await parent.reload()
+  await expect(parent.getByText('Bulletins pas encore publiés')).toBeVisible()
+  await expect(parent.getByText('85/100')).toHaveCount(0)
+
+  // 6. L'admin publie : le parent consulte le bulletin et le signe
+  await setExamSettings(admin, { published: true })
+  await parent.reload()
   const bulletin = parent.locator('div.rounded-xl').filter({ hasText: CLASS_NAME }).filter({ hasText: 'Signature du parent' })
   await expect(bulletin).toContainText('85/100')
   await expect(bulletin).toContainText('Élève appliqué, bonne mémorisation.')
@@ -93,22 +104,23 @@ test('bulletin : période ouverte par l\'admin, note de l\'enseignant, signature
   await parent.reload() // persisté
   await expect(bulletin).toContainText(E2E_USERS.parent.fullName)
 
-  // 6. Admin : le bulletin apparaît signé
-  await admin.reload()
+  // 7. Admin : le bulletin apparaît signé
+  await admin.goto('/admin-portal/track-exams')
   await classCard.getByRole('button', { name: 'Voir les détails' }).click()
   await expect(classCard.locator('div').filter({ hasText: STUDENT }).last()).toContainText('Signé')
   await expect(classCard.locator('div').filter({ hasText: STUDENT }).last()).not.toContainText('Non signé')
 
-  // 7. L'admin referme la période : le formulaire n'est plus accessible, même par son URL
-  await setExamPeriod(admin, false)
+  // 8. L'admin referme la saisie : le formulaire n'est plus accessible, même par son URL
+  await setExamSettings(admin, { open: false })
   await teacher.goto(gradeUrl!)
   await expect(teacher).toHaveURL('/teacher-portal/exams')
   await expect(teacher.getByText("Période d'examens fermée")).toBeVisible()
 
-  // … et le bulletin (pourtant signé) disparaît du portail parent
+  // … le parent garde son bulletin signé, en lecture seule
   await parent.reload()
-  await expect(parent.getByText("Période d'examens fermée")).toBeVisible()
-  await expect(parent.getByText('85/100')).toHaveCount(0)
+  await expect(parent.getByText("Période d'examens fermée — signature indisponible")).toBeVisible()
+  await expect(bulletin).toContainText('85/100')
+  await expect(bulletin).toContainText(E2E_USERS.parent.fullName)
 
   expect(errors).toEqual([])
   await Promise.all([admin.close(), teacher.close(), parent.close()])

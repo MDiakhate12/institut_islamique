@@ -40,6 +40,11 @@ export type SchoolSettings = {
   examPeriodT1Open: boolean
   examPeriodT2Open: boolean
   examPeriodT3Open: boolean
+  // Bulletins visibles par les parents (indépendant de la saisie enseignant ci-dessus).
+  // Absent des écoles existantes → lire avec `?? true` (comportement historique : visibles)
+  examResultsPublishedT1?: boolean
+  examResultsPublishedT2?: boolean
+  examResultsPublishedT3?: boolean
 
   // ── Calendrier
   yearStartDate: string | null
@@ -86,6 +91,9 @@ export const DEFAULT_SETTINGS: SchoolSettings = {
   examPeriodT1Open:        false,
   examPeriodT2Open:        false,
   examPeriodT3Open:        false,
+  examResultsPublishedT1:  true,
+  examResultsPublishedT2:  true,
+  examResultsPublishedT3:  true,
   yearStartDate:           null,
   yearEndDate:             null,
   trimester1StartDate:     null,
