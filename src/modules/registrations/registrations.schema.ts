@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { FormField, FormItem } from './registrations.types'
+import type { FormField, FormItem, SystemFieldKey, RegistrationGuardianInput } from './registrations.types'
 
 export const formTypeSchema = z.enum(['new_student', 'reenrollment'])
 
@@ -19,6 +19,8 @@ type RequiredFieldsContext = {
   gradeOptions?: string[]
   /** settings.financialOptions — options du champ système "financialAid" */
   financialOptions?: string[]
+  /** Champs système non affichés (remplacés par le bloc « Tuteurs » du portail parent) */
+  skipFieldKeys?: SystemFieldKey[]
 }
 
 function fieldOptions(field: FormField, ctx: RequiredFieldsContext): string[] {
@@ -48,6 +50,7 @@ export function getMissingRequiredFields(
     for (const field of item.fields) {
       if (!field.required) continue
       if (field.kind === 'system_field' && field.readOnly) continue
+      if (field.kind === 'system_field' && ctx.skipFieldKeys?.includes(field.fieldKey)) continue
       // Oui/Non : non coché = « non », une réponse valide
       if (field.type === 'yes_no') continue
       // Champ à choix sans aucune option configurée par l'école : impossible à remplir, on ne bloque pas
@@ -64,3 +67,34 @@ export const reviewRegistrationSchema = z.object({
   notes: z.string().trim().max(1000).nullable(),
 })
 export type ReviewRegistrationInput = z.infer<typeof reviewRegistrationSchema>
+
+// ── Bloc « Tuteurs » (portail parent) ─────────────────────────────────────────
+
+export const registrationGuardianSchema = z.object({
+  relationship: z.enum(['father', 'mother', 'guardian', 'other', '']),
+  name:           z.string().trim().max(200),
+  phone:          z.string().trim().max(40),
+  email:          z.string().trim().max(200),
+  emergencyPhone: z.string().trim().max(40),
+})
+export const registrationGuardiansSchema = z.array(registrationGuardianSchema).min(1).max(2)
+
+/**
+ * Erreurs du bloc « Tuteurs », clé `<index>.<champ>` → message. Même règle côté client et serveur :
+ * relation obligatoire, un seul père et une seule mère ; tuteur 1 (le parent connecté) : nom et
+ * téléphone obligatoires ; tuteur 2 (optionnel) : nom obligatoire s'il est ajouté.
+ */
+export function getGuardianErrors(guardians: RegistrationGuardianInput[]): Record<string, string> {
+  const errors: Record<string, string> = {}
+  guardians.forEach((g, i) => {
+    if (!g.relationship) errors[`${i}.relationship`] = 'Choisissez la relation avec l\'élève'
+    if (!g.name.trim()) errors[`${i}.name`] = 'Ce champ est requis'
+    if (i === 0 && !g.phone.trim()) errors[`${i}.phone`] = 'Ce champ est requis'
+    if (g.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email.trim())) errors[`${i}.email`] = 'E-mail invalide'
+  })
+  for (const rel of ['father', 'mother'] as const) {
+    const idx = guardians.map((g, i) => (g.relationship === rel ? i : -1)).filter(i => i >= 0)
+    if (idx.length > 1) errors[`${idx[1]}.relationship`] = rel === 'father' ? 'Il y a déjà un père' : 'Il y a déjà une mère'
+  }
+  return errors
+}

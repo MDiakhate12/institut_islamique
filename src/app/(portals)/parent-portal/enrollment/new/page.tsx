@@ -5,7 +5,7 @@ import { profiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { schoolService } from '@/modules/school/school.service'
 import { getPublicRegistrationFormAction } from '@/modules/registrations/registrations.actions'
-import { buildKeyToIdMap } from '@/modules/registrations/registrations.service'
+import type { RegistrationGuardianInput } from '@/modules/registrations/registrations.types'
 import { PublicRegistrationForm } from '@/app/portal/register/[schoolSlug]/PublicRegistrationForm'
 import { RegistrationNotice } from '@/app/portal/register/[schoolSlug]/RegistrationNotice'
 
@@ -35,15 +35,16 @@ export default async function NewChildEnrollmentPage() {
     )
   }
 
-  const keyToId = buildKeyToIdMap(form.formSchema)
-  const initialFormData: Record<string, unknown> = {}
-  if (keyToId.primaryEmail) initialFormData[keyToId.primaryEmail] = session.email
+  // Bloc « Tuteurs » : tuteur 1 = le parent connecté (données de son compte). Relation pré-choisie
+  // d'après le genre du profil s'il est renseigné, sinon le parent la choisit (Père, Mère…)
   const profile = profileResult[0]
-  if (keyToId.primaryPhone && profile?.phone) initialFormData[keyToId.primaryPhone] = profile.phone
-  // Le parent connecté est pré-rempli comme père ou mère selon le genre de son profil ;
-  // à la soumission, le tuteur correspondant est rattaché à son compte
-  const parentNameField = profile?.gender === 'male' ? keyToId.fatherName : profile?.gender === 'female' ? keyToId.motherName : undefined
-  if (parentNameField && profile?.fullName) initialFormData[parentNameField] = profile.fullName
+  const initialGuardians: RegistrationGuardianInput[] = [{
+    relationship: profile?.gender === 'male' ? 'father' : profile?.gender === 'female' ? 'mother' : '',
+    name:           profile?.fullName ?? '',
+    phone:          profile?.phone ?? '',
+    email:          session.email,
+    emergencyPhone: '',
+  }]
 
   return (
     <PublicRegistrationForm
@@ -55,7 +56,7 @@ export default async function NewChildEnrollmentPage() {
       financialOptions={financialOptions}
       academicYear={academicYear}
       classes={classes}
-      initialFormData={initialFormData}
+      initialGuardians={initialGuardians}
       backHref="/parent-portal/enrollment"
       successHref="/parent-portal/enrollment/success"
     />

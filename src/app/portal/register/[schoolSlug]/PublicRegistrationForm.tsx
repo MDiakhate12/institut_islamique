@@ -6,8 +6,10 @@ import { toast } from 'sonner'
 import { Info, AlertTriangle, CheckCircle, XCircle, Star, X, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { submitRegistrationAction } from '@/modules/registrations/registrations.actions'
-import { getMissingRequiredFields } from '@/modules/registrations/registrations.schema'
-import type { FormItem, FormSection, InfoBlock, FormField, FormType, InfoBlockStyle, RegistrationClassItem } from '@/modules/registrations/registrations.types'
+import { getMissingRequiredFields, getGuardianErrors } from '@/modules/registrations/registrations.schema'
+import { GuardiansInput } from './GuardiansInput'
+import type { FormItem, FormSection, InfoBlock, FormField, FormType, InfoBlockStyle, RegistrationClassItem, RegistrationGuardianInput } from '@/modules/registrations/registrations.types'
+import { GUARDIAN_FIELD_KEYS } from '@/modules/registrations/registrations.types'
 
 // ── Style config ───────────────────────────────────────────────────────────────
 
@@ -445,6 +447,7 @@ function InfoBlockRenderer({ block }: { block: InfoBlock }) {
 
 function SectionRenderer({
   section, formType, formData, onFieldChange, gradeOptions, financialOptions, prefilledStudent, classes, errors,
+  guardiansSlot,
 }: {
   section: FormSection
   formType: FormType
@@ -455,8 +458,13 @@ function SectionRenderer({
   financialOptions?: string[]
   prefilledStudent?: { name: string; id: string }
   classes?: RegistrationClassItem[]
+  /** Bloc « Tuteurs » (portail parent) : remplace les champs parents/contact, à la place du premier */
+  guardiansSlot?: React.ReactNode
 }) {
   const isClassSection = section.systemKey === 'class_selection'
+  const isGuardianField = (f: FormSection['fields'][number]) =>
+    !!guardiansSlot && f.kind === 'system_field' && GUARDIAN_FIELD_KEYS.includes(f.fieldKey)
+  const firstGuardianFieldId = section.fields.find(isGuardianField)?.id
 
   return (
     <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
@@ -507,6 +515,9 @@ function SectionRenderer({
 
         {/* Regular fields */}
         {!isClassSection && section.fields.map(field => {
+          if (isGuardianField(field)) {
+            return field.id === firstGuardianFieldId ? <div key="guardians">{guardiansSlot}</div> : null
+          }
           const hasError = errors.has(field.id)
           return (
             <div
@@ -544,6 +555,8 @@ export interface PublicRegistrationFormProps {
   financialOptions?: string[]
   classes?: RegistrationClassItem[]
   initialFormData?: Record<string, unknown>
+  /** Portail parent, nouvel élève : bloc « Tuteurs » (tuteur 1 = parent connecté) au lieu des champs père/mère/contact */
+  initialGuardians?: RegistrationGuardianInput[]
   studentId?: string
   backHref?: string
   successHref?: string
@@ -558,6 +571,7 @@ export function PublicRegistrationForm({
   financialOptions,
   classes = [],
   initialFormData,
+  initialGuardians,
   studentId,
   backHref,
   successHref,
@@ -577,6 +591,15 @@ export function PublicRegistrationForm({
   })
   const [isPending, startTransition] = useTransition()
   const [errors, setErrors] = useState<Set<string>>(new Set())
+  const [guardians, setGuardians] = useState<RegistrationGuardianInput[]>(initialGuardians ?? [])
+  const [guardianErrors, setGuardianErrors] = useState<Record<string, string>>({})
+  const withGuardians = !!initialGuardians && formType === 'new_student'
+
+  function handleGuardiansChange(next: RegistrationGuardianInput[]) {
+    setGuardians(next)
+    // Les erreurs affichées suivent la saisie (elles disparaissent dès que le champ est corrigé)
+    if (Object.keys(guardianErrors).length > 0) setGuardianErrors(getGuardianErrors(next))
+  }
 
   function handleFieldChange(key: string, value: unknown) {
     setFormData(prev => ({ ...prev, [key]: value }))
@@ -589,17 +612,24 @@ export function PublicRegistrationForm({
       toast.info("Mode aperçu — soumission désactivée")
       return
     }
-    const missing = getMissingRequiredFields(schema, formData, { gradeOptions, financialOptions })
-    if (missing.length > 0) {
+    const missing = getMissingRequiredFields(schema, formData, {
+      gradeOptions, financialOptions,
+      skipFieldKeys: withGuardians ? GUARDIAN_FIELD_KEYS : undefined,
+    })
+    const gErrors = withGuardians ? getGuardianErrors(guardians) : {}
+    const errorCount = missing.length + Object.keys(gErrors).length
+    if (errorCount > 0) {
       setErrors(new Set(missing.map(f => f.id)))
-      toast.error(missing.length === 1
-        ? 'Veuillez remplir le champ obligatoire'
-        : `Veuillez remplir les ${missing.length} champs obligatoires`)
-      document.getElementById(`field-${missing[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setGuardianErrors(gErrors)
+      toast.error(errorCount === 1
+        ? 'Veuillez compléter le champ obligatoire'
+        : `Veuillez compléter les ${errorCount} champs obligatoires`)
+      const firstId = Object.keys(gErrors).length > 0 ? 'field-guardians' : `field-${missing[0].id}`
+      document.getElementById(firstId)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     startTransition(async () => {
-      const result = await submitRegistrationAction(schoolSlug, formType, formData, studentId)
+      const result = await submitRegistrationAction(schoolSlug, formType, formData, studentId, withGuardians ? guardians : undefined)
       if (!result.success) { toast.error(result.error); return }
       router.push(successHref ?? `/portal/register/${schoolSlug}/success`)
     })
@@ -663,6 +693,9 @@ export function PublicRegistrationForm({
                 prefilledStudent={prefilledStudent}
                 classes={classes}
                 errors={errors}
+                guardiansSlot={withGuardians && item.systemKey === 'student_info'
+                  ? <GuardiansInput value={guardians} onChange={handleGuardiansChange} errors={guardianErrors} />
+                  : undefined}
               />
             )
           })}

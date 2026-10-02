@@ -29,10 +29,33 @@ export async function fillNewStudentForm(page: Page, child: {
   if (child.father !== undefined) await field(page, 'Nom du père ou du tuteur').fill(child.father)
   if (child.mother !== undefined) await field(page, 'Nom de la mère ou du tuteur').fill(child.mother)
   if (child.email !== undefined) await field(page, 'E-mail principal').fill(child.email)
-  await field(page, 'Téléphone principal').fill(child.phone ?? '0699887766')
+  // Formulaire public uniquement : côté portail parent, ces champs sont remplacés par le bloc « Tuteurs »
+  if (child.father !== undefined || child.email !== undefined) {
+    await field(page, 'Téléphone principal').fill(child.phone ?? '0699887766')
+  }
   await field(page, 'Niveau scolaire actuel').selectOption(child.grade ?? 'CM1')
   if (child.className) await page.getByRole('button', { name: new RegExp(child.className) }).first().click()
   await page.getByRole('button', { name: 'Annuellement' }).click()
   await page.getByRole('checkbox', { name: /J'ai lu et accepte les politiques/ }).check()
   await page.getByRole('checkbox', { name: /J'ai lu et j'accepte le règlement intérieur/ }).check()
+}
+
+/**
+ * Bloc « Tuteurs » du portail parent (nouvel élève) : tuteur 1 = le parent connecté (nom/e-mail
+ * pré-remplis), on choisit la relation et on complète le téléphone ; tuteur 2 optionnel.
+ */
+export async function fillGuardians(page: Page, opts: {
+  relation?: 'Père' | 'Mère' | 'Tuteur légal' | 'Autre'
+  phone?: string
+  second?: { relation: 'Père' | 'Mère' | 'Tuteur légal' | 'Autre'; name: string; phone?: string; email?: string }
+} = {}) {
+  await page.locator('#guardian-0-relationship').selectOption({ label: opts.relation ?? 'Père' })
+  await page.locator('#guardian-0-phone').fill(opts.phone ?? '0699887766')
+  if (opts.second) {
+    await page.getByRole('button', { name: /Ajouter un second tuteur/ }).click()
+    await page.locator('#guardian-1-relationship').selectOption({ label: opts.second.relation })
+    await page.locator('#guardian-1-name').fill(opts.second.name)
+    if (opts.second.phone) await page.locator('#guardian-1-phone').fill(opts.second.phone)
+    if (opts.second.email) await page.locator('#guardian-1-email').fill(opts.second.email)
+  }
 }

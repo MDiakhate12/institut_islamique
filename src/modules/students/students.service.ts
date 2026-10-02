@@ -386,6 +386,7 @@ export const studentsService = {
             .set({
               relationship:   g.relationship,
               firstName:      g.name?.trim() || null,
+              lastName:       '', // le nom complet est dans first_name
               phone:          g.phone?.trim()          || null,
               email:          g.email?.trim()          || null,
               emergencyPhone: g.emergencyPhone?.trim() || null,

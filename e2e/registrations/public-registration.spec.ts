@@ -56,7 +56,7 @@ test('le formulaire public refuse une soumission sans les champs requis', async 
 
   // 12 champs requis dans le formulaire par défaut (identité, parents, contact, niveau,
   // fréquence de paiement, 2 cases d'acceptation) — l'année, en lecture seule, est exclue
-  await expect(page.getByText('Veuillez remplir les 12 champs obligatoires')).toBeVisible()
+  await expect(page.getByText('Veuillez compléter les 12 champs obligatoires')).toBeVisible()
   await expect(errors).toHaveCount(12)
   await expect(page).toHaveURL(`/portal/register/${E2E_SCHOOL.slug}`)
 
@@ -67,7 +67,7 @@ test('le formulaire public refuse une soumission sans les champs requis', async 
   await expect(errors).toHaveCount(9)
 
   await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
-  await expect(page.getByText('Veuillez remplir les 9 champs obligatoires')).toBeVisible()
+  await expect(page.getByText('Veuillez compléter les 9 champs obligatoires')).toBeVisible()
 
   // Rien n'a été créé côté admin
   const admin = await browser.newPage({ storageState: storageStatePath('admin') })

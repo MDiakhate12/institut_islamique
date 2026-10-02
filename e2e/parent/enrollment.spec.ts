@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '../support/fixtures'
 import { storageStatePath, E2E_USERS } from '../support/users'
-import { field, uniqueSuffix } from '../support/registration-form'
+import { field, fillGuardians, uniqueSuffix } from '../support/registration-form'
 
 // §7.4 — /parent-portal/enrollment réutilise le formulaire public. Un enfant a un badge de statut
 // (non cliquable) dès qu'une registration existe pour lui ; un nouvel élève créé par le parent
@@ -51,8 +51,11 @@ test('nouvel élève inscrit par le parent : lié immédiatement à son compte',
   await page.getByRole('link', { name: "Ajouter un nouvel élève à l'école" }).click()
   await expect(page).toHaveURL('/parent-portal/enrollment/new')
 
-  // L'e-mail principal est pré-rempli avec celui du compte connecté
-  await expect(field(page, 'E-mail principal')).toHaveValue(E2E_USERS.family.email)
+  // Bloc « Tuteurs » : le tuteur 1 est le parent connecté, nom et e-mail pré-remplis (e-mail non modifiable)
+  await expect(page.locator('#guardian-0-name')).toHaveValue(E2E_USERS.family.fullName)
+  await expect(page.locator('#guardian-0-email')).toHaveValue(E2E_USERS.family.email)
+  await expect(page.locator('#guardian-0-email')).toHaveAttribute('readonly', '')
+  await expect(page.getByText('Nom du père ou du tuteur')).toHaveCount(0)
 
   // Prénom unique : une relance ne doit pas être refusée comme doublon de la 1re tentative
   const first = `Lina${uniqueSuffix()}`
@@ -60,9 +63,7 @@ test('nouvel élève inscrit par le parent : lié immédiatement à son compte',
   await field(page, "Nom de famille de l'étudiant").fill('enfant')
   await field(page, 'Date de naissance').fill('2018-01-15')
   await page.getByRole('button', { name: 'Féminin' }).click()
-  await field(page, 'Nom du père ou du tuteur').fill('Famille E2E')
-  await field(page, 'Nom de la mère ou du tuteur').fill('Maman E2E')
-  await field(page, 'Téléphone principal').fill('0699887766')
+  await fillGuardians(page, { relation: 'Père', second: { relation: 'Mère', name: 'Maman E2E' } })
   await field(page, 'Niveau scolaire actuel').selectOption('CE2')
   await page.getByRole('button', { name: 'Annuellement' }).click()
   await acceptPolicies(page)

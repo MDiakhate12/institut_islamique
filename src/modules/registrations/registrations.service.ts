@@ -20,21 +20,6 @@ export function buildKeyToIdMap(schema: FormItem[]): Partial<Record<SystemFieldK
 }
 
 
-/**
- * Découpe « Karim BENALI » / « Abdel Karim BEN ALI » en prénom + nom. Les mots entièrement en
- * majuscules en fin de chaîne forment le nom ; à défaut, le dernier mot. Un seul mot → prénom seul.
- * (Avant, tout le nom du tuteur était stocké dans first_name, last_name restant vide.)
- */
-export function splitFullName(full: string): { firstName: string; lastName: string } {
-  const words = full.trim().split(/\s+/).filter(Boolean)
-  if (words.length <= 1) return { firstName: words[0] ?? '', lastName: '' }
-  const isUpper = (w: string) => w.length > 1 && w === w.toUpperCase() && w !== w.toLowerCase()
-  let i = words.length
-  while (i > 1 && isUpper(words[i - 1])) i--
-  if (i === words.length) i = words.length - 1 // pas de nom en majuscules : dernier mot
-  return { firstName: words.slice(0, i).join(' '), lastName: words.slice(i).join(' ') }
-}
-
 const normalizeName = (s: string) =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, ' ').toLowerCase()
 
@@ -444,17 +429,4 @@ export const registrationsService = {
     return { enrolledClassIds: toEnroll }
   },
 
-  /** Rattache au compte du parent le tuteur qui le représente (nom identique, sinon le tuteur principal). */
-  async linkGuardianToParent(studentId: string, parentMemberId: string, parentFullName: string | null): Promise<void> {
-    const rows = await db
-      .select({ id: guardians.id, firstName: guardians.firstName, lastName: guardians.lastName, isPrimary: guardians.isPrimary })
-      .from(guardians)
-      .where(eq(guardians.studentId, studentId))
-    if (rows.length === 0) return
-    const target = parentFullName
-      ? rows.find(g => normalizeName(`${g.firstName ?? ''} ${g.lastName}`) === normalizeName(parentFullName))
-      : undefined
-    const chosen = target ?? rows.find(g => g.isPrimary) ?? rows[0]
-    await db.update(guardians).set({ linkedMemberId: parentMemberId }).where(eq(guardians.id, chosen.id))
-  },
 }

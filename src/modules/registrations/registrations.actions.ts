@@ -5,13 +5,13 @@ import { requireSession, getSession } from '@/lib/auth/session'
 import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
-import { registrationsService, buildKeyToIdMap, splitFullName } from './registrations.service'
-import { profileService } from '@/modules/profile/profile.service'
-import { getMissingRequiredFields, reviewRegistrationSchema } from './registrations.schema'
+import { registrationsService, buildKeyToIdMap } from './registrations.service'
+import { getMissingRequiredFields, reviewRegistrationSchema, registrationGuardiansSchema, getGuardianErrors } from './registrations.schema'
 import { studentsService } from '@/modules/students/students.service'
 import { scheduledClassesService } from '@/modules/classes/classes.service'
 import { parentsService } from '@/modules/parents/parents.service'
-import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem, RegistrationWithDetails } from './registrations.types'
+import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem, RegistrationWithDetails, RegistrationGuardianInput } from './registrations.types'
+import { GUARDIAN_FIELD_KEYS } from './registrations.types'
 import { db } from '@/db'
 import { schools, guardians } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -80,6 +80,8 @@ export async function submitRegistrationAction(
   // parent connecté. Le parent soumetteur n'est plus un paramètre : il vient de la session
   // (un appel direct à cette action publique permettait de lier l'élève à n'importe quel compte).
   knownStudentId?: string,
+  // Bloc « Tuteurs » du portail parent (nouvel élève) : tuteur 1 = parent connecté, tuteur 2 optionnel
+  guardiansInput?: RegistrationGuardianInput[],
 ): Promise<ActionResult<{ id: string; studentId?: string }>> {
   try {
     // 1. Find school by slug
@@ -119,10 +121,39 @@ export async function submitRegistrationAction(
     const form = await registrationsService.getOrCreateForm(school.id, formType)
     const keyToId = buildKeyToIdMap(form.formSchema)
 
+    // Parent connecté qui inscrit un nouvel élève : les tuteurs viennent du bloc « Tuteurs »
+    // (les champs père/mère/contact du formulaire ne sont pas affichés)
+    const parentGuardians = formType === 'new_student' && submitterMemberId && session
+    let guardianList: RegistrationGuardianInput[] = []
+    if (parentGuardians) {
+      const parsedGuardians = registrationGuardiansSchema.safeParse(guardiansInput)
+      if (!parsedGuardians.success) return err('Renseignez au moins un tuteur.')
+      // Le tuteur 1 est le titulaire du compte : son e-mail est celui de la session, pas celui envoyé
+      guardianList = parsedGuardians.data.map((g, i) => (i === 0 ? { ...g, email: session.email } : g))
+      const guardianErrors = getGuardianErrors(guardianList)
+      if (Object.keys(guardianErrors).length > 0) {
+        return err(`Tuteurs incomplets : ${Object.values(guardianErrors)[0]}`)
+      }
+      // Recopie dans les réponses du formulaire : la liste admin, les e-mails de décision et les
+      // replis « form_data » du tableau Élèves lisent ces champs (§7.4)
+      const father = guardianList.find(g => g.relationship === 'father')
+      const mother = guardianList.find(g => g.relationship === 'mother')
+      const mirror: Partial<Record<SystemFieldKey, string>> = {
+        fatherName: father?.name ?? '', motherName: mother?.name ?? '',
+        primaryEmail: guardianList[0].email, primaryPhone: guardianList[0].phone,
+        secondaryEmail: guardianList[1]?.email ?? '', secondaryPhone: guardianList[1]?.phone ?? '',
+      }
+      for (const [key, value] of Object.entries(mirror) as [SystemFieldKey, string][]) {
+        const fieldId = keyToId[key]
+        if (fieldId) formData[fieldId] = value
+      }
+    }
+
     // Garantie serveur : le client valide déjà, mais on ne crée jamais d'élève à partir d'un envoi incomplet
     const missing = getMissingRequiredFields(form.formSchema, formData, {
       gradeOptions:     settings?.gradeLevels,
       financialOptions: settings?.financialOptions,
+      skipFieldKeys:    parentGuardians ? GUARDIAN_FIELD_KEYS : undefined,
     })
     if (missing.length > 0) {
       return err(`Champs obligatoires manquants : ${missing.map(f => f.label).join(', ')}`)
@@ -166,39 +197,56 @@ export async function submitRegistrationAction(
         })
         studentId = student.id
 
-        // Tuteurs : « Prénom NOM » découpé en prénom + nom de famille
-        const fatherName = get('fatherName')?.trim()
-        const motherName = get('motherName')?.trim()
-        if (fatherName) {
-          await db.insert(guardians).values({
-            schoolId: school.id,
-            studentId,
-            relationship:   'father',
-            ...splitFullName(fatherName),
-            isPrimary:      true,
-            email:          get('primaryEmail')   || null,
-            phone:          get('primaryPhone')   || null,
-            emergencyPhone: get('secondaryPhone') || null,
-          })
-        }
-        if (motherName) {
-          await db.insert(guardians).values({
-            schoolId: school.id,
-            studentId,
-            relationship: 'mother',
-            ...splitFullName(motherName),
-            isPrimary:    !fatherName,
-            email:        get('secondaryEmail') || (fatherName ? null : get('primaryEmail') || null),
-            phone:        fatherName ? null : get('primaryPhone') || null,
-          })
+        // Tuteurs — nom complet dans first_name, last_name vide : même convention que l'éditeur
+        // de tuteurs du tableau Élèves (qui n'affiche et ne modifie que first_name)
+        if (parentGuardians) {
+          for (const [i, g] of guardianList.entries()) {
+            await db.insert(guardians).values({
+              schoolId: school.id,
+              studentId,
+              relationship:   g.relationship as Exclude<RegistrationGuardianInput['relationship'], ''>,
+              firstName:      g.name.trim(),
+              lastName:       '',
+              isPrimary:      i === 0,
+              email:          g.email.trim() || null,
+              phone:          g.phone.trim() || null,
+              emergencyPhone: g.emergencyPhone.trim() || null,
+              // Tuteur 1 = le parent connecté : rattaché à son compte
+              linkedMemberId: i === 0 ? submitterMemberId : null,
+            })
+          }
+        } else {
+          const fatherName = get('fatherName')?.trim()
+          const motherName = get('motherName')?.trim()
+          if (fatherName) {
+            await db.insert(guardians).values({
+              schoolId: school.id,
+              studentId,
+              relationship:   'father',
+              firstName:      fatherName,
+              isPrimary:      true,
+              email:          get('primaryEmail')   || null,
+              phone:          get('primaryPhone')   || null,
+              emergencyPhone: get('secondaryPhone') || null,
+            })
+          }
+          if (motherName) {
+            await db.insert(guardians).values({
+              schoolId: school.id,
+              studentId,
+              relationship: 'mother',
+              firstName:    motherName,
+              isPrimary:    !fatherName,
+              email:        get('secondaryEmail') || (fatherName ? null : get('primaryEmail') || null),
+              phone:        fatherName ? null : get('primaryPhone') || null,
+            })
+          }
         }
       }
 
-      // Parent connecté : l'enfant est lié à son compte, et le tuteur qui le représente aussi
-      if (studentId && submitterMemberId && session) {
+      // Parent connecté : l'enfant apparaît tout de suite dans « Mes enfants »
+      if (studentId && submitterMemberId) {
         await parentsService.linkStudentsToParent(submitterMemberId, [studentId], school.id)
-        const profile = await profileService.getProfile(session.userId, school.id)
-        await registrationsService.linkGuardianToParent(studentId, submitterMemberId, profile?.fullName ?? null)
       }
     }
 
