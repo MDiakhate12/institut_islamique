@@ -3,7 +3,8 @@ import { EXPENSE_CATEGORIES, EXPENSE_STATUSES } from '@/lib/constants'
 
 export const createExpenseSchema = z.object({
   date: z.string(),
-  amount: z.number().min(0),
+  // positive() : une demande de remboursement à 0 € n'a pas de sens (min(0) l'acceptait)
+  amount: z.number({ error: 'Montant requis' }).positive('Le montant doit être supérieur à 0'),
   category: z.enum(EXPENSE_CATEGORIES).nullable(),
   description: z.string().min(1, 'Description requise'),
   receipt: z.object({

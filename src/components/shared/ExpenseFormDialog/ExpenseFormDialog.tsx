@@ -62,7 +62,7 @@ export function ExpenseFormDialog({ triggerLabel = 'Nouvelle dépense', teacherS
   const classes = teacherSelectable ? adminClasses : myClasses
   const rate = school?.settings?.teacherHourlyRate ?? 0
 
-  const { control, register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } = useForm<CreateExpenseInput>({
+  const { control, register, handleSubmit, reset, setValue, watch, formState: { isSubmitting, errors } } = useForm<CreateExpenseInput>({
     resolver: zodResolver(createExpenseSchema),
     defaultValues: DEFAULT_VALUES,
   })
@@ -174,11 +174,13 @@ export function ExpenseFormDialog({ triggerLabel = 'Nouvelle dépense', teacherS
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
                   <Input type="number" step="0.01" className="pl-7" {...register('amount', { valueAsNumber: true })} />
                 </div>
+                {errors.amount && <p className="text-xs text-red-600 mt-1">{errors.amount.message}</p>}
               </div>
 
               <div>
                 <label className="text-sm font-medium mb-1.5 block">À quoi cela servait-il ?</label>
                 <Textarea placeholder="ex. : Livres pour la Classe A, fournitures de bureau..." {...register('description')} />
+                {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description.message}</p>}
               </div>
 
               <div>
