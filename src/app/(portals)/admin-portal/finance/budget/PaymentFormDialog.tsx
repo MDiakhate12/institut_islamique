@@ -1,5 +1,6 @@
 'use client'
 
+import { localTodayISO } from '@/lib/dates'
 import { useEffect, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,7 +33,7 @@ const DEFAULT_VALUES: CreatePaymentInput = {
   method: 'cash',
   financialOption: null,
   status: 'verified',
-  paymentDate: new Date().toISOString().slice(0, 10),
+  paymentDate: localTodayISO(),
   notes: null,
 }
 

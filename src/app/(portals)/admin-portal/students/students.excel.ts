@@ -1,3 +1,4 @@
+import { localTodayISO } from '@/lib/dates'
 import * as XLSX from 'xlsx'
 import type { StudentListItem } from '@/modules/students/students.types'
 
@@ -17,5 +18,5 @@ export function exportStudentsToExcel(students: StudentListItem[]) {
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Élèves')
-  XLSX.writeFile(wb, `eleves-${new Date().toISOString().slice(0, 10)}.xlsx`)
+  XLSX.writeFile(wb, `eleves-${localTodayISO()}.xlsx`)
 }

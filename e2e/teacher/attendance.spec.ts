@@ -8,12 +8,6 @@ const CLASS_NAME = 'Classe Coran E2E'
 const STUDENT = 'Yassine TESTEUR'
 
 test('présence saisie par l\'enseignant, visible par l\'admin et le parent', async ({ browser }) => {
-  // « Aujourd'hui » = date UTC du serveur pour l'enseignant (TZ=UTC), date Europe/Paris du navigateur
-  // pour l'admin et le parent : entre minuit et 1-2 h à Paris, les deux ne désignent pas le même jour.
-  const utcDay = new Date().toISOString().slice(0, 10)
-  const parisDay = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Paris' })
-  test.skip(utcDay !== parisDay, 'Jour UTC ≠ jour Europe/Paris : l\'admin et l\'enseignant ne regardent pas la même date')
-
   const teacher = await browser.newPage({ storageState: storageStatePath('teacher') })
   const admin = await browser.newPage({ storageState: storageStatePath('admin') })
   const parent = await browser.newPage({ storageState: storageStatePath('parent') })

@@ -1,3 +1,4 @@
+import { localTodayISO } from '@/lib/dates'
 import * as XLSX from 'xlsx'
 import type { RegistrationWithDetails } from '@/modules/registrations/registrations.types'
 
@@ -20,5 +21,5 @@ export function exportRegistrationsToExcel(registrations: RegistrationWithDetail
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Inscriptions')
-  XLSX.writeFile(wb, `inscriptions-${new Date().toISOString().slice(0, 10)}.xlsx`)
+  XLSX.writeFile(wb, `inscriptions-${localTodayISO()}.xlsx`)
 }

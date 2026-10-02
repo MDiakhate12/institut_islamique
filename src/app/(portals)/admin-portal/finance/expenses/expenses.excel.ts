@@ -1,3 +1,4 @@
+import { localTodayISO } from '@/lib/dates'
 import * as XLSX from 'xlsx'
 import type { ExpenseListItem } from '@/modules/expenses/expenses.types'
 import { EXPENSE_CATEGORY_LABELS } from '@/lib/constants'
@@ -19,5 +20,5 @@ export function exportExpensesToExcel(expenses: ExpenseListItem[]) {
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Depenses')
-  XLSX.writeFile(wb, `depenses-${new Date().toISOString().slice(0, 10)}.xlsx`)
+  XLSX.writeFile(wb, `depenses-${localTodayISO()}.xlsx`)
 }

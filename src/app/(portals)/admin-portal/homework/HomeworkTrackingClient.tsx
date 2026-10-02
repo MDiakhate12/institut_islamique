@@ -1,5 +1,6 @@
 'use client'
 
+import { addDaysISO, isSchoolDayISO, latestSchoolDayISO, todayInTimeZone } from '@/lib/dates'
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -17,49 +18,19 @@ type Filter = null | 'submitted' | 'missing'
 interface Props {
   initialOverview: AdminHomeworkOverview
   initialDate: string
+  timeZone: string
   schoolName: string
   schoolDays: string[]
 }
 
-const DAY_INDEX: Record<string, number> = {
-  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-  thursday: 4, friday: 5, saturday: 6,
-}
-
-function addDays(dateStr: string, n: number): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  d.setDate(d.getDate() + n)
-  return d.toISOString().split('T')[0]
-}
-
-function isSchoolDay(dateStr: string, schoolDays: string[]): boolean {
-  if (schoolDays.length === 0) return true
-  const dow = new Date(dateStr + 'T00:00:00').getDay()
-  return schoolDays.some(sd => DAY_INDEX[sd] === dow)
-}
-
 function prevSchoolDay(dateStr: string, schoolDays: string[]): string {
-  let d = addDays(dateStr, -1)
-  for (let i = 0; i < 7; i++) {
-    if (isSchoolDay(d, schoolDays)) return d
-    d = addDays(d, -1)
-  }
-  return addDays(dateStr, -1)
+  return latestSchoolDayISO(addDaysISO(dateStr, -1), schoolDays)
 }
 
 function nextSchoolDay(dateStr: string, schoolDays: string[]): string {
-  let d = addDays(dateStr, 1)
-  for (let i = 0; i < 7; i++) {
-    if (isSchoolDay(d, schoolDays)) return d
-    d = addDays(d, 1)
-  }
-  return addDays(dateStr, 1)
-}
-
-function latestSchoolDay(schoolDays: string[]): string {
-  const today = new Date().toISOString().split('T')[0]
-  if (isSchoolDay(today, schoolDays)) return today
-  return prevSchoolDay(today, schoolDays)
+  let d = addDaysISO(dateStr, 1)
+  for (let i = 0; i < 7 && !isSchoolDayISO(d, schoolDays); i++) d = addDaysISO(d, 1)
+  return d
 }
 
 function fmtLongDate(dateStr: string) {
@@ -279,7 +250,7 @@ function ClassCard({ cls, onClick }: { cls: AdminClassHomework; onClick: () => v
 
 // ── Main component ──────────────────────────────────────────────────────────
 
-export default function HomeworkTrackingClient({ initialOverview, initialDate, schoolName, schoolDays }: Props) {
+export default function HomeworkTrackingClient({ initialOverview, initialDate, schoolName, schoolDays, timeZone }: Props) {
   const [date, setDate]         = useState(initialDate)
   const [filter, setFilter]     = useState<Filter>(null)
   const [selected, setSelected] = useState<AdminClassHomework | null>(null)
@@ -375,7 +346,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
             variant="ghost"
             size="sm"
             className="h-8 px-2.5 text-xs text-[#2d6a4f]"
-            onClick={() => { setDate(latestSchoolDay(schoolDays)); setFilter(null) }}
+            onClick={() => { setDate(latestSchoolDayISO(todayInTimeZone(timeZone), schoolDays)); setFilter(null) }}
           >
             Aller à aujourd&apos;hui
           </Button>

@@ -1,4 +1,5 @@
 import { db } from '@/db'
+import { addDaysISO, isSchoolDayISO, todayInTimeZone } from '@/lib/dates'
 import {
   attendance, attendanceRecords, teacherAttendanceClasses,
   classes, classEnrollments, students, schoolMembers, profiles,
@@ -368,7 +369,7 @@ export const attendanceService = {
 
     // 2. School settings for yearStartDate + schoolDays
     const [school] = await db
-      .select({ settings: schools.settings })
+      .select({ settings: schools.settings, timezone: schools.timezone })
       .from(schools)
       .where(eq(schools.id, schoolId))
       .limit(1)
@@ -395,7 +396,7 @@ export const attendanceService = {
     const classIds = enrollRows.map(r => r.classId)
 
     // 4. Generate expected class dates (school days from yearStart to today)
-    const today = new Date()
+    const today = todayInTimeZone(school?.timezone)
     const expectedDates = generateExpectedDates(settings.yearStartDate, settings.schoolDays, today)
     if (expectedDates.length === 0) return []
 
@@ -471,41 +472,23 @@ export const attendanceService = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-
+// Jours de classe de yearStartDate (ou 3 mois en arrière, plafonné à 1 an) jusqu'à `todayISO`,
+// du plus récent au plus ancien — arithmétique ISO en UTC pur (src/lib/dates.ts)
 function generateExpectedDates(
   yearStartDate: string | null,
   schoolDays: string[],
-  today: Date,
+  todayISO: string,
 ): string[] {
-  const schoolDayNums = new Set(schoolDays.map(d => DAY_NAMES.indexOf(d)).filter(n => n >= 0))
-  if (schoolDayNums.size === 0) return []
+  if (schoolDays.length === 0) return []
 
-  const todayNorm = new Date(today)
-  todayNorm.setHours(0, 0, 0, 0)
-
-  // Fallback: 3 months ago if no yearStartDate
-  const start = yearStartDate
-    ? new Date(yearStartDate)
-    : new Date(todayNorm.getFullYear(), todayNorm.getMonth() - 3, todayNorm.getDate())
-  start.setHours(0, 0, 0, 0)
-
-  // Cap at 1 year back
-  const cap = new Date(todayNorm)
-  cap.setFullYear(cap.getFullYear() - 1)
+  const cap = addDaysISO(todayISO, -365)
+  const fallback = addDaysISO(todayISO, -91)
+  const start = yearStartDate ? yearStartDate.slice(0, 10) : fallback
   const from = start < cap ? cap : start
 
   const dates: string[] = []
-  const cursor = new Date(from)
-  while (cursor <= todayNorm) {
-    if (schoolDayNums.has(cursor.getDay())) {
-      const y = cursor.getFullYear()
-      const m = String(cursor.getMonth() + 1).padStart(2, '0')
-      const d = String(cursor.getDate()).padStart(2, '0')
-      dates.push(`${y}-${m}-${d}`)
-    }
-    cursor.setDate(cursor.getDate() + 1)
+  for (let d = todayISO; d >= from; d = addDaysISO(d, -1)) {
+    if (isSchoolDayISO(d, schoolDays)) dates.push(d)
   }
-
-  return dates.reverse() // most recent first
+  return dates
 }

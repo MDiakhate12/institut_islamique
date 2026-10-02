@@ -130,7 +130,7 @@ src/
 │   │   │   │   └── students.excel.ts
 │   │   │   ├── teachers/             # ✅ Construit
 │   │   │   ├── classes/              # ✅ Construit
-│   │   │   ├── class-catalog/        # ✅ Construit (avec DnD, classe précédente/suivante)
+│   │   │   ├── class-catalog/        # ↪ redirige vers /classes (catalogue intégré à la page Classes)
 │   │   │   │   ├── ClassCatalogClient.tsx
 │   │   │   │   └── ClassCatalogForm.tsx
 │   │   │   ├── academic-calendar/    # ✅ Construit
@@ -151,21 +151,23 @@ src/
 │   │   │   ├── parents/              # ✅ Construit (ParentsClient — liste élèves + parents liés)
 │   │   │   ├── announcements/        # ✅ Construit (CRUD + RTE + upload image + audience)
 │   │   │   ├── permissions/          # ✅ Construit (3 sections + search + revoke "REVOKE")
-│   │   │   ├── track-exams/          # ❌ ComingSoon
+│   │   │   ├── track-exams/          # ✅ Construit (suivi des bulletins, §7.20)
 │   │   │   ├── track-stars/          # ❌ ComingSoon
 │   │   │   ├── reports/              # ❌ ComingSoon
 │   │   │   ├── book-tracking/        # ❌ ComingSoon
 │   │   │   ├── substitutions/        # ❌ ComingSoon
 │   │   │   ├── finance/
-│   │   │   │   ├── budget/           # ❌ ComingSoon
-│   │   │   │   └── expenses/         # ❌ ComingSoon
+│   │   │   │   ├── budget/           # ✅ Construit (§7.13)
+│   │   │   │   └── expenses/         # ✅ Construit (§7.13)
 │   │   │   ├── communication/
 │   │   │   │   └── send-email/       # ❌ ComingSoon
 │   │   │   ├── sticky-notes/         # ❌ ComingSoon
 │   │   │   ├── birthdays/            # ❌ ComingSoon
 │   │   │   ├── start-new-year/       # ❌ ComingSoon
-│   │   │   └── roadmap/              # ❌ ComingSoon
-│   │   ├── teacher-portal/           # 🟡 Partiellement construit
+│   │   │   ├── roadmap/              # ❌ ComingSoon
+│   │   │   ├── rankings/             # ❌ ComingSoon
+│   │   │   └── tv/                   # ❌ ComingSoon
+│   │   ├── teacher-portal/           # ✅ Construit sauf remplacements et emploi du temps
 │   │   │   ├── layout.tsx            # ✅ Sidebar + gate d'activation
 │   │   │   ├── classes/              # ✅ Mes classes (MyClassesClient)
 │   │   │   ├── homework/             # ✅ Devoirs (CRUD + Jitsi)
@@ -173,13 +175,13 @@ src/
 │   │   │   ├── announcements/        # ✅ Annonces (feed lecture seule)
 │   │   │   ├── audio/                # ✅ Audio Coran (QuranAudioClient)
 │   │   │   ├── calendar/             # ✅ Calendrier (readonly, partagé admin)
-│   │   │   ├── catalog/              # ✅ Catalogue classes (readonly, partagé admin)
+│   │   │   ├── catalog/              # ↪ redirige vers /classes
 │   │   │   ├── profile/              # ✅ Profil (partagé ProfileSettingsClient)
-│   │   │   ├── exams/                # ❌ ComingSoon
+│   │   │   ├── exams/                # ✅ Notation des bulletins (§7.20)
 │   │   │   ├── substitutions/        # ❌ ComingSoon
-│   │   │   ├── refunds/              # ❌ ComingSoon
+│   │   │   ├── refunds/              # ✅ Remboursements + heures (§7.13)
 │   │   │   └── schedule/             # ❌ ComingSoon
-│   │   └── parent-portal/            # 🟡 Partiellement construit
+│   │   └── parent-portal/            # ✅ Construit sauf étoiles, absences et emploi du temps
 │   │       ├── layout.tsx            # ✅ Sidebar + guard rôle 'parent'
 │   │       ├── page.tsx              # ✅ Dashboard
 │   │       ├── children/             # ✅ Classes de mes enfants (cartes par matière + Présence/Devoirs)
@@ -189,10 +191,10 @@ src/
 │   │       ├── attendance/           # ✅ Présences (ParentAttendanceClient)
 │   │       ├── audio/                # ✅ Audio Coran (QuranAudioClient partagé)
 │   │       ├── calendar/             # ✅ Calendrier (readonly, partagé admin)
-│   │       ├── catalog/              # ✅ Catalogue classes (readonly, partagé admin)
+│   │       ├── catalog/              # ↪ redirige vers /children
 │   │       ├── profile/              # ✅ Profil (partagé ProfileSettingsClient)
-│   │       ├── exams/                # ❌ ComingSoon
-│   │       ├── payments/             # ❌ ComingSoon
+│   │       ├── exams/                # ✅ Bulletins + signature (§7.20)
+│   │       ├── payments/             # ✅ Statut de paiement + « Marquer comme payé » (§7.13)
 │   │       ├── stars/                # ❌ ComingSoon
 │   │       ├── absence/              # ❌ ComingSoon
 │   │       └── schedule/             # ❌ ComingSoon
@@ -219,7 +221,10 @@ src/
 │   ├── profile/         ✅ (types+schema+service+actions+hooks — partagé tous portails)
 │   ├── teacher-classes/ ✅ (types+service+actions+hooks — classes épinglées enseignant)
 │   ├── exams/           ✅ (types+schema+service+actions+hooks — teacher submit + admin tracking + parent view+signature)
-│   ├── finance/         ❌
+│   ├── payments/        ✅ (§7.13 — Budget admin + paiements parent)
+│   ├── expenses/        ✅ (§7.13 — dépenses / remboursements)
+│   ├── wages/           ✅ (§7.13 — heures des enseignants payés)
+│   ├── notifications/   ✅ (notifications in-app, cloche des 3 portails)
 │   ├── stars/           ❌
 │   ├── substitutions/   ❌
 │   ├── communication/   ❌
@@ -245,7 +250,8 @@ src/
 │   │   ├── finance.ts     # payments, expenses
 │   │   ├── communication.ts # announcements
 │   │   └── operations.ts  # registrations, registration_forms, substitutions,
-│   │                      # academic_events, book_tracking, sticky_notes
+│   │                      # academic_events, book_tracking, sticky_notes, notifications
+│   ├── auth-users.ts      # auth.users (Supabase) en lecture seule — hors schema/ exprès (§4.4)
 │   └── index.ts           # Client Drizzle
 │
 └── lib/
@@ -257,6 +263,8 @@ src/
     │   ├── server.ts       # Client server-side
     │   └── client.ts       # Client browser-side
     ├── result.ts           # Pattern ActionResult<T>
+    ├── dates.ts            # Dates ISO dans le fuseau de l'école (§7.21)
+    ├── email.ts            # Envoi + destinataires (admins, membres par rôle, parents)
     ├── utils.ts            # cn(), helpers
     └── constants.ts        # Constantes globales
 ```
@@ -544,7 +552,7 @@ Toujours utiliser `@/components/ui/dialog` (wrapper Shadcn). Ne jamais importer 
 
 ### 7.12 Page "Modifier le profil" — un composant, plusieurs portails
 
-`ProfileSettingsClient` (`src/components/shared/ProfileSettingsClient.tsx`) est le composant unique rendu par `/admin-portal/profile` et `/parent-portal/profile` (même pattern "un composant, plusieurs consommateurs" que le form-builder d'inscription, voir §7.4). Il n'a pas de prop `portal` — tout est piloté par `session.roles` : la checkbox "Administrateur" est toujours désactivée (le rôle admin ne se retire/s'ajoute que via `/admin-portal/permissions`, pas encore construit), les blocs "ID Enseignant" et "Enfants liés"/"Gérer les enfants" ne s'affichent que si l'utilisateur a le rôle correspondant. Le module `src/modules/profile/` gère nom/téléphone/rôles/langue via Drizzle ; changement d'e-mail, mot de passe et suppression de compte appellent directement `supabase.auth.updateUser()`/`supabaseAdmin.auth.admin.deleteUser()` depuis les server actions (pas de service Drizzle pour ces opérations, elles ne touchent pas nos tables). Chaque action sensible (email, mot de passe, suppression) ré-authentifie d'abord via `signInWithPassword` avant d'agir. Le lien "Edit Profile" de `UserProfileDialog` prend une prop `profileHref` (passée par chaque sidebar : admin/parent/teacher) — avant §7.12 il pointait toujours vers `/admin-portal/profile` en dur, quel que soit le portail d'où il était ouvert. Le "Délier l'enfant" vit dans `parentsService.unlinkChild` / `unlinkChildAction` (module `parents`, pas `profile`, car il opère sur `parent_students`). Le bouton "+ Ajouter un enfant" réutilise `LinkChildModal` déjà construit pour `/parent-portal/children`.
+`ProfileSettingsClient` (`src/components/shared/ProfileSettingsClient.tsx`) est le composant unique rendu par `/admin-portal/profile`, `/teacher-portal/profile` et `/parent-portal/profile` (même pattern "un composant, plusieurs consommateurs" que le form-builder d'inscription, voir §7.4). Il n'a pas de prop `portal` — tout est piloté par `session.roles` : la checkbox "Administrateur" est toujours désactivée (le rôle admin ne se retire/s'ajoute que via `/admin-portal/permissions`), les blocs "ID Enseignant" et "Enfants liés"/"Gérer les enfants" ne s'affichent que si l'utilisateur a le rôle correspondant. Le module `src/modules/profile/` gère nom/téléphone/rôles/langue via Drizzle ; changement d'e-mail, mot de passe et suppression de compte appellent directement `supabase.auth.updateUser()`/`supabaseAdmin.auth.admin.deleteUser()` depuis les server actions (pas de service Drizzle pour ces opérations, elles ne touchent pas nos tables). Chaque action sensible (email, mot de passe, suppression) ré-authentifie d'abord via `signInWithPassword` avant d'agir. Le lien "Edit Profile" de `UserProfileDialog` prend une prop `profileHref` (passée par chaque sidebar : admin/parent/teacher) — avant §7.12 il pointait toujours vers `/admin-portal/profile` en dur, quel que soit le portail d'où il était ouvert. Le "Délier l'enfant" vit dans `parentsService.unlinkChild` / `unlinkChildAction` (module `parents`, pas `profile`, car il opère sur `parent_students`). Le bouton "+ Ajouter un enfant" réutilise `LinkChildModal` déjà construit pour `/parent-portal/children`.
 
 ---
 
@@ -641,9 +649,9 @@ npm run test:e2e          # build Next dans .next-e2e puis next start :3100 + te
 npm run test:e2e:ui       # mode UI interactif
 ```
 
-- **Seed** (`e2e/seed.ts`, idempotent) : école `e2e-school` + 6 comptes (`admin`, `treasurer`, `manager`, `teacher`, `parent`, `family` `@e2e.qaf.test`, définis dans `e2e/support/users.ts` — `family` est un second parent réservé aux tests qui ajoutent des enfants/inscriptions, pour que `parent` garde un seul enfant), 1 classe (déjà épinglée par l'enseignant dans Présences et Devoirs), 1 élève inscrit lié au parent, buckets Storage ; `schoolDays` = les 7 jours (la chronologie de présence parent n'affiche que les jours de classe). Toute donnée nécessaire à un nouveau test s'ajoute ici. **Relancé automatiquement avant chaque run** (`e2e/global-setup.ts`) : un test qui écrit (paiement, inscription…) part toujours de l'état initial — mais les tests d'un même run partagent la base, donc un test qui écrit doit cibler ses propres lignes (montant/nom unique) et ne pas dépendre de ce qu'un autre test écrit.
+- **Seed** (`e2e/seed.ts`, idempotent) : école `e2e-school` + 6 comptes (`admin`, `treasurer`, `manager`, `teacher`, `parent`, `family` `@e2e.qaf.test`, définis dans `e2e/support/users.ts` — `family` est un second parent réservé aux tests qui ajoutent des enfants/inscriptions, pour que `parent` garde un seul enfant), 1 classe (déjà épinglée par l'enseignant dans Présences et Devoirs), 1 élève inscrit lié au parent, buckets Storage ; `schoolDays` = les 7 jours (la chronologie de présence parent n'affiche que les jours de classe) ; `timezone` = `Europe/Paris` (serveur E2E en UTC, navigateur à Paris : reproduit la prod, §7.21). Toute donnée nécessaire à un nouveau test s'ajoute ici. **Relancé automatiquement avant chaque run** (`e2e/global-setup.ts`) : un test qui écrit (paiement, inscription…) part toujours de l'état initial — mais les tests d'un même run partagent la base, donc un test qui écrit doit cibler ses propres lignes (montant/nom unique) et ne pas dépendre de ce qu'un autre test écrit.
 - **CI** : `.github/workflows/e2e.yml` (PR + push sur `main`) — `supabase start` dans le runner, push du schéma, tests, rapport HTML en artefact.
-- **Parcours métier couverts** : sous-rôles (`e2e/admin/sub-roles.spec.ts`), smoke de toutes les pages construites (`e2e/smoke.spec.ts`), paiement parent → vérification admin (`e2e/finance/parent-payment.spec.ts`), inscription publique → visible dans Inscriptions + Étudiants (`e2e/registrations/public-registration.spec.ts`), création/validation/modification/suppression d'un élève par l'admin (`e2e/admin/students.spec.ts`), appel enseignant → classe « Soumis » côté admin → statut dans la chronologie parent (`e2e/teacher/attendance.spec.ts`, ignoré quand le jour UTC du serveur ≠ jour Europe/Paris du navigateur), devoir Hifz enseignant → visible par le parent (`e2e/teacher/homework.spec.ts`), réinscription d'un enfant lié → « Inscrit » + nouvel élève lié immédiatement au parent (`e2e/parent/enrollment.spec.ts`), annonces par public cible Tous/Parents/Personnel + suppression (`e2e/communication/announcements.spec.ts`), remboursement enseignant → approuvé/payé ou rejeté par l'admin (`e2e/finance/teacher-refund.spec.ts`), création d'un enseignant par l'admin → inscription → gate d'activation avec le code copié via « Copier l'ID » (`e2e/admin/teacher-activation.spec.ts`, presse-papier lu avec la permission `clipboard-read`), bulletin d'examen : saisie ouverte + publication retenue → notation enseignant → invisible pour le parent → publication → signature parent → saisie refermée, formulaire inaccessible même par URL et bulletin toujours visible en lecture seule (`e2e/exams/exam-grades.spec.ts`, seul test qui modifie des réglages d'école). Helper `field()` (champ de `PublicRegistrationForm` par libellé) dans `e2e/support/registration-form.ts`.
+- **Parcours métier couverts** : sous-rôles (`e2e/admin/sub-roles.spec.ts`), smoke de toutes les pages construites (`e2e/smoke.spec.ts`), paiement parent → vérification admin (`e2e/finance/parent-payment.spec.ts`), inscription publique → visible dans Inscriptions + Étudiants (`e2e/registrations/public-registration.spec.ts`), création/validation/modification/suppression d'un élève par l'admin (`e2e/admin/students.spec.ts`), appel enseignant → classe « Soumis » côté admin → statut dans la chronologie parent (`e2e/teacher/attendance.spec.ts`), navigation jour précédent/suivant du suivi des devoirs admin (`e2e/admin/homework-tracking.spec.ts`), devoir Hifz enseignant → visible par le parent (`e2e/teacher/homework.spec.ts`), réinscription d'un enfant lié → « Inscrit » + nouvel élève lié immédiatement au parent (`e2e/parent/enrollment.spec.ts`), annonces par public cible Tous/Parents/Personnel + suppression (`e2e/communication/announcements.spec.ts`), remboursement enseignant → approuvé/payé ou rejeté par l'admin (`e2e/finance/teacher-refund.spec.ts`), création d'un enseignant par l'admin → inscription → gate d'activation avec le code copié via « Copier l'ID » (`e2e/admin/teacher-activation.spec.ts`, presse-papier lu avec la permission `clipboard-read`), bulletin d'examen : saisie ouverte + publication retenue → notation enseignant → invisible pour le parent → publication → signature parent → saisie refermée, formulaire inaccessible même par URL et bulletin toujours visible en lecture seule (`e2e/exams/exam-grades.spec.ts`, seul test qui modifie des réglages d'école). Helper `field()` (champ de `PublicRegistrationForm` par libellé) dans `e2e/support/registration-form.ts`.
 - **`test.fixme`** = comportement attendu mais pas encore implémenté (le test est listé, pas exécuté) — à retirer dès que la fonctionnalité existe.
 - **Timeouts** : 10 s par assertion (`expect.timeout`) — sous charge parallèle, certaines Server Actions dépassent les 5 s par défaut ; 60 s par test (`timeout`) — les parcours multi-portails dépassent les 30 s par défaut sous charge.
 - **Auth** : `e2e/auth.setup.ts` se connecte via le vrai formulaire pour chaque rôle et sauve `e2e/.auth/<role>.json` ; un test choisit son rôle avec `test.use({ storageState: storageStatePath('treasurer') })`.
@@ -667,6 +675,14 @@ Règles (source unique : `examsService.getExamFlags`) :
 - Libellés des critères en étoiles : `EXAM_CRITERIA` (`src/modules/exams/exams.labels.ts`), partagés formulaire enseignant / bulletin parent — ne pas les redéfinir localement.
 - Modifier le contenu d'un bulletin signé (étoiles, commentaires, note) remet `parentSignature` à `null` dans `submitExamResult` : le parent doit re-signer ; le formulaire enseignant l'avertit avant, et les parents liés reçoivent une notification in-app (type `exam_signature_reset`, cloche) + un e-mail (`notifyParentsSignatureReset`, `getParentEmailsForStudent`).
 
+### 7.21 Dates — « aujourd'hui » dans le fuseau de l'école
+
+Le serveur (Vercel) tourne en UTC, les écoles sont en Europe/Paris : `new Date().toISOString().slice(0, 10)` donne **la veille** entre minuit et 1-2 h. Et `new Date('YYYY-MM-DDT00:00:00')` (minuit local) relu en `toISOString()` décale d'un jour dans tout fuseau en avance sur UTC — c'est ce qui cassait « Jour suivant / précédent » du suivi des devoirs.
+- Tout passe par `src/lib/dates.ts` : `todayInTimeZone(school.timezone)` côté serveur, `addDaysISO` / `dayOfWeekISO` / `isSchoolDayISO` / `latestSchoolDayISO` pour l'arithmétique (UTC pur), `localTodayISO()` seulement pour une valeur par défaut de formulaire côté client.
+- Une date affichée pendant le rendu d'un composant client (« Aujourd'hui », « Hier ») vient du serveur en prop (`today`), sinon le rendu SSR (UTC) et le navigateur (Paris) divergent → erreur d'hydratation.
+- Ne plus jamais écrire `toISOString().split('T')[0]` / `.slice(0, 10)` pour obtenir une date du jour.
+- Le fuseau se règle dans Paramètres de l'école → Identité (`schools.timezone`, défaut `UTC`).
+
 ---
 
 ## 8. État d'avancement des modules
@@ -681,7 +697,7 @@ Règles (source unique : `examsService.getExamFlags`) :
 | **Students** | `/admin-portal/students` (liste + détail + création/édition + export Excel) — sélecteur de colonnes persisté en localStorage (`qaf:students:columns`), colonnes optionnelles : téléphone/email/père/mère depuis `guardians` + présences + date d'inscription (`students.created_at`) ; tri ET filtre « à la Excel » sur toutes les colonnes (`SORT_VALUE` / `FILTER_VALUES` + `ColumnFilter.tsx` : on coche les valeurs à afficher, « (Vide) » inclus, masquer une colonne retire son filtre) ; filtre par classe (+ « Sans classe ») ; drawer avec popup détail tuteur (clic sur carte), `schoolGrade` et `regSponsorship` depuis `form_data` JSONB de la dernière inscription |
 | **Teachers** | `/admin-portal/teachers` (liste + détail + flow activation NIL_UUID) — email modifiable par l'admin uniquement tant que `userId = NIL_UUID` (met à jour `pendingEmail` + renvoie l'invitation) ; une fois le compte créé, l'email est l'identifiant de connexion, modifiable seulement par l'enseignant depuis son profil |
 | **Classes** | `/admin-portal/classes` |
-| **Class Catalog** | `/admin-portal/class-catalog` (DnD, classe précédente/suivante) + `/teacher-portal/catalog` + `/parent-portal/catalog` (readonly partagé) |
+| **Class Catalog** | Intégré à `/admin-portal/classes` (DnD, classe précédente/suivante) — `/admin-portal/class-catalog`, `/teacher-portal/catalog` et `/parent-portal/catalog` redirigent respectivement vers `/admin-portal/classes`, `/teacher-portal/classes` et `/parent-portal/children` |
 | **Calendar** | `/admin-portal/academic-calendar` (vues Année/Mois/Semaine/Jour) + `/teacher-portal/calendar` + `/parent-portal/calendar` (readonly partagé) |
 | **Registration Forms** | `/admin-portal/registration-forms` (form builder DnD complet) |
 | **Registrations** | `/admin-portal/registrations` (liste + filtres + export Excel) |
@@ -696,7 +712,7 @@ Règles (source unique : `examsService.getExamFlags`) :
 | **Audio Coran** | `/teacher-portal/audio` + `/parent-portal/audio` (QuranAudioClient partagé, 6 récitateurs) |
 | **Teacher Classes** | `/teacher-portal/classes` (MyClassesClient — mes classes avec devoirs/présences) |
 | **Children** | `/parent-portal/children` (cartes par matière, badge subjectCode/level, Présence/Devoirs, Voir le programme) |
-| **Exams** | `/admin-portal/track-exams` (4 tabs, search, sort, email rapport, bandeau période) + `/teacher-portal/exams` (liste classes/élèves, star rating form) + `/parent-portal/exams` (bulletins read-only + signature parent) |
+| **Exams** | `/admin-portal/track-exams` (4 tabs, search, sort, email rapport, bandeau période) + `/teacher-portal/exams` (liste classes/élèves, star rating form) + `/parent-portal/exams` (bulletins + signature parent) — réglages « saisie ouverte » / « bulletins publiés » par trimestre, voir §7.20 |
 | **Finance** | `/admin-portal/finance/budget` (paiements, KPI, rappels impayés) + `/admin-portal/finance/expenses` (3 onglets Remboursements/Salaires/Paiements) + `/teacher-portal/refunds` (auto-soumission remboursements + heures) + `/parent-portal/payments` (statut par trimestre + auto-déclaration "Marquer comme payé") — voir §7.13 |
 
 ### ❌ ComingSoon (stub page existe, UI à construire, module backend absent)
@@ -720,9 +736,9 @@ Règles (source unique : `examsService.getExamFlags`) :
 
 ## 9. Problèmes connus à corriger (backlog)
 
-### 9.1 Période d'examens
-**Problème** : Switch global dans school-settings. Les enseignants et parents voient "Période d'examens fermée".  
-**Solution** : Configurable par trimestre et par classe (colonnes `examPeriodT1Open/T2Open/T3Open` déjà dans le schéma `classes`). Retirer le switch global.
+### 9.1 Période d'examens — par classe
+**État (2026-10)** : deux réglages **par trimestre au niveau de l'école** — saisie ouverte (`examPeriodT{N}Open`) et bulletins publiés (`examResultsPublishedT{N}`), appliqués côté serveur (§7.20).
+**Reste à faire** : les colonnes `examPeriodT1Open/T2Open/T3Open` du schéma `classes` existent mais ne sont lues nulle part. Si l'école veut ouvrir la saisie classe par classe, les brancher dans `examsService.getExamFlags` (classe ouverte **et/ou** école ouverte — règle à décider) et ajouter le réglage dans `/admin-portal/classes`.
 
 ### 9.2 Rapports
 **Problème** : "Date de début d'année non définie" — rapports inopérants si non configuré.  
@@ -764,7 +780,7 @@ Règles (source unique : `examsService.getExamFlags`) :
 
 > Le site de référence https://www.qaf.app/admin-portal est la source de vérité visuelle.
 > Toujours prendre des screenshots à jour avant de construire une page.
-> Les notes ci-dessous sont un complément pour les pages pas encore construites.
+> Les notes ci-dessous datent de l'audit de juin 2026 : une partie de ces pages est construite depuis (voir §8) — elles restent utiles pour celles marquées ❌.
 
 ### Pages à construire — détails visuels clés
 
