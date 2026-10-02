@@ -245,8 +245,12 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
           {/* Genre */}
           <div>
             <label className="text-sm font-medium mb-1 block">Genre</label>
+            {/* setValueAs : l'option vide envoie "" que z.enum(...).optional() refuse — sans ça,
+                créer/modifier un enseignant sans genre échouait en silence (aucun message affiché) */}
             <select
-              {...(isEditing ? editForm.register('gender') : createForm.register('gender'))}
+              {...(isEditing
+                ? editForm.register('gender', { setValueAs: v => v || undefined })
+                : createForm.register('gender', { setValueAs: v => v || undefined }))}
               className="w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30"
             >
               <option value="">Sélectionner le genre</option>
