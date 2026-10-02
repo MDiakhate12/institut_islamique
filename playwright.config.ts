@@ -18,6 +18,9 @@ export default defineConfig({
   // 5 s par défaut : trop juste quand plusieurs workers chargent en même temps le serveur
   // Next et le Supabase local (Server Actions qui dépassent 5 s → faux échecs)
   expect: { timeout: 10_000 },
+  // 30 s par défaut : trop court pour les parcours multi-portails (admin + enseignant + parent,
+  // plusieurs sauvegardes) quand 4 workers chargent le serveur en même temps
+  timeout: 60_000,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,

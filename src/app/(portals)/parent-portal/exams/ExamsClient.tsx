@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { GraduationCap, Star, User } from 'lucide-react'
+import { AlertTriangle, GraduationCap, Star, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useParentChildrenGrades, useSignExamGrade } from '@/modules/exams/exams.hooks'
-import type { ParentChildExamData, ParentExamGrade } from '@/modules/exams/exams.types'
+import { EXAM_CRITERIA } from '@/modules/exams/exams.labels'
+import type { ParentChildExamData, ParentExamGrade, ParentExamView } from '@/modules/exams/exams.types'
 
 interface Props {
-  initialChildren: ParentChildExamData[]
+  initialView: ParentExamView
   initialTrimester: number
   academicYear: string
   parentName: string
@@ -31,16 +32,8 @@ function StarDisplay({ value }: { value: number | null }) {
   )
 }
 
-const STAR_LABELS = [
-  { key: 'attendance' as const, label: 'Présence' },
-  { key: 'respectTeachers' as const, label: 'Respect des enseignants' },
-  { key: 'respectOthers' as const, label: 'Respect des autres' },
-  { key: 'participation' as const, label: 'Participation' },
-  { key: 'eagerness' as const, label: 'Envie d\'apprendre' },
-  { key: 'bringBooks' as const, label: 'Performance académique' },
-]
 
-function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: string }) {
+function GradeCard({ grade, parentName, canSign }: { grade: ParentExamGrade; parentName: string; canSign: boolean }) {
   const { mutate: sign, isPending } = useSignExamGrade()
 
   return (
@@ -59,7 +52,7 @@ function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: 
       <div className="p-5 space-y-4">
         {/* Star ratings */}
         <div className="space-y-3">
-          {STAR_LABELS.map(({ key, label }) => {
+          {EXAM_CRITERIA.map(({ key, label }) => {
             const val = grade[key]
             if (val === null && key === 'bringBooks') return null
             return (
@@ -110,6 +103,8 @@ function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: 
                 <path d="M9 12l2 2 4-4" />
               </svg>
             </span>
+          ) : !canSign ? (
+            <span className="text-xs text-muted-foreground">Signature indisponible (période fermée)</span>
           ) : (
             <button
               onClick={() => sign({ examResultId: grade.examResultId, parentSignature: parentName })}
@@ -125,7 +120,7 @@ function GradeCard({ grade, parentName }: { grade: ParentExamGrade; parentName: 
   )
 }
 
-function ChildGrades({ child, parentName }: { child: ParentChildExamData; parentName: string }) {
+function ChildGrades({ child, parentName, canSign }: { child: ParentChildExamData; parentName: string; canSign: boolean }) {
   if (child.grades.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -141,16 +136,17 @@ function ChildGrades({ child, parentName }: { child: ParentChildExamData; parent
   return (
     <div className="space-y-4">
       {child.grades.map(grade => (
-        <GradeCard key={grade.classId} grade={grade} parentName={parentName} />
+        <GradeCard key={grade.classId} grade={grade} parentName={parentName} canSign={canSign} />
       ))}
     </div>
   )
 }
 
-export function ExamsClient({ initialChildren, initialTrimester, academicYear, parentName }: Props) {
+export function ExamsClient({ initialView, initialTrimester, academicYear, parentName }: Props) {
   const [trimester, setTrimester] = useState(initialTrimester)
-  const { data: children = initialChildren } = useParentChildrenGrades(trimester)
-  const [activeId, setActiveId] = useState(initialChildren[0]?.studentId ?? '')
+  const { data: view = initialView } = useParentChildrenGrades(trimester)
+  const { children, periodOpen, published } = view
+  const [activeId, setActiveId] = useState(initialView.children[0]?.studentId ?? '')
 
   const activeChild = children.find(c => c.studentId === activeId) ?? children[0]
 
@@ -228,7 +224,27 @@ export function ExamsClient({ initialChildren, initialTrimester, academicYear, p
               <h2 className="text-lg font-bold text-[#2d6a4f]">
                 Élève : {activeChild.firstName} {activeChild.lastName}
               </h2>
-              <ChildGrades child={activeChild} parentName={parentName} />
+              {published && !periodOpen && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-sm font-medium text-amber-800">
+                    Période d&apos;examens fermée — signature indisponible
+                  </p>
+                </div>
+              )}
+              {published ? (
+                <ChildGrades child={activeChild} parentName={parentName} canSign={periodOpen} />
+              ) : (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-800">Bulletins pas encore publiés</p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Les bulletins du Trimestre {trimester} seront visibles dès que l&apos;école les publiera.
+                    </p>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>

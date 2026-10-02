@@ -101,6 +101,9 @@ interface SchoolSettingsFormValues {
   examPeriodT1Open: boolean
   examPeriodT2Open: boolean
   examPeriodT3Open: boolean
+  examResultsPublishedT1: boolean
+  examResultsPublishedT2: boolean
+  examResultsPublishedT3: boolean
   yearStartDate: string | null
   yearEndDate: string | null
   trimester1StartDate: string | null
@@ -144,6 +147,9 @@ function buildDefaultValues(school: School): SchoolSettingsFormValues {
     examPeriodT1Open:       s.examPeriodT1Open,
     examPeriodT2Open:       s.examPeriodT2Open,
     examPeriodT3Open:       s.examPeriodT3Open,
+    examResultsPublishedT1: s.examResultsPublishedT1 ?? true,
+    examResultsPublishedT2: s.examResultsPublishedT2 ?? true,
+    examResultsPublishedT3: s.examResultsPublishedT3 ?? true,
     yearStartDate:          s.yearStartDate,
     yearEndDate:            s.yearEndDate,
     trimester1StartDate:    s.trimester1StartDate,
@@ -265,6 +271,9 @@ function SchoolSettingsForm({ school }: { school: School }) {
       examPeriodT1Open: values.examPeriodT1Open,
       examPeriodT2Open: values.examPeriodT2Open,
       examPeriodT3Open: values.examPeriodT3Open,
+      examResultsPublishedT1: values.examResultsPublishedT1,
+      examResultsPublishedT2: values.examResultsPublishedT2,
+      examResultsPublishedT3: values.examResultsPublishedT3,
       yearStartDate: values.yearStartDate,
       yearEndDate: values.yearEndDate,
       trimester1StartDate: values.trimester1StartDate,
@@ -380,6 +389,8 @@ function OperationsSection() {
 
   const examOpen = trimester === 1 ? examT1Open : trimester === 2 ? examT2Open : examT3Open
   const examField = trimester === 1 ? 'examPeriodT1Open' : trimester === 2 ? 'examPeriodT2Open' : 'examPeriodT3Open'
+  const publishedField = `examResultsPublishedT${trimester}` as const
+  const published = watch(publishedField)
 
   return (
     <Section icon={Settings} title="Opérations scolaires">
@@ -475,7 +486,27 @@ function OperationsSection() {
               Ouvrir les examens pour Trimestre {trimester} {academicYear}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Activer l&apos;affichage des examens et notes dans les portails parents et enseignants
+              Les enseignants peuvent saisir les notes ; les parents peuvent signer les bulletins
+            </p>
+          </div>
+        </label>
+
+        <label className={cn(
+          'flex items-start gap-3 cursor-pointer rounded-xl border-2 p-4 transition-colors',
+          published ? 'border-[#2d6a4f]/40 bg-[#f4f9f3]' : 'border-border bg-white'
+        )}>
+          <input
+            type="checkbox"
+            checked={published}
+            onChange={e => setValue(publishedField, e.target.checked, { shouldDirty: true })}
+            className="mt-0.5 h-4 w-4 rounded border-border accent-[#2d6a4f]"
+          />
+          <div>
+            <p className="text-sm font-medium leading-snug">
+              Bulletins publiés pour Trimestre {trimester} {academicYear}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Les parents voient les bulletins du trimestre. Décochez pour les publier tous en même temps, une fois la saisie terminée
             </p>
           </div>
         </label>

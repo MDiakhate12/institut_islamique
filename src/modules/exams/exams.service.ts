@@ -1,13 +1,13 @@
 import { db } from '@/db'
 import {
   examResults, classes, classEnrollments,
-  students, schoolMembers, profiles, parentStudents,
+  students, schoolMembers, profiles, parentStudents, schools,
 } from '@/db/schema'
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import type {
   ExamResult, TeacherExamClass, StudentGradeStatus,
   AdminExamClassProgress, AdminExamStudentProgress,
-  ParentChildExamData, ParentExamGrade, GradeFormStudent,
+  ParentChildExamData, ParentExamGrade, GradeFormStudent, ParentExamView,
 } from './exams.types'
 import type { SubmitExamInput } from './exams.schema'
 
@@ -200,7 +200,7 @@ export const examsService = {
     schoolId: string,
     memberId: string,
     data: SubmitExamInput,
-  ): Promise<void> {
+  ): Promise<{ signatureReset: boolean }> {
     const existing = await this.getExamResult(data.classId, data.studentId, schoolId, data.trimester)
 
     const values = {
@@ -223,12 +223,32 @@ export const examsService = {
     }
 
     if (existing) {
+      // Le parent a signé une version précise : si le contenu change, la signature n'est plus valable
+      const contentChanged = (
+        ['attendance', 'respectTeachers', 'respectOthers', 'bringBooks', 'participation',
+          'eagerness', 'coveredContent', 'generalComments', 'score'] as const
+      ).some(k => (existing[k] ?? null) !== (values[k] ?? null))
+
       await db
         .update(examResults)
-        .set(values)
+        .set(contentChanged ? { ...values, parentSignature: null } : values)
         .where(eq(examResults.id, existing.id))
-    } else {
-      await db.insert(examResults).values(values)
+      return { signatureReset: contentChanged && !!existing.parentSignature }
+    }
+    await db.insert(examResults).values(values)
+    return { signatureReset: false }
+  },
+
+  /** Parents liés à l'élève (school_members.id) + nom de l'élève, pour les notifications. */
+  async getStudentParents(studentId: string, schoolId: string): Promise<{ studentName: string; parentMemberIds: string[] }> {
+    const rows = await db
+      .select({ memberId: parentStudents.schoolMemberId, firstName: students.firstName, lastName: students.lastName })
+      .from(students)
+      .leftJoin(parentStudents, and(eq(parentStudents.studentId, students.id), eq(parentStudents.schoolId, schoolId)))
+      .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))
+    return {
+      studentName: rows[0] ? `${rows[0].firstName} ${rows[0].lastName}` : 'votre enfant',
+      parentMemberIds: rows.map(r => r.memberId).filter((id): id is string => !!id),
     }
   },
 
@@ -557,16 +577,81 @@ export const examsService = {
     })
   },
 
+  // L'enseignant (titulaire ou assistant) de la classe, et l'élève y est inscrit
+  async canTeacherGrade(memberId: string, classId: string, studentId: string, schoolId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: classEnrollments.id })
+      .from(classEnrollments)
+      .innerJoin(classes, eq(classes.id, classEnrollments.classId))
+      .where(and(
+        eq(classEnrollments.classId, classId),
+        eq(classEnrollments.studentId, studentId),
+        isNull(classEnrollments.unenrolledAt),
+        eq(classes.schoolId, schoolId),
+        or(eq(classes.teacherId, memberId), eq(classes.assistantTeacherId, memberId)),
+      ))
+      .limit(1)
+    return !!row
+  },
+
+  async getExamFlags(schoolId: string, trimester: number): Promise<{ periodOpen: boolean; published: boolean }> {
+    const [school] = await db
+      .select({ settings: schools.settings })
+      .from(schools)
+      .where(eq(schools.id, schoolId))
+      .limit(1)
+    const s = school?.settings
+    const t = trimester === 1 || trimester === 2 ? trimester : 3
+    return {
+      periodOpen: !!s?.[`examPeriodT${t}Open`],
+      published:  s?.[`examResultsPublishedT${t}`] ?? true, // écoles existantes : visibles
+    }
+  },
+
+  async isExamPeriodOpen(schoolId: string, trimester: number): Promise<boolean> {
+    return (await this.getExamFlags(schoolId, trimester)).periodOpen
+  },
+
+  // Visibilité parent = « Bulletins publiés » ; signature = période ouverte (§7.20).
+  // Non publiés : on renvoie les enfants (pour l'en-tête) mais aucun bulletin.
+  async getParentExamView(schoolMemberId: string, schoolId: string, trimester: number): Promise<ParentExamView> {
+    const [{ periodOpen, published }, children] = await Promise.all([
+      this.getExamFlags(schoolId, trimester),
+      this.getChildrenGrades(schoolMemberId, schoolId, trimester),
+    ])
+    return {
+      periodOpen,
+      published,
+      children: published ? children : children.map(c => ({ ...c, grades: [] })),
+    }
+  },
+
+  /** Signe le bulletin — élève lié à ce parent, bulletins publiés et période du trimestre ouverte. */
   async signGrade(
     examResultId: string,
     parentSignature: string,
     schoolId: string,
-  ): Promise<void> {
+    parentMemberId: string,
+  ): Promise<'ok' | 'forbidden' | 'closed'> {
+    const [result] = await db
+      .select({ id: examResults.id, trimester: examResults.trimester })
+      .from(examResults)
+      .innerJoin(parentStudents, and(
+        eq(parentStudents.studentId, examResults.studentId),
+        eq(parentStudents.schoolMemberId, parentMemberId),
+        eq(parentStudents.schoolId, schoolId),
+      ))
+      .where(and(eq(examResults.id, examResultId), eq(examResults.schoolId, schoolId)))
+      .limit(1)
+    if (!result) return 'forbidden'
+    const { periodOpen, published } = await this.getExamFlags(schoolId, result.trimester)
+    if (!published) return 'forbidden'
+    if (!periodOpen) return 'closed'
+
     await db
       .update(examResults)
       .set({ parentSignature })
-      .where(
-        and(eq(examResults.id, examResultId), eq(examResults.schoolId, schoolId))
-      )
+      .where(eq(examResults.id, result.id))
+    return 'ok'
   },
 }

@@ -63,7 +63,7 @@ export function useParentChildrenGrades(trimester: number) {
     queryKey: ['parent-exam-grades', trimester],
     queryFn: async () => {
       const r = await getParentChildrenGradesAction(trimester)
-      return r.success ? r.data : []
+      return r.success ? r.data : { periodOpen: false, published: false, children: [] }
     },
     staleTime: 30_000,
   })

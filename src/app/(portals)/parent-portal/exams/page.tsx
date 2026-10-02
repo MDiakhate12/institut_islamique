@@ -14,11 +14,11 @@ export default async function ParentExamsPage() {
   const academicYear = school?.settings?.academicYear ?? ''
   const parentName = profile?.fullName ?? session.email
 
-  const children = await examsService.getChildrenGrades(session.memberId, session.schoolId, initialTrimester)
+  const view = await examsService.getParentExamView(session.memberId, session.schoolId, initialTrimester)
 
   return (
     <ExamsClient
-      initialChildren={children}
+      initialView={view}
       initialTrimester={initialTrimester}
       academicYear={academicYear}
       parentName={parentName}
