@@ -3,7 +3,8 @@ import { storageStatePath, E2E_SCHOOL } from '../support/users'
 import { field, fillGuardians, uniqueSuffix } from '../support/registration-form'
 
 // §7.4 — le formulaire public crée immédiatement l'élève + ses tuteurs, puis la
-// registration 'pending'. L'admin la retrouve dans Inscriptions, et l'élève dans Étudiants.
+// registration 'pending'. L'admin la retrouve dans Inscriptions ; l'élève n'entre dans le tableau
+// Élèves qu'une fois l'inscription approuvée.
 
 test('inscription publique d\'un nouvel élève, visible côté admin', async ({ page, browser }) => {
   // Nom unique : une relance ne doit pas être refusée comme doublon de la 1re tentative
@@ -40,9 +41,19 @@ test('inscription publique d\'un nouvel élève, visible côté admin', async ({
   await expect(registration).toContainText('Karim BENALI')
   await expect(registration).toContainText('karim.benali@example.com')
 
-  // L'élève a été créé immédiatement (sans attendre de validation)
+  // Pas encore dans le tableau Élèves : il n'y entre qu'une fois l'inscription approuvée
   await admin.goto('/admin-portal/students')
-  await admin.getByPlaceholder(/Rechercher des élèves/).fill(last)
+  const search = admin.getByPlaceholder(/Rechercher des élèves/)
+  await search.fill(last)
+  await expect(admin.getByText('0 élèves', { exact: true })).toBeVisible()
+
+  // Approbation → l'élève apparaît dans le tableau
+  await admin.goto('/admin-portal/registrations')
+  await registration.click()
+  await admin.locator('section').filter({ hasText: 'Décision' }).getByRole('button', { name: 'Approuver' }).click()
+  await expect(admin.getByText('Inscription approuvée')).toBeVisible()
+  await admin.goto('/admin-portal/students')
+  await search.fill(last)
   await expect(admin.getByRole('row').filter({ hasText: 'Inès' })).toBeVisible()
 
   expect(adminErrors).toEqual([])

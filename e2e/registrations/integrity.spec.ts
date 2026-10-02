@@ -6,7 +6,7 @@ import { fillGuardians, fillNewStudentForm, uniqueSuffix } from '../support/regi
 // la classe choisie, doublons refusés, réinscription publique renvoyée vers le portail parent,
 // inscriptions fermées respectées, retour à la page demandée après connexion.
 
-test('nouvel élève : « En attente » jusqu\'à l\'approbation, puis inscrit dans la classe choisie', async ({ browser }) => {
+test('nouvel élève : absent du tableau Élèves jusqu\'à l\'approbation, puis inscrit dans la classe choisie', async ({ browser }) => {
   const family = await browser.newPage({ storageState: storageStatePath('family') })
   const admin = await browser.newPage({ storageState: storageStatePath('admin') })
   const errors: Error[] = []
@@ -21,12 +21,12 @@ test('nouvel élève : « En attente » jusqu\'à l\'approbation, puis inscrit d
   await family.getByRole('button', { name: "Soumettre l'inscription" }).click()
   await expect(family).toHaveURL('/parent-portal/enrollment/success')
 
-  // Admin : l'élève existe mais n'est pas encore « Inscrit », et n'a pas de classe
+  // Admin : tant que l'inscription n'est pas approuvée, l'enfant n'est pas dans le tableau Élèves
   const studentRow = admin.getByRole('row').filter({ hasText: first })
   await admin.goto('/admin-portal/students')
   await admin.getByPlaceholder(/Rechercher des élèves/).fill(first)
-  await expect(studentRow).toContainText('En attente')
-  await expect(studentRow).not.toContainText('Classe Coran E2E')
+  await expect(admin.getByText('0 élèves', { exact: true })).toBeVisible()
+  await expect(studentRow).toHaveCount(0)
 
   // Approbation → élève actif et inscrit dans la classe choisie
   await admin.goto('/admin-portal/registrations')
@@ -112,7 +112,12 @@ test('bloc « Tuteurs » : validation, second tuteur, tuteur 1 rattaché au comp
   await family.getByRole('button', { name: "Soumettre l'inscription" }).click()
   await expect(family).toHaveURL('/parent-portal/enrollment/success')
 
-  // Admin : fiche élève avec les deux tuteurs, le parent connecté marqué « Compte lié »
+  // Admin : approuve l'inscription (l'élève n'entre qu'alors dans le tableau Élèves), puis ouvre
+  // sa fiche : les deux tuteurs, le parent connecté marqué « Compte lié »
+  await admin.goto('/admin-portal/registrations')
+  await admin.getByRole('row').filter({ hasText: first }).click()
+  await admin.locator('section').filter({ hasText: 'Décision' }).getByRole('button', { name: 'Approuver' }).click()
+  await expect(admin.getByText('Inscription approuvée')).toBeVisible()
   await admin.goto('/admin-portal/students')
   await admin.getByPlaceholder(/Rechercher des élèves/).fill(first)
   await admin.getByRole('row').filter({ hasText: first }).click()
