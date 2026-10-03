@@ -39,7 +39,7 @@ test('activation d\'un enseignant créé par l\'admin', async ({ browser }) => {
   await teacher.getByPlaceholder('Prénom Nom').fill('Nadia PROF')
   await teacher.getByPlaceholder('votre@email.com').fill(email)
   await teacher.getByRole('combobox').click()
-  await teacher.getByRole('option', { name: E2E_SCHOOL.name }).click()
+  await teacher.getByRole('option', { name: E2E_SCHOOL.name, exact: true }).click()
   await teacher.getByPlaceholder('0X XX XX XX XX').fill('0612345678')
   await teacher.getByRole('button', { name: 'Inscription parent' }).click() // coché par défaut
   await teacher.getByRole('button', { name: 'Inscription enseignant' }).click()

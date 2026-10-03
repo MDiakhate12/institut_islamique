@@ -152,7 +152,10 @@ function buildFilterOptions(students: StudentListItem[], key: SortKey): string[]
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function StudentsClient() {
-  const { data: students, isLoading } = useStudents()
+  const { data: allStudents, isLoading } = useStudents()
+  // Un enfant n'apparaît dans le tableau qu'une fois son inscription approuvée (§7.4) —
+  // tant qu'elle est en attente ou rejetée, il n'est visible que dans « Inscriptions »
+  const students = useMemo(() => allStudents?.filter(s => !s.awaitingApproval), [allStudents])
 
   const [search, setSearch]             = useState('')
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all')

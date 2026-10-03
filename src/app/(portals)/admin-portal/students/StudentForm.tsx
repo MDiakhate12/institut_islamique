@@ -87,7 +87,8 @@ function guardianToLocal(g: GuardianSummary): LocalGuardian {
     _tempId:          g.id,
     id:               g.id,
     relationship:     g.relationship as LocalGuardian['relationship'],
-    name:             g.firstName ?? '',
+    // Nom complet dans first_name (convention) ; on concatène last_name s'il est renseigné
+    name:             `${g.firstName ?? ''} ${g.lastName ?? ''}`.trim(),
     phone:            g.phone ?? '',
     email:            g.email ?? '',
     emergencyPhone:   g.emergencyPhone ?? '',

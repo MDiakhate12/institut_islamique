@@ -5,7 +5,7 @@ import {
   attendance, attendanceRecords, homework, homeworkGrades,
   examResults, schools, registrations, registrationForms,
 } from '@/db/schema'
-import { eq, and, isNull, desc, inArray, count, max, or, sum } from 'drizzle-orm'
+import { eq, and, isNull, desc, inArray, count, max, or, sum, ne, exists, notExists, sql } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
 import type {
   Student, StudentListItem, GuardianSummary, StudentEnrollment,
@@ -29,6 +29,23 @@ function buildYearOptions(currentYear: string): string[] {
   ]
 }
 
+/**
+ * Règle produit : un enfant n'est un élève de l'école qu'une fois son inscription approuvée (§7.4).
+ * Masqué = inactif ET une inscription non approuvée (en attente / rejetée) ET aucune approuvée.
+ * Restent donc visibles : les élèves actifs, ceux créés à la main ou importés (sans inscription),
+ * et les anciens élèves approuvés puis désactivés par l'admin (« Inactif »).
+ */
+function officialStudentFilter() {
+  const reg = (status: 'approved' | 'other') => db
+    .select({ one: sql`1` })
+    .from(registrations)
+    .where(and(
+      eq(registrations.studentId, students.id),
+      status === 'approved' ? eq(registrations.status, 'approved') : ne(registrations.status, 'approved'),
+    ))
+  return or(eq(students.isActive, true), notExists(reg('other')), exists(reg('approved')))
+}
+
 export const studentsService = {
   async getBySchool(schoolId: string): Promise<StudentListItem[]> {
     const [
@@ -43,7 +60,7 @@ export const studentsService = {
     ] = await Promise.all([
       // 1. Base students
       db
-        .select()
+        .select({ student: students, approved: sql<boolean>`(${officialStudentFilter()})` })
         .from(students)
         .where(eq(students.schoolId, schoolId))
         .orderBy(desc(students.createdAt)),
@@ -206,7 +223,7 @@ export const studentsService = {
       return acc
     }, {})
 
-    return studentRows.map(s => {
+    return studentRows.map(({ student: s, approved }) => {
       const periods   = paymentsByStudent[s.id] ?? []
       const annually  = periods.includes('annually')
       const paidT1    = annually || periods.includes('trimester_1')
@@ -242,6 +259,7 @@ export const studentsService = {
         studentCustomId:  s.studentCustomId,
         notes:            s.notes,
         enrollmentYear:   s.enrollmentYear,
+        awaitingApproval: !approved,
         enrollments,
         phone:            father?.phone ?? null,
         guardians:        gList,
@@ -380,6 +398,7 @@ export const studentsService = {
             .set({
               relationship:   g.relationship,
               firstName:      g.name?.trim() || null,
+              lastName:       '', // le nom complet est dans first_name
               phone:          g.phone?.trim()          || null,
               email:          g.email?.trim()          || null,
               emergencyPhone: g.emergencyPhone?.trim() || null,

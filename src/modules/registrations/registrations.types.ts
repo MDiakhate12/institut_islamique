@@ -13,6 +13,25 @@ export type SystemFieldKey =
   | 'paymentFrequency' | 'financialAid' | 'sponsorship'
   | 'academicYear'
 
+/**
+ * Champs « parents / contact » du formulaire, remplacés par le bloc « Tuteurs » quand un parent
+ * connecté inscrit un nouvel élève depuis son portail (tuteur 1 = lui, tuteur 2 optionnel).
+ */
+export const GUARDIAN_FIELD_KEYS: SystemFieldKey[] = [
+  'fatherName', 'motherName', 'primaryEmail', 'secondaryEmail', 'primaryPhone', 'secondaryPhone',
+]
+
+export type GuardianRelationship = 'father' | 'mother' | 'guardian' | 'other'
+
+/** Un tuteur saisi dans le bloc « Tuteurs » (même modèle que l'éditeur de tuteurs du tableau Élèves). */
+export type RegistrationGuardianInput = {
+  relationship: GuardianRelationship | ''
+  name: string
+  phone: string
+  email: string
+  emergencyPhone: string
+}
+
 export type SystemField = {
   kind: 'system_field'
   id: string

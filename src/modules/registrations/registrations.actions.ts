@@ -1,21 +1,23 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requireSession } from '@/lib/auth/session'
+import { requireSession, getSession } from '@/lib/auth/session'
 import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { registrationsService, buildKeyToIdMap } from './registrations.service'
-import { getMissingRequiredFields, reviewRegistrationSchema } from './registrations.schema'
+import { getMissingRequiredFields, reviewRegistrationSchema, registrationGuardiansSchema, getGuardianErrors } from './registrations.schema'
 import { studentsService } from '@/modules/students/students.service'
 import { scheduledClassesService } from '@/modules/classes/classes.service'
 import { parentsService } from '@/modules/parents/parents.service'
-import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem, RegistrationWithDetails } from './registrations.types'
+import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem, RegistrationWithDetails, RegistrationGuardianInput } from './registrations.types'
+import { GUARDIAN_FIELD_KEYS } from './registrations.types'
 import { db } from '@/db'
 import { schools, guardians } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import type { SchoolSettings } from '@/db/schema/schools'
-import { sendEmail, getAdminEmails, getAppUrl, getSchoolName, getEmailsForMembers } from '@/lib/email'
+import { sendEmail, getAppUrl, getSchoolName, getEmailsForMembers } from '@/lib/email'
+import { notifyAdmins } from '@/modules/notifications/notify-admins'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 
 const PATH = '/admin-portal/registration-forms'
@@ -74,8 +76,12 @@ export async function submitRegistrationAction(
   schoolSlug: string,
   formType: FormType,
   formData: Record<string, unknown>,
+  // Indice du formulaire de réinscription parent : n'est accepté que si l'élève est lié au
+  // parent connecté. Le parent soumetteur n'est plus un paramètre : il vient de la session
+  // (un appel direct à cette action publique permettait de lier l'élève à n'importe quel compte).
   knownStudentId?: string,
-  submitterMemberId?: string,
+  // Bloc « Tuteurs » (nouvel élève) : portail parent (tuteur 1 = parent connecté) ou formulaire public
+  guardiansInput?: RegistrationGuardianInput[],
 ): Promise<ActionResult<{ id: string; studentId?: string }>> {
   try {
     // 1. Find school by slug
@@ -86,17 +92,69 @@ export async function submitRegistrationAction(
       .limit(1)
 
     if (!school) return err('École introuvable')
-    const academicYear = (school.settings as SchoolSettings | null)?.academicYear ?? ''
+    const settings = school.settings as SchoolSettings | null
+    const academicYear = settings?.academicYear ?? ''
+
+    // Parent connecté à cette école (portail parent) — sinon soumission publique anonyme
+    const session = await getSession()
+    const submitterMemberId = session && session.schoolId === school.id && session.roles.includes('parent')
+      ? session.memberId
+      : undefined
+
+    // Réglage « Autoriser les nouvelles inscriptions » : la réinscription reste toujours possible
+    if (formType === 'new_student' && settings?.allowNewRegistrations === false) {
+      return err("Les nouvelles inscriptions sont fermées pour le moment. Contactez l'école pour plus d'informations.")
+    }
+
+    // Réinscription : uniquement pour un élève lié au parent connecté (sinon on enregistrait
+    // une inscription sans élève, impossible à traiter par l'admin)
+    let studentId: string | undefined
+    if (formType === 'reenrollment') {
+      if (!submitterMemberId || !knownStudentId
+        || !await registrationsService.isLinkedToParent(submitterMemberId, knownStudentId, school.id)) {
+        return err('Pour réinscrire un élève, connectez-vous au portail parent et choisissez-le dans la liste de vos enfants.')
+      }
+      studentId = knownStudentId
+    }
 
     // 2. Get the form (to read the field→id mapping)
     const form = await registrationsService.getOrCreateForm(school.id, formType)
     const keyToId = buildKeyToIdMap(form.formSchema)
 
+    // Nouvel élève : les tuteurs viennent du bloc « Tuteurs » (les champs père/mère/contact du
+    // formulaire ne sont plus affichés). Sans bloc (ancienne page encore ouverte) : champs historiques.
+    const parentGuardians = formType === 'new_student' && guardiansInput !== undefined
+    const isAccountHolder = !!(submitterMemberId && session)
+    let guardianList: RegistrationGuardianInput[] = []
+    if (parentGuardians) {
+      const parsedGuardians = registrationGuardiansSchema.safeParse(guardiansInput)
+      if (!parsedGuardians.success) return err('Renseignez au moins un tuteur.')
+      // Portail parent : le tuteur 1 est le titulaire du compte, son e-mail est celui de la session
+      guardianList = parsedGuardians.data.map((g, i) => (i === 0 && isAccountHolder ? { ...g, email: session!.email } : g))
+      const guardianErrors = getGuardianErrors(guardianList, { accountHolder: isAccountHolder })
+      if (Object.keys(guardianErrors).length > 0) {
+        return err(`Tuteurs incomplets : ${Object.values(guardianErrors)[0]}`)
+      }
+      // Recopie dans les réponses du formulaire : la liste admin, les e-mails de décision et les
+      // replis « form_data » du tableau Élèves lisent ces champs (§7.4)
+      const father = guardianList.find(g => g.relationship === 'father')
+      const mother = guardianList.find(g => g.relationship === 'mother')
+      const mirror: Partial<Record<SystemFieldKey, string>> = {
+        fatherName: father?.name ?? '', motherName: mother?.name ?? '',
+        primaryEmail: guardianList[0].email, primaryPhone: guardianList[0].phone,
+        secondaryEmail: guardianList[1]?.email ?? '', secondaryPhone: guardianList[1]?.phone ?? '',
+      }
+      for (const [key, value] of Object.entries(mirror) as [SystemFieldKey, string][]) {
+        const fieldId = keyToId[key]
+        if (fieldId) formData[fieldId] = value
+      }
+    }
+
     // Garantie serveur : le client valide déjà, mais on ne crée jamais d'élève à partir d'un envoi incomplet
-    const settings = school.settings as SchoolSettings | null
     const missing = getMissingRequiredFields(form.formSchema, formData, {
       gradeOptions:     settings?.gradeLevels,
       financialOptions: settings?.financialOptions,
+      skipFieldKeys:    parentGuardians ? GUARDIAN_FIELD_KEYS : undefined,
     })
     if (missing.length > 0) {
       return err(`Champs obligatoires manquants : ${missing.map(f => f.label).join(', ')}`)
@@ -107,53 +165,87 @@ export async function submitRegistrationAction(
       return fieldId ? (formData[fieldId] as string | undefined) : undefined
     }
 
-    // 3. For new_student: create a student record + guardian records
-    let studentId: string | undefined = knownStudentId
-    if (formType === 'new_student' && !studentId) {
+    // 3. Nouvel élève : refus des doublons, puis création (inactif jusqu'à l'approbation) + tuteurs
+    if (formType === 'new_student') {
       const firstName = get('firstName')?.trim()
       const lastName  = get('lastName')?.trim()
       const genderRaw = get('gender')
+      const birthDate = get('birthDate') || undefined
+
+      if (firstName && lastName) {
+        const duplicate = await registrationsService.findDuplicateStudent(school.id, firstName, lastName, birthDate)
+        if (duplicate) {
+          if (submitterMemberId && await registrationsService.isLinkedToParent(submitterMemberId, duplicate.id, school.id)) {
+            return err('Cet enfant est déjà lié à votre compte : choisissez-le dans la liste pour le réinscrire.')
+          }
+          return err(submitterMemberId
+            ? "Un élève portant ce nom et cette date de naissance est déjà inscrit à l'école. Utilisez « Lier mon élève » pour le rattacher à votre compte, puis réinscrivez-le."
+            : "Un élève portant ce nom et cette date de naissance est déjà inscrit à l'école. S'il s'agit de votre enfant, connectez-vous au portail parent pour le réinscrire, ou contactez l'école.")
+        }
+      }
 
       if (firstName && lastName && genderRaw) {
         const gender: 'male' | 'female' =
           genderRaw === 'Masculin' || genderRaw === 'male' ? 'male' : 'female'
 
+        // Inactif tant que l'école n'a pas approuvé l'inscription (activé par reviewRegistrationAction)
         const student = await studentsService.create(school.id, {
           firstName,
           lastName,
           gender,
-          isActive:  true,
-          birthDate: get('birthDate') || undefined,
+          isActive:  false,
+          birthDate,
         })
         studentId = student.id
 
-        // Create guardian records from form data
-        const fatherName = get('fatherName')?.trim()
-        const motherName = get('motherName')?.trim()
-        if (fatherName) {
-          await db.insert(guardians).values({
-            schoolId: school.id,
-            studentId,
-            relationship:   'father',
-            firstName:      fatherName,
-            isPrimary:      true,
-            email:          get('primaryEmail')   || null,
-            phone:          get('primaryPhone')   || null,
-            emergencyPhone: get('secondaryPhone') || null,
-          })
-        }
-        if (motherName) {
-          await db.insert(guardians).values({
-            schoolId: school.id,
-            studentId,
-            relationship: 'mother',
-            firstName:    motherName,
-            email:        get('secondaryEmail') || null,
-          })
+        // Tuteurs — nom complet dans first_name, last_name vide : même convention que l'éditeur
+        // de tuteurs du tableau Élèves (qui n'affiche et ne modifie que first_name)
+        if (parentGuardians) {
+          for (const [i, g] of guardianList.entries()) {
+            await db.insert(guardians).values({
+              schoolId: school.id,
+              studentId,
+              relationship:   g.relationship as Exclude<RegistrationGuardianInput['relationship'], ''>,
+              firstName:      g.name.trim(),
+              lastName:       '',
+              isPrimary:      i === 0,
+              email:          g.email.trim() || null,
+              phone:          g.phone.trim() || null,
+              emergencyPhone: g.emergencyPhone.trim() || null,
+              // Portail parent : tuteur 1 = le parent connecté, rattaché à son compte
+              linkedMemberId: i === 0 && isAccountHolder ? submitterMemberId : null,
+            })
+          }
+        } else {
+          const fatherName = get('fatherName')?.trim()
+          const motherName = get('motherName')?.trim()
+          if (fatherName) {
+            await db.insert(guardians).values({
+              schoolId: school.id,
+              studentId,
+              relationship:   'father',
+              firstName:      fatherName,
+              isPrimary:      true,
+              email:          get('primaryEmail')   || null,
+              phone:          get('primaryPhone')   || null,
+              emergencyPhone: get('secondaryPhone') || null,
+            })
+          }
+          if (motherName) {
+            await db.insert(guardians).values({
+              schoolId: school.id,
+              studentId,
+              relationship: 'mother',
+              firstName:    motherName,
+              isPrimary:    !fatherName,
+              email:        get('secondaryEmail') || (fatherName ? null : get('primaryEmail') || null),
+              phone:        fatherName ? null : get('primaryPhone') || null,
+            })
+          }
         }
       }
 
-      // Auto-link the newly created student to the submitting parent, if known
+      // Parent connecté : l'enfant apparaît tout de suite dans « Mes enfants »
       if (studentId && submitterMemberId) {
         await parentsService.linkStudentsToParent(submitterMemberId, [studentId], school.id)
       }
@@ -166,12 +258,17 @@ export async function submitRegistrationAction(
     const studentLastName  = get('lastName')?.trim()  ?? ''
     const studentName = [studentFirstName, studentLastName].filter(Boolean).join(' ') || 'un élève'
     const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(school.id)])
-    getAdminEmails(school.id).then(emails =>
-      Promise.allSettled(emails.map(to => sendEmail({
-        to,
-        fromName: schoolName,
-        subject: `Nouvelle inscription — ${studentName}`,
-        html: `<!DOCTYPE html>
+    // Tous les admins/gestionnaires : notification in-app + e-mail (hors du chemin critique)
+    const kind = formType === 'new_student' ? 'nouvel élève' : 'réinscription'
+    void notifyAdmins(school.id, {
+      type: 'registration_submitted',
+      title: `Nouvelle inscription — ${studentName}`,
+      body: `Inscription (${kind}) en attente de validation.`,
+      link: '/admin-portal/registrations',
+    }, {
+      fromName: schoolName,
+      subject: `Nouvelle inscription — ${studentName}`,
+      html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
@@ -182,7 +279,7 @@ export async function submitRegistrationAction(
     <div style="padding:40px;">
       <p style="color:#1e4535;font-size:16px;margin:0 0 16px;">Assalamo Alykom,</p>
       <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
-        Une nouvelle inscription a été soumise pour <strong>${studentName}</strong> (${formType === 'new_student' ? 'nouvel élève' : 'réinscription'}). Elle est en attente de validation.
+        Une nouvelle inscription a été soumise pour <strong>${studentName}</strong> (${kind}). Elle est en attente de validation.
       </p>
       <div style="text-align:center;">
         <a href="${appUrl}/admin-portal/registrations" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;">
@@ -195,8 +292,7 @@ export async function submitRegistrationAction(
     </div>
   </div>
 </body></html>`,
-      })))
-    ).catch(() => {})
+    }, 'submitRegistrationAction')
 
     return ok({ id: registration.id, studentId })
   } catch (e) {
@@ -210,7 +306,7 @@ export async function submitRegistrationAction(
 export async function getPublicRegistrationFormAction(
   schoolSlug: string,
   formType: FormType
-): Promise<ActionResult<{ form: RegistrationForm; schoolName: string; gradeOptions: string[]; financialOptions: string[]; academicYear: string; classes: RegistrationClassItem[] }>> {
+): Promise<ActionResult<{ form: RegistrationForm; schoolName: string; gradeOptions: string[]; financialOptions: string[]; academicYear: string; classes: RegistrationClassItem[]; allowNewRegistrations: boolean }>> {
   try {
     const [school] = await db
       .select({ id: schools.id, name: schools.name, settings: schools.settings })
@@ -224,12 +320,12 @@ export async function getPublicRegistrationFormAction(
       registrationsService.getOrCreateForm(school.id, formType),
       scheduledClassesService.getForRegistration(school.id),
     ])
-    const settings         = school.settings as { gradeLevels?: string[]; financialOptions?: string[]; academicYear?: string } | null
+    const settings         = school.settings as { gradeLevels?: string[]; financialOptions?: string[]; academicYear?: string; allowNewRegistrations?: boolean } | null
     const gradeOptions     = settings?.gradeLevels      ?? []
     const financialOptions = settings?.financialOptions ?? []
     const academicYear     = settings?.academicYear     ?? '2025-2026'
 
-    return ok({ form, schoolName: school.name, gradeOptions, financialOptions, academicYear, classes })
+    return ok({ form, schoolName: school.name, gradeOptions, financialOptions, academicYear, classes, allowNewRegistrations: settings?.allowNewRegistrations !== false })
   } catch (e) {
     console.error('[getPublicRegistrationFormAction]', e)
     return err('Impossible de charger le formulaire')
@@ -275,7 +371,12 @@ export async function reviewRegistrationAction(raw: unknown): Promise<ActionResu
 
   try {
     const result = await registrationsService.review(session.schoolId, registrationId, session.memberId, status, notes || null)
-    if (!result) return err('Inscription introuvable')
+    if (!result) return err('Inscription introuvable ou déjà approuvée (une approbation est définitive).')
+    // Nouvel élève activé/désactivé selon la décision ; classes choisies inscrites à l'approbation
+    if (result.studentId) {
+      await registrationsService.applyReviewToStudent(session.schoolId, result.studentId, result.formType, status, result.formData)
+    }
+    revalidatePath('/admin-portal/students')
     revalidatePath('/admin-portal/registrations')
 
     // Hors du chemin critique : un échec d'envoi ne doit pas annuler la décision

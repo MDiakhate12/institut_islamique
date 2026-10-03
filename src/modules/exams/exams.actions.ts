@@ -6,7 +6,8 @@ import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { examsService } from './exams.service'
 import { submitExamSchema, signGradeSchema } from './exams.schema'
-import { sendEmail, getAdminEmails, getAppUrl, getSchoolName, getParentEmailsForStudent } from '@/lib/email'
+import { sendEmail, getAppUrl, getSchoolName, getParentEmailsForStudent } from '@/lib/email'
+import { notifyAdmins } from '@/modules/notifications/notify-admins'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 import type {
   TeacherExamClass, ExamResult, GradeFormStudent,
@@ -79,12 +80,15 @@ export async function submitExamResultAction(
       notifyParentsSignatureReset(session.schoolId, studentId, trimester, appUrl, schoolName)
         .catch(e => console.warn('[submitExamResultAction] notification parents :', e))
     }
-    getAdminEmails(session.schoolId).then(emails =>
-      Promise.allSettled(emails.map(to => sendEmail({
-        to,
-        fromName: schoolName,
-        subject: `${schoolName} — Notes soumises (Trimestre ${parsed.data.trimester})`,
-        html: `<!DOCTYPE html>
+    void notifyAdmins(session.schoolId, {
+      type: 'exam_grades_submitted',
+      title: `Notes soumises — Trimestre ${parsed.data.trimester}`,
+      body: 'Un enseignant vient de soumettre des notes d\'examen.',
+      link: '/admin-portal/track-exams',
+    }, {
+      fromName: schoolName,
+      subject: `${schoolName} — Notes soumises (Trimestre ${parsed.data.trimester})`,
+      html: `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
@@ -108,8 +112,7 @@ export async function submitExamResultAction(
     </div>
   </div>
 </body></html>`,
-      })))
-    ).catch(() => {})
+    }, 'submitExamResultAction')
     return ok(undefined)
   } catch {
     return err('Erreur lors de la soumission de la note')

@@ -6,6 +6,8 @@ export type NotificationType =
   | 'registration_rejected'
   | 'teacher_invitation'
   | 'exam_signature_reset'
+  | 'registration_submitted'
+  | 'exam_grades_submitted'
 
 export type Notification = {
   id: string

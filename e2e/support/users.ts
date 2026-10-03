@@ -3,6 +3,8 @@
  * Mot de passe commun : process.env.E2E_PASSWORD (généré dans .env.test).
  */
 export const E2E_SCHOOL = { name: 'École E2E', slug: 'e2e-school' } as const
+/** École sans compte dont les nouvelles inscriptions sont fermées. */
+export const E2E_CLOSED_SCHOOL = { name: 'École E2E Fermée', slug: 'e2e-closed' } as const
 
 export const E2E_EMAIL_DOMAIN = 'e2e.qaf.test'
 

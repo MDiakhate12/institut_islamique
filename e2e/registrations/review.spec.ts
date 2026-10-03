@@ -1,7 +1,7 @@
 import type { Browser } from '@playwright/test'
 import { test, expect, type Page } from '../support/fixtures'
 import { storageStatePath } from '../support/users'
-import { field } from '../support/registration-form'
+import { field, fillGuardians } from '../support/registration-form'
 
 // L'admin approuve ou rejette une inscription ; la famille voit le statut dans son sélecteur
 // d'inscription et reçoit une notification (et un e-mail, désactivé en E2E).
@@ -20,9 +20,7 @@ async function registerChild(family: Page, firstName: string): Promise<string> {
   await field(family, "Nom de famille de l'étudiant").fill('revue')
   await field(family, 'Date de naissance').fill('2017-05-04')
   await family.getByRole('button', { name: 'Masculin' }).click()
-  await field(family, 'Nom du père ou du tuteur').fill('Famille E2E')
-  await field(family, 'Nom de la mère ou du tuteur').fill('Maman E2E')
-  await field(family, 'Téléphone principal').fill('0699887766')
+  await fillGuardians(family, { relation: 'Père', second: { relation: 'Mère', name: 'Maman E2E' } })
   await field(family, 'Niveau scolaire actuel').selectOption('CM1')
   await family.getByRole('button', { name: 'Annuellement' }).click()
   await family.getByRole('checkbox', { name: /J'ai lu et accepte les politiques/ }).check()
@@ -57,7 +55,10 @@ test('inscription approuvée : la famille la voit « Inscrit » et est notifiée
   await expect(admin.getByText('Inscription approuvée')).toBeVisible()
   await expect(row).toContainText('Approuvée')
   await expect(panel).toContainText(/Approuvée le .* par Admin E2E/)
+  // Approbation définitive : plus aucune action possible (ni rejet, ni nouvelle approbation)
   await expect(panel.getByRole('button', { name: 'Approuver' })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: 'Rejeter' })).toHaveCount(0)
+  await expect(panel).toContainText('Décision définitive')
 
   await family.reload()
   await expect(childCard(family, name)).toContainText('Inscrit')
