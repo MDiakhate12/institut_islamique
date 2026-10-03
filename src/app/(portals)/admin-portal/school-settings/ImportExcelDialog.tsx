@@ -45,8 +45,50 @@ function downloadTemplate(type: 'students' | 'teachers') {
   XLSX.writeFile(wb, type === 'students' ? 'modele-eleves.xlsx' : 'modele-enseignants.xlsx')
 }
 
+// Excel stocke un téléphone tapé (0612345678) ou une date (15/03/2015) comme un NOMBRE,
+// pas comme du texte : on convertit chaque cellule numérique en texte avant la lecture,
+// sinon les `.trim()` plantent (le bouton « Importer » semblait ne rien faire).
+// Les dates sont converties d'après le format de la cellule → 'AAAA-MM-JJ', sans ambiguïté.
 function parseRows(ws: XLSX.WorkSheet): Record<string, string>[] {
-  return XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' })
+  for (const [addr, cell] of Object.entries(ws) as [string, XLSX.CellObject][]) {
+    if (addr.startsWith('!') || cell.t !== 'n') continue
+    if (cell.z && XLSX.SSF.is_date(cell.z)) {
+      const d = XLSX.SSF.parse_date_code(cell.v as number)
+      cell.v = `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`
+    } else {
+      cell.v = String(cell.v)
+    }
+    cell.t = 's'
+    delete cell.w
+  }
+  return XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '', raw: false })
+}
+
+/** 'JJ/MM/AAAA', 'JJ-MM-AAAA', 'JJ.MM.AA' ou 'AAAA-MM-JJ' → 'AAAA-MM-JJ'. '' si vide, null si invalide. */
+function normalizeBirthDate(raw: string | undefined): string | null {
+  const value = raw?.trim() ?? ''
+  if (!value) return ''
+  let y: number, m: number, d: number
+  const iso = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
+  const fr  = value.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/)
+  if (iso) {
+    [y, m, d] = [Number(iso[1]), Number(iso[2]), Number(iso[3])]
+  } else if (fr) {
+    [d, m, y] = [Number(fr[1]), Number(fr[2]), Number(fr[3])]
+    if (fr[3].length === 2) y += y > new Date().getFullYear() % 100 ? 1900 : 2000
+  } else {
+    return null
+  }
+  const date = new Date(Date.UTC(y, m - 1, d))
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) return null
+  if (date > new Date()) return null
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+}
+
+/** Un numéro français tapé dans Excel perd son 0 initial (612345678) : on le remet. */
+function normalizePhone(raw: string | undefined): string {
+  const value = raw?.trim() ?? ''
+  return /^[1-9]\d{8}$/.test(value) ? `0${value}` : value
 }
 
 function validateStudentRow(row: Record<string, string>): string | null {
@@ -58,6 +100,9 @@ function validateStudentRow(row: Record<string, string>): string | null {
   if (!genre) return 'Genre manquant'
   if (!['garçon', 'garcon', 'g', 'fille', 'f'].some(v => genre.startsWith(v))) {
     return `Genre invalide "${row['Genre (Garçon/Fille)']}". Utilisez Garçon ou Fille`
+  }
+  if (normalizeBirthDate(row['Date de naissance']) === null) {
+    return `Date de naissance invalide "${row['Date de naissance']}". Format attendu : JJ/MM/AAAA`
   }
   return null
 }
@@ -122,7 +167,7 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
     setFileName(file.name)
     const reader = new FileReader()
     reader.onload = (e) => {
-      const wb = XLSX.read(e.target?.result, { type: 'binary' })
+      const wb = XLSX.read(e.target?.result, { type: 'binary', cellNF: true })
       const ws = wb.Sheets[wb.SheetNames[0]]
       const rows = parseRows(ws)
       if (rows.length === 0) {
@@ -159,8 +204,8 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
           firstName:    r['Prénom']?.trim() || '',
           lastName:     r['Nom']?.trim()    || '',
           gender:       r['Genre (Garçon/Fille)']?.trim() || '',
-          birthDate:    r['Date de naissance']?.trim()    || '',
-          parentPhone:  r['Téléphone parent']?.trim()     || '',
+          birthDate:    normalizeBirthDate(r['Date de naissance']) ?? '',
+          parentPhone:  normalizePhone(r['Téléphone parent']),
           parentName1:  r['Nom parent 1']?.trim()         || '',
           parentName2:  r['Nom parent 2']?.trim()         || '',
           email1:       r['Email 1']?.trim()              || '',
@@ -172,13 +217,16 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
           fullName:    r['Nom complet']?.trim()             || '',
           email:       r['Email']?.trim()                   || '',
           teacherType: r['Type (Bénévole/Payé)']?.trim()   || '',
-          phone:       r['Téléphone']?.trim()               || '',
+          phone:       normalizePhone(r['Téléphone']),
         }))
         res = await importTeachersAction(mapped)
       }
       if (!res.success) { toast.error(res.error); return }
       setResult(res.data)
       setStep('result')
+    } catch (e) {
+      console.error('[ImportExcelDialog]', e)
+      toast.error("L'import a échoué. Vérifiez le fichier et réessayez.")
     } finally {
       setLoading(false)
     }

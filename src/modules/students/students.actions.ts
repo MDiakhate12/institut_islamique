@@ -231,6 +231,12 @@ export async function importStudentsAction(
       continue
     }
 
+    // Le dialog convertit les dates en 'AAAA-MM-JJ' ; toute autre forme serait rejetée par Postgres
+    if (row.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(row.birthDate)) {
+      errors.push({ row: rowNum, message: `Date de naissance invalide: "${row.birthDate}". Format attendu : JJ/MM/AAAA` })
+      continue
+    }
+
     try {
       const guardiansToCreate = []
       if (row.parentPhone || row.parentName1 || row.email1) {
