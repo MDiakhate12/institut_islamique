@@ -204,7 +204,9 @@ export function ImportExcelDialog({ open, onOpenChange, type }: ImportExcelDialo
           firstName:    r['Prénom']?.trim() || '',
           lastName:     r['Nom']?.trim()    || '',
           gender:       r['Genre (Garçon/Fille)']?.trim() || '',
-          birthDate:    normalizeBirthDate(r['Date de naissance']) ?? '',
+          // Date invalide : on transmet la valeur brute pour que le serveur rejette la ligne
+          // (comme l'aperçu), au lieu d'importer l'élève sans date
+          birthDate:    normalizeBirthDate(r['Date de naissance']) ?? r['Date de naissance'],
           parentPhone:  normalizePhone(r['Téléphone parent']),
           parentName1:  r['Nom parent 1']?.trim()         || '',
           parentName2:  r['Nom parent 2']?.trim()         || '',
