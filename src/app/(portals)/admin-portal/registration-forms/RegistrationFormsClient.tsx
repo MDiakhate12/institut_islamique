@@ -59,7 +59,7 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
   activeTab: FormType
   onTabChange: (tab: FormType) => void
 }) {
-  const { data: form, isLoading } = useRegistrationForm(formType)
+  const { data: form } = useRegistrationForm(formType)
   const update = useUpdateRegistrationForm()
   const reset  = useResetRegistrationForm()
   const hist = useHistory(form?.formSchema ?? [])
@@ -110,10 +110,6 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
     const suffix = formType === 'reenrollment' ? '/reenroll' : ''
     const url = `${window.location.origin}/portal/register/${schoolSlug}${suffix}`
     navigator.clipboard.writeText(url).then(() => toast.success('Lien copié !'))
-  }
-
-  if (isLoading) {
-    return <PageLoader />
   }
 
   const itemCount = hist.current.length
@@ -315,6 +311,12 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
 
 export function RegistrationFormsClient({ schoolSlug, classes }: { schoolSlug: string; classes: RegistrationClassItem[] }) {
   const [activeTab, setActiveTab] = useState<FormType>('new_student')
+  // Les deux formulaires chargés avant d'afficher la page (même cache que TabContent) :
+  // un seul loader, et le changement d'onglet est ensuite instantané
+  const newStudentForm = useRegistrationForm('new_student')
+  const reenrollmentForm = useRegistrationForm('reenrollment')
+
+  if (newStudentForm.isLoading || reenrollmentForm.isLoading) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-0">
