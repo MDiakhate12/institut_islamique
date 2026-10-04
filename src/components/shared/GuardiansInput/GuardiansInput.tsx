@@ -42,7 +42,7 @@ interface Props {
   options?: GuardianOptions
   /** Aperçu du constructeur : cartes non interactives (l'emplacement `secondSlot` reste utilisable) */
   preview?: boolean
-  /** Contenu affiché entre la carte du tuteur principal et celle du second tuteur (réglages du constructeur) */
+  /** Contenu affiché sous les cartes et le bouton d'ajout (réglages du constructeur) */
   secondSlot?: React.ReactNode
 }
 
@@ -76,10 +76,7 @@ export function GuardiansInput({ value, onChange, errors, accountHolder, showHea
       </div>}
 
       {value.map((g, i) => (
-        <div key={i} className="contents">
-        {/* Réglages du second tuteur (constructeur) : sous la carte du tuteur principal */}
-        {i === 1 && secondSlot}
-        <div className={previewCls} aria-hidden={preview || undefined}>
+        <div key={i} className={previewCls} aria-hidden={preview || undefined}>
         <GuardianCard
           index={i}
           guardian={g}
@@ -92,11 +89,10 @@ export function GuardiansInput({ value, onChange, errors, accountHolder, showHea
           required={i === 0 ? undefined : secondRequired ? { email: !!options?.secondEmailRequired, phone: !!options?.secondPhoneRequired } : undefined}
         />
         </div>
-        </div>
       ))}
 
-      {value.length < 2 && secondSlot}
-      {value.length < 2 && (
+      {/* Pas de bouton d'ajout quand le second tuteur est obligatoire (sa carte est déjà affichée) */}
+      {value.length < 2 && !secondRequired && (
         <button
           aria-hidden={preview || undefined}
           tabIndex={preview ? -1 : undefined}
@@ -108,6 +104,8 @@ export function GuardiansInput({ value, onChange, errors, accountHolder, showHea
           Ajouter un second tuteur <span className="font-normal text-muted-foreground">(optionnel)</span>
         </button>
       )}
+
+      {secondSlot}
     </div>
   )
 }

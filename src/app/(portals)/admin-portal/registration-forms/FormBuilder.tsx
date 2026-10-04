@@ -304,11 +304,11 @@ function SortableGuardiansGroup({ id, options, onOptionsChange }: {
             Dans le portail parent, le tuteur principal est le parent connecté, pré-rempli depuis son compte.
           </p>
 
-          {/* Aperçu du bloc vu par les familles (formulaire public). Les réglages du second tuteur
-              (enregistrés avec le formulaire, section.guardianOptions) s'affichent sous la carte du
-              tuteur principal, là où apparaît le second tuteur */}
+          {/* Aperçu : carte du tuteur principal, puis le bouton « Ajouter un second tuteur » (retiré quand
+              le second tuteur est obligatoire), puis les réglages (enregistrés avec le formulaire,
+              section.guardianOptions) */}
           <GuardiansInput
-            value={options.secondRequired ? [emptyGuardian(), emptyGuardian()] : [emptyGuardian()]}
+            value={[emptyGuardian()]}
             onChange={() => {}} errors={{}} accountHolder={false} showHeader={false} options={options}
             preview
             secondSlot={
