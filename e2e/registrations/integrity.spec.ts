@@ -36,7 +36,7 @@ test('nouvel élève : absent du tableau Élèves jusqu\'à l\'approbation, puis
 
   await admin.goto('/admin-portal/students')
   await admin.getByPlaceholder(/Rechercher des élèves/).fill(first)
-  await expect(studentRow).toContainText('Inscrit')
+  await expect(studentRow).toContainText('Actif')
   await expect(studentRow).toContainText('Classe Coran E2E')
 
   expect(errors).toEqual([])

@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
 import { requireSession, getSession } from '@/lib/auth/session'
 import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
@@ -390,6 +391,45 @@ export async function reviewRegistrationAction(raw: unknown): Promise<ActionResu
   } catch (e) {
     console.error('[reviewRegistrationAction]', e)
     return err("Impossible d'enregistrer la décision")
+  }
+}
+
+/**
+ * Approbation groupée (ex. reprise des inscriptions créées avant la validation obligatoire) :
+ * même traitement que reviewRegistrationAction pour chaque inscription en attente/rejetée.
+ * Les inscriptions déjà approuvées sont ignorées (l'approbation est définitive).
+ */
+export async function bulkApproveRegistrationsAction(registrationIds: string[]): Promise<ActionResult<{ approved: number; skipped: number }>> {
+  const session = await requireSession()
+  if (!canAccess(session, 'registrations')) return unauthorized()
+  const ids = Array.from(new Set(registrationIds)).filter(id => z.string().uuid().safeParse(id).success)
+  if (ids.length === 0) return err('Aucune inscription sélectionnée')
+
+  try {
+    const approvedResults: NonNullable<Awaited<ReturnType<typeof registrationsService.review>>>[] = []
+    for (const id of ids) {
+      const result = await registrationsService.review(session.schoolId, id, session.memberId, 'approved', null)
+      if (!result) continue
+      if (result.studentId) {
+        await registrationsService.applyReviewToStudent(session.schoolId, result.studentId, result.formType, 'approved', result.formData)
+      }
+      approvedResults.push(result)
+    }
+    revalidatePath('/admin-portal/students')
+    revalidatePath('/admin-portal/registrations')
+
+    // Notifications en série, hors du chemin critique (le transporteur SMTP est en pool à 1 connexion)
+    const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
+    void (async () => {
+      for (const r of approvedResults) {
+        await notifyFamilyOfReview(session.schoolId, 'approved', null, r, appUrl, schoolName)
+          .catch(e => console.warn('[bulkApproveRegistrationsAction] notification famille :', e))
+      }
+    })()
+    return ok({ approved: approvedResults.length, skipped: ids.length - approvedResults.length })
+  } catch (e) {
+    console.error('[bulkApproveRegistrationsAction]', e)
+    return err("Impossible d'approuver la sélection")
   }
 }
 

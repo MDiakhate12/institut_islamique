@@ -126,7 +126,7 @@ const FILTER_VALUES: Record<SortKey, (s: StudentListItem) => (string | null | un
   classes:         s => s.enrollments.map(e => e.className ? `${e.classCode} — ${e.className}` : e.classCode),
   teacher:         s => s.enrollments.map(e => e.teacherName),
   previousTeacher: s => [s.previousTeacher],
-  status:          s => [s.isActive ? 'Inscrit' : 'Inactif'],
+  status:          s => [s.isActive ? 'Actif' : 'Inactif'],
   fatherPhone:     s => [SORT_VALUE.fatherPhone(s) as string | null],
   motherPhone:     s => [SORT_VALUE.motherPhone(s) as string | null],
   fatherEmail:     s => [SORT_VALUE.fatherEmail(s) as string | null],
@@ -376,10 +376,10 @@ export function StudentsClient() {
 
         {/* Chips inscrit */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">Inscrit :</span>
-          <button onClick={() => setActiveFilter(activeFilter === 'active' ? 'all' : 'active')} title="Inscrits"
+          <span className="text-xs text-muted-foreground">Actif :</span>
+          <button onClick={() => setActiveFilter(activeFilter === 'active' ? 'all' : 'active')} title="Actifs"
             className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'active' ? 'bg-green-500 border-green-500' : 'border-green-400 bg-white')} />
-          <button onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')} title="Non inscrits"
+          <button onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')} title="Inactifs"
             className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'inactive' ? 'bg-red-400 border-red-400' : 'border-red-400 bg-white')} />
         </div>
 
@@ -723,7 +723,7 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
             'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
             s.isActive ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
           )}>
-            {s.isActive ? 'Inscrit' : 'Inactif'}
+            {s.isActive ? 'Actif' : 'Inactif'}
           </span>
         </td>
       )}

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { useRegistrations, useReviewRegistration } from '@/modules/registrations/registrations.hooks'
+import { useRegistrations, useReviewRegistration, useBulkApproveRegistrations } from '@/modules/registrations/registrations.hooks'
 import { useSchool } from '@/modules/school/school.hooks'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -71,6 +71,10 @@ export function RegistrationsClient() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = registrations?.find(r => r.id === selectedId) ?? null
   const pendingCount = (registrations ?? []).filter(r => r.status === 'pending').length
+  // Approbation groupée : cases cochées (seules les inscriptions non approuvées sont cochables)
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [confirmBulk, setConfirmBulk] = useState(false)
+  const bulkApprove = useBulkApproveRegistrations()
 
   const grades = useMemo(() => {
     const set = new Set((registrations ?? []).map(r => r.grade).filter((g): g is string => !!g))
@@ -86,6 +90,11 @@ export function RegistrationsClient() {
     return Array.from(set).sort().reverse()
   }, [registrations])
 
+  const toggleChecked = (id: string) => setCheckedIds(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
   const filtered = useMemo(() => {
     if (!registrations) return []
     return registrations.filter(r => {
@@ -100,6 +109,15 @@ export function RegistrationsClient() {
       return true
     })
   }, [registrations, search, gradeFilter, typeFilter, statusFilter])
+
+  // Cochables visibles = non approuvées du filtre courant ; les cases d'une ligne masquée ou
+  // approuvée entre-temps ne comptent pas
+  const checkable = filtered.filter(r => r.status !== 'approved')
+  const checkedVisible = checkable.filter(r => checkedIds.has(r.id))
+  const allChecked = checkable.length > 0 && checkedVisible.length === checkable.length
+  const runBulkApprove = () => bulkApprove.mutate(checkedVisible.map(r => r.id), {
+    onSuccess: res => { if (res.success) { setCheckedIds(new Set()); setConfirmBulk(false) } },
+  })
 
   const total = registrations?.length ?? 0
 
@@ -193,7 +211,36 @@ export function RegistrationsClient() {
         {pendingCount > 0 && (
           <span className="text-xs text-orange-700">{pendingCount} inscription{pendingCount > 1 ? 's' : ''} à traiter</span>
         )}
+        {checkedVisible.length > 0 && (
+          <Button
+            size="sm"
+            onClick={() => setConfirmBulk(true)}
+            className="ml-auto bg-[#c2440f] hover:bg-[#a33a0d] text-white"
+          >
+            <Check className="h-4 w-4" />
+            Approuver la sélection ({checkedVisible.length})
+          </Button>
+        )}
       </div>
+
+      <Dialog open={confirmBulk} onOpenChange={setConfirmBulk}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Approuver {checkedVisible.length} inscription{checkedVisible.length > 1 ? 's' : ''} ?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Les élèves concernés entreront dans le tableau Élèves et chaque famille sera prévenue
+            (notification et e-mail). Une approbation est définitive.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setConfirmBulk(false)} disabled={bulkApprove.isPending}>Annuler</Button>
+            <Button onClick={runBulkApprove} disabled={bulkApprove.isPending}
+              className="bg-[#c2440f] hover:bg-[#a33a0d] text-white">
+              {bulkApprove.isPending ? 'Approbation…' : 'Approuver'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Tableau + panneau détail ── */}
       <div className="flex flex-col lg:flex-row gap-4 relative">
@@ -209,6 +256,16 @@ export function RegistrationsClient() {
               <table className="w-full text-sm whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
+                    <th className="pl-3 py-3 w-8">
+                      <input
+                        type="checkbox"
+                        aria-label="Sélectionner toutes les inscriptions non approuvées"
+                        checked={allChecked}
+                        disabled={checkable.length === 0}
+                        onChange={() => setCheckedIds(allChecked ? new Set() : new Set(checkable.map(r => r.id)))}
+                        className="h-4 w-4 accent-[#c2440f] cursor-pointer disabled:cursor-not-allowed"
+                      />
+                    </th>
                     <SortableTh label="ID" />
                     <SortableTh label="Élève" />
                     <th className="px-3 py-3 text-left">Statut</th>
@@ -235,6 +292,8 @@ export function RegistrationsClient() {
                       registration={r}
                       customFieldLabels={customFieldLabels}
                       isSelected={selected?.id === r.id}
+                      isChecked={checkedIds.has(r.id)}
+                      onToggleChecked={() => toggleChecked(r.id)}
                       onClick={() => setSelectedId(prev => prev === r.id ? null : r.id)}
                     />
                   ))}
@@ -270,11 +329,15 @@ function RegistrationRow({
   registration: r,
   customFieldLabels,
   isSelected,
+  isChecked,
+  onToggleChecked,
   onClick,
 }: {
   registration: RegistrationWithDetails
   customFieldLabels: string[]
   isSelected: boolean
+  isChecked: boolean
+  onToggleChecked: () => void
   onClick: () => void
 }) {
   const father = r.parents[0]
@@ -288,6 +351,19 @@ function RegistrationRow({
         isSelected ? 'bg-orange-50' : 'hover:bg-muted/10'
       )}
     >
+      {/* Sélection (approbation groupée) — le clic ne doit pas ouvrir le panneau */}
+      <td className="pl-3 py-2.5" onClick={e => e.stopPropagation()}>
+        {r.status !== 'approved' && (
+          <input
+            type="checkbox"
+            aria-label={`Sélectionner ${r.studentFirstName} ${r.studentLastName}`}
+            checked={isChecked}
+            onChange={onToggleChecked}
+            className="h-4 w-4 accent-[#c2440f] cursor-pointer"
+          />
+        )}
+      </td>
+
       {/* ID */}
       <td className="px-3 py-2.5 text-xs text-muted-foreground font-mono">
         {r.studentCustomId ?? '—'}

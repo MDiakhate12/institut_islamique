@@ -601,11 +601,11 @@ export function StudentFormDialog({
             {/* Toggle inscrit */}
             <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 border border-border">
               <span className="text-sm text-muted-foreground">
-                {isActive ? "L'élève est actuellement inscrit et actif" : "L'élève est actuellement inactif"}
+                {isActive ? "L'élève est actuellement actif" : "L'élève est actuellement inactif"}
               </span>
               <div className="flex items-center gap-2">
                 <span className={cn('text-sm font-medium', isActive ? 'text-emerald-600' : 'text-gray-400')}>
-                  {isActive ? 'Inscrit' : 'Inactif'}
+                  {isActive ? 'Actif' : 'Inactif'}
                 </span>
                 <button
                   type="button"

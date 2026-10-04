@@ -95,3 +95,35 @@ test('inscription rejetée avec motif : statut, motif et notification', async ({
   expect(errors).toEqual([])
   await Promise.all([admin.close(), family.close()])
 })
+
+test('approbation groupée : les inscriptions cochées passent « Approuvée » et entrent dans Élèves', async ({ browser }) => {
+  const errors: Error[] = []
+  const [admin, family] = await Promise.all([openAs(browser, 'admin', errors), openAs(browser, 'family', errors)])
+  const stamp = Date.now()
+  const names = [await registerChild(family, `GroupeA${stamp}`), await registerChild(family, `GroupeB${stamp}`)]
+
+  await admin.goto('/admin-portal/registrations')
+  for (const name of names) {
+    const row = admin.getByRole('row').filter({ hasText: name })
+    await expect(row).toContainText('En attente')
+    await row.getByRole('checkbox').check()
+  }
+  // Cocher ne doit pas ouvrir le panneau de détail
+  await expect(admin.locator('section').filter({ hasText: 'Décision' })).toHaveCount(0)
+
+  await admin.getByRole('button', { name: 'Approuver la sélection (2)' }).click()
+  await admin.getByRole('dialog').getByRole('button', { name: 'Approuver', exact: true }).click()
+  await expect(admin.getByText('2 inscriptions approuvées')).toBeVisible()
+  for (const name of names) {
+    const row = admin.getByRole('row').filter({ hasText: name })
+    await expect(row).toContainText('Approuvée')
+    await expect(row.getByRole('checkbox')).toHaveCount(0) // approbation définitive : plus cochable
+  }
+
+  await admin.goto('/admin-portal/students')
+  await admin.getByPlaceholder(/Rechercher des élèves/).fill(String(stamp))
+  await expect(admin.getByText('2 élèves', { exact: true })).toBeVisible()
+
+  expect(errors).toEqual([])
+  await Promise.all([admin.close(), family.close()])
+})

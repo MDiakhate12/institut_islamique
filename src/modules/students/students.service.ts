@@ -31,19 +31,23 @@ function buildYearOptions(currentYear: string): string[] {
 
 /**
  * Règle produit : un enfant n'est un élève de l'école qu'une fois son inscription approuvée (§7.4).
- * Masqué = inactif ET une inscription non approuvée (en attente / rejetée) ET aucune approuvée.
- * Restent donc visibles : les élèves actifs, ceux créés à la main ou importés (sans inscription),
- * et les anciens élèves approuvés puis désactivés par l'admin (« Inactif »).
+ * Masqué du tableau Élèves = une inscription « nouvel élève » non approuvée (en attente / rejetée)
+ * ET aucune inscription « nouvel élève » approuvée — que l'élève soit actif ou non (les élèves créés
+ * actifs par l'ancien code, avant la validation admin, sont donc masqués aussi jusqu'à approbation).
+ * Restent visibles : les élèves créés à la main ou importés (sans inscription « nouvel élève »), et
+ * ceux qui ne font qu'une réinscription (une réinscription en attente ne masque pas un élève scolarisé).
  */
 function officialStudentFilter() {
-  const reg = (status: 'approved' | 'other') => db
+  const newStudentReg = (approved: boolean) => db
     .select({ one: sql`1` })
     .from(registrations)
+    .innerJoin(registrationForms, eq(registrationForms.id, registrations.formId))
     .where(and(
       eq(registrations.studentId, students.id),
-      status === 'approved' ? eq(registrations.status, 'approved') : ne(registrations.status, 'approved'),
+      eq(registrationForms.formType, 'new_student'),
+      approved ? eq(registrations.status, 'approved') : ne(registrations.status, 'approved'),
     ))
-  return or(eq(students.isActive, true), notExists(reg('other')), exists(reg('approved')))
+  return or(notExists(newStudentReg(false)), exists(newStudentReg(true)))
 }
 
 export const studentsService = {
