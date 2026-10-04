@@ -421,10 +421,13 @@ export function StudentsClient() {
                   <th className="px-3 py-3 w-8 sm:sticky sm:left-0 sm:z-10 bg-[#fefbf6] border-r border-border">
                     <button
                       type="button"
+                      role="checkbox"
+                      aria-checked={allSelected}
+                      aria-label="Sélectionner tous les élèves"
                       onClick={toggleSelectAll}
                       className={cn(
                         'h-4 w-4 rounded border-2 flex items-center justify-center transition-colors',
-                        allSelected ? 'bg-[#c2440f] border-[#c2440f]' : 'border-border bg-white'
+                        allSelected ? 'bg-[#2d6a4f] border-[#2d6a4f]' : 'border-border bg-white'
                       )}
                     >
                       {allSelected && <Check className="h-2.5 w-2.5 text-white" />}
@@ -481,7 +484,7 @@ export function StudentsClient() {
           <Button
             size="sm"
             onClick={() => setAssignOpen(true)}
-            className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5 h-8"
+            className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5 h-8"
           >
             <BookOpen className="h-3.5 w-3.5" />
             Affecter à une classe
@@ -643,18 +646,17 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
       onClick={() => onEdit(s)}
       className={cn(
         'group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-middle cursor-pointer',
-        selected && 'bg-[#c2440f]/5'
+        selected && 'bg-[#2d6a4f]/5'
       )}
     >
       {/* Checkbox sélection */}
       <td
-        className="px-3 py-3 w-8 sm:sticky sm:left-0 sm:z-10 border-r border-border/50"
-        style={{ background: selected ? 'rgb(194 68 15 / 0.05)' : undefined }}
+        className={cn('px-3 py-3 w-8 sm:sticky sm:left-0 sm:z-10 border-r border-border/50', selected && 'bg-[#2d6a4f]/5')}
         onClick={e => { e.stopPropagation(); onToggleSelect(s.id) }}
       >
         <span className={cn(
           'h-4 w-4 rounded border-2 flex items-center justify-center transition-colors',
-          selected ? 'bg-[#c2440f] border-[#c2440f]' : 'border-border bg-white'
+          selected ? 'bg-[#2d6a4f] border-[#2d6a4f]' : 'border-border bg-white'
         )}>
           {selected && <Check className="h-2.5 w-2.5 text-white" />}
         </span>

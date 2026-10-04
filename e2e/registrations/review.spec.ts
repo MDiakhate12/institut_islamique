@@ -51,14 +51,18 @@ test('inscription approuvée : la famille la voit « Inscrit » et est notifiée
   await expect(childCard(family, name)).toContainText('En attente de validation')
 
   const { row, panel } = await openRegistration(admin, name)
+  // Même panneau que le tableau Élèves, décision d'inscription en tête
+  await expect(admin.getByRole('dialog').filter({ hasText: "Modifier l'élève" })).toContainText('Décision')
   await panel.getByRole('button', { name: 'Approuver' }).click()
   await expect(admin.getByText('Inscription approuvée')).toBeVisible()
-  await expect(row).toContainText('Approuvée')
   await expect(panel).toContainText(/Approuvée le .* par Admin E2E/)
   // Approbation définitive : plus aucune action possible (ni rejet, ni nouvelle approbation)
   await expect(panel.getByRole('button', { name: 'Approuver' })).toHaveCount(0)
   await expect(panel.getByRole('button', { name: 'Rejeter' })).toHaveCount(0)
   await expect(panel).toContainText('Décision définitive')
+  // Le panneau (modal) masque le tableau : on le ferme pour lire la ligne
+  await admin.keyboard.press('Escape')
+  await expect(row).toContainText('Approuvée')
 
   await family.reload()
   await expect(childCard(family, name)).toContainText('Inscrit')
@@ -83,8 +87,9 @@ test('inscription rejetée avec motif : statut, motif et notification', async ({
   await dialog.getByRole('button', { name: "Rejeter l'inscription" }).click()
   await expect(admin.getByText('Inscription rejetée')).toBeVisible()
   await expect(dialog).toBeHidden()
-  await expect(row).toContainText('Rejetée')
   await expect(panel).toContainText(`Motif : ${reason}`)
+  await admin.keyboard.press('Escape')
+  await expect(row).toContainText('Rejetée')
 
   await family.goto('/parent-portal/enrollment')
   await expect(childCard(family, name)).toContainText('Inscription refusée')
@@ -108,10 +113,12 @@ test('approbation groupée : les inscriptions cochées passent « Approuvée » 
     await expect(row).toContainText('En attente')
     await row.getByRole('checkbox').check()
   }
-  // Cocher ne doit pas ouvrir le panneau de détail
+  // Cocher ne doit pas ouvrir le panneau de l'élève
   await expect(admin.locator('section').filter({ hasText: 'Décision' })).toHaveCount(0)
 
-  await admin.getByRole('button', { name: 'Approuver la sélection (2)' }).click()
+  // Barre flottante, même forme que la sélection groupée du tableau Élèves
+  await expect(admin.getByText('2 inscriptions sélectionnées')).toBeVisible()
+  await admin.getByRole('button', { name: 'Approuver', exact: true }).click()
   await admin.getByRole('dialog').getByRole('button', { name: 'Approuver', exact: true }).click()
   await expect(admin.getByText('2 inscriptions approuvées')).toBeVisible()
   for (const name of names) {

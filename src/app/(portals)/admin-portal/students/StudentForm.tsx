@@ -215,6 +215,8 @@ interface Props {
   // en plus (ou à la place) du trigger
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Contenu affiché sous l'en-tête (ex. décision d'inscription quand le panneau est ouvert depuis Inscriptions) */
+  topSlot?: React.ReactNode
 }
 
 // ── Collapsible section for registration form data ────────────────────────────
@@ -250,7 +252,7 @@ function RegistrationDataCollapsible({ fields }: { fields: { label: string; valu
 }
 
 export function StudentFormDialog({
-  student, trigger, onSuccess, open: controlledOpen, onOpenChange: setControlledOpen,
+  student, trigger, onSuccess, open: controlledOpen, onOpenChange: setControlledOpen, topSlot,
 }: Props) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open  = controlledOpen ?? internalOpen
@@ -453,6 +455,8 @@ export function StudentFormDialog({
               </>
             )}
           </SheetHeader>
+
+          {topSlot && <div className="px-4">{topSlot}</div>}
 
           {isEditing && (
             <div className="px-4 space-y-3">
