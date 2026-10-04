@@ -3,19 +3,18 @@ import { requireSession } from '@/lib/auth/session'
 import { db } from '@/db'
 import { profiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { parentsService } from '@/modules/parents/parents.service'
 import { schoolService } from '@/modules/school/school.service'
 import { getPublicRegistrationFormAction } from '@/modules/registrations/registrations.actions'
-import { buildKeyToIdMap } from '@/modules/registrations/registrations.service'
+import type { RegistrationGuardianInput } from '@/modules/registrations/registrations.types'
 import { PublicRegistrationForm } from '@/app/portal/register/[schoolSlug]/PublicRegistrationForm'
+import { RegistrationNotice } from '@/app/portal/register/[schoolSlug]/RegistrationNotice'
 
 export default async function NewChildEnrollmentPage() {
   const session = await requireSession()
 
-  const [school, memberId, profileResult] = await Promise.all([
+  const [school, profileResult] = await Promise.all([
     schoolService.getById(session.schoolId),
-    parentsService.getMemberId(session.userId, session.schoolId),
-    db.select({ phone: profiles.phone }).from(profiles).where(eq(profiles.userId, session.userId)).limit(1),
+    db.select({ phone: profiles.phone, fullName: profiles.fullName, gender: profiles.gender }).from(profiles).where(eq(profiles.userId, session.userId)).limit(1),
   ])
 
   if (!school) notFound()
@@ -23,13 +22,29 @@ export default async function NewChildEnrollmentPage() {
   const result = await getPublicRegistrationFormAction(school.slug, 'new_student')
   if (!result.success) notFound()
 
-  const { form, gradeOptions, financialOptions, academicYear, classes } = result.data
+  const { form, gradeOptions, financialOptions, academicYear, classes, allowNewRegistrations } = result.data
 
-  const keyToId = buildKeyToIdMap(form.formSchema)
-  const initialFormData: Record<string, unknown> = {}
-  if (keyToId.primaryEmail) initialFormData[keyToId.primaryEmail] = session.email
-  const phone = profileResult[0]?.phone
-  if (keyToId.primaryPhone && phone) initialFormData[keyToId.primaryPhone] = phone
+  if (!allowNewRegistrations) {
+    return (
+      <RegistrationNotice
+        schoolName={school.name}
+        title="Inscriptions fermées"
+        message="L'école n'accepte pas de nouvelles inscriptions pour le moment. Contactez-la pour plus d'informations. Vous pouvez toujours réinscrire vos enfants déjà inscrits."
+        links={[{ href: '/parent-portal/enrollment', label: 'Retour à mes inscriptions' }]}
+      />
+    )
+  }
+
+  // Bloc « Tuteurs » : tuteur 1 = le parent connecté (données de son compte). Relation pré-choisie
+  // d'après le genre du profil s'il est renseigné, sinon le parent la choisit (Père, Mère…)
+  const profile = profileResult[0]
+  const initialGuardians: RegistrationGuardianInput[] = [{
+    relationship: profile?.gender === 'male' ? 'father' : profile?.gender === 'female' ? 'mother' : '',
+    name:           profile?.fullName ?? '',
+    phone:          profile?.phone ?? '',
+    email:          session.email,
+    emergencyPhone: '',
+  }]
 
   return (
     <PublicRegistrationForm
@@ -41,8 +56,7 @@ export default async function NewChildEnrollmentPage() {
       financialOptions={financialOptions}
       academicYear={academicYear}
       classes={classes}
-      initialFormData={initialFormData}
-      submitterMemberId={memberId ?? undefined}
+      initialGuardians={initialGuardians}
       backHref="/parent-portal/enrollment"
       successHref="/parent-portal/enrollment/success"
     />

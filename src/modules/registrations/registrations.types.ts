@@ -13,6 +13,25 @@ export type SystemFieldKey =
   | 'paymentFrequency' | 'financialAid' | 'sponsorship'
   | 'academicYear'
 
+/**
+ * Champs « parents / contact » du formulaire, remplacés par le bloc « Tuteurs » quand un parent
+ * connecté inscrit un nouvel élève depuis son portail (tuteur 1 = lui, tuteur 2 optionnel).
+ */
+export const GUARDIAN_FIELD_KEYS: SystemFieldKey[] = [
+  'fatherName', 'motherName', 'primaryEmail', 'secondaryEmail', 'primaryPhone', 'secondaryPhone',
+]
+
+export type GuardianRelationship = 'father' | 'mother' | 'guardian' | 'other'
+
+/** Un tuteur saisi dans le bloc « Tuteurs » (même modèle que l'éditeur de tuteurs du tableau Élèves). */
+export type RegistrationGuardianInput = {
+  relationship: GuardianRelationship | ''
+  name: string
+  phone: string
+  email: string
+  emergencyPhone: string
+}
+
 export type SystemField = {
   kind: 'system_field'
   id: string
@@ -57,6 +76,29 @@ export type FormSection = {
   isSystem: boolean
   systemKey?: 'student_info' | 'class_selection' | 'payment'
   fields: FormField[]
+  /** Réglages du bloc « Tuteurs » (portés par la section qui contient les champs tuteurs) */
+  guardianOptions?: GuardianOptions
+}
+
+/** Réglages du bloc « Tuteurs », définis par l'école dans le constructeur. Par défaut : tout à false. */
+export type GuardianOptions = {
+  /** Le second tuteur doit être renseigné (ex. l'école exige les deux parents) */
+  secondRequired: boolean
+  /** Si le second tuteur est obligatoire : son e-mail l'est aussi */
+  secondEmailRequired: boolean
+  /** Si le second tuteur est obligatoire : son téléphone l'est aussi */
+  secondPhoneRequired: boolean
+}
+
+export const DEFAULT_GUARDIAN_OPTIONS: GuardianOptions = {
+  secondRequired: false, secondEmailRequired: false, secondPhoneRequired: false,
+}
+
+/** Réglages du bloc « Tuteurs » d'un formulaire (section qui contient les champs tuteurs). */
+export function getGuardianOptions(schema: FormItem[]): GuardianOptions {
+  const section = schema.find((item): item is FormSection =>
+    item.kind === 'section' && item.fields.some(f => f.kind === 'system_field' && GUARDIAN_FIELD_KEYS.includes(f.fieldKey)))
+  return { ...DEFAULT_GUARDIAN_OPTIONS, ...section?.guardianOptions }
 }
 
 export type FormItem = FormSection | InfoBlock

@@ -2,8 +2,10 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { useRegistrations, useReviewRegistration } from '@/modules/registrations/registrations.hooks'
+import { useRegistrations, useReviewRegistration, useBulkApproveRegistrations } from '@/modules/registrations/registrations.hooks'
 import { useSchool } from '@/modules/school/school.hooks'
+import { useStudents } from '@/modules/students/students.hooks'
+import { StudentFormDialog } from '../students/StudentForm'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
@@ -70,7 +72,17 @@ export function RegistrationsClient() {
   // On garde l'id (pas l'objet) : après une décision, le panneau relit la ligne rafraîchie
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = registrations?.find(r => r.id === selectedId) ?? null
+  // Une inscription liée à un élève s'ouvre dans le même panneau que le tableau Élèves ;
+  // sans élève (anciennes réinscriptions anonymes), repli sur le panneau de détail
+  const { data: students } = useStudents()
+  const selectedStudent = selected?.studentId ? students?.find(s => s.id === selected.studentId) ?? null : null
+  // Repli seulement quand on sait qu'il n'y a pas d'élève (évite un flash pendant le chargement des élèves)
+  const showDetailPanel = !!selected && (!selected.studentId || (!!students && !selectedStudent))
   const pendingCount = (registrations ?? []).filter(r => r.status === 'pending').length
+  // Approbation groupée : cases cochées (seules les inscriptions non approuvées sont cochables)
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [confirmBulk, setConfirmBulk] = useState(false)
+  const bulkApprove = useBulkApproveRegistrations()
 
   const grades = useMemo(() => {
     const set = new Set((registrations ?? []).map(r => r.grade).filter((g): g is string => !!g))
@@ -86,6 +98,11 @@ export function RegistrationsClient() {
     return Array.from(set).sort().reverse()
   }, [registrations])
 
+  const toggleChecked = (id: string) => setCheckedIds(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
   const filtered = useMemo(() => {
     if (!registrations) return []
     return registrations.filter(r => {
@@ -100,6 +117,15 @@ export function RegistrationsClient() {
       return true
     })
   }, [registrations, search, gradeFilter, typeFilter, statusFilter])
+
+  // Cochables visibles = non approuvées du filtre courant ; les cases d'une ligne masquée ou
+  // approuvée entre-temps ne comptent pas
+  const checkable = filtered.filter(r => r.status !== 'approved')
+  const checkedVisible = checkable.filter(r => checkedIds.has(r.id))
+  const allChecked = checkable.length > 0 && checkedVisible.length === checkable.length
+  const runBulkApprove = () => bulkApprove.mutate(checkedVisible.map(r => r.id), {
+    onSuccess: res => { if (res.success) { setCheckedIds(new Set()); setConfirmBulk(false) } },
+  })
 
   const total = registrations?.length ?? 0
 
@@ -195,9 +221,28 @@ export function RegistrationsClient() {
         )}
       </div>
 
+      <Dialog open={confirmBulk} onOpenChange={setConfirmBulk}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Approuver {checkedVisible.length} inscription{checkedVisible.length > 1 ? 's' : ''} ?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Les élèves concernés entreront dans le tableau Élèves et chaque famille sera prévenue
+            (notification et e-mail). Une approbation est définitive.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setConfirmBulk(false)} disabled={bulkApprove.isPending}>Annuler</Button>
+            <Button onClick={runBulkApprove} disabled={bulkApprove.isPending}
+              className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white">
+              {bulkApprove.isPending ? 'Approbation…' : 'Approuver'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Tableau + panneau détail ── */}
       <div className="flex flex-col lg:flex-row gap-4 relative">
-        <div className={cn('flex-1 min-w-0 rounded-lg border border-border bg-white overflow-hidden', selected && 'lg:max-w-[calc(100%-380px)]')}>
+        <div className={cn('flex-1 min-w-0 rounded-lg border border-border bg-white overflow-hidden', showDetailPanel && 'lg:max-w-[calc(100%-380px)]')}>
           {isLoading ? <RegistrationsSkeleton /> : filtered.length === 0 ? (
             <EmptyState
               icon={ClipboardList}
@@ -209,6 +254,14 @@ export function RegistrationsClient() {
               <table className="w-full text-sm whitespace-nowrap">
                 <thead>
                   <tr className="border-b border-border bg-muted/20 text-xs text-muted-foreground uppercase tracking-wide">
+                    <th className="pl-3 py-3 w-8">
+                      <SelectBox
+                        label="Sélectionner toutes les inscriptions non approuvées"
+                        checked={allChecked}
+                        disabled={checkable.length === 0}
+                        onToggle={() => setCheckedIds(allChecked ? new Set() : new Set(checkable.map(r => r.id)))}
+                      />
+                    </th>
                     <SortableTh label="ID" />
                     <SortableTh label="Élève" />
                     <th className="px-3 py-3 text-left">Statut</th>
@@ -235,6 +288,8 @@ export function RegistrationsClient() {
                       registration={r}
                       customFieldLabels={customFieldLabels}
                       isSelected={selected?.id === r.id}
+                      isChecked={checkedIds.has(r.id)}
+                      onToggleChecked={() => toggleChecked(r.id)}
                       onClick={() => setSelectedId(prev => prev === r.id ? null : r.id)}
                     />
                   ))}
@@ -244,14 +299,92 @@ export function RegistrationsClient() {
           )}
         </div>
 
-        {/* ── Panneau détail ── */}
-        {selected && (
+        {/* ── Panneau détail (repli sans élève lié) ── */}
+        {selected && showDetailPanel && (
           <RegistrationDetailPanel
             registration={selected}
             onClose={() => setSelectedId(null)}
           />
         )}
       </div>
+
+      {/* Panneau élève — le même que le tableau Élèves, avec la décision d'inscription en tête.
+          Hors du tableau (§7.15) ; la clé inclut le statut pour que le formulaire reparte des
+          valeurs à jour (élève activé) après une décision (§7.16). */}
+      {selected && selectedStudent && (
+        <StudentFormDialog
+          key={`${selectedStudent.id}-${selected.status}`}
+          student={selectedStudent}
+          open={true}
+          onOpenChange={v => { if (!v) setSelectedId(null) }}
+          topSlot={<RegistrationSummary registration={selected} />}
+        />
+      )}
+
+      {/* ── Barre flottante sélection (même forme que le tableau Élèves) ── */}
+      {checkedVisible.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 bg-[#1a1a1a] text-white rounded-xl shadow-2xl">
+          <span className="text-sm font-medium">
+            {checkedVisible.length} inscription{checkedVisible.length > 1 ? 's' : ''} sélectionnée{checkedVisible.length > 1 ? 's' : ''}
+          </span>
+          <Button
+            size="sm"
+            onClick={() => setConfirmBulk(true)}
+            className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5 h-8"
+          >
+            <Check className="h-3.5 w-3.5" />
+            Approuver
+          </Button>
+          <button
+            type="button"
+            aria-label="Vider la sélection"
+            onClick={() => setCheckedIds(new Set())}
+            className="p-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Case de sélection — même rendu que le tableau Élèves */
+function SelectBox({ label, checked, disabled, onToggle }: {
+  label: string
+  checked: boolean
+  disabled?: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onToggle}
+      className={cn(
+        'h-4 w-4 rounded border-2 flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+        checked ? 'bg-[#2d6a4f] border-[#2d6a4f]' : 'border-border bg-white',
+      )}
+    >
+      {checked && <Check className="h-2.5 w-2.5 text-white" />}
+    </button>
+  )
+}
+
+/** En-tête du panneau élève ouvert depuis Inscriptions : statut de l'inscription + décision */
+function RegistrationSummary({ registration: r }: { registration: RegistrationWithDetails }) {
+  return (
+    <div className="space-y-2 pb-1">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span>Inscription {r.formType === 'new_student' ? 'nouvel élève' : 'réinscription'}</span>
+        <span>·</span>
+        <span>soumise le {new Date(r.submittedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        <RegistrationStatusBadge status={r.status} />
+      </div>
+      <ReviewSection registration={r} />
     </div>
   )
 }
@@ -270,11 +403,15 @@ function RegistrationRow({
   registration: r,
   customFieldLabels,
   isSelected,
+  isChecked,
+  onToggleChecked,
   onClick,
 }: {
   registration: RegistrationWithDetails
   customFieldLabels: string[]
   isSelected: boolean
+  isChecked: boolean
+  onToggleChecked: () => void
   onClick: () => void
 }) {
   const father = r.parents[0]
@@ -285,9 +422,20 @@ function RegistrationRow({
       onClick={onClick}
       className={cn(
         'border-b border-border/50 last:border-0 cursor-pointer transition-colors',
-        isSelected ? 'bg-orange-50' : 'hover:bg-muted/10'
+        isSelected ? 'bg-orange-50' : isChecked ? 'bg-[#2d6a4f]/5' : 'hover:bg-muted/10'
       )}
     >
+      {/* Sélection (approbation groupée) — le clic ne doit pas ouvrir le panneau */}
+      <td className={cn('pl-3 py-2.5', isChecked && 'bg-[#2d6a4f]/5')} onClick={e => e.stopPropagation()}>
+        {r.status !== 'approved' && (
+          <SelectBox
+            label={`Sélectionner ${r.studentFirstName} ${r.studentLastName}`}
+            checked={isChecked}
+            onToggle={onToggleChecked}
+          />
+        )}
+      </td>
+
       {/* ID */}
       <td className="px-3 py-2.5 text-xs text-muted-foreground font-mono">
         {r.studentCustomId ?? '—'}
@@ -630,21 +778,25 @@ function ReviewSection({ registration: r }: { registration: RegistrationWithDeta
         <p className="text-xs p-2 rounded bg-red-50 border border-red-100 text-red-800">Motif : {r.reviewNotes}</p>
       )}
 
-      <div className="flex gap-2">
-        {r.status !== 'approved' && (
-          <Button size="sm" disabled={review.isPending} onClick={() => decide('approved', null)}
-            className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
-            <Check className="h-4 w-4" /> Approuver
-          </Button>
-        )}
-        {r.status !== 'rejected' && (
-          <Button size="sm" variant="outline" disabled={review.isPending} onClick={() => setRejectOpen(true)}
-            className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50">
-            <Ban className="h-4 w-4" /> Rejeter
-          </Button>
-        )}
-      </div>
-      <p className="text-[11px] text-muted-foreground">La famille est prévenue par notification et par e-mail.</p>
+      {/* Une approbation est définitive : plus aucune action une fois l'inscription approuvée */}
+      {r.status === 'approved' ? (
+        <p className="text-[11px] text-muted-foreground">Décision définitive : l&apos;élève fait partie de l&apos;école.</p>
+      ) : (
+        <>
+          <div className="flex gap-2">
+            <Button size="sm" disabled={review.isPending} onClick={() => decide('approved', null)}
+              className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+              <Check className="h-4 w-4" /> Approuver
+            </Button>
+            {r.status !== 'rejected' && (
+              <Button size="sm" variant="outline" disabled={review.isPending} onClick={() => setRejectOpen(true)}
+                className="flex-1 gap-1.5 border-red-300 text-red-700 hover:bg-red-50">
+                <Ban className="h-4 w-4" /> Rejeter
+              </Button>
+            )}
+          </div>
+        </>
+      )}
 
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogContent className="max-w-md">

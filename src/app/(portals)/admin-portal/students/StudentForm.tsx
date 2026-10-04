@@ -87,7 +87,8 @@ function guardianToLocal(g: GuardianSummary): LocalGuardian {
     _tempId:          g.id,
     id:               g.id,
     relationship:     g.relationship as LocalGuardian['relationship'],
-    name:             g.firstName ?? '',
+    // Nom complet dans first_name (convention) ; on concatène last_name s'il est renseigné
+    name:             `${g.firstName ?? ''} ${g.lastName ?? ''}`.trim(),
     phone:            g.phone ?? '',
     email:            g.email ?? '',
     emergencyPhone:   g.emergencyPhone ?? '',
@@ -214,6 +215,8 @@ interface Props {
   // en plus (ou à la place) du trigger
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Contenu affiché sous l'en-tête (ex. décision d'inscription quand le panneau est ouvert depuis Inscriptions) */
+  topSlot?: React.ReactNode
 }
 
 // ── Collapsible section for registration form data ────────────────────────────
@@ -249,7 +252,7 @@ function RegistrationDataCollapsible({ fields }: { fields: { label: string; valu
 }
 
 export function StudentFormDialog({
-  student, trigger, onSuccess, open: controlledOpen, onOpenChange: setControlledOpen,
+  student, trigger, onSuccess, open: controlledOpen, onOpenChange: setControlledOpen, topSlot,
 }: Props) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open  = controlledOpen ?? internalOpen
@@ -453,6 +456,8 @@ export function StudentFormDialog({
             )}
           </SheetHeader>
 
+          {topSlot && <div className="px-4">{topSlot}</div>}
+
           {isEditing && (
             <div className="px-4 space-y-3">
               {/* Badges de présence */}
@@ -600,11 +605,11 @@ export function StudentFormDialog({
             {/* Toggle inscrit */}
             <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/20 border border-border">
               <span className="text-sm text-muted-foreground">
-                {isActive ? "L'élève est actuellement inscrit et actif" : "L'élève est actuellement inactif"}
+                {isActive ? "L'élève est actuellement actif" : "L'élève est actuellement inactif"}
               </span>
               <div className="flex items-center gap-2">
                 <span className={cn('text-sm font-medium', isActive ? 'text-emerald-600' : 'text-gray-400')}>
-                  {isActive ? 'Inscrit' : 'Inactif'}
+                  {isActive ? 'Actif' : 'Inactif'}
                 </span>
                 <button
                   type="button"

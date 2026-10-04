@@ -5,7 +5,7 @@ import {
   attendance, attendanceRecords, homework, homeworkGrades,
   examResults, schools, registrations, registrationForms,
 } from '@/db/schema'
-import { eq, and, isNull, desc, inArray, count, max, or, sum } from 'drizzle-orm'
+import { eq, and, isNull, desc, inArray, count, max, or, sum, ne, exists, notExists, sql } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
 import type {
   Student, StudentListItem, GuardianSummary, StudentEnrollment,
@@ -29,6 +29,27 @@ function buildYearOptions(currentYear: string): string[] {
   ]
 }
 
+/**
+ * Règle produit : un enfant n'est un élève de l'école qu'une fois son inscription approuvée (§7.4).
+ * Masqué du tableau Élèves = une inscription « nouvel élève » non approuvée (en attente / rejetée)
+ * ET aucune inscription « nouvel élève » approuvée — que l'élève soit actif ou non (les élèves créés
+ * actifs par l'ancien code, avant la validation admin, sont donc masqués aussi jusqu'à approbation).
+ * Restent visibles : les élèves créés à la main ou importés (sans inscription « nouvel élève »), et
+ * ceux qui ne font qu'une réinscription (une réinscription en attente ne masque pas un élève scolarisé).
+ */
+function officialStudentFilter() {
+  const newStudentReg = (approved: boolean) => db
+    .select({ one: sql`1` })
+    .from(registrations)
+    .innerJoin(registrationForms, eq(registrationForms.id, registrations.formId))
+    .where(and(
+      eq(registrations.studentId, students.id),
+      eq(registrationForms.formType, 'new_student'),
+      approved ? eq(registrations.status, 'approved') : ne(registrations.status, 'approved'),
+    ))
+  return or(notExists(newStudentReg(false)), exists(newStudentReg(true)))
+}
+
 export const studentsService = {
   async getBySchool(schoolId: string): Promise<StudentListItem[]> {
     const [
@@ -43,7 +64,7 @@ export const studentsService = {
     ] = await Promise.all([
       // 1. Base students
       db
-        .select()
+        .select({ student: students, approved: sql<boolean>`(${officialStudentFilter()})` })
         .from(students)
         .where(eq(students.schoolId, schoolId))
         .orderBy(desc(students.createdAt)),
@@ -206,7 +227,7 @@ export const studentsService = {
       return acc
     }, {})
 
-    return studentRows.map(s => {
+    return studentRows.map(({ student: s, approved }) => {
       const periods   = paymentsByStudent[s.id] ?? []
       const annually  = periods.includes('annually')
       const paidT1    = annually || periods.includes('trimester_1')
@@ -242,6 +263,7 @@ export const studentsService = {
         studentCustomId:  s.studentCustomId,
         notes:            s.notes,
         enrollmentYear:   s.enrollmentYear,
+        awaitingApproval: !approved,
         enrollments,
         phone:            father?.phone ?? null,
         guardians:        gList,
@@ -380,6 +402,7 @@ export const studentsService = {
             .set({
               relationship:   g.relationship,
               firstName:      g.name?.trim() || null,
+              lastName:       '', // le nom complet est dans first_name
               phone:          g.phone?.trim()          || null,
               email:          g.email?.trim()          || null,
               emergencyPhone: g.emergencyPhone?.trim() || null,

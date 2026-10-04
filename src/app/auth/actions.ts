@@ -27,7 +27,14 @@ function translateAuthError(message: string): string {
   return "Une erreur est survenue lors de l'inscription. Veuillez réessayer."
 }
 
-export async function signInAction(email: string, password: string) {
+// Chemin interne uniquement (« /… » mais pas « //hôte ») : empêche une redirection ouverte vers
+// un site externe via ?redirect=. Les droits d'accès à la page sont ensuite vérifiés par proxy.ts.
+function safeRedirectPath(path: string | undefined): string | null {
+  if (!path || !path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return null
+  return path
+}
+
+export async function signInAction(email: string, password: string, redirectTo?: string) {
   const supabase = await createClient()
   const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
 
@@ -57,7 +64,8 @@ export async function signInAction(email: string, password: string) {
   }
 
   revalidatePath('/', 'layout')
-  redirect(destination)
+  // Retour à la page demandée avant la connexion (?redirect=), sinon le portail du rôle principal
+  redirect(safeRedirectPath(redirectTo) ?? destination)
 }
 
 export async function signOutAction() {

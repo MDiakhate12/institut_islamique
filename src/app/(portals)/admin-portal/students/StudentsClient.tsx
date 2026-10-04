@@ -126,7 +126,7 @@ const FILTER_VALUES: Record<SortKey, (s: StudentListItem) => (string | null | un
   classes:         s => s.enrollments.map(e => e.className ? `${e.classCode} — ${e.className}` : e.classCode),
   teacher:         s => s.enrollments.map(e => e.teacherName),
   previousTeacher: s => [s.previousTeacher],
-  status:          s => [s.isActive ? 'Inscrit' : 'Inactif'],
+  status:          s => [s.isActive ? 'Actif' : 'Inactif'],
   fatherPhone:     s => [SORT_VALUE.fatherPhone(s) as string | null],
   motherPhone:     s => [SORT_VALUE.motherPhone(s) as string | null],
   fatherEmail:     s => [SORT_VALUE.fatherEmail(s) as string | null],
@@ -152,7 +152,10 @@ function buildFilterOptions(students: StudentListItem[], key: SortKey): string[]
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function StudentsClient() {
-  const { data: students, isLoading } = useStudents()
+  const { data: allStudents, isLoading } = useStudents()
+  // Un enfant n'apparaît dans le tableau qu'une fois son inscription approuvée (§7.4) —
+  // tant qu'elle est en attente ou rejetée, il n'est visible que dans « Inscriptions »
+  const students = useMemo(() => allStudents?.filter(s => !s.awaitingApproval), [allStudents])
 
   const [search, setSearch]             = useState('')
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all')
@@ -373,10 +376,10 @@ export function StudentsClient() {
 
         {/* Chips inscrit */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">Inscrit :</span>
-          <button onClick={() => setActiveFilter(activeFilter === 'active' ? 'all' : 'active')} title="Inscrits"
+          <span className="text-xs text-muted-foreground">Actif :</span>
+          <button onClick={() => setActiveFilter(activeFilter === 'active' ? 'all' : 'active')} title="Actifs"
             className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'active' ? 'bg-green-500 border-green-500' : 'border-green-400 bg-white')} />
-          <button onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')} title="Non inscrits"
+          <button onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')} title="Inactifs"
             className={cn('h-5 w-5 rounded-full border-2 transition-all', activeFilter === 'inactive' ? 'bg-red-400 border-red-400' : 'border-red-400 bg-white')} />
         </div>
 
@@ -418,10 +421,13 @@ export function StudentsClient() {
                   <th className="px-3 py-3 w-8 sm:sticky sm:left-0 sm:z-10 bg-[#fefbf6] border-r border-border">
                     <button
                       type="button"
+                      role="checkbox"
+                      aria-checked={allSelected}
+                      aria-label="Sélectionner tous les élèves"
                       onClick={toggleSelectAll}
                       className={cn(
                         'h-4 w-4 rounded border-2 flex items-center justify-center transition-colors',
-                        allSelected ? 'bg-[#c2440f] border-[#c2440f]' : 'border-border bg-white'
+                        allSelected ? 'bg-[#2d6a4f] border-[#2d6a4f]' : 'border-border bg-white'
                       )}
                     >
                       {allSelected && <Check className="h-2.5 w-2.5 text-white" />}
@@ -478,7 +484,7 @@ export function StudentsClient() {
           <Button
             size="sm"
             onClick={() => setAssignOpen(true)}
-            className="bg-[#c2440f] hover:bg-[#a33a0d] text-white gap-1.5 h-8"
+            className="bg-[#2d6a4f] hover:bg-[#1b4332] text-white gap-1.5 h-8"
           >
             <BookOpen className="h-3.5 w-3.5" />
             Affecter à une classe
@@ -640,18 +646,17 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
       onClick={() => onEdit(s)}
       className={cn(
         'group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-middle cursor-pointer',
-        selected && 'bg-[#c2440f]/5'
+        selected && 'bg-[#2d6a4f]/5'
       )}
     >
       {/* Checkbox sélection */}
       <td
-        className="px-3 py-3 w-8 sm:sticky sm:left-0 sm:z-10 border-r border-border/50"
-        style={{ background: selected ? 'rgb(194 68 15 / 0.05)' : undefined }}
+        className={cn('px-3 py-3 w-8 sm:sticky sm:left-0 sm:z-10 border-r border-border/50', selected && 'bg-[#2d6a4f]/5')}
         onClick={e => { e.stopPropagation(); onToggleSelect(s.id) }}
       >
         <span className={cn(
           'h-4 w-4 rounded border-2 flex items-center justify-center transition-colors',
-          selected ? 'bg-[#c2440f] border-[#c2440f]' : 'border-border bg-white'
+          selected ? 'bg-[#2d6a4f] border-[#2d6a4f]' : 'border-border bg-white'
         )}>
           {selected && <Check className="h-2.5 w-2.5 text-white" />}
         </span>
@@ -720,7 +725,7 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
             'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
             s.isActive ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
           )}>
-            {s.isActive ? 'Inscrit' : 'Inactif'}
+            {s.isActive ? 'Actif' : 'Inactif'}
           </span>
         </td>
       )}

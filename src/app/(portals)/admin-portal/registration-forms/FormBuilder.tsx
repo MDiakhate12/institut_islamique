@@ -27,6 +27,8 @@ import { Label } from '@/components/ui/label'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
 import { AddSectionDialog } from './AddSectionDialog'
 import { AddFieldDialog } from './AddFieldDialog'
+import { GuardiansInput, emptyGuardian } from '@/components/shared/GuardiansInput/GuardiansInput'
+import { GUARDIAN_FIELD_KEYS, DEFAULT_GUARDIAN_OPTIONS, type GuardianOptions } from '@/modules/registrations/registrations.types'
 import type {
   FormItem, FormSection, InfoBlock, FormField, CustomField, FormType,
   InfoBlockStyle, RegistrationClassItem, SystemField, FieldType,
@@ -264,6 +266,88 @@ function SortableFieldRow({ field, onDelete, onEdit }: { field: FormField; onDel
         attributes={attributes}
         isOver={isOver}
       />
+    </div>
+  )
+}
+
+// ── Bloc « Tuteurs » (champs père/mère/contact regroupés) ──────────────────────
+
+const isGuardianField = (f: FormField) =>
+  f.kind === 'system_field' && GUARDIAN_FIELD_KEYS.includes(f.fieldKey)
+
+/**
+ * Les 6 champs système père/mère/e-mails/téléphones sont affichés aux familles sous la forme d'un
+ * bloc « Tuteurs » unique (portail parent et formulaire public). Le constructeur les montre donc
+ * de la même façon : un bloc verrouillé, déplaçable d'un seul tenant, avec l'aperçu réel.
+ */
+function SortableGuardiansGroup({ id, options, onOptionsChange }: {
+  id: string
+  options: GuardianOptions
+  onOptionsChange: (next: GuardianOptions) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isOver } = useSortable({ id })
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}>
+      <div className={cn('group relative flex items-start gap-3 px-4 py-3 border-b border-border/50 last:border-b-0', isOver && 'bg-[#2d6a4f]/5')}>
+        <button {...listeners} {...attributes} type="button"
+          className="mt-1 text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0">
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-sm font-medium text-foreground">Tuteurs</span>
+            <span className="text-[#2d6a4f] text-sm font-medium">*</span>
+            <Lock className="h-3 w-3 text-amber-500 shrink-0" />
+          </div>
+          <p className="text-xs text-muted-foreground/70 italic">
+            Tuteur principal obligatoire (nom, téléphone, e-mail), second tuteur {options.secondRequired ? 'obligatoire' : 'optionnel'}.
+            Dans le portail parent, le tuteur principal est le parent connecté, pré-rempli depuis son compte.
+          </p>
+
+          {/* Aperçu : carte du tuteur principal, puis le bouton « Ajouter un second tuteur » (retiré quand
+              le second tuteur est obligatoire), puis les réglages (enregistrés avec le formulaire,
+              section.guardianOptions) */}
+          <GuardiansInput
+            value={[emptyGuardian()]}
+            onChange={() => {}} errors={{}} accountHolder={false} showHeader={false} options={options}
+            preview
+            secondSlot={
+              <div className="rounded-md border border-border bg-muted/20 px-3 py-2 space-y-1.5 text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="h-4 w-4 accent-[#2d6a4f]" checked={options.secondRequired}
+                    onChange={e => onOptionsChange(e.target.checked
+                      ? { ...options, secondRequired: true }
+                      : { ...DEFAULT_GUARDIAN_OPTIONS })} />
+                  Second tuteur obligatoire
+                </label>
+                {options.secondRequired && (
+                  <div className="pl-6 flex flex-wrap gap-x-5 gap-y-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs">
+                      <input type="checkbox" className="h-3.5 w-3.5 accent-[#2d6a4f]" checked={options.secondEmailRequired}
+                        onChange={e => onOptionsChange({ ...options, secondEmailRequired: e.target.checked })} />
+                      Son e-mail est obligatoire
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs">
+                      <input type="checkbox" className="h-3.5 w-3.5 accent-[#2d6a4f]" checked={options.secondPhoneRequired}
+                        onChange={e => onOptionsChange({ ...options, secondPhoneRequired: e.target.checked })} />
+                      Son téléphone est obligatoire
+                    </label>
+                  </div>
+                )}
+              </div>
+            }
+          />
+        </div>
+        {/* Même structure que FieldRow (badge + zone des actions) pour aligner « Système » sur les autres
+            lignes ; le bloc n'a ni Modifier ni Supprimer, la zone reste vide (invisible) */}
+        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Système</span>
+          <div className="invisible flex gap-1" aria-hidden>
+            <span className="p-1"><Pencil className="h-3.5 w-3.5" /></span>
+            <span className="p-1"><Trash2 className="h-3.5 w-3.5" /></span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -600,13 +684,14 @@ function ClassSelectionPreview({ formType, classes = [] }: { formType: FormType;
 // ── Section block ──────────────────────────────────────────────────────────────
 
 function SectionBlock({
-  section, formType, classes, onUpdateFields, onEdit, onDelete,
+  section, formType, classes, onUpdateFields, onUpdateMeta, onEdit, onDelete,
   listeners, attributes, style: dragStyle,
 }: {
   section: FormSection
   formType: FormType
   classes?: RegistrationClassItem[]
   onUpdateFields: (fields: FormField[]) => void
+  onUpdateMeta: (patch: Partial<FormSection>) => void
   onEdit: () => void
   onDelete?: () => void
   listeners?: AnyProps
@@ -619,7 +704,16 @@ function SectionBlock({
   const [editingField,      setEditingField]      = useState<CustomField | null>(null)
   const [editingSystemField, setEditingSystemField] = useState<SystemField | null>(null)
 
-  const fieldCount = section.fields.length
+  // Les champs tuteurs sont regroupés en un seul élément « Tuteurs », à la place du premier d'entre eux
+  const guardiansGroupId = `${section.id}__guardians`
+  const guardianFields = section.fields.filter(isGuardianField)
+  const displayIds: string[] = []
+  for (const f of section.fields) {
+    if (!isGuardianField(f)) displayIds.push(f.id)
+    else if (!displayIds.includes(guardiansGroupId)) displayIds.push(guardiansGroupId)
+  }
+
+  const fieldCount = displayIds.length
   const isClassSection = section.systemKey === 'class_selection'
   const classCount = (classes ?? []).length
   const totalCount = isClassSection
@@ -631,9 +725,10 @@ function SectionBlock({
   function handleFieldDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (over && active.id !== over.id) {
-      const oldIndex = section.fields.findIndex(f => f.id === active.id)
-      const newIndex = section.fields.findIndex(f => f.id === over.id)
-      onUpdateFields(arrayMove(section.fields, oldIndex, newIndex))
+      // Réordonne la liste affichée (bloc « Tuteurs » = un élément), puis la redéplie en champs
+      const moved = arrayMove(displayIds, displayIds.indexOf(String(active.id)), displayIds.indexOf(String(over.id)))
+      const byId = new Map(section.fields.map(f => [f.id, f]))
+      onUpdateFields(moved.flatMap(id => (id === guardiansGroupId ? guardianFields : [byId.get(id)!])))
     }
   }
 
@@ -744,8 +839,17 @@ function SectionBlock({
           {/* Fields */}
           {!isClassSection && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFieldDragEnd}>
-              <SortableContext items={section.fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                {section.fields.map(field => (
+              <SortableContext items={displayIds} strategy={verticalListSortingStrategy}>
+                {displayIds.map(id => {
+                  if (id === guardiansGroupId) {
+                    return (
+                      <SortableGuardiansGroup key={id} id={id}
+                        options={{ ...DEFAULT_GUARDIAN_OPTIONS, ...section.guardianOptions }}
+                        onOptionsChange={guardianOptions => onUpdateMeta({ guardianOptions })} />
+                    )
+                  }
+                  const field = section.fields.find(f => f.id === id)!
+                  return (
                   <SortableFieldRow
                     key={field.id}
                     field={field}
@@ -756,7 +860,8 @@ function SectionBlock({
                         : () => setEditingSystemField(field as SystemField)
                     }
                   />
-                ))}
+                  )
+                })}
               </SortableContext>
             </DndContext>
           )}
@@ -952,6 +1057,7 @@ export function FormBuilder({ items, formType, onChange, classes = [] }: FormBui
                     formType={formType}
                     classes={classes}
                     onUpdateFields={(fields) => updateSection(item.id, fields)}
+                    onUpdateMeta={(patch) => updateSectionMeta(item.id, patch)}
                     onEdit={() => setEditingSection(item)}
                     onDelete={() => deleteItem(item.id)}
                   />

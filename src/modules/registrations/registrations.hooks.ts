@@ -8,7 +8,9 @@ import {
   resetRegistrationFormAction,
   getRegistrationsAction,
   reviewRegistrationAction,
+  bulkApproveRegistrationsAction,
 } from './registrations.actions'
+import { studentsKeys } from '@/modules/students/students.hooks'
 import type { FormType, FormItem } from './registrations.types'
 import type { ReviewRegistrationInput } from './registrations.schema'
 
@@ -80,7 +82,25 @@ export function useReviewRegistration() {
       if (!result.success) { toast.error(result.error); return }
       toast.success(vars.status === 'approved' ? 'Inscription approuvée' : 'Inscription rejetée')
       qc.invalidateQueries({ queryKey: registrationKeys.list })
+      // L'élève est activé / inscrit dans ses classes : le tableau Élèves et son panneau changent
+      qc.invalidateQueries({ queryKey: studentsKeys.all })
     },
     onError: () => toast.error("Impossible d'enregistrer la décision"),
+  })
+}
+
+export function useBulkApproveRegistrations() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: string[]) => bulkApproveRegistrationsAction(ids),
+    onSuccess: (result) => {
+      if (!result.success) { toast.error(result.error); return }
+      const { approved, skipped } = result.data
+      toast.success(`${approved} inscription${approved > 1 ? 's' : ''} approuvée${approved > 1 ? 's' : ''}`
+        + (skipped > 0 ? ` (${skipped} déjà traitée${skipped > 1 ? 's' : ''})` : ''))
+      qc.invalidateQueries({ queryKey: registrationKeys.list })
+      qc.invalidateQueries({ queryKey: studentsKeys.all })
+    },
+    onError: () => toast.error("Impossible d'approuver la sélection"),
   })
 }
