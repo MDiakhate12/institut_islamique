@@ -15,7 +15,7 @@ import {
 } from '../src/db/schema'
 import { DEFAULT_NEW_STUDENT_SCHEMA, type FormItem } from '../src/modules/registrations/registrations.types'
 import { DEFAULT_SETTINGS } from '../src/db/schema/schools'
-import { E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, type E2ERole } from './support/users'
+import { E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_TWO_GUARDIANS_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, type E2ERole } from './support/users'
 
 const env = loadE2EEnv() // lève une erreur si la base n'est pas locale
 
@@ -32,6 +32,7 @@ async function seed() {
   // 1. Nettoyage — l'école en cascade, puis les comptes Auth du domaine de test
   await db.delete(schools).where(eq(schools.slug, E2E_SCHOOL.slug))
   await db.delete(schools).where(eq(schools.slug, E2E_CLOSED_SCHOOL.slug))
+  await db.delete(schools).where(eq(schools.slug, E2E_TWO_GUARDIANS_SCHOOL.slug))
   const { data: existing, error: listError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
   if (listError) throw listError
   for (const u of existing.users.filter(u => u.email?.endsWith(`@${E2E_EMAIL_DOMAIN}`))) {
@@ -157,6 +158,23 @@ async function seed() {
     slug: E2E_CLOSED_SCHOOL.slug,
     timezone: 'Europe/Paris',
     settings: { ...DEFAULT_SETTINGS, onboardingCompleted: true, allowNewRegistrations: false },
+  })
+
+  // Troisième école, sans compte : formulaire avec « Second tuteur obligatoire » + son e-mail
+  const [twoGuardians] = await db.insert(schools).values({
+    name: E2E_TWO_GUARDIANS_SCHOOL.name,
+    slug: E2E_TWO_GUARDIANS_SCHOOL.slug,
+    timezone: 'Europe/Paris',
+    settings: { ...DEFAULT_SETTINGS, onboardingCompleted: true, gradeLevels: ['CE2', 'CM1', 'CM2'] },
+  }).returning()
+  const [studentInfo, ...rest] = DEFAULT_NEW_STUDENT_SCHEMA
+  await db.insert(registrationForms).values({
+    schoolId: twoGuardians.id,
+    formType: 'new_student',
+    formSchema: [
+      { ...studentInfo, guardianOptions: { secondRequired: true, secondEmailRequired: true, secondPhoneRequired: false } },
+      ...rest,
+    ],
   })
 
   console.log(`✅ Seed E2E OK — école ${E2E_SCHOOL.slug} (${school.id}), ${Object.keys(memberIds).length} comptes`)

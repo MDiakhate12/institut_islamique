@@ -1,5 +1,5 @@
 import { test, expect } from '../support/fixtures'
-import { storageStatePath, E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_USERS } from '../support/users'
+import { storageStatePath, E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_TWO_GUARDIANS_SCHOOL, E2E_USERS } from '../support/users'
 import { fillGuardians, fillNewStudentForm, uniqueSuffix } from '../support/registration-form'
 
 // Intégrité des inscriptions (§7.4) : nouvel élève inactif jusqu'à l'approbation puis inscrit dans
@@ -135,5 +135,40 @@ test('constructeur admin : les champs parents/contact apparaissent comme le bloc
   await expect(admin.getByText('Tuteur principal obligatoire (nom, téléphone, e-mail)')).toBeVisible()
   await expect(admin.getByText('Nom du père ou du tuteur')).toHaveCount(0)
   await expect(admin.getByText('Téléphone principal')).toHaveCount(0)
+  await admin.close()
+})
+
+test('réglage « Second tuteur obligatoire » : le formulaire exige le second tuteur et son e-mail', async ({ page }) => {
+  await page.goto(`/portal/register/${E2E_TWO_GUARDIANS_SCHOOL.slug}`)
+  // Carte du second tuteur affichée d'office, sans « Retirer » ni bouton d'ajout
+  await expect(page.locator('#guardian-1-name')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Retirer' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Ajouter un second tuteur/ })).toHaveCount(0)
+
+  await fillNewStudentForm(page, { firstName: `Sara${uniqueSuffix()}`, lastName: 'deuxtuteurs' })
+  await fillGuardians(page, { relation: 'Mère', name: 'Mère DEUXTUTEURS', email: 'mere@example.com' })
+
+  // Second tuteur incomplet → refus : nom et e-mail exigés (le téléphone, non exigé ici, ne l'est pas)
+  await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
+  await expect(page.getByText('Veuillez compléter les 2 champs obligatoires')).toBeVisible()
+  await expect(page.locator('#guardian-1-relationship')).toHaveValue('father') // relation complémentaire pré-choisie
+
+  await page.locator('#guardian-1-name').fill('Père DEUXTUTEURS')
+  await page.locator('#guardian-1-email').fill('pere@example.com')
+  await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
+  await expect(page).toHaveURL(`/portal/register/${E2E_TWO_GUARDIANS_SCHOOL.slug}/success`)
+})
+
+test('constructeur : la case « Second tuteur obligatoire » met à jour l\'aperçu', async ({ browser }) => {
+  // Coché puis décoché en moins de 1,2 s (délai de l'auto-sauvegarde) : le formulaire partagé
+  // par les autres tests n'est pas modifié
+  const admin = await browser.newPage({ storageState: storageStatePath('admin') })
+  await admin.goto('/admin-portal/registration-forms')
+  const toggle = admin.getByRole('checkbox', { name: 'Second tuteur obligatoire' })
+  await toggle.check()
+  await expect(admin.getByRole('checkbox', { name: 'Son e-mail est obligatoire' })).toBeVisible()
+  await expect(admin.getByText('second tuteur obligatoire.')).toBeVisible()
+  await toggle.uncheck()
+  await expect(admin.getByRole('checkbox', { name: 'Son e-mail est obligatoire' })).toHaveCount(0)
   await admin.close()
 })

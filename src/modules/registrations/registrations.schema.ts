@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { FormField, FormItem, SystemFieldKey, RegistrationGuardianInput } from './registrations.types'
+import type { FormField, FormItem, SystemFieldKey, RegistrationGuardianInput, GuardianOptions } from './registrations.types'
 
 export const formTypeSchema = z.enum(['new_student', 'reenrollment'])
 
@@ -88,10 +88,17 @@ export function getGuardianErrors(
   guardians: RegistrationGuardianInput[],
   // Formulaire public : l'e-mail du tuteur principal est obligatoire (contact de l'école,
   // décision envoyée par e-mail). Portail parent : c'est celui du compte, toujours présent.
-  opts: { accountHolder: boolean } = { accountHolder: true },
+  opts: { accountHolder: boolean; options?: GuardianOptions } = { accountHolder: true },
 ): Record<string, string> {
   const errors: Record<string, string> = {}
+  const o = opts.options
   if (guardians.length === 0) errors['0.name'] = 'Renseignez au moins un tuteur'
+  // Réglage de l'école « Second tuteur obligatoire »
+  if (o?.secondRequired && guardians.length < 2) errors['1.name'] = 'Le second tuteur est obligatoire'
+  if (o?.secondRequired && guardians[1]) {
+    if (o.secondEmailRequired && !guardians[1].email.trim()) errors['1.email'] = 'Ce champ est requis'
+    if (o.secondPhoneRequired && !guardians[1].phone.trim()) errors['1.phone'] = 'Ce champ est requis'
+  }
   guardians.forEach((g, i) => {
     if (!g.relationship) errors[`${i}.relationship`] = 'Choisissez la relation avec l\'élève'
     if (!g.name.trim()) errors[`${i}.name`] = 'Ce champ est requis'

@@ -11,7 +11,7 @@ import { studentsService } from '@/modules/students/students.service'
 import { scheduledClassesService } from '@/modules/classes/classes.service'
 import { parentsService } from '@/modules/parents/parents.service'
 import type { FormType, FormItem, RegistrationForm, SystemFieldKey, RegistrationClassItem, RegistrationWithDetails, RegistrationGuardianInput } from './registrations.types'
-import { GUARDIAN_FIELD_KEYS } from './registrations.types'
+import { GUARDIAN_FIELD_KEYS, getGuardianOptions } from './registrations.types'
 import { db } from '@/db'
 import { schools, guardians } from '@/db/schema'
 import { eq } from 'drizzle-orm'
@@ -131,7 +131,10 @@ export async function submitRegistrationAction(
       if (!parsedGuardians.success) return err('Renseignez au moins un tuteur.')
       // Portail parent : le tuteur 1 est le titulaire du compte, son e-mail est celui de la session
       guardianList = parsedGuardians.data.map((g, i) => (i === 0 && isAccountHolder ? { ...g, email: session!.email } : g))
-      const guardianErrors = getGuardianErrors(guardianList, { accountHolder: isAccountHolder })
+      const guardianErrors = getGuardianErrors(guardianList, {
+        accountHolder: isAccountHolder,
+        options: getGuardianOptions(form.formSchema), // « Second tuteur obligatoire »… (réglage de l'école)
+      })
       if (Object.keys(guardianErrors).length > 0) {
         return err(`Tuteurs incomplets : ${Object.values(guardianErrors)[0]}`)
       }

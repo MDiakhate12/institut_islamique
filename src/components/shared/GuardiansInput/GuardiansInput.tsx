@@ -3,7 +3,7 @@
 import { Plus, UserRound, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import type { GuardianRelationship, RegistrationGuardianInput } from '@/modules/registrations/registrations.types'
+import type { GuardianOptions, GuardianRelationship, RegistrationGuardianInput } from '@/modules/registrations/registrations.types'
 
 // Même gabarit que l'éditeur de tuteurs du tableau Élèves (admin-portal/students/StudentForm.tsx)
 const SELECT_CLASS = 'h-10 w-full border border-border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30'
@@ -20,7 +20,7 @@ export const emptyGuardian = (relationship: RegistrationGuardianInput['relations
   ({ relationship, name: '', phone: '', email: '', emergencyPhone: '' })
 
 /** Relation proposée pour le second tuteur : l'autre parent si le premier est le père ou la mère. */
-function complementRelation(first: RegistrationGuardianInput['relationship']): RegistrationGuardianInput['relationship'] {
+export function complementRelation(first: RegistrationGuardianInput['relationship']): RegistrationGuardianInput['relationship'] {
   if (first === 'father') return 'mother'
   if (first === 'mother') return 'father'
   return ''
@@ -38,6 +38,8 @@ interface Props {
   accountHolder: boolean
   /** Titre « Tuteurs » + phrase d'explication. Masqué dans l'aperçu du constructeur, qui a déjà son titre. */
   showHeader?: boolean
+  /** Réglages de l'école (second tuteur obligatoire…) */
+  options?: GuardianOptions
 }
 
 /**
@@ -45,9 +47,17 @@ interface Props {
  * formulaire public et l'aperçu du constructeur admin. Tuteur 1 obligatoire, tuteur 2 optionnel.
  * Remplace les champs système père/mère/e-mails/téléphones (GUARDIAN_FIELD_KEYS).
  */
-export function GuardiansInput({ value, onChange, errors, accountHolder, showHeader = true }: Props) {
+export function GuardiansInput({ value, onChange, errors, accountHolder, showHeader = true, options }: Props) {
+  const secondRequired = !!options?.secondRequired
   const update = (i: number, patch: Partial<RegistrationGuardianInput>) =>
-    onChange(value.map((g, j) => (j === i ? { ...g, ...patch } : g)))
+    onChange(value.map((g, j) => {
+      if (j === i) return { ...g, ...patch }
+      // Le tuteur 1 choisit sa relation : le second, s'il n'en a pas encore, prend la complémentaire
+      if (i === 0 && j === 1 && patch.relationship !== undefined && !g.relationship) {
+        return { ...g, relationship: complementRelation(patch.relationship) }
+      }
+      return g
+    }))
 
   return (
     <div id="field-guardians" className="space-y-3">
@@ -70,7 +80,8 @@ export function GuardiansInput({ value, onChange, errors, accountHolder, showHea
           takenRelations={value.filter((_, j) => j !== i).map(o => o.relationship)}
           errors={errors}
           onChange={patch => update(i, patch)}
-          onRemove={i > 0 ? () => onChange(value.filter((_, j) => j !== i)) : undefined}
+          onRemove={i > 0 && !secondRequired ? () => onChange(value.filter((_, j) => j !== i)) : undefined}
+          required={i === 0 ? undefined : secondRequired ? { email: !!options?.secondEmailRequired, phone: !!options?.secondPhoneRequired } : undefined}
         />
       ))}
 
@@ -88,7 +99,7 @@ export function GuardiansInput({ value, onChange, errors, accountHolder, showHea
   )
 }
 
-function GuardianCard({ index, guardian: g, isFirst, accountHolder, takenRelations, errors, onChange, onRemove }: {
+function GuardianCard({ index, guardian: g, isFirst, accountHolder, takenRelations, errors, onChange, onRemove, required }: {
   index: number
   guardian: RegistrationGuardianInput
   isFirst: boolean
@@ -97,6 +108,8 @@ function GuardianCard({ index, guardian: g, isFirst, accountHolder, takenRelatio
   errors: Record<string, string>
   onChange: (patch: Partial<RegistrationGuardianInput>) => void
   onRemove?: () => void
+  /** Second tuteur obligatoire : quels contacts sont exigés (undefined = second tuteur optionnel) */
+  required?: { email: boolean; phone: boolean }
 }) {
   const id = (f: string) => `guardian-${index}-${f}`
   const err = (f: string) => errors[`${index}.${f}`]
@@ -118,7 +131,7 @@ function GuardianCard({ index, guardian: g, isFirst, accountHolder, takenRelatio
               <UserRound className="h-3 w-3" /> {isAccountHolder ? 'Votre compte' : 'Contact principal'}
             </span>
           ) : (
-            <span className="text-xs text-muted-foreground">(optionnel)</span>
+            !required && <span className="text-xs text-muted-foreground">(optionnel)</span>
           )}
         </div>
         {onRemove && (
@@ -158,7 +171,7 @@ function GuardianCard({ index, guardian: g, isFirst, accountHolder, takenRelatio
 
         <div>
           <label htmlFor={id('phone')} className="text-xs font-medium mb-1 block">
-            Téléphone {isFirst ? '*' : <span className="text-muted-foreground font-normal">(optionnel)</span>}
+            Téléphone {isFirst || required?.phone ? '*' : <span className="text-muted-foreground font-normal">(optionnel)</span>}
           </label>
           <Input id={id('phone')} type="tel" className={cn(INPUT_CLASS, errCls('phone'))} value={g.phone}
             onChange={e => onChange({ phone: e.target.value })} placeholder="0X XX XX XX XX" />
@@ -170,7 +183,7 @@ function GuardianCard({ index, guardian: g, isFirst, accountHolder, takenRelatio
 
         <div>
           <label htmlFor={id('email')} className="text-xs font-medium mb-1 block">
-            Email {isFirst ? (isAccountHolder ? null : '*') : <span className="text-muted-foreground font-normal">(optionnel)</span>}
+            Email {isFirst ? (isAccountHolder ? null : '*') : required?.email ? '*' : <span className="text-muted-foreground font-normal">(optionnel)</span>}
           </label>
           <Input id={id('email')} type="email" value={g.email}
             readOnly={isAccountHolder}

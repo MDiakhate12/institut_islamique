@@ -28,7 +28,7 @@ import { AddInfoBlockDialog } from './AddInfoBlockDialog'
 import { AddSectionDialog } from './AddSectionDialog'
 import { AddFieldDialog } from './AddFieldDialog'
 import { GuardiansInput, emptyGuardian } from '@/components/shared/GuardiansInput/GuardiansInput'
-import { GUARDIAN_FIELD_KEYS } from '@/modules/registrations/registrations.types'
+import { GUARDIAN_FIELD_KEYS, DEFAULT_GUARDIAN_OPTIONS, type GuardianOptions } from '@/modules/registrations/registrations.types'
 import type {
   FormItem, FormSection, InfoBlock, FormField, CustomField, FormType,
   InfoBlockStyle, RegistrationClassItem, SystemField, FieldType,
@@ -280,7 +280,11 @@ const isGuardianField = (f: FormField) =>
  * bloc « Tuteurs » unique (portail parent et formulaire public). Le constructeur les montre donc
  * de la même façon : un bloc verrouillé, déplaçable d'un seul tenant, avec l'aperçu réel.
  */
-function SortableGuardiansGroup({ id }: { id: string }) {
+function SortableGuardiansGroup({ id, options, onOptionsChange }: {
+  id: string
+  options: GuardianOptions
+  onOptionsChange: (next: GuardianOptions) => void
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isOver } = useSortable({ id })
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}>
@@ -296,15 +300,51 @@ function SortableGuardiansGroup({ id }: { id: string }) {
             <Lock className="h-3 w-3 text-amber-500 shrink-0" />
           </div>
           <p className="text-xs text-muted-foreground/70 italic">
-            Tuteur principal obligatoire (nom, téléphone, e-mail), second tuteur optionnel. Dans le portail
-            parent, le tuteur principal est le parent connecté, pré-rempli depuis son compte.
+            Tuteur principal obligatoire (nom, téléphone, e-mail), second tuteur {options.secondRequired ? 'obligatoire' : 'optionnel'}.
+            Dans le portail parent, le tuteur principal est le parent connecté, pré-rempli depuis son compte.
           </p>
+
+          {/* Réglages de l'école : enregistrés avec le formulaire (section.guardianOptions) */}
+          <div className="rounded-md border border-border bg-muted/20 px-3 py-2 space-y-1.5 text-sm">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" className="h-4 w-4 accent-[#2d6a4f]" checked={options.secondRequired}
+                onChange={e => onOptionsChange(e.target.checked
+                  ? { ...options, secondRequired: true }
+                  : { ...DEFAULT_GUARDIAN_OPTIONS })} />
+              Second tuteur obligatoire
+            </label>
+            {options.secondRequired && (
+              <div className="pl-6 flex flex-wrap gap-x-5 gap-y-1">
+                <label className="flex items-center gap-2 cursor-pointer text-xs">
+                  <input type="checkbox" className="h-3.5 w-3.5 accent-[#2d6a4f]" checked={options.secondEmailRequired}
+                    onChange={e => onOptionsChange({ ...options, secondEmailRequired: e.target.checked })} />
+                  Son e-mail est obligatoire
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-xs">
+                  <input type="checkbox" className="h-3.5 w-3.5 accent-[#2d6a4f]" checked={options.secondPhoneRequired}
+                    onChange={e => onOptionsChange({ ...options, secondPhoneRequired: e.target.checked })} />
+                  Son téléphone est obligatoire
+                </label>
+              </div>
+            )}
+          </div>
+
           {/* Aperçu non interactif du bloc vu par les familles (formulaire public) */}
           <div className="pointer-events-none select-none opacity-80" aria-hidden>
-            <GuardiansInput value={[emptyGuardian()]} onChange={() => {}} errors={{}} accountHolder={false} showHeader={false} />
+            <GuardiansInput
+              value={options.secondRequired ? [emptyGuardian(), emptyGuardian()] : [emptyGuardian()]}
+              onChange={() => {}} errors={{}} accountHolder={false} showHeader={false} options={options} />
           </div>
         </div>
-        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 shrink-0 mt-0.5">Système</span>
+        {/* Même structure que FieldRow (badge + zone des actions) pour aligner « Système » sur les autres
+            lignes ; le bloc n'a ni Modifier ni Supprimer, la zone reste vide (invisible) */}
+        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Système</span>
+          <div className="invisible flex gap-1" aria-hidden>
+            <span className="p-1"><Pencil className="h-3.5 w-3.5" /></span>
+            <span className="p-1"><Trash2 className="h-3.5 w-3.5" /></span>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -642,13 +682,14 @@ function ClassSelectionPreview({ formType, classes = [] }: { formType: FormType;
 // ── Section block ──────────────────────────────────────────────────────────────
 
 function SectionBlock({
-  section, formType, classes, onUpdateFields, onEdit, onDelete,
+  section, formType, classes, onUpdateFields, onUpdateMeta, onEdit, onDelete,
   listeners, attributes, style: dragStyle,
 }: {
   section: FormSection
   formType: FormType
   classes?: RegistrationClassItem[]
   onUpdateFields: (fields: FormField[]) => void
+  onUpdateMeta: (patch: Partial<FormSection>) => void
   onEdit: () => void
   onDelete?: () => void
   listeners?: AnyProps
@@ -798,7 +839,13 @@ function SectionBlock({
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleFieldDragEnd}>
               <SortableContext items={displayIds} strategy={verticalListSortingStrategy}>
                 {displayIds.map(id => {
-                  if (id === guardiansGroupId) return <SortableGuardiansGroup key={id} id={id} />
+                  if (id === guardiansGroupId) {
+                    return (
+                      <SortableGuardiansGroup key={id} id={id}
+                        options={{ ...DEFAULT_GUARDIAN_OPTIONS, ...section.guardianOptions }}
+                        onOptionsChange={guardianOptions => onUpdateMeta({ guardianOptions })} />
+                    )
+                  }
                   const field = section.fields.find(f => f.id === id)!
                   return (
                   <SortableFieldRow
@@ -1008,6 +1055,7 @@ export function FormBuilder({ items, formType, onChange, classes = [] }: FormBui
                     formType={formType}
                     classes={classes}
                     onUpdateFields={(fields) => updateSection(item.id, fields)}
+                    onUpdateMeta={(patch) => updateSectionMeta(item.id, patch)}
                     onEdit={() => setEditingSection(item)}
                     onDelete={() => deleteItem(item.id)}
                   />

@@ -7,9 +7,9 @@ import { Info, AlertTriangle, CheckCircle, XCircle, Star, X, BookOpen } from 'lu
 import { cn } from '@/lib/utils'
 import { submitRegistrationAction } from '@/modules/registrations/registrations.actions'
 import { getMissingRequiredFields, getGuardianErrors } from '@/modules/registrations/registrations.schema'
-import { GuardiansInput, emptyGuardian } from '@/components/shared/GuardiansInput/GuardiansInput'
+import { GuardiansInput, emptyGuardian, complementRelation } from '@/components/shared/GuardiansInput/GuardiansInput'
 import type { FormItem, FormSection, InfoBlock, FormField, FormType, InfoBlockStyle, RegistrationClassItem, RegistrationGuardianInput } from '@/modules/registrations/registrations.types'
-import { GUARDIAN_FIELD_KEYS } from '@/modules/registrations/registrations.types'
+import { GUARDIAN_FIELD_KEYS, getGuardianOptions } from '@/modules/registrations/registrations.types'
 
 // ── Style config ───────────────────────────────────────────────────────────────
 
@@ -595,13 +595,20 @@ export function PublicRegistrationForm({
   const accountHolder = !!initialGuardians
   const withGuardians = formType === 'new_student' && schema.some(item =>
     item.kind === 'section' && item.fields.some(f => f.kind === 'system_field' && GUARDIAN_FIELD_KEYS.includes(f.fieldKey)))
-  const [guardians, setGuardians] = useState<RegistrationGuardianInput[]>(initialGuardians ?? [emptyGuardian()])
+  // Réglages de l'école (« Second tuteur obligatoire »…) : la carte du second tuteur est alors affichée d'office
+  const guardianOptions = getGuardianOptions(schema)
+  const [guardians, setGuardians] = useState<RegistrationGuardianInput[]>(() => {
+    const first = initialGuardians ?? [emptyGuardian()]
+    return guardianOptions.secondRequired && first.length < 2
+      ? [...first, emptyGuardian(complementRelation(first[0]?.relationship ?? ''))]
+      : first
+  })
   const [guardianErrors, setGuardianErrors] = useState<Record<string, string>>({})
 
   function handleGuardiansChange(next: RegistrationGuardianInput[]) {
     setGuardians(next)
     // Les erreurs affichées suivent la saisie (elles disparaissent dès que le champ est corrigé)
-    if (Object.keys(guardianErrors).length > 0) setGuardianErrors(getGuardianErrors(next, { accountHolder }))
+    if (Object.keys(guardianErrors).length > 0) setGuardianErrors(getGuardianErrors(next, { accountHolder, options: guardianOptions }))
   }
 
   function handleFieldChange(key: string, value: unknown) {
@@ -619,7 +626,7 @@ export function PublicRegistrationForm({
       gradeOptions, financialOptions,
       skipFieldKeys: withGuardians ? GUARDIAN_FIELD_KEYS : undefined,
     })
-    const gErrors = withGuardians ? getGuardianErrors(guardians, { accountHolder }) : {}
+    const gErrors = withGuardians ? getGuardianErrors(guardians, { accountHolder, options: guardianOptions }) : {}
     const errorCount = missing.length + Object.keys(gErrors).length
     if (errorCount > 0) {
       setErrors(new Set(missing.map(f => f.id)))
@@ -697,7 +704,7 @@ export function PublicRegistrationForm({
                 classes={classes}
                 errors={errors}
                 guardiansSlot={withGuardians && item.systemKey === 'student_info'
-                  ? <GuardiansInput value={guardians} onChange={handleGuardiansChange} errors={guardianErrors} accountHolder={accountHolder} />
+                  ? <GuardiansInput value={guardians} onChange={handleGuardiansChange} errors={guardianErrors} accountHolder={accountHolder} options={guardianOptions} />
                   : undefined}
               />
             )
