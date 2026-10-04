@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useDisplayedPathname } from '@/components/layouts/NavigationProgress/navigation-store'
 import { useState, useRef } from 'react'
 import {
   Users, GraduationCap, BookOpen, ClipboardList, CalendarCheck,
@@ -108,7 +108,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ session, userFullName, schoolName, isSuperAdmin }: SidebarProps) {
-  const pathname = usePathname()
+  // Page demandée dès le clic, sans attendre le serveur (§7.23)
+  const pathname = useDisplayedPathname()
   const [collapsed, setCollapsed] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     Académique: true,

@@ -11,7 +11,7 @@ interface PendingContentProps {
 /**
  * Garde le contenu précédent affiché, atténué, pendant qu'on charge une autre
  * période (jour, trimestre…), avec un filet de progression au-dessus.
- * Pour une autre entité (autre classe, autre enfant), préférer un squelette.
+ * Pour une autre entité (autre classe, autre enfant), utiliser `Loader`.
  */
 export function PendingContent({ pending, children, className }: PendingContentProps) {
   return (

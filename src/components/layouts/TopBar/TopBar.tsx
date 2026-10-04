@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { useDisplayedPathname } from '@/components/layouts/NavigationProgress/navigation-store'
 import Link from 'next/link'
 import { GraduationCap, User, LogOut } from 'lucide-react'
 import {
@@ -35,7 +35,8 @@ interface TopBarProps {
 }
 
 export function TopBar({ session, schoolName, userFullName }: TopBarProps) {
-  const pathname = usePathname()
+  // Page demandée dès le clic, sans attendre le serveur (§7.23)
+  const pathname = useDisplayedPathname()
   const displayName = userFullName || session.email.split('@')[0]
 
   // La homepage a son propre en-tête intégré — pas de TopBar

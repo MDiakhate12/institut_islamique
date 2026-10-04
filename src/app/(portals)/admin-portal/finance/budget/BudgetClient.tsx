@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, Check, X, Download } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -19,7 +20,6 @@ import {
 import { PaymentFormDialog } from './PaymentFormDialog'
 import { PaymentReminderDialog } from './PaymentReminderDialog'
 import { exportPaymentsToExcel } from './budget.excel'
-import { TableSkeleton } from '@/components/shared/Loader/TableSkeleton'
 
 const METHOD_CHIPS = ['venmo', 'cash', 'check', 'paypal', 'no_fees']
 const PERIOD_CHIPS = ['trimester_1', 'trimester_2', 'trimester_3', 'annually']
@@ -72,9 +72,9 @@ function SortTh({ label, sortKey, active, asc, onSort }: {
 
 export function BudgetClient() {
   const { data: payments = [], isLoading } = usePayments()
-  const { data: paymentKpis } = usePaymentKpis()
-  const { data: expenseKpis } = useExpenseKpis()
-  const { data: wageKpis } = useWageKpis()
+  const { data: paymentKpis, isLoading: loadingPaymentKpis } = usePaymentKpis()
+  const { data: expenseKpis, isLoading: loadingExpenseKpis } = useExpenseKpis()
+  const { data: wageKpis, isLoading: loadingWageKpis } = useWageKpis()
   const verifyPayment = useVerifyPayment()
   const rejectPayment = useRejectPayment()
   const deletePayment = useDeletePayment()
@@ -122,6 +122,8 @@ export function BudgetClient() {
   const total = filtered.reduce((s, p) => s + p.amount, 0)
   const dépensesPayées = (expenseKpis?.paid ?? 0) + (wageKpis?.paid ?? 0)
   const budgetRestant = (paymentKpis?.totalRevenue ?? 0) - dépensesPayées
+
+  if (isLoading || loadingPaymentKpis || loadingExpenseKpis || loadingWageKpis) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -182,9 +184,7 @@ export function BudgetClient() {
         </div>
 
         <div className="overflow-x-auto">
-          {isLoading ? (
-            <TableSkeleton columns={7} rows={6} />
-          ) : sorted.length === 0 ? (
+          {sorted.length === 0 ? (
             <p className="text-center text-gray-500 py-8 text-sm">Aucun paiement trouvé</p>
           ) : (
             <table className="w-full text-sm">

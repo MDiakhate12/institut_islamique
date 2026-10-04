@@ -16,7 +16,7 @@ const SIZES = {
 
 /**
  * Loader standard de l'appli : logo (celui de la barre du haut) dans un cercle qui tourne.
- * Les squelettes sont réservés aux tableaux de données (§7.23).
+ * Seul indicateur de chargement de l'appli, pas de squelettes (§7.23).
  */
 export function Loader({ label = 'Chargement…', size = 'md', className }: LoaderProps) {
   const s = SIZES[size]

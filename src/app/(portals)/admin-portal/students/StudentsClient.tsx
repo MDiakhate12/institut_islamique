@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import { useStudents } from '@/modules/students/students.hooks'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
-import { TableSkeleton } from '@/components/shared/Loader/TableSkeleton'
 import { Users, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Columns2, Check, BookOpen, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
@@ -277,6 +277,8 @@ export function StudentsClient() {
   const allSelected = filtered.length > 0 && filtered.every(s => selectedIds.has(s.id))
   const visibleCount = COLUMNS.filter(c => visibleCols[c.id]).length
 
+  if (isLoading) return <PageLoader />
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
 
@@ -285,7 +287,7 @@ export function StudentsClient() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Élèves</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gérer les inscriptions et les profils des élèves</p>
-          {!isLoading && <p className="text-base font-semibold text-foreground mt-1">{total} élève{total !== 1 ? 's' : ''}</p>}
+          <p className="text-base font-semibold text-foreground mt-1">{total} élève{total !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button
@@ -396,11 +398,7 @@ export function StudentsClient() {
       </div>
 
       {/* ── Tableau ── */}
-      {isLoading ? (
-        <div className="rounded-lg border border-border bg-white overflow-hidden">
-          <TableSkeleton columns={1 + visibleCount} />
-        </div>
-      ) : !students?.length ? (
+      {!students?.length ? (
         <EmptyState
           icon={Users}
           title="Aucun élève pour le moment"

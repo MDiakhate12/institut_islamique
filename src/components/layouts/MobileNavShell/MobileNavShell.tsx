@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { useDisplayedPathname } from '@/components/layouts/NavigationProgress/navigation-store'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -18,7 +18,8 @@ interface MobileNavShellProps {
  * - < lg : sidebar en tiroir off-canvas, ouvert via le bouton hamburger de la barre mobile
  */
 export function MobileNavShell({ sidebar, title, subtitle, children }: MobileNavShellProps) {
-  const pathname = usePathname()
+  // Page demandée dès le clic, sans attendre le serveur (§7.23)
+  const pathname = useDisplayedPathname()
   // Le tiroir est lié à la page où il a été ouvert → se ferme automatiquement à la navigation
   const [openedOn, setOpenedOn] = useState<string | null>(null)
   const open = openedOn === pathname
