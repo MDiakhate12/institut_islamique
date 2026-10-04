@@ -19,6 +19,7 @@ import {
 import { PaymentFormDialog } from './PaymentFormDialog'
 import { PaymentReminderDialog } from './PaymentReminderDialog'
 import { exportPaymentsToExcel } from './budget.excel'
+import { TableSkeleton } from '@/components/shared/Loader/TableSkeleton'
 
 const METHOD_CHIPS = ['venmo', 'cash', 'check', 'paypal', 'no_fees']
 const PERIOD_CHIPS = ['trimester_1', 'trimester_2', 'trimester_3', 'annually']
@@ -182,7 +183,7 @@ export function BudgetClient() {
 
         <div className="overflow-x-auto">
           {isLoading ? (
-            <p className="text-center text-gray-500 py-8 text-sm">Chargement...</p>
+            <TableSkeleton columns={7} rows={6} />
           ) : sorted.length === 0 ? (
             <p className="text-center text-gray-500 py-8 text-sm">Aucun paiement trouvé</p>
           ) : (

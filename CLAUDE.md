@@ -705,6 +705,18 @@ Le serveur (Vercel) tourne en UTC, les écoles sont en Europe/Paris : `new Date(
 - Destinataires : `getAdminEmails` / `getAdminMemberIds`, `getMemberEmails(schoolId, role?)`, `getParentEmailsForClass`, `getParentEmailsForStudent`, `getEmailsForMembers` (`src/lib/email.ts`).
 - Connexion : `?redirect=` est respecté après login (chemins internes uniquement, `safeRedirectPath`).
 
+### 7.23 Chargement — loader logo, squelettes pour les tableaux, contenu atténué
+
+Composants dans `src/components/shared/Loader/`. Choix produit : un loader unique (le logo de la barre du haut dans un cercle qui tourne) et des squelettes **uniquement pour les tableaux de données**.
+- **Un seul loader visible par page, du clic jusqu'à la page complète.** `PageLoader` (= `Loader` taille `lg`, même place) est rendu par les `loading.tsx` des portails **et** par chaque page tant que ses données initiales ne sont pas toutes arrivées : `if (isLoading || autreIsLoading) return <PageLoader />` juste avant le `return` principal — jamais un titre de page + un loader dans le contenu, jamais un loader par section (Autorisations charge ses 3 sections dans le composant principal). Si la page charge selon une sélection (classe, enfant), `useInitialLoading(...)` : page entière au premier chargement, puis loader de la seule zone concernée quand l'utilisateur change de sélection.
+- **`Loader`** (`sm`/`md`/`lg`) : seulement pour un rechargement secondaire (après une action de l'utilisateur) et dans les dialogs / la cloche. Pas de spinner ad hoc, pas de « Chargement... » en texte brut. `FullPageLoader` : formulaire d'inscription public. Pas de `(portals)/loading.tsx` (il créait un 2ᵉ loader plein écran avant celui du portail).
+- **Squelettes (`Shimmer`, `TableSkeleton`, `PageHeaderSkeleton`)** : réservés aux pages tableau — **Élèves, Inscriptions, Budget** (leur client + leur `loading.tsx` dédié). Ne pas en ajouter ailleurs sans demande explicite.
+- **`loading.tsx`** : un par portail + `super-admin/` (`PageLoader`), `portal/register/[schoolSlug]/` (`FullPageLoader`) ; dédiés seulement pour les 3 pages tableau. Une nouvelle page hérite du loader de son portail.
+- **Navigation** : `NavigationProgress` (`src/components/layouts/NavigationProgress/`, monté dans `app/layout.tsx`) — barre dorée de 3 px en haut dès le clic sur un lien interne (écouteur `click` en phase de capture, car `next/link` appelle `preventDefault`), finie quand l'URL change. Maison, sans dépendance ; ne couvre pas `router.push()`. En dev, aucun préchargement : l'ancienne page reste affichée le temps de la compilation / réponse serveur, avec la barre — en production le `loading.tsx` est préchargé et s'affiche au clic.
+- **Changement de période (jour, trimestre)** : `placeholderData: keepPreviousData` dans le hook + `<PendingContent pending={isPlaceholderData}>` — l'affichage précédent reste visible, atténué. Pour une autre entité (autre classe, autre enfant) : `Loader`.
+- **Données serveur `initial*`** : en `initialData` du hook **uniquement pour la valeur initiale du paramètre** ; jamais `data ?? initialX` pour une autre valeur (le suivi des devoirs admin et les examens affichaient ainsi les données du jour / trimestre initial).
+- **Toujours tester `isLoading` avant l'état vide**, sinon « Aucun … » s'affiche le temps de la requête.
+
 ---
 
 ## 8. État d'avancement des modules

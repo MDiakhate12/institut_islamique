@@ -7,6 +7,7 @@ import {
 import { Users, User, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useHomeworkStudents } from '@/modules/homework/homework.hooks'
+import { Loader } from '@/components/shared/Loader/Loader'
 import { cn } from '@/lib/utils'
 import type { HomeworkItem } from '@/modules/homework/homework.types'
 
@@ -19,7 +20,7 @@ type Props = {
 export default function GradeDialog({ open, onClose, homework }: Props) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
 
-  const { data: students = [] } = useHomeworkStudents(homework?.classId ?? '')
+  const { data: students = [], isLoading: loadingStudents } = useHomeworkStudents(homework?.classId ?? '')
 
   const selectedStudent = students.find(s => s.studentId === selectedStudentId)
 
@@ -60,7 +61,9 @@ export default function GradeDialog({ open, onClose, homework }: Props) {
               </span>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {students.length === 0 ? (
+              {loadingStudents ? (
+                <Loader size="sm" label="Chargement des élèves…" />
+              ) : students.length === 0 ? (
                 <div className="px-4 py-8 text-center">
                   <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                   <p className="text-sm text-gray-400">Aucun élève</p>

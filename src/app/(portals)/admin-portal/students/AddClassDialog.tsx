@@ -5,8 +5,9 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useActiveClasses } from '@/modules/students/students.hooks'
-import { Loader2, Search, Check } from 'lucide-react'
+import { Search, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Loader } from '@/components/shared/Loader/Loader'
 
 interface ClassOption {
   id: string
@@ -64,9 +65,7 @@ export function AddClassDialog({ open, onOpenChange, excludeClassIds, onAdd }: P
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-          </div>
+          <Loader size="sm" className="py-8" />
         ) : filtered.length === 0 ? (
           <p className="text-center text-gray-500 text-sm py-6">
             {search ? 'Aucune classe correspondante' : 'Aucune classe disponible'}

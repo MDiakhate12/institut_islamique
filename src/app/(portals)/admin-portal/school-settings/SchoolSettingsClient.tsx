@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { nanoid } from 'nanoid'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 // ── Days ─────────────────────────────────────────────────────────────────────
 const DAYS = [
@@ -233,7 +234,7 @@ function CheckRow({
 export function SchoolSettingsClient() {
   const { data: school, isLoading } = useSchool()
 
-  if (isLoading) return <SettingsSkeleton />
+  if (isLoading) return <PageLoader />
   if (!school) return (
     <div className="p-6 text-center text-muted-foreground">
       École introuvable
@@ -1735,29 +1736,3 @@ function FinancialSection() {
   )
 }
 
-// ── Skeleton ──────────────────────────────────────────────────────────────────
-function SettingsSkeleton() {
-  return (
-    <div className="p-4 sm:p-6 space-y-4 animate-pulse">
-      <div className="h-7 w-56 bg-muted rounded" />
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5">
-        <div className="space-y-5">
-          {[130, 100, 160, 140, 90].map((h, i) => (
-            <div key={i} className="bg-white rounded-xl border border-border p-5">
-              <div className="h-4 w-40 bg-muted rounded mb-4" />
-              <div style={{ height: h }} className="bg-muted/50 rounded" />
-            </div>
-          ))}
-        </div>
-        <div className="space-y-5">
-          {[120, 220, 280].map((h, i) => (
-            <div key={i} className="bg-white rounded-xl border border-border p-5">
-              <div className="h-4 w-32 bg-muted rounded mb-4" />
-              <div style={{ height: h }} className="bg-muted/50 rounded" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}

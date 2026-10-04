@@ -27,6 +27,9 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Loader } from '@/components/shared/Loader/Loader'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
+import { useInitialLoading } from '@/components/shared/Loader/useInitialLoading'
 
 type Props = {
   initialPinnedClasses: PinnedClass[]
@@ -57,7 +60,10 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
 
   const { data: pinnedClasses = initialPinnedClasses } = usePinnedClasses()
   const { data: homeworkItems = [], isLoading: loadingHw } = useHomework(selectedClassId ?? '')
-  const { data: activeSession } = useActiveSession(selectedClassId ?? '')
+  const { data: activeSession, isLoading: loadingSession } = useActiveSession(selectedClassId ?? '')
+  // Devoirs + séance virtuelle de la classe affichée : un seul loader jusqu'à la page complète.
+  // Changer de classe ensuite ne recharge que la liste.
+  const initialLoading = useInitialLoading(loadingHw || loadingSession)
 
   const deleteHw = useDeleteHomework(selectedClassId ?? '')
   const removePinned = useRemovePinnedClass()
@@ -107,6 +113,8 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
     setCopiedSessionId(sessionId)
     setTimeout(() => setCopiedSessionId(null), 2000)
   }
+
+  if (initialLoading) return <PageLoader />
 
   return (
     <div className="flex flex-col h-full bg-[#f4f9f3] min-h-screen">
@@ -313,11 +321,7 @@ export default function HomeworkClient({ initialPinnedClasses }: Props) {
 
               {/* Homework list */}
               {loadingHw ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse h-28" />
-                  ))}
-                </div>
+                <Loader />
               ) : homeworkItems.length === 0 ? (
                 <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
                   <ClipboardList className="w-10 h-10 text-gray-300 mx-auto mb-3" />

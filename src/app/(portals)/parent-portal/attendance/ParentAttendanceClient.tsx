@@ -10,6 +10,9 @@ import { useParentAttendance } from '@/modules/attendance/attendance.hooks'
 import { LinkChildModal } from '../children/LinkChildModal'
 import type { ParentAttendanceEntry } from '@/modules/attendance/attendance.types'
 import type { AttendanceStatus } from '@/modules/attendance/attendance.types'
+import { Loader } from '@/components/shared/Loader/Loader'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
+import { useInitialLoading } from '@/components/shared/Loader/useInitialLoading'
 
 const PAGE_SIZE = 20
 
@@ -38,21 +41,6 @@ function formatDateHeading(dateStr: string): string {
 
 function formatTime(date: Date): string {
   return format(date, 'HH:mm', { locale: fr })
-}
-
-// ── Skeleton ──────────────────────────────────────────────────────────────────
-
-function Skeleton() {
-  return (
-    <div className="space-y-4">
-      {[0, 1, 2, 3].map(i => (
-        <div key={i} className="rounded-xl border border-border bg-white p-4 animate-pulse">
-          <div className="h-4 w-32 bg-gray-200 rounded mb-3" />
-          <div className="h-3 w-48 bg-gray-100 rounded" />
-        </div>
-      ))}
-    </div>
-  )
 }
 
 // ── Empty state (no linked children) ─────────────────────────────────────────
@@ -188,6 +176,8 @@ export function ParentAttendanceClient() {
 
   const { data: entries = [], isLoading: entriesLoading } = useParentAttendance(effectiveStudentId)
 
+  const initialLoading = useInitialLoading(childrenLoading || entriesLoading)
+
   const visibleEntries = entries.slice(0, visibleCount)
   const hasMore = visibleCount < entries.length
 
@@ -195,14 +185,9 @@ export function ParentAttendanceClient() {
     refetchChildren()
   }
 
-  if (childrenLoading) {
-    return (
-      <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
-        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
-        <Skeleton />
-      </div>
-    )
-  }
+  // Enfants puis présences de l'enfant affiché : un seul loader jusqu'à la page complète.
+  // Changer d'enfant ensuite ne recharge que la chronologie.
+  if (initialLoading) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
@@ -273,7 +258,7 @@ export function ParentAttendanceClient() {
 
           {/* Timeline */}
           {entriesLoading ? (
-            <Skeleton />
+            <Loader />
           ) : (
             <>
               <Timeline entries={visibleEntries} />

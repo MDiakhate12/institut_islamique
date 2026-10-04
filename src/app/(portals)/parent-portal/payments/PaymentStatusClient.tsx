@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/PageHeader/PageHeader'
 import { useSchool } from '@/modules/school/school.hooks'
 import { useChildrenPaymentStatus } from '@/modules/payments/payments.hooks'
 import { MarkAsPaidDialog } from './MarkAsPaidDialog'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 const PERIOD_LABELS: Record<'t1' | 't2' | 't3', string> = {
   t1: 'Trimestre 1',
@@ -32,17 +33,17 @@ function StatusRow({ label, status, annual }: { label: string; status: 'paid' | 
 }
 
 export function PaymentStatusClient() {
-  const { data: school } = useSchool()
+  const { data: school, isLoading: loadingSchool } = useSchool()
   const { data: children = [], isLoading } = useChildrenPaymentStatus()
   const academicYear = school?.settings?.academicYear ?? ''
+
+  if (isLoading || loadingSchool) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-2xl mx-auto">
       <PageHeader title="Statut de paiement" subtitle={`Année scolaire : ${academicYear}`} />
 
-      {isLoading ? (
-        <p className="text-center text-gray-500 py-8 text-sm">Chargement...</p>
-      ) : children.length === 0 ? (
+      {children.length === 0 ? (
         <p className="text-center text-gray-500 py-8 text-sm bg-white rounded-xl border">Aucun enfant lié à votre compte.</p>
       ) : (
         <div className="space-y-4">

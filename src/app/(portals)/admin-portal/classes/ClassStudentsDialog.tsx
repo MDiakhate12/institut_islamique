@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { UserRound, Plus, ArrowLeftRight, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Loader } from '@/components/shared/Loader/Loader'
 
 interface Props {
   scheduledClass: ClassWithDetails
@@ -86,9 +87,7 @@ export function ClassStudentsDialog({ scheduledClass, allClasses, open, onOpenCh
           {/* Student list */}
           <div className="space-y-1 max-h-64 overflow-y-auto">
             {isLoading ? (
-              <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-                Chargement...
-              </div>
+              <Loader size="sm" className="py-4" />
             ) : count === 0 ? (
               <div className="flex flex-col items-center justify-center py-4 text-center">
                 <UserRound className="h-6 w-6 text-muted-foreground/40 mb-1.5" />

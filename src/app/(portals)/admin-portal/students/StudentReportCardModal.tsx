@@ -3,9 +3,10 @@
 import { useRef } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useStudentReportCard } from '@/modules/students/students.hooks'
-import { Loader2, Printer } from 'lucide-react'
+import { Printer } from 'lucide-react'
 import type { StudentListItem } from '@/modules/students/students.types'
 import type { StudentExamResult } from '@/modules/students/students.types'
+import { Loader } from '@/components/shared/Loader/Loader'
 
 const TRIMESTER_LABEL: Record<number, string> = { 1: 'Trimestre 1', 2: 'Trimestre 2', 3: 'Trimestre 3' }
 
@@ -126,9 +127,7 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          </div>
+          <Loader label="Chargement du bulletin…" className="py-16" />
         ) : (
           <div ref={printRef} className="report bg-white">
 

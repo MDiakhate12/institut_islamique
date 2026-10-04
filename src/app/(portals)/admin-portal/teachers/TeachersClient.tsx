@@ -12,6 +12,7 @@ import { resendTeacherInvitationAction } from '@/modules/teachers/teachers.actio
 import { toast } from 'sonner'
 import type { TeacherListItem } from '@/modules/teachers/teachers.types'
 import type { Teacher } from '@/modules/teachers/teachers.types'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 // ── Filter state ────────────────────────────────────────────────────────────
 type GenderFilter   = 'male' | 'female' | null
@@ -48,6 +49,8 @@ export function TeachersClient() {
       return true
     })
   }, [teachers, search, genderFilter, activeFilter, benevolFilter])
+
+  if (isLoading) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -142,9 +145,7 @@ export function TeachersClient() {
       </div>
 
       {/* ── Cards grid ── */}
-      {isLoading ? (
-        <TeachersSkeleton />
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="font-medium text-foreground">Aucun enseignant trouvé</p>
           <p className="text-sm text-muted-foreground mt-1">
@@ -309,23 +310,3 @@ function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
   )
 }
 
-// ── Skeleton ─────────────────────────────────────────────────────────────────
-function TeachersSkeleton() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-xl border border-border p-4 space-y-3 animate-pulse">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-muted" />
-            <div className="h-3.5 bg-muted rounded w-2/3" />
-          </div>
-          <div className="h-3 bg-muted rounded w-1/3" />
-          <div className="space-y-1.5">
-            <div className="h-3 bg-muted rounded w-full" />
-            <div className="h-3 bg-muted rounded w-2/3" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}

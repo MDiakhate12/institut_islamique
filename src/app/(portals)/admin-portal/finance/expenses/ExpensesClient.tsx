@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge'
 import { PageHeader } from '@/components/shared/PageHeader/PageHeader'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import { cn } from '@/lib/utils'
 import { EXPENSE_CATEGORY_LABELS } from '@/lib/constants'
 import type { ExpenseCategory } from '@/lib/constants'
@@ -76,14 +77,14 @@ export function ExpensesClient() {
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [editingWage, setEditingWage] = useState<WageEntry | null>(null)
 
-  const { data: expenses = [] } = useExpenses()
-  const { data: expenseKpis } = useExpenseKpis()
+  const { data: expenses = [], isLoading: loadingExpenses } = useExpenses()
+  const { data: expenseKpis, isLoading: loadingExpenseKpis } = useExpenseKpis()
   const approveExpense = useApproveExpense()
   const rejectExpense = useRejectExpense()
   const markPaid = useMarkExpensePaid()
 
-  const { data: timesheet } = useWageTimesheet()
-  const { data: wageKpis } = useWageKpis()
+  const { data: timesheet, isLoading: loadingTimesheet } = useWageTimesheet()
+  const { data: wageKpis, isLoading: loadingWageKpis } = useWageKpis()
 
   const filteredExpenses = expenses.filter(e => {
     if (statusFilter !== '__all__' && e.status !== statusFilter) return false
@@ -117,6 +118,8 @@ export function ExpensesClient() {
 
   const filteredTimesheetTotalHours = filteredTimesheetRows.reduce((s, r) => s + r.totalHours, 0)
   const filteredTimesheetTotalAmount = filteredTimesheetRows.reduce((s, r) => s + r.totalAmountCents, 0)
+
+  if (loadingExpenses || loadingExpenseKpis || loadingTimesheet || loadingWageKpis) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-6">

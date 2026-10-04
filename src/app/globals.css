@@ -155,3 +155,48 @@
     display: none;
   }
 }
+
+/* ── Chargement (§7.23) ─────────────────────────────────────────────────────── */
+
+/* Squelette avec reflet qui balaie de gauche à droite (remplace animate-pulse) */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      animation: none;
+    }
+  }
+}
+
+/* Barre de progression : avance vite puis ralentit, sans jamais atteindre la fin
+   tant que la page n'est pas arrivée */
+@keyframes progress-trickle {
+  0% {
+    transform: scaleX(0);
+  }
+  20% {
+    transform: scaleX(0.4);
+  }
+  100% {
+    transform: scaleX(0.9);
+  }
+}
+
+@utility animate-progress-trickle {
+  animation: progress-trickle 12s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Bell, CheckCheck, ExternalLink } from 'lucide-react'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '@/modules/notifications/notifications.hooks'
 import type { Notification } from '@/modules/notifications/notifications.types'
+import { Loader } from '@/components/shared/Loader/Loader'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -23,7 +24,7 @@ const TYPE_ICON: Record<string, string> = {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
-  const { data: notifications = [] } = useNotifications()
+  const { data: notifications = [], isLoading } = useNotifications()
   const { data: unreadCount = 0 } = useUnreadCount()
   const { mutate: markRead } = useMarkRead()
   const { mutate: markAllRead } = useMarkAllRead()
@@ -86,7 +87,9 @@ export function NotificationBell() {
 
             {/* Liste */}
             <div className="max-h-96 overflow-y-auto">
-              {notifications.length === 0 ? (
+              {isLoading ? (
+                <Loader size="sm" />
+              ) : notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
                   <Bell className="h-8 w-8 opacity-30" />
                   <p className="text-sm">Aucune notification</p>

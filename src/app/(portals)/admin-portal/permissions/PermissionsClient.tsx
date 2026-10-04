@@ -9,6 +9,7 @@ import { RevokeDialog } from './RevokeDialog'
 import type { AdminSubRole } from '@/lib/constants'
 import type { PermissionMember } from '@/modules/permissions/permissions.types'
 import { toast } from 'sonner'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 // ---------- Role badge colors ----------
 const PORTAL_ROLE_BADGES: Record<string, string> = {
@@ -168,7 +169,7 @@ function PermissionSection({
   config: SectionConfig
   schoolName: string
 }) {
-  const { data: members = [], isLoading } = usePermissions(config.role)
+  const { data: members = [] } = usePermissions(config.role)
   const [addOpen, setAddOpen] = useState(false)
   const [revoke, setRevoke] = useState<PermissionMember | null>(null)
 
@@ -188,13 +189,7 @@ function PermissionSection({
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[0, 1].map(i => (
-            <div key={i} className="h-40 rounded-xl border border-border bg-white animate-pulse" />
-          ))}
-        </div>
-      ) : members.length === 0 ? (
+      {members.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-white px-6 py-8 text-center text-sm text-muted-foreground">
           {config.emptyText}
         </div>
@@ -228,6 +223,13 @@ function PermissionSection({
 
 // ---------- Main client ----------
 export function PermissionsClient({ schoolName }: { schoolName: string }) {
+  // Les 3 sections chargées ensemble (même cache que PermissionSection) : un seul loader
+  const admins = usePermissions('admin')
+  const treasurers = usePermissions('treasurer')
+  const managers = usePermissions('manager')
+
+  if (admins.isLoading || treasurers.isLoading || managers.isLoading) return <PageLoader />
+
   return (
     <div className="p-4 sm:p-6 space-y-10 max-w-6xl mx-auto">
       <div>

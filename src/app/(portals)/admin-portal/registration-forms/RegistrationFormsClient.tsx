@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { nanoid } from 'nanoid'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 const TABS: { key: FormType; label: string; icon: typeof Users }[] = [
   { key: 'new_student',  label: 'Nouvel élève',  icon: Users },
@@ -112,11 +113,7 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24 text-muted-foreground text-sm">
-        Chargement du formulaire…
-      </div>
-    )
+    return <PageLoader />
   }
 
   const itemCount = hist.current.length

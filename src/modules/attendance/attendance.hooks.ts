@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getPinnedAttendanceClassesAction, getAttendanceClassOptionsAction,
   addPinnedAttendanceClassAction, removePinnedAttendanceClassAction,
@@ -86,6 +86,8 @@ export function useAdminDayOverview(date: string) {
     queryKey: attKeys.adminDay(date),
     queryFn:  () => getAdminDayOverviewAction(date).then(r => r.success ? r.data : null),
     enabled:  !!date,
+    // Changement de jour : le jour précédent reste affiché, atténué, jusqu'à la réponse
+    placeholderData: keepPreviousData,
   })
 }
 

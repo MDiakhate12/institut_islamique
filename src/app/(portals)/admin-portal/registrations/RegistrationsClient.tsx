@@ -9,7 +9,7 @@ import { StudentFormDialog } from '../students/StudentForm'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
-import { Skeleton } from '@/components/ui/skeleton'
+import { TableSkeleton } from '@/components/shared/Loader/TableSkeleton'
 import { ClipboardList, Pencil, Download, X, Trash2, ArrowUpDown, Check, Ban } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportRegistrationsToExcel } from './registrations.excel'
@@ -243,7 +243,7 @@ export function RegistrationsClient() {
       {/* ── Tableau + panneau détail ── */}
       <div className="flex flex-col lg:flex-row gap-4 relative">
         <div className={cn('flex-1 min-w-0 rounded-lg border border-border bg-white overflow-hidden', showDetailPanel && 'lg:max-w-[calc(100%-380px)]')}>
-          {isLoading ? <RegistrationsSkeleton /> : filtered.length === 0 ? (
+          {isLoading ? <TableSkeleton columns={10} /> : filtered.length === 0 ? (
             <EmptyState
               icon={ClipboardList}
               title={search ? 'Aucune inscription trouvée' : 'Aucune inscription pour le moment'}
@@ -722,31 +722,6 @@ function Row({ label, value, highlight, dot }: {
           {value}
         </span>
       </div>
-    </div>
-  )
-}
-
-function RegistrationsSkeleton() {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border bg-muted/20">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <th key={i} className="px-3 py-3"><Skeleton className="h-3 w-20" /></th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <tr key={i} className="border-b border-border/50">
-              {Array.from({ length: 10 }).map((_, j) => (
-                <td key={j} className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   )
 }

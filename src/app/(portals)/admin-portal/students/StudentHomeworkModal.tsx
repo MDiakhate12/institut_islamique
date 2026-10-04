@@ -2,7 +2,8 @@
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useStudentHomework } from '@/modules/students/students.hooks'
-import { Loader2, Star } from 'lucide-react'
+import { Star } from 'lucide-react'
+import { Loader } from '@/components/shared/Loader/Loader'
 
 interface Props {
   open: boolean
@@ -20,9 +21,7 @@ export function StudentHomeworkModal({ open, onOpenChange, studentId, studentNam
         <DialogTitle>Devoirs de {studentName}</DialogTitle>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          </div>
+          <Loader className="py-12" />
         ) : !data?.length ? (
           <p className="text-center text-gray-500 py-8 text-sm">Aucun devoir enregistré</p>
         ) : (

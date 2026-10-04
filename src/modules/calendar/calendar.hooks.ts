@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   getEventsAction,
@@ -25,6 +25,8 @@ export function useEvents(opts?: { from?: string; to?: string; type?: string }) 
       if (!result.success) throw new Error(result.error)
       return result.data
     },
+    // Changement de filtre : les événements précédents restent affichés jusqu'à la réponse
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 }

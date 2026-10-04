@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import { useQueryClient } from '@tanstack/react-query'
 import { useClasses } from '@/modules/classes/classes.hooks'
 import { useTeachers } from '@/modules/teachers/teachers.hooks'
@@ -82,8 +83,8 @@ function renderCurriculum(text: string) {
 
 export function ClassesClient() {
   const { data: classes, isLoading } = useClasses()
-  const { data: teachers } = useTeachers()
-  const { data: school } = useSchool()
+  const { data: teachers, isLoading: loadingTeachers } = useTeachers()
+  const { data: school, isLoading: loadingSchool } = useSchool()
   const configuredRooms = school?.settings?.rooms ?? []
 
   const [search, setSearch] = useState('')
@@ -143,6 +144,8 @@ export function ClassesClient() {
     }
     return map
   }, [filtered, groupBy])
+
+  if (isLoading || loadingTeachers || loadingSchool) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -261,9 +264,7 @@ export function ClassesClient() {
       </div>
 
       {/* ── Content ── */}
-      {isLoading ? (
-        <ClassesSkeleton />
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <GraduationCap className="h-10 w-10 text-muted-foreground/30 mb-3" />
           <p className="font-medium">Aucune classe trouvée</p>
@@ -663,33 +664,5 @@ function ManageRoomsDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
-
-// ── Skeleton ─────────────────────────────────────────────────────────────────
-function ClassesSkeleton() {
-  return (
-    <div className="space-y-8">
-      {[3, 2].map((count, g) => (
-        <div key={g} className="space-y-3">
-          <div className="h-5 bg-muted rounded w-32 animate-pulse" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {Array.from({ length: count }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-border p-4 space-y-2.5 animate-pulse">
-                <div className="flex gap-2">
-                  <div className="h-4 w-10 bg-muted rounded" />
-                  <div className="h-4 w-8 bg-muted rounded" />
-                </div>
-                <div className="h-4 bg-muted rounded w-5/6" />
-                <div className="h-3 bg-muted rounded w-2/3" />
-                <div className="h-3 bg-muted rounded w-1/2" />
-                <div className="h-px bg-muted rounded" />
-                <div className="h-3 bg-muted rounded w-3/4" />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
   )
 }

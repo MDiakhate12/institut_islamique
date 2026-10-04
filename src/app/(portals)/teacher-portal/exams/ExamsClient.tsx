@@ -6,6 +6,7 @@ import { GraduationCap, Search, MapPin, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTeacherExamClasses } from '@/modules/exams/exams.hooks'
 import type { TeacherExamClass, StudentGradeStatus } from '@/modules/exams/exams.types'
+import { PendingContent } from '@/components/shared/Loader/PendingContent'
 
 interface Props {
   initialClasses: TeacherExamClass[]
@@ -130,10 +131,14 @@ function ClassCard({ cls, search, examPeriodOpen }: {
   )
 }
 
+const NO_CLASSES: TeacherExamClass[] = []
+
 export function ExamsClient({ initialClasses, initialTrimester, academicYear, examPeriodT1Open, examPeriodT2Open, examPeriodT3Open }: Props) {
   const [trimester, setTrimester] = useState(initialTrimester)
   const [search, setSearch] = useState('')
-  const { data: classes = initialClasses } = useTeacherExamClasses(trimester)
+  // Données serveur = trimestre initial uniquement (cf. TrackExamsClient)
+  const classesQuery = useTeacherExamClasses(trimester, trimester === initialTrimester ? initialClasses : undefined)
+  const classes = classesQuery.data ?? NO_CLASSES
   const examPeriodOpen = trimester === 1 ? examPeriodT1Open : trimester === 2 ? examPeriodT2Open : examPeriodT3Open
 
   const filtered = useMemo(() => {
@@ -208,6 +213,7 @@ export function ExamsClient({ initialClasses, initialTrimester, academicYear, ex
       </div>
 
       {/* Classes */}
+      <PendingContent pending={classesQuery.isPlaceholderData}>
       {classes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <GraduationCap className="h-12 w-12 text-muted-foreground/30 mb-4" />
@@ -227,6 +233,7 @@ export function ExamsClient({ initialClasses, initialTrimester, academicYear, ex
           ))}
         </div>
       )}
+      </PendingContent>
     </div>
   )
 }
