@@ -304,37 +304,39 @@ function SortableGuardiansGroup({ id, options, onOptionsChange }: {
             Dans le portail parent, le tuteur principal est le parent connecté, pré-rempli depuis son compte.
           </p>
 
-          {/* Réglages de l'école : enregistrés avec le formulaire (section.guardianOptions) */}
-          <div className="rounded-md border border-border bg-muted/20 px-3 py-2 space-y-1.5 text-sm">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="h-4 w-4 accent-[#2d6a4f]" checked={options.secondRequired}
-                onChange={e => onOptionsChange(e.target.checked
-                  ? { ...options, secondRequired: true }
-                  : { ...DEFAULT_GUARDIAN_OPTIONS })} />
-              Second tuteur obligatoire
-            </label>
-            {options.secondRequired && (
-              <div className="pl-6 flex flex-wrap gap-x-5 gap-y-1">
-                <label className="flex items-center gap-2 cursor-pointer text-xs">
-                  <input type="checkbox" className="h-3.5 w-3.5 accent-[#2d6a4f]" checked={options.secondEmailRequired}
-                    onChange={e => onOptionsChange({ ...options, secondEmailRequired: e.target.checked })} />
-                  Son e-mail est obligatoire
+          {/* Aperçu du bloc vu par les familles (formulaire public). Les réglages du second tuteur
+              (enregistrés avec le formulaire, section.guardianOptions) s'affichent sous la carte du
+              tuteur principal, là où apparaît le second tuteur */}
+          <GuardiansInput
+            value={options.secondRequired ? [emptyGuardian(), emptyGuardian()] : [emptyGuardian()]}
+            onChange={() => {}} errors={{}} accountHolder={false} showHeader={false} options={options}
+            preview
+            secondSlot={
+              <div className="rounded-md border border-border bg-muted/20 px-3 py-2 space-y-1.5 text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="h-4 w-4 accent-[#2d6a4f]" checked={options.secondRequired}
+                    onChange={e => onOptionsChange(e.target.checked
+                      ? { ...options, secondRequired: true }
+                      : { ...DEFAULT_GUARDIAN_OPTIONS })} />
+                  Second tuteur obligatoire
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer text-xs">
-                  <input type="checkbox" className="h-3.5 w-3.5 accent-[#2d6a4f]" checked={options.secondPhoneRequired}
-                    onChange={e => onOptionsChange({ ...options, secondPhoneRequired: e.target.checked })} />
-                  Son téléphone est obligatoire
-                </label>
+                {options.secondRequired && (
+                  <div className="pl-6 flex flex-wrap gap-x-5 gap-y-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs">
+                      <input type="checkbox" className="h-3.5 w-3.5 accent-[#2d6a4f]" checked={options.secondEmailRequired}
+                        onChange={e => onOptionsChange({ ...options, secondEmailRequired: e.target.checked })} />
+                      Son e-mail est obligatoire
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs">
+                      <input type="checkbox" className="h-3.5 w-3.5 accent-[#2d6a4f]" checked={options.secondPhoneRequired}
+                        onChange={e => onOptionsChange({ ...options, secondPhoneRequired: e.target.checked })} />
+                      Son téléphone est obligatoire
+                    </label>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Aperçu non interactif du bloc vu par les familles (formulaire public) */}
-          <div className="pointer-events-none select-none opacity-80" aria-hidden>
-            <GuardiansInput
-              value={options.secondRequired ? [emptyGuardian(), emptyGuardian()] : [emptyGuardian()]}
-              onChange={() => {}} errors={{}} accountHolder={false} showHeader={false} options={options} />
-          </div>
+            }
+          />
         </div>
         {/* Même structure que FieldRow (badge + zone des actions) pour aligner « Système » sur les autres
             lignes ; le bloc n'a ni Modifier ni Supprimer, la zone reste vide (invisible) */}

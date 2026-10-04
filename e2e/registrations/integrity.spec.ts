@@ -165,6 +165,10 @@ test('constructeur : la case « Second tuteur obligatoire » met à jour l\'aper
   const admin = await browser.newPage({ storageState: storageStatePath('admin') })
   await admin.goto('/admin-portal/registration-forms')
   const toggle = admin.getByRole('checkbox', { name: 'Second tuteur obligatoire' })
+  // Les réglages du second tuteur sont placés sous la carte du tuteur principal
+  const principalBox = await admin.getByText('Tuteur principal', { exact: true }).boundingBox()
+  const toggleBox = await toggle.boundingBox()
+  expect(toggleBox!.y).toBeGreaterThan(principalBox!.y)
   await toggle.check()
   await expect(admin.getByRole('checkbox', { name: 'Son e-mail est obligatoire' })).toBeVisible()
   await expect(admin.getByText('second tuteur obligatoire.')).toBeVisible()

@@ -40,6 +40,10 @@ interface Props {
   showHeader?: boolean
   /** Réglages de l'école (second tuteur obligatoire…) */
   options?: GuardianOptions
+  /** Aperçu du constructeur : cartes non interactives (l'emplacement `secondSlot` reste utilisable) */
+  preview?: boolean
+  /** Contenu affiché entre la carte du tuteur principal et celle du second tuteur (réglages du constructeur) */
+  secondSlot?: React.ReactNode
 }
 
 /**
@@ -47,7 +51,8 @@ interface Props {
  * formulaire public et l'aperçu du constructeur admin. Tuteur 1 obligatoire, tuteur 2 optionnel.
  * Remplace les champs système père/mère/e-mails/téléphones (GUARDIAN_FIELD_KEYS).
  */
-export function GuardiansInput({ value, onChange, errors, accountHolder, showHeader = true, options }: Props) {
+export function GuardiansInput({ value, onChange, errors, accountHolder, showHeader = true, options, preview = false, secondSlot }: Props) {
+  const previewCls = preview ? 'pointer-events-none select-none opacity-80' : undefined
   const secondRequired = !!options?.secondRequired
   const update = (i: number, patch: Partial<RegistrationGuardianInput>) =>
     onChange(value.map((g, j) => {
@@ -71,8 +76,11 @@ export function GuardiansInput({ value, onChange, errors, accountHolder, showHea
       </div>}
 
       {value.map((g, i) => (
+        <div key={i} className="contents">
+        {/* Réglages du second tuteur (constructeur) : sous la carte du tuteur principal */}
+        {i === 1 && secondSlot}
+        <div className={previewCls} aria-hidden={preview || undefined}>
         <GuardianCard
-          key={i}
           index={i}
           guardian={g}
           isFirst={i === 0}
@@ -83,13 +91,18 @@ export function GuardiansInput({ value, onChange, errors, accountHolder, showHea
           onRemove={i > 0 && !secondRequired ? () => onChange(value.filter((_, j) => j !== i)) : undefined}
           required={i === 0 ? undefined : secondRequired ? { email: !!options?.secondEmailRequired, phone: !!options?.secondPhoneRequired } : undefined}
         />
+        </div>
+        </div>
       ))}
 
+      {value.length < 2 && secondSlot}
       {value.length < 2 && (
         <button
+          aria-hidden={preview || undefined}
+          tabIndex={preview ? -1 : undefined}
           type="button"
           onClick={() => onChange([...value, emptyGuardian(complementRelation(value[0]?.relationship ?? ''))])}
-          className="w-full flex items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-[#2d6a4f]/30 py-3 text-sm font-medium text-[#2d6a4f] hover:bg-[#2d6a4f]/5 transition-colors"
+          className={cn('w-full flex items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-[#2d6a4f]/30 py-3 text-sm font-medium text-[#2d6a4f] hover:bg-[#2d6a4f]/5 transition-colors', previewCls)}
         >
           <Plus className="h-4 w-4" />
           Ajouter un second tuteur <span className="font-normal text-muted-foreground">(optionnel)</span>
