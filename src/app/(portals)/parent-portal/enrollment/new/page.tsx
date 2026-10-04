@@ -14,7 +14,7 @@ export default async function NewChildEnrollmentPage() {
 
   const [school, profileResult] = await Promise.all([
     schoolService.getById(session.schoolId),
-    db.select({ phone: profiles.phone, fullName: profiles.fullName, gender: profiles.gender }).from(profiles).where(eq(profiles.userId, session.userId)).limit(1),
+    db.select({ phone: profiles.phone, fullName: profiles.fullName }).from(profiles).where(eq(profiles.userId, session.userId)).limit(1),
   ])
 
   if (!school) notFound()
@@ -35,11 +35,11 @@ export default async function NewChildEnrollmentPage() {
     )
   }
 
-  // Bloc « Tuteurs » : tuteur 1 = le parent connecté (données de son compte). Relation pré-choisie
-  // d'après le genre du profil s'il est renseigné, sinon le parent la choisit (Père, Mère…)
+  // Bloc « Tuteurs » : tuteur 1 = le parent connecté (données de son compte). Relation
+  // « Tuteur légal » par défaut, le parent peut la changer (Père, Mère…)
   const profile = profileResult[0]
   const initialGuardians: RegistrationGuardianInput[] = [{
-    relationship: profile?.gender === 'male' ? 'father' : profile?.gender === 'female' ? 'mother' : '',
+    relationship:   'guardian',
     name:           profile?.fullName ?? '',
     phone:          profile?.phone ?? '',
     email:          session.email,

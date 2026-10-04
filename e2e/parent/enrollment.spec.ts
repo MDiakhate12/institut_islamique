@@ -55,6 +55,7 @@ test('nouvel élève inscrit par le parent : lié immédiatement à son compte',
   await expect(page.locator('#guardian-0-name')).toHaveValue(E2E_USERS.family.fullName)
   await expect(page.locator('#guardian-0-email')).toHaveValue(E2E_USERS.family.email)
   await expect(page.locator('#guardian-0-email')).toHaveAttribute('readonly', '')
+  await expect(page.locator('#guardian-0-relationship')).toHaveValue('guardian') // « Tuteur légal » par défaut
   await expect(page.getByText('Nom du père ou du tuteur')).toHaveCount(0)
 
   // Prénom unique : une relance ne doit pas être refusée comme doublon de la 1re tentative

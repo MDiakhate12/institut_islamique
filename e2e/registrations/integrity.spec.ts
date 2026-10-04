@@ -100,15 +100,17 @@ test('bloc « Tuteurs » : validation, second tuteur, tuteur 1 rattaché au comp
   await family.goto('/parent-portal/enrollment/new')
   await fillNewStudentForm(family, { firstName: first, lastName: 'tuteurs', gender: 'Féminin' })
 
-  // Relation et téléphone du tuteur 1 non renseignés → erreurs sous les champs, rien n'est envoyé
+  // Relation « Tuteur légal » par défaut ; téléphone du tuteur 1 vide → erreur sous le champ, rien n'est envoyé
+  await expect(family.locator('#guardian-0-relationship')).toHaveValue('guardian')
+  await family.locator('#guardian-0-phone').fill('')
   await family.getByRole('button', { name: "Soumettre l'inscription" }).click()
-  await expect(family.getByText("Choisissez la relation avec l'élève")).toBeVisible()
+  await expect(family.locator('#guardian-0-phone').locator('xpath=..').getByText('Ce champ est requis')).toBeVisible()
   await expect(family).toHaveURL('/parent-portal/enrollment/new')
 
   // Mère + second tuteur : « Mère » n'est plus proposé pour lui, il est pré-réglé sur « Père »
   await fillGuardians(family, { relation: 'Mère', second: { relation: 'Père', name: 'Papa TUTEURS', phone: '0611223344' } })
   await expect(family.locator('#guardian-1-relationship option[value="mother"]')).toBeDisabled()
-  await expect(family.getByText("Choisissez la relation avec l'élève")).toHaveCount(0)
+  await expect(family.locator('#guardian-0-phone').locator('xpath=..').getByText('Ce champ est requis')).toHaveCount(0)
   await family.getByRole('button', { name: "Soumettre l'inscription" }).click()
   await expect(family).toHaveURL('/parent-portal/enrollment/success')
 
