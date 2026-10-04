@@ -2,7 +2,7 @@
 
 import { addDaysISO, isSchoolDayISO, latestSchoolDayISO, todayInTimeZone } from '@/lib/dates'
 import { useState, useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   CalendarDays, ChevronLeft, ChevronRight, FileText, Bell,
   CheckCircle2, AlertCircle, BookOpen, Users,
@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { getAdminHomeworkOverviewAction } from '@/modules/homework/homework.actions'
 import type { AdminHomeworkOverview, AdminClassHomework } from '@/modules/homework/homework.types'
 import { ClassDetailDialog } from './ClassDetailDialog'
+import { PendingContent } from '@/components/shared/Loader/PendingContent'
 
 type Filter = null | 'submitted' | 'missing'
 
@@ -255,13 +256,15 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
   const [filter, setFilter]     = useState<Filter>(null)
   const [selected, setSelected] = useState<AdminClassHomework | null>(null)
 
-  const { data: overview } = useQuery({
+  const { data: overview, isPlaceholderData } = useQuery({
     queryKey: ['admin-homework-overview', date],
     queryFn: async () => {
       const r = await getAdminHomeworkOverviewAction(date)
       return r.success ? r.data : initialOverview
     },
     initialData: date === initialDate ? initialOverview : undefined,
+    // Changement de jour : le jour précédent reste affiché, atténué, jusqu'à la réponse
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 
@@ -328,6 +331,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
             variant="outline"
             size="sm"
             onClick={handleResume}
+            disabled={isPlaceholderData}
             className="gap-1.5 text-xs h-8"
           >
             <FileText className="h-3.5 w-3.5" />
@@ -362,6 +366,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
         </div>
       </div>
 
+      <PendingContent pending={isPlaceholderData} className="space-y-6">
       {/* Overview header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -451,6 +456,7 @@ export default function HomeworkTrackingClient({ initialOverview, initialDate, s
           ))
         )}
       </div>
+      </PendingContent>
 
       {/* Detail dialog */}
       <ClassDetailDialog

@@ -155,3 +155,23 @@
     display: none;
   }
 }
+
+/* ── Chargement (§7.23) ─────────────────────────────────────────────────────── */
+
+/* Barre de progression : avance vite puis ralentit, sans jamais atteindre la fin
+   tant que la page n'est pas arrivée */
+@keyframes progress-trickle {
+  0% {
+    transform: scaleX(0);
+  }
+  20% {
+    transform: scaleX(0.4);
+  }
+  100% {
+    transform: scaleX(0.9);
+  }
+}
+
+@utility animate-progress-trickle {
+  animation: progress-trickle 12s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}

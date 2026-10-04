@@ -9,6 +9,7 @@ import {
 import { StatusBadge } from '@/components/shared/StatusBadge/StatusBadge'
 import { PageHeader } from '@/components/shared/PageHeader/PageHeader'
 import { ExpenseFormDialog } from '@/components/shared/ExpenseFormDialog/ExpenseFormDialog'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import { cn } from '@/lib/utils'
 import { EXPENSE_CATEGORY_LABELS } from '@/lib/constants'
 import type { ExpenseCategory } from '@/lib/constants'
@@ -54,10 +55,10 @@ export function RefundsClient() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('__all__')
 
-  const { data: expenses = [] } = useMyExpenses()
-  const { data: expenseKpis } = useMyExpenseKpis()
-  const { data: timesheet } = useMyWages()
-  const { data: wageKpis } = useMyWageKpis()
+  const { data: expenses = [], isLoading: loadingExpenses } = useMyExpenses()
+  const { data: expenseKpis, isLoading: loadingExpenseKpis } = useMyExpenseKpis()
+  const { data: timesheet, isLoading: loadingTimesheet } = useMyWages()
+  const { data: wageKpis, isLoading: loadingWageKpis } = useMyWageKpis()
 
   const filteredExpenses = expenses.filter(e => {
     if (statusFilter !== '__all__' && e.status !== statusFilter) return false
@@ -68,6 +69,8 @@ export function RefundsClient() {
   const kpis = tab === 'wages'
     ? { approved: wageKpis?.approved ?? 0, pending: wageKpis?.pending ?? 0, paid: wageKpis?.paid ?? 0 }
     : { approved: expenseKpis?.approved ?? 0, pending: expenseKpis?.pending ?? 0, paid: expenseKpis?.paid ?? 0 }
+
+  if (loadingExpenses || loadingExpenseKpis || loadingTimesheet || loadingWageKpis) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-6">

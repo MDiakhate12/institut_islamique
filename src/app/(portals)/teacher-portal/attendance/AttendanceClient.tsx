@@ -14,6 +14,9 @@ import type {
 } from '@/modules/attendance/attendance.types'
 import AddClassDialog from './AddClassDialog'
 import SubmitAttendanceDialog from './SubmitAttendanceDialog'
+import { Loader } from '@/components/shared/Loader/Loader'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
+import { useInitialLoading } from '@/components/shared/Loader/useInitialLoading'
 
 type Props = {
   initialPinnedClasses: PinnedAttendanceClass[]
@@ -52,7 +55,10 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
 
   const { data: pinnedClasses = initialPinnedClasses } = usePinnedAttendanceClasses()
   const { data: students = [], isLoading: loadingStudents } = useAttendanceStudents(selectedClassId ?? '')
-  const { data: existing } = useExistingAttendance(selectedClassId ?? '', today)
+  const { data: existing, isLoading: loadingExisting } = useExistingAttendance(selectedClassId ?? '', today)
+  // Élèves + saisie du jour de la classe affichée : un seul loader jusqu'à la page complète.
+  // Changer de classe ensuite ne recharge que la liste.
+  const initialLoading = useInitialLoading(loadingStudents || loadingExisting)
   const removePinned = useRemovePinnedAttendanceClass()
   const submit = useSubmitAttendance()
 
@@ -101,6 +107,8 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
     }
     toast.success('Classe retirée')
   }
+
+  if (initialLoading) return <PageLoader />
 
   return (
     <div className="flex flex-col bg-[#f4f9f3] min-h-screen">
@@ -247,9 +255,7 @@ export default function AttendanceClient({ initialPinnedClasses, today }: Props)
 
             {/* Students */}
             {loadingStudents ? (
-              <div className="px-6 py-12 text-center text-muted-foreground text-sm">
-                Chargement des élèves...
-              </div>
+              <Loader label="Chargement des élèves…" />
             ) : students.length === 0 ? (
               <div className="px-6 py-12 text-center text-muted-foreground text-sm">
                 Aucun élève dans cette classe.

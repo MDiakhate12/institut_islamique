@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import { useStudents } from '@/modules/students/students.hooks'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Users, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Columns2, Check, BookOpen, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportStudentsToExcel } from './students.excel'
@@ -277,6 +277,8 @@ export function StudentsClient() {
   const allSelected = filtered.length > 0 && filtered.every(s => selectedIds.has(s.id))
   const visibleCount = COLUMNS.filter(c => visibleCols[c.id]).length
 
+  if (isLoading) return <PageLoader />
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
 
@@ -285,7 +287,7 @@ export function StudentsClient() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Élèves</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gérer les inscriptions et les profils des élèves</p>
-          {!isLoading && <p className="text-base font-semibold text-foreground mt-1">{total} élève{total !== 1 ? 's' : ''}</p>}
+          <p className="text-base font-semibold text-foreground mt-1">{total} élève{total !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button
@@ -396,7 +398,7 @@ export function StudentsClient() {
       </div>
 
       {/* ── Tableau ── */}
-      {isLoading ? <StudentsSkeleton visibleCount={visibleCount} /> : !students?.length ? (
+      {!students?.length ? (
         <EmptyState
           icon={Users}
           title="Aucun élève pour le moment"
@@ -770,33 +772,5 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
       )}
 
     </tr>
-  )
-}
-
-function StudentsSkeleton({ visibleCount }: { visibleCount: number }) {
-  const cols = 1 + visibleCount // sticky Nom + colonnes visibles
-  return (
-    <div className="rounded-lg border border-border bg-white overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/20">
-              {Array.from({ length: cols }).map((_, i) => (
-                <th key={i} className="px-3 py-3"><Skeleton className="h-3 w-20" /></th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i} className="border-b border-border/50">
-                {Array.from({ length: cols }).map((_, j) => (
-                  <td key={j} className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
   )
 }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Search, Check, ChevronDown } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Input } from '@/components/ui/input'
+import { Loader } from '@/components/shared/Loader/Loader'
 import { cn } from '@/lib/utils'
 
 export type StudentOption = { id: string; name: string }
@@ -13,9 +14,11 @@ interface Props {
   selected: string[]
   onChange: (ids: string[]) => void
   placeholder?: string
+  /** Liste d'élèves encore en chargement. */
+  isLoading?: boolean
 }
 
-export function StudentMultiSelect({ options, selected, onChange, placeholder = 'Sélectionner des étudiants...' }: Props) {
+export function StudentMultiSelect({ options, selected, onChange, placeholder = 'Sélectionner des étudiants...', isLoading = false }: Props) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -55,7 +58,9 @@ export function StudentMultiSelect({ options, selected, onChange, placeholder = 
             </div>
           </div>
           <div className="max-h-56 overflow-y-auto py-1">
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <Loader size="sm" label="Chargement des élèves…" className="py-4" />
+            ) : filtered.length === 0 ? (
               <p className="text-center text-gray-500 text-sm py-4">Aucun élève trouvé</p>
             ) : (
               filtered.map(o => (

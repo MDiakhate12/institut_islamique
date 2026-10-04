@@ -7,6 +7,7 @@ import { useAnnouncements, useDeleteAnnouncement } from '@/modules/announcements
 import { AnnouncementFeed } from '@/components/shared/AnnouncementFeed'
 import { AnnouncementDialog } from './AnnouncementDialog'
 import type { Announcement } from '@/modules/announcements/announcements.types'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 interface Props {
   schoolName: string
@@ -38,6 +39,8 @@ export function AnnouncementsClient({ schoolName }: Props) {
     setDeleteTarget(null)
   }
 
+  if (isLoading) return <PageLoader />
+
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
 
@@ -63,19 +66,11 @@ export function AnnouncementsClient({ schoolName }: Props) {
       </div>
 
       {/* Feed */}
-      {isLoading ? (
-        <div className="space-y-4">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="h-40 rounded-xl border border-border bg-white animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <AnnouncementFeed
-          announcements={announcements}
-          onEdit={openEdit}
-          onDelete={a => setDeleteTarget(a)}
-        />
-      )}
+      <AnnouncementFeed
+        announcements={announcements}
+        onEdit={openEdit}
+        onDelete={a => setDeleteTarget(a)}
+      />
 
       {/* Create/Edit dialog */}
       {dialogOpen && (

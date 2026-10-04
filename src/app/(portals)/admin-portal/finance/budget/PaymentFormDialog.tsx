@@ -44,7 +44,7 @@ interface Props {
 
 export function PaymentFormDialog({ editing, onClose }: Props) {
   const [open, setOpen] = useState(false)
-  const { data: students = [] } = useStudents()
+  const { data: students = [], isLoading: loadingStudents } = useStudents()
   const { data: school } = useSchool()
   const createPayment = useCreatePayment()
   const updatePayment = useUpdatePayment()
@@ -134,7 +134,7 @@ export function PaymentFormDialog({ editing, onClose }: Props) {
             control={control}
             name="studentIds"
             render={({ field }) => (
-              <StudentMultiSelect options={studentOptions} selected={field.value} onChange={field.onChange} />
+              <StudentMultiSelect options={studentOptions} selected={field.value} onChange={field.onChange} isLoading={loadingStudents} />
             )}
           />
 

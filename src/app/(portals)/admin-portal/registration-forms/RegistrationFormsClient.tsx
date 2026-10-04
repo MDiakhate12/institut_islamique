@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { nanoid } from 'nanoid'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 const TABS: { key: FormType; label: string; icon: typeof Users }[] = [
   { key: 'new_student',  label: 'Nouvel élève',  icon: Users },
@@ -58,7 +59,7 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
   activeTab: FormType
   onTabChange: (tab: FormType) => void
 }) {
-  const { data: form, isLoading } = useRegistrationForm(formType)
+  const { data: form } = useRegistrationForm(formType)
   const update = useUpdateRegistrationForm()
   const reset  = useResetRegistrationForm()
   const hist = useHistory(form?.formSchema ?? [])
@@ -109,14 +110,6 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
     const suffix = formType === 'reenrollment' ? '/reenroll' : ''
     const url = `${window.location.origin}/portal/register/${schoolSlug}${suffix}`
     navigator.clipboard.writeText(url).then(() => toast.success('Lien copié !'))
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24 text-muted-foreground text-sm">
-        Chargement du formulaire…
-      </div>
-    )
   }
 
   const itemCount = hist.current.length
@@ -318,6 +311,12 @@ function TabContent({ formType, schoolSlug, classes, activeTab, onTabChange }: {
 
 export function RegistrationFormsClient({ schoolSlug, classes }: { schoolSlug: string; classes: RegistrationClassItem[] }) {
   const [activeTab, setActiveTab] = useState<FormType>('new_student')
+  // Les deux formulaires chargés avant d'afficher la page (même cache que TabContent) :
+  // un seul loader, et le changement d'onglet est ensuite instantané
+  const newStudentForm = useRegistrationForm('new_student')
+  const reenrollmentForm = useRegistrationForm('reenrollment')
+
+  if (newStudentForm.isLoading || reenrollmentForm.isLoading) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-0">

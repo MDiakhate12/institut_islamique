@@ -1,6 +1,7 @@
 import { Sidebar } from '@/components/layouts/Sidebar/Sidebar'
 import { TopBar } from '@/components/layouts/TopBar/TopBar'
 import { MobileNavShell } from '@/components/layouts/MobileNavShell/MobileNavShell'
+import { PortalContent } from '@/components/layouts/PortalContent/PortalContent'
 import type { Session } from '@/lib/auth/session'
 
 interface PortalLayoutProps {
@@ -19,9 +20,7 @@ export function PortalLayout({ children, session, schoolName, userFullName, isSu
       sidebar={<Sidebar session={session} userFullName={userFullName} schoolName={schoolName} isSuperAdmin={isSuperAdmin} />}
     >
       <TopBar session={session} schoolName={schoolName} userFullName={userFullName} />
-      <div className="flex-1 bg-[#f4f9f3] min-h-0 overflow-y-auto overscroll-contain">
-        {children}
-      </div>
+      <PortalContent>{children}</PortalContent>
     </MobileNavShell>
   )
 }

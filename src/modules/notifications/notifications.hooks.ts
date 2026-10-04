@@ -16,6 +16,7 @@ export function useNotifications() {
       return result.success ? result.data : []
     },
     refetchInterval: 30_000, // polling toutes les 30s
+    meta: { silent: true }, // pas de barre de chargement pour le polling (NavigationProgress)
   })
 }
 
@@ -27,6 +28,7 @@ export function useUnreadCount() {
       return result.success ? result.data : 0
     },
     refetchInterval: 30_000,
+    meta: { silent: true },
   })
 }
 

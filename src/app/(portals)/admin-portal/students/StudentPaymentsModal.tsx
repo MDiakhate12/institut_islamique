@@ -8,7 +8,8 @@ import { useDeletePayment } from '@/modules/payments/payments.hooks'
 import { PaymentFormDialog } from '../finance/budget/PaymentFormDialog'
 import type { EditablePayment } from '@/modules/payments/payments.types'
 import type { StudentPayment } from '@/modules/students/students.types'
-import { Loader2, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
+import { Loader } from '@/components/shared/Loader/Loader'
 
 const PERIOD_LABELS: Record<string, string> = {
   annually:    'Annuel',
@@ -79,9 +80,7 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
         <DialogTitle>Paiements de {studentName}</DialogTitle>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          </div>
+          <Loader className="py-12" />
         ) : !data?.length ? (
           <p className="text-center text-gray-500 py-8 text-sm">Aucun paiement enregistré</p>
         ) : (

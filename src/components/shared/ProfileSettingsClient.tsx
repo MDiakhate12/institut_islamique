@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import {
   User, Phone, Building2, Globe, Mail, KeyRound, IdCard, Smile, ShieldAlert,
-  Trash2, Eye, EyeOff, Plus, Loader2, Coffee, ExternalLink,
+  Trash2, Eye, EyeOff, Plus, Coffee, ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,7 @@ import { APP_LANGUAGES } from '@/modules/profile/profile.types'
 import { useChildren, useUnlinkChild } from '@/modules/parents/parents.hooks'
 import { LinkChildModal } from '@/app/(portals)/parent-portal/children/LinkChildModal'
 import type { ProfileData } from '@/modules/profile/profile.types'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 const ROLE_LABELS: Record<PortalRole, string> = {
   admin: 'Administrateur',
@@ -68,11 +69,7 @@ export function ProfileSettingsClient() {
   const { data: profile, isLoading } = useProfile()
 
   if (isLoading || !profile) {
-    return (
-      <div className="flex items-center justify-center py-24 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin mr-2" /> Chargement du profil...
-      </div>
-    )
+    return <PageLoader />
   }
 
   return <ProfileForm profile={profile} />

@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { Loader } from '@/components/shared/Loader/Loader'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
+import { PendingContent } from '@/components/shared/Loader/PendingContent'
 import { format, addDays, subDays, isToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -47,7 +50,7 @@ export function AdminAttendanceClient() {
   const [dialogFilter,   setDialogFilter]   = useState<DialogStatusFilter | null>(null)
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd')
-  const { data: overview, isLoading } = useAdminDayOverview(dateStr)
+  const { data: overview, isLoading, isPlaceholderData } = useAdminDayOverview(dateStr)
 
   const prevDay  = () => setSelectedDate(d => subDays(d, 1))
   const nextDay  = () => setSelectedDate(d => addDays(d, 1))
@@ -57,6 +60,9 @@ export function AdminAttendanceClient() {
 
   const formattedDate = format(selectedDate, "EEEE d MMMM yyyy", { locale: fr })
   const formattedDateCapitalized = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)
+
+  // Premier chargement seulement : changer de jour garde l'aperçu affiché, atténué (keepPreviousData)
+  if (isLoading) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
@@ -115,7 +121,7 @@ export function AdminAttendanceClient() {
       ) : (
         <OverviewView
           overview={overview ?? null}
-          isLoading={isLoading}
+          isUpdating={isPlaceholderData}
           onSelectClass={setSelectedClass}
           onOpenDialog={setDialogFilter}
         />
@@ -138,12 +144,12 @@ export function AdminAttendanceClient() {
 
 function OverviewView({
   overview,
-  isLoading,
+  isUpdating,
   onSelectClass,
   onOpenDialog,
 }: {
   overview: AdminDayOverview | null
-  isLoading: boolean
+  isUpdating: boolean
   onSelectClass: (cls: AdminClassOverview) => void
   onOpenDialog: (f: DialogStatusFilter) => void
 }) {
@@ -167,10 +173,8 @@ function OverviewView({
     return map
   }, [ov.classes])
 
-  if (isLoading) return <OverviewSkeleton />
-
   return (
-    <div className="space-y-6">
+    <PendingContent pending={isUpdating} className="space-y-6">
       {/* ── Aperçu des présences ── */}
       <section className="bg-white rounded-xl border border-border p-5 space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -260,7 +264,7 @@ function OverviewView({
           </p>
         </div>
       )}
-    </div>
+    </PendingContent>
   )
 }
 
@@ -408,16 +412,7 @@ function ClassDetailView({
       {/* Student list */}
       <div className="bg-white rounded-xl border border-border divide-y divide-border overflow-hidden">
         {loadingStudents ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between gap-4 px-5 py-4">
-              <div className="h-4 bg-muted rounded w-32 animate-pulse" />
-              <div className="flex gap-1">
-                {[1, 2, 3, 4].map(j => (
-                  <div key={j} className="h-7 w-20 bg-muted rounded-full animate-pulse" />
-                ))}
-              </div>
-            </div>
-          ))
+          <Loader label="Chargement des élèves…" />
         ) : students.length === 0 ? (
           <div className="py-10 text-center text-sm text-muted-foreground">
             Aucun élève inscrit dans cette classe
@@ -551,31 +546,6 @@ function MiniKpi({ label, value, color }: { label: string; value: number; color:
     <div className={cn('rounded-lg border p-2.5 text-center', KPI_BG[color])}>
       <p className={cn('text-xl font-bold tabular-nums', KPI_VALUE[color])}>{value}</p>
       <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{label}</p>
-    </div>
-  )
-}
-
-// ── Skeleton ──────────────────────────────────────────────────────────────────
-
-function OverviewSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      <div className="bg-white rounded-xl border border-border p-5 space-y-4">
-        <div className="h-5 bg-muted rounded w-40" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-muted rounded-lg h-16" />
-          ))}
-        </div>
-      </div>
-      <div className="bg-white rounded-xl border border-border p-5 space-y-4">
-        <div className="h-5 bg-muted rounded w-48" />
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="bg-muted rounded-lg h-16" />
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

@@ -2,8 +2,9 @@
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useStudentAttendanceCalendar } from '@/modules/students/students.hooks'
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useMemo } from 'react'
+import { Loader } from '@/components/shared/Loader/Loader'
 
 const STATUS_COLORS: Record<string, string> = {
   present:  'bg-green-500 text-white',
@@ -82,9 +83,7 @@ export function StudentAttendanceModal({ open, onOpenChange, studentId, studentN
         <DialogTitle>Présences de {studentName}</DialogTitle>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          </div>
+          <Loader className="py-12" />
         ) : (
           <div className="space-y-4">
             {/* Summary chips */}

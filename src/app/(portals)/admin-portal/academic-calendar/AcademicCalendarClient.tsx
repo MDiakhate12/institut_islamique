@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import './calendar.css'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 // ── react-big-calendar setup ──────────────────────────────────────────────────
 const locales = { fr }
@@ -253,6 +254,9 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
     </div>
   )
 
+  // Changer de filtre garde les événements affichés (keepPreviousData) : loader au premier chargement seulement
+  if (isLoading) return <PageLoader />
+
   return (
     <div className="p-4 sm:p-6 space-y-4 h-full">
       {/* ── Page header ── */}
@@ -345,37 +349,31 @@ export function AcademicCalendarClient({ readonly = false }: { readonly?: boolea
         />
       ) : (
         <div className="calendar-wrapper rounded-xl border border-border overflow-hidden bg-white">
-          {isLoading ? (
-            <div className="h-[600px] flex items-center justify-center text-muted-foreground text-sm">
-              Chargement...
-            </div>
-          ) : (
-            <Calendar
-              localizer={localizer}
-              events={calendarEvents}
-              view={view === 'month' ? Views.MONTH : view === 'week' ? Views.WEEK : Views.DAY}
-              date={date}
-              onNavigate={setDate}
-              onView={() => {}}
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={readonly ? undefined : handleSelectSlot}
-              selectable={!readonly}
-              popup
-              toolbar={false}
-              components={{ event: EventComponent }}
-              formats={{
-                dayFormat: (date, culture, localizer) =>
-                  localizer?.format(date, 'd EEE', culture) ?? '',
-                weekdayFormat: (date, culture, localizer) =>
-                  localizer?.format(date, 'EEE', culture)?.toUpperCase() ?? '',
-                timeGutterFormat: (date, culture, localizer) =>
-                  localizer?.format(date, 'h:mm aaa', culture) ?? '',
-                dayRangeHeaderFormat: ({ start, end }, culture, localizer) =>
-                  `${localizer?.format(start, 'MMM d', culture)} – ${localizer?.format(end, 'd', culture)}`,
-              }}
-              style={{ height: 600 }}
-            />
-          )}
+          <Calendar
+            localizer={localizer}
+            events={calendarEvents}
+            view={view === 'month' ? Views.MONTH : view === 'week' ? Views.WEEK : Views.DAY}
+            date={date}
+            onNavigate={setDate}
+            onView={() => {}}
+            onSelectEvent={handleSelectEvent}
+            onSelectSlot={readonly ? undefined : handleSelectSlot}
+            selectable={!readonly}
+            popup
+            toolbar={false}
+            components={{ event: EventComponent }}
+            formats={{
+              dayFormat: (date, culture, localizer) =>
+                localizer?.format(date, 'd EEE', culture) ?? '',
+              weekdayFormat: (date, culture, localizer) =>
+                localizer?.format(date, 'EEE', culture)?.toUpperCase() ?? '',
+              timeGutterFormat: (date, culture, localizer) =>
+                localizer?.format(date, 'h:mm aaa', culture) ?? '',
+              dayRangeHeaderFormat: ({ start, end }, culture, localizer) =>
+                `${localizer?.format(start, 'MMM d', culture)} – ${localizer?.format(end, 'd', culture)}`,
+            }}
+            style={{ height: 600 }}
+          />
         </div>
       )}
 

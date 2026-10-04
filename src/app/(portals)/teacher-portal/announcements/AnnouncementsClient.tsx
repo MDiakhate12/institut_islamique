@@ -3,9 +3,12 @@
 import { Megaphone } from 'lucide-react'
 import { useAnnouncements } from '@/modules/announcements/announcements.hooks'
 import { AnnouncementFeed } from '@/components/shared/AnnouncementFeed'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 
 export function TeacherAnnouncementsClient() {
   const { data: announcements = [], isLoading } = useAnnouncements('teachers')
+
+  if (isLoading) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
@@ -20,18 +23,10 @@ export function TeacherAnnouncementsClient() {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="h-40 rounded-xl border border-border bg-white animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <AnnouncementFeed
-          announcements={announcements}
-          emptyMessage="Aucune annonce pour le personnel pour l'instant."
-        />
-      )}
+      <AnnouncementFeed
+        announcements={announcements}
+        emptyMessage="Aucune annonce pour le personnel pour l'instant."
+      />
     </div>
   )
 }

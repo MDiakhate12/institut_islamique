@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import Link from 'next/link'
 import { useRegistrations, useReviewRegistration, useBulkApproveRegistrations } from '@/modules/registrations/registrations.hooks'
 import { useSchool } from '@/modules/school/school.hooks'
@@ -9,7 +10,6 @@ import { StudentFormDialog } from '../students/StudentForm'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ClipboardList, Pencil, Download, X, Trash2, ArrowUpDown, Check, Ban } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportRegistrationsToExcel } from './registrations.excel'
@@ -74,7 +74,7 @@ export function RegistrationsClient() {
   const selected = registrations?.find(r => r.id === selectedId) ?? null
   // Une inscription liée à un élève s'ouvre dans le même panneau que le tableau Élèves ;
   // sans élève (anciennes réinscriptions anonymes), repli sur le panneau de détail
-  const { data: students } = useStudents()
+  const { data: students, isLoading: loadingStudents } = useStudents()
   const selectedStudent = selected?.studentId ? students?.find(s => s.id === selected.studentId) ?? null : null
   // Repli seulement quand on sait qu'il n'y a pas d'élève (évite un flash pendant le chargement des élèves)
   const showDetailPanel = !!selected && (!selected.studentId || (!!students && !selectedStudent))
@@ -137,6 +137,8 @@ export function RegistrationsClient() {
     return Array.from(labels)
   }, [registrations])
 
+  if (isLoading || loadingStudents) return <PageLoader />
+
   return (
     <div className="p-4 sm:p-6 space-y-4">
       {/* ── En-tête ── */}
@@ -191,11 +193,9 @@ export function RegistrationsClient() {
           <option value="all">All Types</option>
           {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-        {!isLoading && (
-          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted text-xs font-semibold text-muted-foreground">
-            {total}
-          </span>
-        )}
+        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+          {total}
+        </span>
       </div>
 
       {/* ── Filtre par statut ── */}
@@ -243,7 +243,7 @@ export function RegistrationsClient() {
       {/* ── Tableau + panneau détail ── */}
       <div className="flex flex-col lg:flex-row gap-4 relative">
         <div className={cn('flex-1 min-w-0 rounded-lg border border-border bg-white overflow-hidden', showDetailPanel && 'lg:max-w-[calc(100%-380px)]')}>
-          {isLoading ? <RegistrationsSkeleton /> : filtered.length === 0 ? (
+          {filtered.length === 0 ? (
             <EmptyState
               icon={ClipboardList}
               title={search ? 'Aucune inscription trouvée' : 'Aucune inscription pour le moment'}
@@ -722,31 +722,6 @@ function Row({ label, value, highlight, dot }: {
           {value}
         </span>
       </div>
-    </div>
-  )
-}
-
-function RegistrationsSkeleton() {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border bg-muted/20">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <th key={i} className="px-3 py-3"><Skeleton className="h-3 w-20" /></th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <tr key={i} className="border-b border-border/50">
-              {Array.from({ length: 10 }).map((_, j) => (
-                <td key={j} className="px-3 py-3"><Skeleton className="h-4 w-full" /></td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   )
 }

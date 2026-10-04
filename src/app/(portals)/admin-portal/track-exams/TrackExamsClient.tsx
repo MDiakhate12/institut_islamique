@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useAdminExamClasses, useAdminExamStudents } from '@/modules/exams/exams.hooks'
 import type { AdminExamClassProgress, AdminExamStudentProgress } from '@/modules/exams/exams.types'
+import { PendingContent } from '@/components/shared/Loader/PendingContent'
 
 interface Props {
   initialClasses: AdminExamClassProgress[]
@@ -270,6 +271,9 @@ Jazakom allahu khayrn`
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
+const NO_CLASSES: AdminExamClassProgress[] = []
+const NO_STUDENTS: AdminExamStudentProgress[] = []
+
 export function TrackExamsClient({
   initialClasses, initialStudents, initialTrimester, academicYear,
   examPeriodT1Open, examPeriodT2Open, examPeriodT3Open, schoolName,
@@ -280,8 +284,14 @@ export function TrackExamsClient({
   const [sort, setSort] = useState<SortOption>('name-az')
   const [showEmail, setShowEmail] = useState(false)
 
-  const { data: classes = initialClasses } = useAdminExamClasses(trimester)
-  const { data: students = initialStudents } = useAdminExamStudents(trimester)
+  // Données serveur = trimestre initial uniquement ; un autre trimestre garde l'affichage
+  // précédent atténué (isPlaceholderData) le temps du chargement.
+  const isInitialTrimester = trimester === initialTrimester
+  const classesQuery = useAdminExamClasses(trimester, isInitialTrimester ? initialClasses : undefined)
+  const studentsQuery = useAdminExamStudents(trimester, isInitialTrimester ? initialStudents : undefined)
+  const classes = classesQuery.data ?? NO_CLASSES
+  const students = studentsQuery.data ?? NO_STUDENTS
+  const isUpdating = classesQuery.isPlaceholderData || studentsQuery.isPlaceholderData
 
   const examPeriodOpen = trimester === 1 ? examPeriodT1Open : trimester === 2 ? examPeriodT2Open : examPeriodT3Open
 
@@ -446,6 +456,7 @@ export function TrackExamsClient({
       </div>
 
       {/* Content */}
+      <PendingContent pending={isUpdating}>
       {isClassTab && (
         displayedClasses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -477,6 +488,7 @@ export function TrackExamsClient({
           </div>
         )
       )}
+      </PendingContent>
 
       {/* Email dialog */}
       {showEmail && (

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useDisplayedPathname } from '@/components/layouts/NavigationProgress/navigation-store'
 import { useState } from 'react'
 import {
   BookMarked, CalendarCheck, Megaphone, Music2,
@@ -47,7 +47,8 @@ interface TeacherSidebarProps {
 }
 
 export function TeacherSidebar({ session, userFullName, schoolName }: TeacherSidebarProps) {
-  const pathname = usePathname()
+  // Page demandée dès le clic, sans attendre le serveur (§7.23)
+  const pathname = useDisplayedPathname()
   const [collapsed, setCollapsed] = useState(false)
 
   const displayName = userFullName || session.email.split('@')[0]

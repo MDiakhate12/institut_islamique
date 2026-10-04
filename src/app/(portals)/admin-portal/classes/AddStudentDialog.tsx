@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, Check, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Loader } from '@/components/shared/Loader/Loader'
 
 interface Props {
   scheduledClass: ClassWithDetails
@@ -132,9 +133,7 @@ export function AddStudentDialog({ scheduledClass, open, onOpenChange, onStudent
         {/* Student list */}
         <div className="max-h-60 overflow-y-auto space-y-0.5 -mx-1">
           {isLoading ? (
-            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-              Chargement…
-            </div>
+            <Loader size="sm" className="py-8" />
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 gap-2">
               <Users className="h-6 w-6 text-muted-foreground/40" />
