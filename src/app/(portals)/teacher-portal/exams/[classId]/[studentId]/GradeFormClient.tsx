@@ -13,7 +13,6 @@ interface Props {
   info: GradeFormStudent
   existing: ExamResult | null
   trimester: number
-  academicYear: string | null
 }
 
 function StarRating({
@@ -59,7 +58,7 @@ function StarRating({
   )
 }
 
-export function GradeFormClient({ info, existing, trimester, academicYear }: Props) {
+export function GradeFormClient({ info, existing, trimester }: Props) {
   const router = useRouter()
   const isUpdate = !!existing
 
@@ -95,7 +94,6 @@ export function GradeFormClient({ info, existing, trimester, academicYear }: Pro
       classId: info.classId,
       studentId: info.studentId,
       trimester,
-      academicYear,
       attendance,
       respectTeachers,
       respectOthers,
