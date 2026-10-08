@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { signInAction } from '../actions'
+import { hardNavigate } from '@/lib/auth/hard-navigate'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -31,9 +32,11 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
   function onSubmit(data: LoginInput) {
     startTransition(async () => {
       const result = await signInAction(data.email, data.password, redirectTo)
-      if (result?.error) {
+      if ('error' in result) {
         toast.error(result.error)
+        return
       }
+      hardNavigate(result.redirectTo)
     })
   }
 

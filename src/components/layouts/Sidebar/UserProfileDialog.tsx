@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { signOutAction } from '@/app/auth/actions'
+import { hardNavigate } from '@/lib/auth/hard-navigate'
 import { cn } from '@/lib/utils'
 import { User, PenSquare, LogOut } from 'lucide-react'
 import type { Session } from '@/lib/auth/session'
@@ -36,6 +37,7 @@ export function UserProfileDialog({ session, userFullName, schoolName, profileHr
   function handleSignOut() {
     startTransition(async () => {
       await signOutAction()
+      hardNavigate('/auth/login')
     })
   }
 

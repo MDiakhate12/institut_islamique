@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { signUpAction } from '../actions'
+import { hardNavigate } from '@/lib/auth/hard-navigate'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -92,7 +93,9 @@ export function SignupForm({
       }
       if (result?.needsConfirmation) {
         setConfirmed(true)
+        return
       }
+      if (result?.redirectTo) hardNavigate(result.redirectTo)
     })
   }
 
