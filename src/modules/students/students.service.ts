@@ -312,6 +312,9 @@ export const studentsService = {
   },
 
   async create(schoolId: string, data: CreateStudentInput): Promise<Student> {
+    // Année non précisée (formulaire d'inscription, import Excel, « Année scolaire en cours » du
+    // formulaire admin) → année en cours de l'école, et non plus vide
+    const enrollmentYear = data.enrollmentYear || await schoolService.getAcademicYear(schoolId) || null
     const [student] = await db
       .insert(students)
       .values({
@@ -322,7 +325,7 @@ export const studentsService = {
         isActive:        data.isActive,
         birthDate:       data.birthDate  || null,
         notes:           data.notes      || null,
-        enrollmentYear:  data.enrollmentYear || null,
+        enrollmentYear,
         studentCustomId: generateCustomId(),
       })
       .returning()
@@ -393,7 +396,8 @@ export const studentsService = {
         ...studentData,
         // Champ date vidé dans le formulaire → '' que Postgres refuse (DateTimeParseError) : on stocke null
         birthDate: studentData.birthDate === '' ? null : studentData.birthDate,
-        enrollmentYear: enrollmentYear ?? undefined,
+        // '' = « Année scolaire en cours » choisie dans le formulaire
+        enrollmentYear: enrollmentYear === '' ? await schoolService.getAcademicYear(schoolId) : enrollmentYear ?? undefined,
         updatedAt: new Date(),
       })
       .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId)))

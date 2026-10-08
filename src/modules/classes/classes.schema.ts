@@ -7,7 +7,8 @@ export const createClassSchema = z.object({
   room:               z.string().optional(),
   teacherId:          z.string().uuid().optional().nullable(),
   assistantTeacherId: z.string().uuid().optional().nullable(),
-  academicYear:       z.string().min(1, "L'année académique est requise"),
+  // Absente à la création → année en cours de l'école (classesService.create)
+  academicYear:       z.string().optional(),
 })
 
 export const updateClassSchema = createClassSchema.partial()

@@ -19,8 +19,6 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
-const CURRENT_YEAR = '2025-2026'
-
 const CURRICULUM_TEMPLATE = `# Programme
 
 ## Tranche d'âge
@@ -84,7 +82,8 @@ export function ClassFormDialog({
       room:               scheduledClass?.room               ?? '',
       teacherId:          scheduledClass?.teacherId          ?? null,
       assistantTeacherId: scheduledClass?.assistantTeacherId ?? null,
-      academicYear:       scheduledClass?.academicYear       ?? CURRENT_YEAR,
+      // Nouvelle classe : le serveur prend l'année en cours de l'école (plus d'année codée en dur)
+      academicYear:       scheduledClass?.academicYear       ?? undefined,
     },
   })
 

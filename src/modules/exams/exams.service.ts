@@ -31,6 +31,7 @@ export const examsService = {
     schoolId: string,
     trimester: number,
   ): Promise<TeacherExamClass[]> {
+    const academicYear = await this.getAcademicYear(schoolId)
     const teacherClasses = await db
       .select({
         classId: classes.id,
@@ -78,6 +79,7 @@ export const examsService = {
             inArray(examResults.classId, classIds),
             eq(examResults.schoolId, schoolId),
             eq(examResults.trimester, trimester),
+            eq(examResults.academicYear, academicYear),
           )
         ),
     ])
@@ -159,7 +161,9 @@ export const examsService = {
     studentId: string,
     schoolId: string,
     trimester: number,
+    academicYear?: string,
   ): Promise<ExamResult | null> {
+    const year = academicYear ?? await this.getAcademicYear(schoolId)
     const [row] = await db
       .select()
       .from(examResults)
@@ -169,6 +173,7 @@ export const examsService = {
           eq(examResults.studentId, studentId),
           eq(examResults.schoolId, schoolId),
           eq(examResults.trimester, trimester),
+          eq(examResults.academicYear, year),
         )
       )
       .limit(1)
@@ -201,14 +206,17 @@ export const examsService = {
     memberId: string,
     data: SubmitExamInput,
   ): Promise<{ signatureReset: boolean }> {
-    const existing = await this.getExamResult(data.classId, data.studentId, schoolId, data.trimester)
+    // L'année vient des réglages de l'école, jamais du client : sans elle, une note du T1 de
+    // l'année suivante écrasait le bulletin T1 de l'année précédente (même élève, même classe).
+    const academicYear = await this.getAcademicYear(schoolId)
+    const existing = await this.getExamResult(data.classId, data.studentId, schoolId, data.trimester, academicYear)
 
     const values = {
       schoolId,
       classId: data.classId,
       studentId: data.studentId,
       trimester: data.trimester,
-      academicYear: data.academicYear,
+      academicYear,
       attendance: data.attendance,
       respectTeachers: data.respectTeachers,
       respectOthers: data.respectOthers,
@@ -258,6 +266,7 @@ export const examsService = {
     schoolId: string,
     trimester: number,
   ): Promise<AdminExamClassProgress[]> {
+    const academicYear = await this.getAcademicYear(schoolId)
     const allClasses = await db
       .select({
         classId: classes.id,
@@ -305,6 +314,7 @@ export const examsService = {
             inArray(examResults.classId, classIds),
             eq(examResults.schoolId, schoolId),
             eq(examResults.trimester, trimester),
+            eq(examResults.academicYear, academicYear),
           )
         ),
     ])
@@ -372,6 +382,7 @@ export const examsService = {
     schoolId: string,
     trimester: number,
   ): Promise<AdminExamStudentProgress[]> {
+    const academicYear = await this.getAcademicYear(schoolId)
     const allClasses = await db
       .select({
         classId: classes.id,
@@ -412,6 +423,7 @@ export const examsService = {
             inArray(examResults.classId, classIds),
             eq(examResults.schoolId, schoolId),
             eq(examResults.trimester, trimester),
+            eq(examResults.academicYear, academicYear),
           )
         ),
     ])
@@ -480,6 +492,7 @@ export const examsService = {
     schoolId: string,
     trimester: number,
   ): Promise<ParentChildExamData[]> {
+    const academicYear = await this.getAcademicYear(schoolId)
     const linked = await db
       .select({ studentId: parentStudents.studentId })
       .from(parentStudents)
@@ -531,6 +544,7 @@ export const examsService = {
             inArray(examResults.studentId, studentIds),
             eq(examResults.schoolId, schoolId),
             eq(examResults.trimester, trimester),
+            eq(examResults.academicYear, academicYear),
           )
         ),
     ])
@@ -594,7 +608,17 @@ export const examsService = {
     return !!row
   },
 
-  async getExamFlags(schoolId: string, trimester: number): Promise<{ periodOpen: boolean; published: boolean }> {
+  /** Année scolaire en cours (Paramètres de l'école). Tous les bulletins sont lus et écrits pour cette année. */
+  async getAcademicYear(schoolId: string): Promise<string> {
+    const [school] = await db
+      .select({ settings: schools.settings })
+      .from(schools)
+      .where(eq(schools.id, schoolId))
+      .limit(1)
+    return school?.settings?.academicYear ?? ''
+  },
+
+  async getExamFlags(schoolId: string, trimester: number): Promise<{ periodOpen: boolean; published: boolean; academicYear: string }> {
     const [school] = await db
       .select({ settings: schools.settings })
       .from(schools)
@@ -605,6 +629,7 @@ export const examsService = {
     return {
       periodOpen: !!s?.[`examPeriodT${t}Open`],
       published:  s?.[`examResultsPublishedT${t}`] ?? true, // écoles existantes : visibles
+      academicYear: s?.academicYear ?? '',
     }
   },
 
@@ -634,7 +659,7 @@ export const examsService = {
     parentMemberId: string,
   ): Promise<'ok' | 'forbidden' | 'closed'> {
     const [result] = await db
-      .select({ id: examResults.id, trimester: examResults.trimester })
+      .select({ id: examResults.id, trimester: examResults.trimester, academicYear: examResults.academicYear })
       .from(examResults)
       .innerJoin(parentStudents, and(
         eq(parentStudents.studentId, examResults.studentId),
@@ -644,9 +669,10 @@ export const examsService = {
       .where(and(eq(examResults.id, examResultId), eq(examResults.schoolId, schoolId)))
       .limit(1)
     if (!result) return 'forbidden'
-    const { periodOpen, published } = await this.getExamFlags(schoolId, result.trimester)
+    const { periodOpen, published, academicYear } = await this.getExamFlags(schoolId, result.trimester)
     if (!published) return 'forbidden'
-    if (!periodOpen) return 'closed'
+    // Les réglages (période ouverte) portent sur l'année en cours : un bulletin d'une année passée n'est plus signable
+    if (!periodOpen || result.academicYear !== academicYear) return 'closed'
 
     await db
       .update(examResults)
