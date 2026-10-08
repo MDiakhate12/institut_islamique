@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { requireSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -134,7 +133,8 @@ export async function deleteAccountAction(input: unknown): Promise<ActionResult<
     return err('Impossible de supprimer le compte')
   }
 
-  redirect('/auth/login')
+  // Le client recharge la page vers /auth/login (hardNavigate) pour vider les caches
+  return ok(undefined)
 }
 
 export async function saveGeminiApiKeyAction(key: string): Promise<ActionResult<void>> {

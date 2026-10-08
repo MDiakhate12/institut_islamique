@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { profiles, schoolMembers } from '@/db/schema'
@@ -34,7 +33,13 @@ function safeRedirectPath(path: string | undefined): string | null {
   return path
 }
 
-export async function signInAction(email: string, password: string, redirectTo?: string) {
+// Connexion / déconnexion / inscription renvoient la destination au lieu de `redirect()` : le client
+// recharge la page (`hardNavigate`) pour vider les caches de l'ancien compte.
+export async function signInAction(
+  email: string,
+  password: string,
+  redirectTo?: string,
+): Promise<{ error: string } | { redirectTo: string }> {
   const supabase = await createClient()
   const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
 
@@ -65,13 +70,12 @@ export async function signInAction(email: string, password: string, redirectTo?:
 
   revalidatePath('/', 'layout')
   // Retour à la page demandée avant la connexion (?redirect=), sinon le portail du rôle principal
-  redirect(safeRedirectPath(redirectTo) ?? destination)
+  return { redirectTo: safeRedirectPath(redirectTo) ?? destination }
 }
 
-export async function signOutAction() {
+export async function signOutAction(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
-  redirect('/auth/login')
 }
 
 export async function forgotPasswordAction(email: string): Promise<{ error?: string; success?: boolean }> {
@@ -110,7 +114,7 @@ export async function signUpAction(input: {
   isTeacher: boolean
   isAdmin: boolean
   password: string
-}): Promise<{ error?: string; needsConfirmation?: boolean } | void> {
+}): Promise<{ error?: string; needsConfirmation?: boolean; redirectTo?: string }> {
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.signUp({
@@ -180,7 +184,7 @@ export async function signUpAction(input: {
 
     if (!data.session) return { needsConfirmation: true }
     revalidatePath('/', 'layout')
-    redirect('/admin-portal')
+    return { redirectTo: '/admin-portal' }
   }
 
   // ── Flows parent / enseignant ────────────────────────────────────
@@ -241,7 +245,7 @@ export async function signUpAction(input: {
 
     if (!data.session) return { needsConfirmation: true }
     revalidatePath('/', 'layout')
-    redirect('/teacher-portal')
+    return { redirectTo: '/teacher-portal' }
   }
 
   // Parent (or combined parent+teacher — parent takes precedence for redirect)
@@ -263,6 +267,5 @@ export async function signUpAction(input: {
   if (!data.session) return { needsConfirmation: true }
 
   revalidatePath('/', 'layout')
-  if (input.isParent) redirect('/parent-portal')
-  redirect('/admin-portal')
+  return { redirectTo: input.isParent ? '/parent-portal' : '/admin-portal' }
 }

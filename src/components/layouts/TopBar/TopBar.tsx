@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { signOutAction } from '@/app/auth/actions'
+import { hardNavigate } from '@/lib/auth/hard-navigate'
 import type { Session } from '@/lib/auth/session'
 import { ROUTES } from '@/lib/constants'
 
@@ -127,13 +128,13 @@ export function TopBar({ session, schoolName, userFullName }: TopBarProps) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive" className="cursor-pointer p-0">
-                    <form action={signOutAction} className="flex items-center w-full px-1.5 py-1">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <button type="submit" className="flex-1 text-left text-sm">
-                        Se déconnecter
-                      </button>
-                    </form>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    className="cursor-pointer"
+                    onClick={async () => { await signOutAction(); hardNavigate('/auth/login') }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Se déconnecter
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

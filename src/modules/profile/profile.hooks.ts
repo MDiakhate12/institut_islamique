@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { hardNavigate } from '@/lib/auth/hard-navigate'
 import {
   getProfileAction, updateProfileAction, updateLanguageAction,
   changeEmailAction, changePasswordAction, deleteAccountAction,
@@ -77,6 +78,11 @@ export function useChangePassword() {
 export function useDeleteAccount() {
   return useMutation({
     mutationFn: (input: DeleteAccountInput) => deleteAccountAction(input),
+    onSuccess: (result) => {
+      // Auparavant une erreur (ex. mot de passe incorrect) était ignorée silencieusement
+      if (!result.success) { toast.error(result.error); return }
+      hardNavigate('/auth/login')
+    },
     onError: () => toast.error('Erreur lors de la suppression du compte'),
   })
 }
