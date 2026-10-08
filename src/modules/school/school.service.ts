@@ -24,6 +24,16 @@ export const schoolService = {
     return { ...school, settings: merged }
   },
 
+  /** Année scolaire en cours (Paramètres de l'école), ex. '2026-2027'. '' si non réglée. */
+  async getAcademicYear(schoolId: string): Promise<string> {
+    const [school] = await db
+      .select({ settings: schools.settings })
+      .from(schools)
+      .where(eq(schools.id, schoolId))
+      .limit(1)
+    return (school?.settings as SchoolSettings | null)?.academicYear ?? ''
+  },
+
   // UPDATE identity / contact fields
   async updateInfo(schoolId: string, data: UpdateSchoolInfoInput): Promise<School> {
     const [updated] = await db

@@ -300,7 +300,8 @@ export function StudentFormDialog({
       isActive:       student?.isActive     ?? true,
       birthDate:      student?.birthDate    ?? '',
       notes:          student?.notes        ?? '',
-      enrollmentYear: student?.enrollmentYear ?? yearOptions[1],
+      // '' = année scolaire en cours de l'école, fixée par le serveur à la création
+      enrollmentYear: student?.enrollmentYear ?? '',
     },
   })
 
@@ -597,6 +598,7 @@ export function StudentFormDialog({
                   {...form.register('enrollmentYear')}
                   className={SELECT_CLASS}
                 >
+                  {!student?.enrollmentYear && <option value="">Année scolaire en cours</option>}
                   {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
