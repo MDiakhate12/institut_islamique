@@ -2,6 +2,7 @@ import { db } from '@/db'
 import { classes, classEnrollments, students, schoolMembers, profiles } from '@/db/schema'
 import { eq, and, asc, isNull, inArray, sql } from 'drizzle-orm'
 import type { CreateClassInput, UpdateClassInput } from './classes.schema'
+import { schoolService } from '@/modules/school/school.service'
 import type { ClassWithDetails, EnrolledStudentInClass } from './classes.types'
 import type { Student } from '@/modules/students/students.types'
 
@@ -93,7 +94,7 @@ export const scheduledClassesService = {
         name:               data.name.trim(),
         room:               data.room      || null,
         curriculum:         data.curriculum || null,
-        academicYear:       data.academicYear,
+        academicYear:       data.academicYear || await schoolService.getAcademicYear(schoolId),
       })
       .returning({ id: classes.id })
 
