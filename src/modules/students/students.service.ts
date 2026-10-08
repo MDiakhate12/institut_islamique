@@ -7,6 +7,7 @@ import {
 } from '@/db/schema'
 import { eq, and, isNull, desc, inArray, count, max, or, sum, ne, exists, notExists, sql } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
+import { schoolService } from '@/modules/school/school.service'
 import type {
   Student, StudentListItem, GuardianSummary, StudentEnrollment,
   StudentPayment, StudentAttendanceDay, StudentHomeworkItem,
@@ -52,6 +53,7 @@ function officialStudentFilter() {
 
 export const studentsService = {
   async getBySchool(schoolId: string): Promise<StudentListItem[]> {
+    const academicYear = await schoolService.getAcademicYear(schoolId)
     const [
       studentRows,
       guardianRows,
@@ -108,7 +110,7 @@ export const studentsService = {
         .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
         .where(and(eq(classEnrollments.schoolId, schoolId), isNull(classEnrollments.unenrolledAt))),
 
-      // 4. Verified payments
+      // 4. Verified payments — année scolaire en cours seulement (T1/T2/T3 « payé » de cette année)
       db
         .select({
           studentId: payments.studentId,
@@ -116,7 +118,11 @@ export const studentsService = {
           status:    payments.status,
         })
         .from(payments)
-        .where(and(eq(payments.schoolId, schoolId), eq(payments.status, 'verified'))),
+        .where(and(
+          eq(payments.schoolId, schoolId),
+          eq(payments.status, 'verified'),
+          eq(payments.academicYear, academicYear),
+        )),
 
       // 5. Attendance counts grouped by student + status
       db
@@ -353,9 +359,11 @@ export const studentsService = {
       if (data.paymentT1) periods.push('trimester_1')
       if (data.paymentT2) periods.push('trimester_2')
       if (data.paymentT3) periods.push('trimester_3')
+      const academicYear = periods.length > 0 ? await schoolService.getAcademicYear(schoolId) : ''
       for (const period of periods) {
         await db.insert(payments).values({
           schoolId,
+          academicYear,
           studentId: student.id,
           amount:    0,
           currency:  'EUR',
@@ -462,6 +470,9 @@ export const studentsService = {
     schoolId: string, studentId: string,
     desired: { t1: boolean; t2: boolean; t3: boolean }
   ): Promise<void> {
+    // Les cases T1/T2/T3 du formulaire élève portent sur l'année en cours : avant, décocher T1
+    // supprimait les paiements T1 vérifiés de TOUTES les années
+    const academicYear = await schoolService.getAcademicYear(schoolId)
     const existing = await db
       .select({ period: payments.period })
       .from(payments)
@@ -469,6 +480,7 @@ export const studentsService = {
         eq(payments.schoolId, schoolId),
         eq(payments.studentId, studentId),
         eq(payments.status, 'verified'),
+        eq(payments.academicYear, academicYear),
       ))
 
     const existingPeriods = new Set(existing.map(r => r.period))
@@ -483,7 +495,7 @@ export const studentsService = {
       const isPaid = existingPeriods.has(period) || existingPeriods.has('annually')
       if (shouldBePaid && !isPaid) {
         await db.insert(payments).values({
-          schoolId, studentId, period, status: 'verified',
+          schoolId, studentId, period, status: 'verified', academicYear,
           amount: 0, currency: 'EUR', method: 'other', category: 'tuition',
         })
       } else if (!shouldBePaid && existingPeriods.has(period)) {
@@ -493,6 +505,7 @@ export const studentsService = {
           eq(payments.studentId, studentId),
           eq(payments.period, period),
           eq(payments.status, 'verified'),
+          eq(payments.academicYear, academicYear),
         ))
       }
     }
@@ -520,6 +533,7 @@ export const studentsService = {
         financialOption: payments.financialOption,
         status:     payments.status,
         notes:      payments.notes,
+        academicYear: payments.academicYear,
         guardianFn: guardians.firstName,
         guardianLn: guardians.lastName,
       })
@@ -535,7 +549,7 @@ export const studentsService = {
       id:         r.id,
       studentId,
       date:       r.date,
-      academicYear: null,
+      academicYear: r.academicYear || null,
       amountCents: r.amount,
       currency:   r.currency,
       category:   r.category,

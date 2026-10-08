@@ -4,6 +4,7 @@ import {
 } from '@/db/schema'
 import { and, eq, inArray, desc } from 'drizzle-orm'
 import { authUsers } from '@/db/auth-users'
+import { schoolService } from '@/modules/school/school.service'
 import type { CreatePaymentInput } from './payments.schema'
 import type { PaymentListItem, PaymentKpis, ChildPaymentStatus, UnpaidParent } from './payments.types'
 
@@ -99,6 +100,7 @@ export const paymentsService = {
     parentNameOverride?: string | null,
   ): Promise<void> {
     const status = source === 'parent' ? 'pending' : input.status
+    const academicYear = await schoolService.getAcademicYear(schoolId)
     for (const studentId of input.studentIds) {
       await db.insert(payments).values({
         schoolId,
@@ -113,6 +115,7 @@ export const paymentsService = {
         source,
         notes: input.notes,
         paymentDate: input.paymentDate,
+        academicYear,
         submittedBy: memberId,
       })
     }
@@ -164,6 +167,7 @@ export const paymentsService = {
 
     if (linked.length === 0) return []
     const studentIds = linked.map(r => r.studentId)
+    const academicYear = await schoolService.getAcademicYear(schoolId)
 
     const [studentRows, paymentRows] = await Promise.all([
       db
@@ -174,7 +178,11 @@ export const paymentsService = {
       db
         .select({ studentId: payments.studentId, period: payments.period, status: payments.status })
         .from(payments)
-        .where(and(inArray(payments.studentId, studentIds), eq(payments.schoolId, schoolId))),
+        .where(and(
+          inArray(payments.studentId, studentIds),
+          eq(payments.schoolId, schoolId),
+          eq(payments.academicYear, academicYear),
+        )),
     ])
 
     const byStudent = paymentRows.reduce<Record<string, { period: string; status: string }[]>>((acc, p) => {
@@ -208,6 +216,7 @@ export const paymentsService = {
   },
 
   async getUnpaidParents(schoolId: string, period: string): Promise<UnpaidParent[]> {
+    const academicYear = await schoolService.getAcademicYear(schoolId)
     const [studentRows, paymentRows, guardianRows] = await Promise.all([
       db
         .select({ id: students.id, firstName: students.firstName, lastName: students.lastName })
@@ -217,7 +226,7 @@ export const paymentsService = {
       db
         .select({ studentId: payments.studentId, period: payments.period, status: payments.status })
         .from(payments)
-        .where(eq(payments.schoolId, schoolId)),
+        .where(and(eq(payments.schoolId, schoolId), eq(payments.academicYear, academicYear))),
 
       db
         .select({ studentId: guardians.studentId, email: guardians.email })

@@ -28,6 +28,9 @@ export const payments = pgTable('payments', {
   parentName:        text('parent_name'),
   notes:             text('notes'),
   paymentDate:       date('payment_date'),
+  // Année scolaire du paiement (Paramètres de l'école au moment de la saisie) : les statuts
+  // « T1/T2/T3 payé » et les rappels d'impayés ne portent que sur l'année en cours
+  academicYear:      text('academic_year').notNull().default(''),
   submittedBy:       uuid('submitted_by').references(() => schoolMembers.id),
   createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
