@@ -13,7 +13,6 @@ export default async function GradeFormPage({ params }: Props) {
   const session = await requireSession()
   const school = await schoolService.getById(session.schoolId)
   const trimester = school?.settings?.currentTrimester ?? 1
-  const academicYear = school?.settings?.academicYear ?? null
 
   // Période fermée : la liste n'affiche pas de lien, mais l'URL reste accessible directement
   const s = school?.settings
@@ -32,7 +31,6 @@ export default async function GradeFormPage({ params }: Props) {
       info={info}
       existing={existing}
       trimester={trimester}
-      academicYear={academicYear}
     />
   )
 }
