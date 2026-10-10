@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition, useState } from 'react'
+import { formatPhone } from '@/lib/phone'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -90,9 +91,9 @@ function guardianToLocal(g: GuardianSummary): LocalGuardian {
     relationship:     g.relationship as LocalGuardian['relationship'],
     // Nom complet dans first_name (convention) ; on concatène last_name s'il est renseigné
     name:             `${g.firstName ?? ''} ${g.lastName ?? ''}`.trim(),
-    phone:            g.phone ?? '',
+    phone:            formatPhone(g.phone),
     email:            g.email ?? '',
-    emergencyPhone:   g.emergencyPhone ?? '',
+    emergencyPhone:   formatPhone(g.emergencyPhone),
     linkedMemberId:   g.linkedMemberId,
     linkedMemberName: g.linkedMemberName,
   }
@@ -715,7 +716,7 @@ export function StudentFormDialog({
                       </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-0.5">
                         {g.phone && (
-                          <span className="text-xs text-muted-foreground">📞 {g.phone}</span>
+                          <span className="text-xs text-muted-foreground">📞 {formatPhone(g.phone)}</span>
                         )}
                         {g.email && (
                           <span className="text-xs text-muted-foreground">✉ {g.email}</span>
@@ -972,7 +973,7 @@ export function StudentFormDialog({
                     {viewingGuardian.phone && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-0.5">Téléphone</p>
-                        <p className="font-medium">{viewingGuardian.phone}</p>
+                        <p className="font-medium">{formatPhone(viewingGuardian.phone)}</p>
                       </div>
                     )}
                     {viewingGuardian.email && (
@@ -984,7 +985,7 @@ export function StudentFormDialog({
                     {viewingGuardian.emergencyPhone && (
                       <div className="col-span-2">
                         <p className="text-xs text-muted-foreground mb-0.5">Téléphone d&apos;urgence</p>
-                        <p className="font-medium">{viewingGuardian.emergencyPhone}</p>
+                        <p className="font-medium">{formatPhone(viewingGuardian.emergencyPhone)}</p>
                       </div>
                     )}
                     {!viewingGuardian.phone && !viewingGuardian.email && !viewingGuardian.emergencyPhone && (

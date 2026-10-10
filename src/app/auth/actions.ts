@@ -6,6 +6,7 @@ import { db } from '@/db'
 import { profiles, schoolMembers } from '@/db/schema'
 import { and, eq, isNotNull, isNull, or } from 'drizzle-orm'
 import { getAppUrl } from '@/lib/email'
+import { isValidPhone, toStoredPhone, PHONE_INVALID_MESSAGE } from '@/lib/phone'
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
@@ -115,6 +116,8 @@ export async function signUpAction(input: {
   isAdmin: boolean
   password: string
 }): Promise<{ error?: string; needsConfirmation?: boolean; redirectTo?: string }> {
+  // Action publique : le client valide déjà, mais on ne crée jamais de compte avec un numéro invalide
+  if (!input.phone.trim() || !isValidPhone(input.phone)) return { error: PHONE_INVALID_MESSAGE }
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.signUp({
@@ -133,10 +136,10 @@ export async function signUpAction(input: {
 
   await db
     .insert(profiles)
-    .values({ userId, fullName: input.fullName, phone: input.phone })
+    .values({ userId, fullName: input.fullName, phone: toStoredPhone(input.phone) })
     .onConflictDoUpdate({
       target: profiles.userId,
-      set: { fullName: input.fullName, phone: input.phone },
+      set: { fullName: input.fullName, phone: toStoredPhone(input.phone) },
     })
 
   // ── Flow admin invité ────────────────────────────────────────────

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { formatPhone, phoneMatches } from '@/lib/phone'
 import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import { useStudents } from '@/modules/students/students.hooks'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
@@ -91,8 +92,8 @@ const SORT_VALUE: Record<SortKey, (s: StudentListItem) => string | number | null
   teacher:         s => s.enrollments[0]?.teacherName ?? null,
   previousTeacher: s => s.previousTeacher,
   status:          s => s.isActive ? 0 : 1,
-  fatherPhone:     s => findGuardian(s, 'father')?.phone ?? s.regPhone,
-  motherPhone:     s => findGuardian(s, 'mother')?.phone ?? null,
+  fatherPhone:     s => formatPhone(findGuardian(s, 'father')?.phone ?? s.regPhone) || null,
+  motherPhone:     s => formatPhone(findGuardian(s, 'mother')?.phone) || null,
   fatherEmail:     s => findGuardian(s, 'father')?.email ?? s.regEmail,
   motherEmail:     s => findGuardian(s, 'mother')?.email ?? null,
   regFatherName:   s => guardianName(s, 'father', s.regFatherName),
@@ -228,7 +229,7 @@ export function StudentsClient() {
       if (search) {
         const q = search.toLowerCase()
         const guardianMatch = s.guardians.some(g =>
-          (g.phone ?? '').includes(q) ||
+          phoneMatches(g.phone, q) ||
           (g.email ?? '').toLowerCase().includes(q) ||
           (g.firstName ?? '').toLowerCase().includes(q)
         )

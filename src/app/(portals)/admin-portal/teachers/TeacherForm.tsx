@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition, useState, useRef } from 'react'
+import { formatPhone } from '@/lib/phone'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -115,7 +116,7 @@ export function TeacherFormDialog({ teacher, trigger, onSuccess }: TeacherFormPr
     defaultValues: {
       email:       canEditEmail ? teacher?.email : undefined,
       fullName:    teacher?.fullName ?? '',
-      phone:       teacher?.phone   ?? '',
+      phone:       formatPhone(teacher?.phone),
       gender:      (teacher?.gender as 'male' | 'female') ?? undefined,
       teacherType: teacher?.teacherType ?? 'volunteer',
       isActive:    teacher ? !teacher.isPending : true,

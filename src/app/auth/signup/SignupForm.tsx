@@ -13,13 +13,14 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CheckCircle, Eye, EyeOff, Mail, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { isValidPhone, PHONE_INVALID_MESSAGE } from '@/lib/phone'
 
 const signupSchema = z
   .object({
     fullName:        z.string().min(2, 'Nom requis'),
     email:           z.string().email('Email invalide'),
     schoolId:        z.string().min(1, 'Veuillez sélectionner une école'),
-    phone:           z.string().min(8, 'Numéro de téléphone requis'),
+    phone:           z.string().trim().min(1, 'Numéro de téléphone requis').refine(isValidPhone, PHONE_INVALID_MESSAGE),
     isParent:        z.boolean(),
     isTeacher:       z.boolean(),
     isAdmin:         z.boolean(),

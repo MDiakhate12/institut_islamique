@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
+import { formatPhone } from '@/lib/phone'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -39,7 +40,7 @@ export function TeacherDetailClient({ teacher, classCount }: TeacherDetailClient
     resolver: zodResolver(updateTeacherSchema),
     defaultValues: {
       fullName: teacher.fullName ?? '',
-      phone: teacher.phone ?? '',
+      phone: formatPhone(teacher.phone),
       teacherType: teacher.teacherType ?? 'volunteer',
     },
   })
@@ -105,7 +106,7 @@ export function TeacherDetailClient({ teacher, classCount }: TeacherDetailClient
           {teacher.phone && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Phone className="h-4 w-4 shrink-0" />
-              <span>{teacher.phone}</span>
+              <span>{formatPhone(teacher.phone)}</span>
             </div>
           )}
           <div className="flex items-center gap-2 text-muted-foreground">

@@ -3,6 +3,7 @@ import { profiles, schoolMembers, schools } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import type { PortalRole } from '@/lib/constants'
 import type { ProfileData } from './profile.types'
+import { toStoredPhone } from '@/lib/phone'
 
 export const profileService = {
   async getProfile(userId: string, schoolId: string): Promise<ProfileData | null> {
@@ -70,7 +71,7 @@ export const profileService = {
       .update(profiles)
       .set({
         fullName: data.fullName,
-        ...(data.phone !== undefined && { phone: data.phone }),
+        ...(data.phone !== undefined && { phone: toStoredPhone(data.phone) }),
         updatedAt: new Date(),
       })
       .where(eq(profiles.userId, userId))

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { formatPhone } from '@/lib/phone'
 import { requireSession } from '@/lib/auth/session'
 import { db } from '@/db'
 import { profiles } from '@/db/schema'
@@ -41,7 +42,7 @@ export default async function NewChildEnrollmentPage() {
   const initialGuardians: RegistrationGuardianInput[] = [{
     relationship:   'guardian',
     name:           profile?.fullName ?? '',
-    phone:          profile?.phone ?? '',
+    phone:          formatPhone(profile?.phone),
     email:          session.email,
     emergencyPhone: '',
   }]

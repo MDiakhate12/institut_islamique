@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useMemo } from 'react'
+import { formatPhone, phoneMatches, whatsappNumber } from '@/lib/phone'
 import { toast } from 'sonner'
 import {
   Search, Mail, Phone, Users, Key, AlertTriangle, CheckCircle2,
@@ -19,10 +20,6 @@ function isAtRisk(s: StudentParentInfo) {
 
 function hasApp(s: StudentParentInfo) {
   return s.connectedParents.length > 0
-}
-
-function cleanPhone(phone: string) {
-  return phone.replace(/\s/g, '').replace(/^0/, '33')
 }
 
 function getStudentEmails(s: StudentParentInfo): { email: string; label: string }[] {
@@ -307,7 +304,7 @@ export function ParentsClient({
       list = list.filter(s =>
         `${s.firstName} ${s.lastName}`.toLowerCase().includes(q) ||
         s.guardians.some(g =>
-          (g.phone ?? '').toLowerCase().includes(q) ||
+          phoneMatches(g.phone, q) ||
           (g.email ?? '').toLowerCase().includes(q) ||
           (g.firstName ?? '').toLowerCase().includes(q)
         ),
@@ -483,18 +480,19 @@ export function ParentsClient({
 
                   {/* Contact */}
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                    {getPrimaryPhone(student) ?? '—'}
+                    {formatPhone(getPrimaryPhone(student)) || '—'}
                   </td>
 
                   {/* Actions */}
                   <td className="px-4 py-3">
                     {(() => {
-                      const phone = getPrimaryPhone(student)
+                      // Lien WhatsApp seulement pour un numéro valide (avant : « + » et points laissés dans l'URL)
+                      const phone = whatsappNumber(getPrimaryPhone(student))
                       return (
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {phone && (
                         <a
-                          href={`https://wa.me/${cleanPhone(phone)}`}
+                          href={`https://wa.me/${phone}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"

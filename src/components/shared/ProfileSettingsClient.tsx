@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { formatPhone } from '@/lib/phone'
 import {
   User, Phone, Building2, Globe, Mail, KeyRound, IdCard, Smile, ShieldAlert,
   Trash2, Eye, EyeOff, Plus, Coffee, ExternalLink,
@@ -86,7 +87,8 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
   const unlinkChild = useUnlinkChild()
 
   const [fullName, setFullName] = useState(profile.fullName ?? '')
-  const [phone, setPhone] = useState(profile.phone ?? '')
+  const initialPhone = formatPhone(profile.phone)
+  const [phone, setPhone] = useState(initialPhone)
   const [roles, setRoles] = useState<PortalRole[]>(profile.roles)
   const [language, setLanguage] = useState(profile.preferredLanguage ?? 'default')
 
@@ -106,7 +108,7 @@ function ProfileForm({ profile }: { profile: ProfileData }) {
   const initials = getInitials(displayName)
 
   const isDirty = fullName !== (profile.fullName ?? '')
-    || phone !== (profile.phone ?? '')
+    || phone !== initialPhone
     || JSON.stringify([...roles].sort()) !== JSON.stringify([...profile.roles].sort())
 
   function toggleRole(role: PortalRole) {

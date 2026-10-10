@@ -740,6 +740,15 @@ Connexion, déconnexion, inscription et suppression de compte se terminent par `
 
 En dev, `logging.serverFunctions: false` (`next.config.ts`) : Next journalisait les arguments des Server Actions, dont les mots de passe en clair.
 
+### 7.26 Numéros de téléphone — une seule règle (`src/lib/phone.ts`)
+
+Bibliothèque `libphonenumber-js` (import depuis `'libphonenumber-js'`, pas `/min` : sous certains chargeurs les métadonnées de `/min` ne sont pas trouvées). Un numéro sans indicatif est lu comme français.
+- **Saisie** : `optionalPhoneField` (Zod) dans tous les schémas (tuteurs, enseignants, profil, école), `isValidPhone` dans les règles partagées client/serveur (`getGuardianErrors`, `getInvalidPhoneFields` pour les champs « Téléphone » du formulaire d'inscription), l'inscription au compte et l'import Excel. Message unique `PHONE_INVALID_MESSAGE`.
+- **Stockage** : `toStoredPhone()` dans chaque service avant écriture → E.164 (`+33612345678`). Un numéro invalide déjà en base est conservé tel quel, jamais perdu.
+- **Affichage** : toujours `formatPhone()` (`06 12 34 56 78`, ou `+213 555 12 34 56` pour l'étranger), y compris pour pré-remplir un formulaire d'édition. **Jamais** afficher la valeur brute.
+- **WhatsApp** : `whatsappNumber()` (lien seulement si le numéro est valide). **Recherche** : `phoneMatches()` (« 0612 » trouve `+33612345678`).
+- Lien parent ↔ tuteur par téléphone (`parentsService.linkStudentsToParent`) : comparaison des 9 derniers chiffres, compatible avec les deux formats.
+
 ---
 
 ## 8. État d'avancement des modules

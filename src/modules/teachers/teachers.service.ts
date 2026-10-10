@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getAuthUserIdByEmail } from '@/db/auth-users'
 import type { InviteTeacherInput, UpdateTeacherInput } from './teachers.schema'
 import type { Teacher, TeacherListItem } from './teachers.types'
+import { toStoredPhone } from '@/lib/phone'
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
@@ -150,7 +151,7 @@ export const teachersService = {
           isPending: true,
           createdAt: existing.createdAt,
           fullName: data.fullName,
-          phone: data.phone ?? null,
+          phone: toStoredPhone(data.phone),
           gender: data.gender ?? null,
           avatarUrl: null,
           documentUrl: null,
@@ -169,7 +170,7 @@ export const teachersService = {
           teacherType: data.teacherType,
           isPending: true,
           fullName: data.fullName,
-          phone: data.phone ?? null,
+          phone: toStoredPhone(data.phone),
           gender: data.gender ?? null,
           createdBy: invitedBy,
         })
@@ -183,7 +184,7 @@ export const teachersService = {
         isPending: true,
         createdAt: member.createdAt,
         fullName: data.fullName,
-        phone: data.phone ?? null,
+        phone: toStoredPhone(data.phone),
         gender: data.gender ?? null,
         avatarUrl: null,
         documentUrl: null,
@@ -203,7 +204,7 @@ export const teachersService = {
         isPending: true,
         pendingEmail: normalizedEmail,
         fullName: data.fullName,
-        phone: data.phone ?? null,
+        phone: toStoredPhone(data.phone),
         gender: data.gender ?? null,
         createdBy: invitedBy,
       })
@@ -217,7 +218,7 @@ export const teachersService = {
       isPending: true,
       createdAt: member.createdAt,
       fullName: data.fullName,
-      phone: data.phone ?? null,
+      phone: toStoredPhone(data.phone),
       gender: data.gender ?? null,
       avatarUrl: null,
       documentUrl: null,
@@ -262,7 +263,7 @@ export const teachersService = {
     // Tant que le compte réel (profiles) n'existe pas, school_members reste la source de vérité
     if (member.userId === NIL_UUID) {
       if (data.fullName !== undefined) memberUpdate.fullName = data.fullName
-      if (data.phone !== undefined) memberUpdate.phone = data.phone
+      if (data.phone !== undefined) memberUpdate.phone = toStoredPhone(data.phone)
       if (data.gender !== undefined) memberUpdate.gender = data.gender
     }
     if (Object.keys(memberUpdate).length > 0) {
@@ -278,7 +279,7 @@ export const teachersService = {
         .update(profiles)
         .set({
           ...(data.fullName && { fullName: data.fullName }),
-          ...(data.phone !== undefined && { phone: data.phone }),
+          ...(data.phone !== undefined && { phone: toStoredPhone(data.phone) }),
           ...(data.gender !== undefined && { gender: data.gender }),
           updatedAt: new Date(),
         })

@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { DEFAULT_SETTINGS } from '@/db/schema/schools'
 import type { School, SchoolSettings } from './school.types'
 import type { UpdateSchoolInfoInput, UpdateSchoolSettingsInput } from './school.schema'
+import { toStoredPhone } from '@/lib/phone'
 
 export const schoolService = {
   // READ
@@ -43,7 +44,7 @@ export const schoolService = {
         defaultLanguage: data.defaultLanguage ?? 'fr',
         timezone:        data.timezone ?? 'UTC',
         contactEmail:    data.contactEmail || null,
-        phone:           data.phone || null,
+        phone:           toStoredPhone(data.phone),
         address:         data.address || null,
         website:         data.website || null,
         facebook:        data.facebook || null,

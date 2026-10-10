@@ -1,9 +1,10 @@
 import { z } from 'zod'
+import { optionalPhoneField } from '@/lib/phone'
 import { PORTAL_ROLES } from '@/lib/constants'
 
 export const updateProfileSchema = z.object({
   fullName: z.string().min(1, 'Le nom complet est requis'),
-  phone: z.string().optional(),
+  phone: optionalPhoneField,
   roles: z.array(z.enum(PORTAL_ROLES)).min(1, 'Vous devez conserver au moins un rôle actif'),
 })
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>

@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { isValidPhone } from '@/lib/phone'
 import { redirect } from 'next/navigation'
 import { teachersService } from './teachers.service'
 import { inviteTeacherSchema, updateTeacherSchema, uploadTeacherDocumentSchema } from './teachers.schema'
@@ -390,6 +391,10 @@ export async function importTeachersAction(
 
     if (!teacherType) {
       errors.push({ row: rowNum, message: `Type invalide: "${row.teacherType}". Utilisez Bénévole ou Payé` })
+      continue
+    }
+    if (!isValidPhone(row.phone)) {
+      errors.push({ row: rowNum, message: `Téléphone invalide: "${row.phone}"` })
       continue
     }
 

@@ -1,12 +1,13 @@
 import { z } from 'zod'
+import { optionalPhoneField } from '@/lib/phone'
 
 const guardianInputSchema = z.object({
   id:             z.string().optional(),
   relationship:   z.enum(['father', 'mother', 'guardian', 'other']),
   name:           z.string().optional(),
-  phone:          z.string().optional(),
+  phone:          optionalPhoneField,
   email:          z.string().optional(),
-  emergencyPhone: z.string().optional(),
+  emergencyPhone: optionalPhoneField,
   _delete:        z.boolean().optional(),
 })
 

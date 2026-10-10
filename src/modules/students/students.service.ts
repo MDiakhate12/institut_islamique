@@ -8,6 +8,7 @@ import {
 import { eq, and, isNull, desc, inArray, count, max, or, sum, ne, exists, notExists, sql } from 'drizzle-orm'
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
 import { schoolService } from '@/modules/school/school.service'
+import { toStoredPhone } from '@/lib/phone'
 import type {
   Student, StudentListItem, GuardianSummary, StudentEnrollment,
   StudentPayment, StudentAttendanceDay, StudentHomeworkItem,
@@ -340,9 +341,9 @@ export const studentsService = {
           relationship:   g.relationship,
           firstName:      g.name?.trim() || null,
           lastName:       '',
-          phone:          g.phone?.trim()          || null,
+          phone:          toStoredPhone(g.phone),
           email:          g.email?.trim()          || null,
-          emergencyPhone: g.emergencyPhone?.trim() || null,
+          emergencyPhone: toStoredPhone(g.emergencyPhone),
           isPrimary:      i === 0,
         })
       }
@@ -416,9 +417,9 @@ export const studentsService = {
               relationship:   g.relationship,
               firstName:      g.name?.trim() || null,
               lastName:       '', // le nom complet est dans first_name
-              phone:          g.phone?.trim()          || null,
+              phone:          toStoredPhone(g.phone),
               email:          g.email?.trim()          || null,
-              emergencyPhone: g.emergencyPhone?.trim() || null,
+              emergencyPhone: toStoredPhone(g.emergencyPhone),
               updatedAt:      new Date(),
             })
             .where(and(eq(guardians.id, g.id), eq(guardians.studentId, studentId), isNull(guardians.linkedMemberId)))
@@ -428,9 +429,9 @@ export const studentsService = {
             relationship:   g.relationship,
             firstName:      g.name?.trim() || null,
             lastName:       '',
-            phone:          g.phone?.trim()          || null,
+            phone:          toStoredPhone(g.phone),
             email:          g.email?.trim()          || null,
-            emergencyPhone: g.emergencyPhone?.trim() || null,
+            emergencyPhone: toStoredPhone(g.emergencyPhone),
             isPrimary:      false,
           })
         }
