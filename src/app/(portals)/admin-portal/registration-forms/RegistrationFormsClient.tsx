@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { RegistrationsOpenToggle } from '@/components/shared/RegistrationsOpenToggle/RegistrationsOpenToggle'
+import { useSchool } from '@/modules/school/school.hooks'
 import { toast } from 'sonner'
 import { useRegistrationForm, useUpdateRegistrationForm, useResetRegistrationForm } from '@/modules/registrations/registrations.hooks'
 import type { FormItem, FormType, InfoBlock, FormSection, RegistrationClassItem } from '@/modules/registrations/registrations.types'
@@ -315,8 +317,9 @@ export function RegistrationFormsClient({ schoolSlug, classes }: { schoolSlug: s
   // un seul loader, et le changement d'onglet est ensuite instantané
   const newStudentForm = useRegistrationForm('new_student')
   const reenrollmentForm = useRegistrationForm('reenrollment')
+  const { isLoading: loadingSchool } = useSchool()
 
-  if (newStudentForm.isLoading || reenrollmentForm.isLoading) return <PageLoader />
+  if (newStudentForm.isLoading || reenrollmentForm.isLoading || loadingSchool) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-0">
@@ -324,6 +327,10 @@ export function RegistrationFormsClient({ schoolSlug, classes }: { schoolSlug: s
       <div className="mb-5">
         <h1 className="text-2xl font-bold text-foreground">Créateur de formulaires d&apos;inscription</h1>
         <p className="text-sm text-muted-foreground mt-1">Faites glisser pour réorganiser, cliquez pour modifier</p>
+      </div>
+
+      <div className="mb-5">
+        <RegistrationsOpenToggle />
       </div>
 
       {/* Tab content — key forces remount on tab change */}

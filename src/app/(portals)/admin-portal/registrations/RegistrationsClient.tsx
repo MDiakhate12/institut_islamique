@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { RegistrationsOpenToggle } from '@/components/shared/RegistrationsOpenToggle/RegistrationsOpenToggle'
 import { PageLoader } from '@/components/shared/Loader/PageLoader'
 import Link from 'next/link'
 import { useRegistrations, useReviewRegistration, useBulkApproveRegistrations } from '@/modules/registrations/registrations.hooks'
@@ -75,6 +76,7 @@ export function RegistrationsClient() {
   // Une inscription liée à un élève s'ouvre dans le même panneau que le tableau Élèves ;
   // sans élève (anciennes réinscriptions anonymes), repli sur le panneau de détail
   const { data: students, isLoading: loadingStudents } = useStudents()
+  const { isLoading: loadingSchool } = useSchool()
   const selectedStudent = selected?.studentId ? students?.find(s => s.id === selected.studentId) ?? null : null
   // Repli seulement quand on sait qu'il n'y a pas d'élève (évite un flash pendant le chargement des élèves)
   const showDetailPanel = !!selected && (!selected.studentId || (!!students && !selectedStudent))
@@ -137,7 +139,7 @@ export function RegistrationsClient() {
     return Array.from(labels)
   }, [registrations])
 
-  if (isLoading || loadingStudents) return <PageLoader />
+  if (isLoading || loadingStudents || loadingSchool) return <PageLoader />
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -164,6 +166,8 @@ export function RegistrationsClient() {
           </button>
         </div>
       </div>
+
+      <RegistrationsOpenToggle />
 
       {/* ── Recherche + filtres ── */}
       <div className="flex items-center flex-wrap gap-2">
