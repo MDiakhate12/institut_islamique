@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { AlertTriangle, GraduationCap, Star, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useParentChildrenGrades, useSignExamGrade } from '@/modules/exams/exams.hooks'
+import { PendingContent } from '@/components/shared/Loader/PendingContent'
 import { EXAM_CRITERIA } from '@/modules/exams/exams.labels'
 import type { ParentChildExamData, ParentExamGrade, ParentExamView } from '@/modules/exams/exams.types'
 
 interface Props {
   initialView: ParentExamView
   initialTrimester: number
-  academicYear: string
   parentName: string
 }
 
@@ -33,14 +33,21 @@ function StarDisplay({ value }: { value: number | null }) {
 }
 
 
-function GradeCard({ grade, parentName, canSign }: { grade: ParentExamGrade; parentName: string; canSign: boolean }) {
+function GradeCard({ grade, parentName, canSign, signHint }: { grade: ParentExamGrade; parentName: string; canSign: boolean; signHint: string }) {
   const { mutate: sign, isPending } = useSignExamGrade()
 
   return (
     <div className="rounded-xl border-2 border-[#2d6a4f]/30 bg-white overflow-hidden">
       {/* Class header */}
       <div className="px-5 py-4 border-b border-[#2d6a4f]/10">
-        <p className="font-semibold text-[#2d6a4f]">{grade.className}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-semibold text-[#2d6a4f]">{grade.className}</p>
+          {grade.classLeft && (
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+              Classe quittée
+            </span>
+          )}
+        </div>
         {grade.teacherName && (
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
             <User className="h-3.5 w-3.5" />
@@ -104,7 +111,7 @@ function GradeCard({ grade, parentName, canSign }: { grade: ParentExamGrade; par
               </svg>
             </span>
           ) : !canSign ? (
-            <span className="text-xs text-muted-foreground">Signature indisponible (période fermée)</span>
+            <span className="text-xs text-muted-foreground">{signHint}</span>
           ) : (
             <button
               onClick={() => sign({ examResultId: grade.examResultId, parentSignature: parentName })}
@@ -120,7 +127,7 @@ function GradeCard({ grade, parentName, canSign }: { grade: ParentExamGrade; par
   )
 }
 
-function ChildGrades({ child, parentName, canSign }: { child: ParentChildExamData; parentName: string; canSign: boolean }) {
+function ChildGrades({ child, parentName, canSign, signHint }: { child: ParentChildExamData; parentName: string; canSign: boolean; signHint: string }) {
   if (child.grades.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -136,16 +143,21 @@ function ChildGrades({ child, parentName, canSign }: { child: ParentChildExamDat
   return (
     <div className="space-y-4">
       {child.grades.map(grade => (
-        <GradeCard key={grade.classId} grade={grade} parentName={parentName} canSign={canSign} />
+        <GradeCard key={grade.examResultId} grade={grade} parentName={parentName} canSign={canSign} signHint={signHint} />
       ))}
     </div>
   )
 }
 
-export function ExamsClient({ initialView, initialTrimester, academicYear, parentName }: Props) {
+export function ExamsClient({ initialView, initialTrimester, parentName }: Props) {
   const [trimester, setTrimester] = useState(initialTrimester)
-  const { data: view = initialView } = useParentChildrenGrades(trimester)
-  const { children, periodOpen, published } = view
+  const [academicYear, setAcademicYear] = useState(initialView.academicYear)
+  const isInitial = trimester === initialTrimester && academicYear === initialView.academicYear
+  const { data: view = initialView, isPlaceholderData } = useParentChildrenGrades(
+    trimester, academicYear, isInitial ? initialView : undefined,
+  )
+  const { children, periodOpen, published, isCurrentYear, availableYears } = view
+  const signHint = isCurrentYear ? 'Signature indisponible (période fermée)' : 'Hors année scolaire en cours — consultation seulement'
   const [activeId, setActiveId] = useState(initialView.children[0]?.studentId ?? '')
 
   const activeChild = children.find(c => c.studentId === activeId) ?? children[0]
@@ -163,8 +175,19 @@ export function ExamsClient({ initialView, initialTrimester, academicYear, paren
           </h1>
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
             <p className="text-sm text-muted-foreground">
-              {academicYear} — Consulter les notes et signer
+              {isCurrentYear ? 'Consulter les notes et signer' : 'Autre année scolaire — consultation seulement'}
             </p>
+            {availableYears.length > 1 && (
+              <select
+                value={academicYear}
+                onChange={e => setAcademicYear(e.target.value)}
+                aria-label="Année scolaire"
+                className="text-xs font-semibold border border-gray-200 rounded-full px-2.5 py-0.5 bg-white focus:outline-none cursor-pointer"
+              >
+                {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            )}
+            {availableYears.length <= 1 && <span className="text-xs font-semibold text-gray-600">{academicYear}</span>}
             <div className="flex items-center gap-1">
               {[1, 2, 3].map(t => (
                 <button
@@ -224,7 +247,7 @@ export function ExamsClient({ initialView, initialTrimester, academicYear, paren
               <h2 className="text-lg font-bold text-[#2d6a4f]">
                 Élève : {activeChild.firstName} {activeChild.lastName}
               </h2>
-              {published && !periodOpen && (
+              {published && !periodOpen && isCurrentYear && (
                 <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
                   <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-sm font-medium text-amber-800">
@@ -233,7 +256,9 @@ export function ExamsClient({ initialView, initialTrimester, academicYear, paren
                 </div>
               )}
               {published ? (
-                <ChildGrades child={activeChild} parentName={parentName} canSign={periodOpen} />
+                <PendingContent pending={isPlaceholderData}>
+                  <ChildGrades child={activeChild} parentName={parentName} canSign={periodOpen} signHint={signHint} />
+                </PendingContent>
               ) : (
                 <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
                   <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />

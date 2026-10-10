@@ -487,26 +487,21 @@ export const examsService = {
 
   // ── Parent ───────────────────────────────────────────────────────────────────
 
+  /**
+   * Bulletins des enfants du parent pour une année + un trimestre. Part des bulletins eux-mêmes,
+   * pas des inscriptions en cours : un bulletin reste consultable après que l'enfant a quitté la
+   * classe (historique, aucune information perdue) — signalé par `classLeft`.
+   */
   async getChildrenGrades(
     schoolMemberId: string,
     schoolId: string,
     trimester: number,
+    academicYear: string,
   ): Promise<ParentChildExamData[]> {
-    const academicYear = await this.getAcademicYear(schoolId)
-    const linked = await db
-      .select({ studentId: parentStudents.studentId })
-      .from(parentStudents)
-      .where(
-        and(
-          eq(parentStudents.schoolMemberId, schoolMemberId),
-          eq(parentStudents.schoolId, schoolId),
-        )
-      )
+    const studentIds = await this.getLinkedStudentIds(schoolMemberId, schoolId)
+    if (studentIds.length === 0) return []
 
-    if (linked.length === 0) return []
-    const studentIds = linked.map(r => r.studentId)
-
-    const [studentRows, enrollmentRows, gradeRows] = await Promise.all([
+    const [studentRows, activeEnrollments, gradeRows] = await Promise.all([
       db
         .select({
           id: students.id,
@@ -518,16 +513,8 @@ export const examsService = {
         .where(inArray(students.id, studentIds)),
 
       db
-        .select({
-          studentId: classEnrollments.studentId,
-          classId: classEnrollments.classId,
-          className: classes.name,
-          teacherName: profiles.fullName,
-        })
+        .select({ studentId: classEnrollments.studentId, classId: classEnrollments.classId })
         .from(classEnrollments)
-        .leftJoin(classes, eq(classEnrollments.classId, classes.id))
-        .leftJoin(schoolMembers, eq(classes.teacherId, schoolMembers.id))
-        .leftJoin(profiles, eq(schoolMembers.userId, profiles.userId))
         .where(
           and(
             inArray(classEnrollments.studentId, studentIds),
@@ -537,8 +524,11 @@ export const examsService = {
         ),
 
       db
-        .select()
+        .select({ grade: examResults, className: classes.name, teacherName: profiles.fullName })
         .from(examResults)
+        .innerJoin(classes, eq(classes.id, examResults.classId))
+        .leftJoin(schoolMembers, eq(classes.teacherId, schoolMembers.id))
+        .leftJoin(profiles, eq(schoolMembers.userId, profiles.userId))
         .where(
           and(
             inArray(examResults.studentId, studentIds),
@@ -546,27 +536,24 @@ export const examsService = {
             eq(examResults.trimester, trimester),
             eq(examResults.academicYear, academicYear),
           )
-        ),
+        )
+        .orderBy(classes.name),
     ])
 
-    const gradeMap = new Map(gradeRows.map(g => [`${g.classId}:${g.studentId}`, g]))
-    const enrollmentsByStudent = enrollmentRows.reduce<Record<string, typeof enrollmentRows>>((acc, e) => {
-      if (!acc[e.studentId]) acc[e.studentId] = []
-      acc[e.studentId].push(e)
-      return acc
-    }, {})
+    const enrolled = new Set(activeEnrollments.map(e => `${e.classId}:${e.studentId}`))
 
-    return studentRows.map(s => {
-      const enrollments = enrollmentsByStudent[s.id] ?? []
-      const grades: ParentExamGrade[] = []
-
-      for (const enr of enrollments) {
-        const grade = gradeMap.get(`${enr.classId}:${s.id}`)
-        if (!grade) continue
-        grades.push({
-          classId: enr.classId,
-          className: enr.className ?? '',
-          teacherName: enr.teacherName ?? null,
+    return studentRows.map(s => ({
+      studentId: s.id,
+      firstName: s.firstName,
+      lastName: s.lastName,
+      studentCustomId: s.studentCustomId,
+      grades: gradeRows
+        .filter(r => r.grade.studentId === s.id)
+        .map(({ grade, className, teacherName }): ParentExamGrade => ({
+          classId: grade.classId,
+          className: className ?? '',
+          teacherName: teacherName ?? null,
+          classLeft: !enrolled.has(`${grade.classId}:${s.id}`),
           examResultId: grade.id,
           attendance: grade.attendance,
           respectTeachers: grade.respectTeachers,
@@ -578,17 +565,27 @@ export const examsService = {
           generalComments: grade.generalComments,
           score: grade.score,
           parentSignature: grade.parentSignature,
-        })
-      }
+        })),
+    }))
+  },
 
-      return {
-        studentId: s.id,
-        firstName: s.firstName,
-        lastName: s.lastName,
-        studentCustomId: s.studentCustomId,
-        grades,
-      }
-    })
+  async getLinkedStudentIds(schoolMemberId: string, schoolId: string): Promise<string[]> {
+    const linked = await db
+      .select({ studentId: parentStudents.studentId })
+      .from(parentStudents)
+      .where(and(eq(parentStudents.schoolMemberId, schoolMemberId), eq(parentStudents.schoolId, schoolId)))
+    return linked.map(r => r.studentId)
+  },
+
+  /** Années ayant au moins un bulletin pour les enfants du parent (+ l'année en cours), récentes d'abord. */
+  async getParentExamYears(schoolMemberId: string, schoolId: string, currentYear: string): Promise<string[]> {
+    const studentIds = await this.getLinkedStudentIds(schoolMemberId, schoolId)
+    const rows = studentIds.length === 0 ? [] : await db
+      .selectDistinct({ year: examResults.academicYear })
+      .from(examResults)
+      .where(and(inArray(examResults.studentId, studentIds), eq(examResults.schoolId, schoolId)))
+    const years = new Set([currentYear, ...rows.map(r => r.year).filter((y): y is string => !!y)])
+    return Array.from(years).sort().reverse()
   },
 
   // L'enseignant (titulaire ou assistant) de la classe, et l'élève y est inscrit
@@ -637,15 +634,28 @@ export const examsService = {
     return (await this.getExamFlags(schoolId, trimester)).periodOpen
   },
 
-  // Visibilité parent = « Bulletins publiés » ; signature = période ouverte (§7.20).
-  // Non publiés : on renvoie les enfants (pour l'en-tête) mais aucun bulletin.
-  async getParentExamView(schoolMemberId: string, schoolId: string, trimester: number): Promise<ParentExamView> {
-    const [{ periodOpen, published }, children] = await Promise.all([
-      this.getExamFlags(schoolId, trimester),
-      this.getChildrenGrades(schoolMemberId, schoolId, trimester),
+  // Année en cours : visibilité = « Bulletins publiés », signature = période ouverte (§7.20).
+  // Année passée : historique toujours visible, en lecture seule (les réglages ne portent que
+  // sur l'année en cours). Non publiés : on renvoie les enfants (pour l'en-tête) sans bulletin.
+  async getParentExamView(
+    schoolMemberId: string,
+    schoolId: string,
+    trimester: number,
+    academicYear?: string,
+  ): Promise<ParentExamView> {
+    const flags = await this.getExamFlags(schoolId, trimester)
+    const year = academicYear || flags.academicYear
+    const isCurrentYear = year === flags.academicYear
+    const [children, availableYears] = await Promise.all([
+      this.getChildrenGrades(schoolMemberId, schoolId, trimester, year),
+      this.getParentExamYears(schoolMemberId, schoolId, flags.academicYear),
     ])
+    const published = isCurrentYear ? flags.published : true
     return {
-      periodOpen,
+      academicYear: year,
+      availableYears,
+      isCurrentYear,
+      periodOpen: isCurrentYear && flags.periodOpen,
       published,
       children: published ? children : children.map(c => ({ ...c, grades: [] })),
     }
