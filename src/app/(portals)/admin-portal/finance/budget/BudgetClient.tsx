@@ -19,6 +19,7 @@ import {
 } from '@/modules/payments/payments.labels'
 import { PaymentFormDialog } from './PaymentFormDialog'
 import { PaymentReminderDialog } from './PaymentReminderDialog'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog/ConfirmDialog'
 import { exportPaymentsToExcel } from './budget.excel'
 
 const METHOD_CHIPS = ['venmo', 'cash', 'check', 'paypal', 'no_fees']
@@ -80,6 +81,7 @@ export function BudgetClient() {
   const deletePayment = useDeletePayment()
 
   const [search, setSearch] = useState('')
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [methodFilter, setMethodFilter] = useState<string | null>(null)
   const [periodFilter, setPeriodFilter] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
@@ -144,6 +146,14 @@ export function BudgetClient() {
 
       <div className="flex flex-wrap gap-3">
         <PaymentFormDialog editing={editing} onClose={() => setEditing(null)} />
+        <ConfirmDialog
+          open={!!cancellingId}
+          onOpenChange={o => { if (!o) setCancellingId(null) }}
+          title="Supprimer ce paiement ?"
+          description="Il sera retiré du Budget et des statuts de paiement, mais restera visible comme « Annulé » dans l'historique des paiements de l'élève."
+          confirmLabel="Supprimer"
+          onConfirm={() => { if (cancellingId) deletePayment.mutate(cancellingId); setCancellingId(null) }}
+        />
         <PaymentReminderDialog />
         <Button
           variant="outline"
@@ -279,7 +289,7 @@ export function BudgetClient() {
                           <button
                             type="button"
                             title="Supprimer"
-                            onClick={() => deletePayment.mutate(p.id)}
+                            onClick={() => setCancellingId(p.id)}
                             className="p-1.5 rounded hover:bg-red-100 text-red-600"
                           >
                             <Trash2 className="h-4 w-4" />

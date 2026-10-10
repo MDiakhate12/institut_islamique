@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText, CalendarDays, ClipboardList, BookOpen, ChevronDown, ChevronUp, ClipboardCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog/ConfirmDialog'
 import type { StudentListItem, GuardianSummary } from '@/modules/students/students.types'
 import { calcAge } from '@/modules/students/students.types'
 import { studentsKeys } from '@/modules/students/students.hooks'
@@ -347,9 +348,15 @@ export function StudentFormDialog({
     return localEnrollments.length > 0 && localEnrollments.every(e => e[field])
   }
 
+  function setGlobalPayment(field: 'paidT1' | 'paidT2' | 'paidT3', paid: boolean) {
+    setLocalEnrollments(prev => prev.map(e => ({ ...e, [field]: paid })))
+  }
+
+  // Décocher un trimestre payé annule le paiement à l'enregistrement : confirmation d'abord
+  const [pendingUnpay, setPendingUnpay] = useState<'paidT1' | 'paidT2' | 'paidT3' | null>(null)
   function toggleGlobalPayment(field: 'paidT1' | 'paidT2' | 'paidT3') {
-    const next = !isTrimesterPaid(field)
-    setLocalEnrollments(prev => prev.map(e => ({ ...e, [field]: next })))
+    if (isTrimesterPaid(field)) setPendingUnpay(field)
+    else setGlobalPayment(field, true)
   }
 
   function removeClass(classId: string, isNew: boolean) {
@@ -831,6 +838,14 @@ export function StudentFormDialog({
                     )
                   })}
                 </div>
+                <ConfirmDialog
+                  open={!!pendingUnpay}
+                  onOpenChange={o => { if (!o) setPendingUnpay(null) }}
+                  title={`Marquer le trimestre ${pendingUnpay?.slice(-1) ?? ''} comme non payé ?`}
+                  description="À l'enregistrement, le paiement de ce trimestre sera annulé : il ne comptera plus comme payé, mais restera visible comme « Annulé » dans l'historique des paiements."
+                  confirmLabel="Marquer non payé"
+                  onConfirm={() => { if (pendingUnpay) setGlobalPayment(pendingUnpay, false); setPendingUnpay(null) }}
+                />
               </div>
             )}
 

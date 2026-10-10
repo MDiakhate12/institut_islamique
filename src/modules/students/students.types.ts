@@ -99,6 +99,8 @@ export type StudentPayment = {
   status: string
   parentName: string | null
   notes: string | null
+  /** Paiement annulé (décoché ou « Supprimer » du Budget) — conservé pour l'historique */
+  cancelledAt: string | null
 }
 
 export type StudentAttendanceDay = {

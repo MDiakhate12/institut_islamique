@@ -82,7 +82,7 @@ export function useDeletePayment() {
     mutationFn: (id: string) => deletePaymentAction(id),
     onSuccess: (result) => {
       if (!result.success) { toast.error(result.error); return }
-      toast.success('Paiement supprimé')
+      toast.success('Paiement annulé')
       invalidate()
     },
     onError: () => toast.error('Erreur lors de la suppression'),

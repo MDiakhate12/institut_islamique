@@ -32,6 +32,10 @@ export const payments = pgTable('payments', {
   // « T1/T2/T3 payé » et les rappels d'impayés ne portent que sur l'année en cours
   academicYear:      text('academic_year').notNull().default(''),
   submittedBy:       uuid('submitted_by').references(() => schoolMembers.id),
+  // Annulation (jamais de suppression physique — audit) : exclu des statuts, du Budget et des
+  // rappels, mais conservé et affiché « Annulé » dans l'historique des paiements de l'élève
+  deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  deletedBy:         uuid('deleted_by').references(() => schoolMembers.id),
   createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
