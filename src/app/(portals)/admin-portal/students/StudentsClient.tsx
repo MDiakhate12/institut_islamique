@@ -294,7 +294,7 @@ export function StudentsClient() {
           <Button
             variant="outline" size="sm"
             className="border-green-600 text-green-700 hover:bg-green-50 gap-1.5"
-            onClick={() => students && exportStudentsToExcel(students)}
+            onClick={() => exportStudentsToExcel(filtered)}
           >
             <Download className="h-4 w-4" />
             Télécharger en Excel

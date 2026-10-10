@@ -253,6 +253,14 @@ function SchoolSettingsForm({ school }: { school: School }) {
   const isSaving = updateInfo.isPending || updateSettings.isPending
 
   async function onSubmit(values: SchoolSettingsFormValues) {
+    // N'envoyer que ce que CETTE personne a modifié depuis l'ouverture de la page. Avant, toute la
+    // page était renvoyée : un admin dont la page était ouverte depuis longtemps écrasait, en
+    // enregistrant un autre champ, les réglages changés entre-temps par un autre admin (ex. il
+    // rouvrait les inscriptions que l'école venait de fermer). Le serveur fusionne le patch.
+    const initial = form.formState.defaultValues ?? {}
+    const changed = (key: string) =>
+      JSON.stringify(values[key as keyof SchoolSettingsFormValues]) !== JSON.stringify(initial[key as keyof typeof initial])
+
     const infoPayload: UpdateSchoolInfoInput = {
       name: values.name,
       defaultLanguage: values.defaultLanguage,
@@ -299,11 +307,16 @@ function SchoolSettingsForm({ school }: { school: School }) {
       quickLinks: values.quickLinks,
     }
 
-    const [infoResult, settingsResult] = await Promise.all([
-      updateInfo.mutateAsync(infoPayload),
-      updateSettings.mutateAsync(settingsPayload),
+    const changedSettings = Object.fromEntries(
+      Object.entries(settingsPayload).filter(([key]) => changed(key)),
+    ) as UpdateSchoolSettingsInput
+    const infoChanged = Object.keys(infoPayload).some(changed)
+
+    const results = await Promise.all([
+      infoChanged ? updateInfo.mutateAsync(infoPayload) : null,
+      Object.keys(changedSettings).length > 0 ? updateSettings.mutateAsync(changedSettings) : null,
     ])
-    if (infoResult.success && settingsResult.success) reset(values)
+    if (results.every(r => r === null || r.success)) reset(values)
   }
 
   return (
