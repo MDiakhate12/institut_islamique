@@ -576,6 +576,7 @@ Trois modules (`src/modules/payments/`, `src/modules/expenses/`, `src/modules/wa
 - Le formulaire de paiement (admin et parent) permet de sélectionner **plusieurs étudiants** (`StudentMultiSelect`, `src/components/shared/StudentMultiSelect/`) : une ligne `payments` est insérée **par étudiant sélectionné**, pas une ligne partagée.
 - `wage_entries` (nouvelle table, aucun équivalent avant ce chantier) modélise la feuille de temps des enseignants payés : `hourlyRateCents` est un instantané de `school.settings.teacherHourlyRate` au moment de la saisie, éditable ensuite par l'admin (recalcule `amountCents`). Un admin peut saisir les heures de n'importe quel enseignant (`WageFormDialog`, sélecteur Enseignant) ; un enseignant ne peut saisir que les siennes (`LogMyHoursDialog`, `teacher-portal/refunds`, pas de sélecteur).
 - `ExpenseFormDialog` (`src/components/shared/ExpenseFormDialog/`) est partagé entre `/admin-portal/finance/expenses` ("Nouvelle dépense") et `/teacher-portal/refunds` ("Nouveau remboursement") — même pattern "un composant, plusieurs consommateurs" que §7.4/§7.12. Upload de reçu (JPG/PNG/PDF) en base64 côté client → Server Action → bucket Supabase Storage public `expense-receipts`.
+- **Année scolaire** : chaque paiement porte `payments.academic_year` ; statuts T1/T2/T3 et rappels d'impayés ne lisent que l'année en cours (§7.24). La liste et les KPI du Budget couvrent toutes les années.
 - L'onglet "Paiements" de Dépenses est un placeholder statique (pas de vraie intégration Stripe) — décision assumée, la référence elle-même ne l'a pas connecté.
 - Les libellés (méthode/catégorie/période) vivent dans `src/modules/payments/payments.labels.ts`, partagés entre Budget (admin) et Statut de paiement (parent) — ne pas les redéfinir localement dans un composant.
 - Bug corrigé (2026-08-15) : `paymentsService.getAll()` construisait `WHERE sm.id = ANY(${array})` en SQL brut — Drizzle envoie un tableau JS interpolé comme paramètre scalaire, pas comme littéral array Postgres, ce qui fait planter la requête (`malformed array literal`) dès qu'une école a un paiement `source='parent'`. Le `catch` de la Server Action avalait l'erreur et `usePayments()` retombait sur `[]` sans toast — symptôme observé : liste Budget vide sans erreur visible. Toujours construire les `IN (...)` dynamiques avec `sql.join(ids.map(id => sql\`${id}\`), sql\`, \`)`, jamais `= ANY(${array})`.
@@ -684,7 +685,8 @@ Paramètres de l'école → Opérations scolaires, pour le trimestre sélectionn
 Règles (source unique : `examsService.getExamFlags`) :
 - **Enseignant** : `submitExamResultAction` exige période ouverte **et** `canTeacherGrade` (titulaire/assistant de la classe, élève inscrit) ; la page `/teacher-portal/exams/[classId]/[studentId]` redirige vers la liste si la période est fermée.
 - **Parent** : `getParentExamView` renvoie `{ periodOpen, published, children }` — `grades` vides si non publiés (bandeau « Bulletins pas encore publiés ») ; publiés mais période fermée → bulletins en lecture seule (« signature indisponible »). Fermer la saisie ne fait **jamais** disparaître un bulletin déjà publié.
-- `signGrade` exige élève lié au parent (`parent_students`) + publiés + période ouverte.
+- `signGrade` exige élève lié au parent (`parent_students`) + publiés + période ouverte + bulletin de l'année en cours.
+- **Année scolaire** : toutes les lectures et l'écriture des bulletins filtrent sur l'année en cours ; l'année d'un bulletin vient du serveur, jamais du client (§7.24).
 - Ne jamais se contenter de masquer un lien/bouton côté UI : toute Server Action d'examens revérifie rôle + lien + réglages.
 - Après une soumission, passer par les hooks de `exams.hooks.ts` (ils invalident le cache TanStack) plutôt que par l'action directe.
 - Libellés des critères en étoiles : `EXAM_CRITERIA` (`src/modules/exams/exams.labels.ts`), partagés formulaire enseignant / bulletin parent — ne pas les redéfinir localement.
@@ -716,6 +718,26 @@ Composants dans `src/components/shared/Loader/`. Choix produit : **un seul indic
 - **Changement de période (jour, trimestre, filtre)** : `placeholderData: keepPreviousData` dans le hook + `<PendingContent pending={isPlaceholderData}>` — l'affichage précédent reste visible, atténué. Pour une autre entité (autre classe, autre enfant) : `Loader`.
 - **Données serveur `initial*`** : en `initialData` du hook **uniquement pour la valeur initiale du paramètre** ; jamais `data ?? initialX` pour une autre valeur (le suivi des devoirs admin et les examens affichaient ainsi les données du jour / trimestre initial).
 - **Toujours tester `isLoading` avant l'état vide**, sinon « Aucun … » s'affiche le temps de la requête.
+
+### 7.24 Année scolaire — tout ce qui en dépend
+
+Source unique : `settings.academicYear` (Paramètres de l'école → Opérations scolaires), lue côté serveur par `schoolService.getAcademicYear(schoolId)` (`examsService.getAcademicYear` en est une copie, à fusionner). **Jamais** l'année envoyée par le client, **jamais** une année calculée sur la date du calendrier ni codée en dur.
+
+| Donnée | Colonne | Règle |
+|---|---|---|
+| Inscriptions | `registrations.academic_year` | Renseignée à la soumission ; « Inscrit » / statut du sélecteur parent filtrés par année |
+| Bulletins | `exam_results.academic_year` | Lectures (enseignant, admin, parent) et écriture filtrées sur l'année en cours — sinon le T1 de l'année N+1 écrasait celui de l'année N |
+| Paiements | `payments.academic_year` (ajoutée le 2026-10-10, backfill = année de l'école) | Renseignée à la saisie (Budget, « Marquer comme payé », cases T1/T2/T3) ; statuts et rappels d'impayés filtrés par année |
+| Élèves | `students.enrollment_year` | Année en cours si non précisée (inscription en ligne, import, option « Année scolaire en cours » du formulaire) — backfill 2026-10-10 depuis la dernière inscription |
+| Classes | `classes.academic_year` | Année en cours à la création (étiquette, non utilisée fonctionnellement) |
+
+Changer l'année dans les Paramètres = passer à l'année suivante : statuts payés, bulletins et « Inscrit » repartent de zéro, l'historique reste en base. Présences et devoirs sont datés, donc non concernés.
+
+### 7.25 Changement de compte — rechargement complet
+
+Connexion, déconnexion, inscription et suppression de compte se terminent par `hardNavigate(path)` (`src/lib/auth/hard-navigate.ts`, `window.location.assign`) : les Server Actions renvoient la destination au lieu d'appeler `redirect()`. Une redirection Next est une navigation côté client — le cache TanStack Query (clés non liées à l'école, ex. `['school', 'detail']`) et le cache du routeur survivaient : après un changement de compte, Paramètres de l'école affichait les réglages de l'école précédente (et « Enregistrer » les aurait écrits dans la nouvelle). Toute nouvelle action qui change l'identité doit suivre ce modèle.
+
+En dev, `logging.serverFunctions: false` (`next.config.ts`) : Next journalisait les arguments des Server Actions, dont les mots de passe en clair.
 
 ---
 
