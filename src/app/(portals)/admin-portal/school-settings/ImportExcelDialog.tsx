@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { isValidPhone } from '@/lib/phone'
 import * as XLSX from 'xlsx'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -104,6 +105,9 @@ function validateStudentRow(row: Record<string, string>): string | null {
   if (normalizeBirthDate(row['Date de naissance']) === null) {
     return `Date de naissance invalide "${row['Date de naissance']}". Format attendu : JJ/MM/AAAA`
   }
+  if (!isValidPhone(normalizePhone(row['Téléphone parent']))) {
+    return `Téléphone invalide "${row['Téléphone parent']}". Ex. 06 12 34 56 78, ou +213… pour l'étranger`
+  }
   return null
 }
 
@@ -116,6 +120,9 @@ function validateTeacherRow(row: Record<string, string>): string | null {
   if (!type) return 'Type manquant'
   if (!['bénévole', 'benevole', 'b', 'payé', 'paye', 'p'].some(v => type.startsWith(v))) {
     return `Type invalide "${row['Type (Bénévole/Payé)']}". Utilisez Bénévole ou Payé`
+  }
+  if (!isValidPhone(normalizePhone(row['Téléphone']))) {
+    return `Téléphone invalide "${row['Téléphone']}". Ex. 06 12 34 56 78, ou +213… pour l'étranger`
   }
   return null
 }

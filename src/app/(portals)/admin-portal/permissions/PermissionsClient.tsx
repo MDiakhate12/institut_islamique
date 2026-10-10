@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { formatPhone } from '@/lib/phone'
 import { ShieldCheck, Wallet, Briefcase, Mail, Phone, XCircle, Plus, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { usePermissions, useResendInvitation } from '@/modules/permissions/permissions.hooks'
@@ -74,7 +75,7 @@ function MemberCard({
         {member.phone && (
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Phone className="h-3.5 w-3.5 shrink-0" />
-            <span>{member.phone}</span>
+            <span>{formatPhone(member.phone)}</span>
           </div>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { optionalPhoneField } from '@/lib/phone'
 
 // ── School identity / contact ─────────────────────────────────────────────────
 
@@ -7,7 +8,7 @@ export const updateSchoolInfoSchema = z.object({
   defaultLanguage: z.string().default('fr'),
   timezone:        z.string().default('UTC'),
   contactEmail:    z.string().email('Email invalide').optional().or(z.literal('')),
-  phone:           z.string().optional(),
+  phone:           optionalPhoneField,
   address:         z.string().optional(),
   website:         z.string().optional(),
   facebook:        z.string().optional(),

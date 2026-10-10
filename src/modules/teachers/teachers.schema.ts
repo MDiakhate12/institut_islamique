@@ -1,9 +1,10 @@
 import { z } from 'zod'
+import { optionalPhoneField } from '@/lib/phone'
 
 export const inviteTeacherSchema = z.object({
   email:       z.string().email("L'email est invalide"),
   fullName:    z.string().min(1, 'Le nom complet est requis'),
-  phone:       z.string().optional(),
+  phone:       optionalPhoneField,
   gender:      z.enum(['male', 'female']).optional(),
   teacherType: z.enum(['volunteer', 'paid'], { message: 'Le type est requis' }),
 })
@@ -12,7 +13,7 @@ export const updateTeacherSchema = z.object({
   // Modifiable uniquement tant que l'enseignant n'a pas créé son compte (NIL_UUID)
   email:       z.string().trim().toLowerCase().email("L'email est invalide").optional(),
   fullName:   z.string().transform(val => val === '' ? undefined : val).optional(),
-  phone:       z.string().optional(),
+  phone:       optionalPhoneField,
   gender:      z.enum(['male', 'female']).optional(),
   teacherType: z.enum(['volunteer', 'paid']).optional(),
   isActive:    z.boolean().optional(),   // mappe sur !isPending

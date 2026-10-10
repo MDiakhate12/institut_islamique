@@ -1,4 +1,5 @@
 import { localTodayISO } from '@/lib/dates'
+import { formatPhone } from '@/lib/phone'
 import * as XLSX from 'xlsx'
 import type { TeacherListItem } from '@/modules/teachers/teachers.types'
 
@@ -6,7 +7,7 @@ export function exportTeachersToExcel(teachers: TeacherListItem[]) {
   const rows = teachers.map(t => ({
     'Nom complet':       t.fullName ?? '—',
     'Email':             t.email,
-    'Téléphone':         t.phone ?? '—',
+    'Téléphone':         formatPhone(t.phone) || '—',
     'Type':              t.teacherType === 'volunteer' ? 'Bénévole' : t.teacherType === 'paid' ? 'Payé' : '—',
     'Classes actives':   t.classCount,
     'Statut':            t.isPending ? 'En attente' : 'Actif',

@@ -208,8 +208,9 @@ function GuardianCard({ index, guardian: g, isFirst, accountHolder, takenRelatio
           <label htmlFor={id('emergencyPhone')} className="text-xs font-medium mb-1 block">
             Téléphone d&apos;urgence <span className="text-muted-foreground font-normal">(optionnel)</span>
           </label>
-          <Input id={id('emergencyPhone')} type="tel" className={INPUT_CLASS} value={g.emergencyPhone}
+          <Input id={id('emergencyPhone')} type="tel" className={cn(INPUT_CLASS, errCls('emergencyPhone'))} value={g.emergencyPhone}
             onChange={e => onChange({ emergencyPhone: e.target.value })} placeholder="0X XX XX XX XX" />
+          {err('emergencyPhone') && <p className="text-xs text-red-600 mt-1">{err('emergencyPhone')}</p>}
         </div>
       </div>
 

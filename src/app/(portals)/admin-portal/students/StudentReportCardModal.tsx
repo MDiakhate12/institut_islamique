@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { formatPhone } from '@/lib/phone'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useStudentReportCard } from '@/modules/students/students.hooks'
 import { Printer } from 'lucide-react'
@@ -149,7 +150,7 @@ export function StudentReportCardModal({ open, onOpenChange, student }: Props) {
               <div style={{ fontSize: 20, fontWeight: 700 }}>{student.firstName} {student.lastName}</div>
               <div style={{ fontSize: 12, color: '#666', textAlign: 'right', lineHeight: '1.6' }}>
                 <div>{student.enrollmentYear ?? '—'}</div>
-                {father?.phone && <div>Tél : {father.phone}</div>}
+                {father?.phone && <div>Tél : {formatPhone(father.phone)}</div>}
               </div>
             </div>
 

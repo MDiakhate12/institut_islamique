@@ -1,4 +1,5 @@
 import { localTodayISO } from '@/lib/dates'
+import { formatPhone } from '@/lib/phone'
 import * as XLSX from 'xlsx'
 import type { GuardianSummary, StudentListItem } from '@/modules/students/students.types'
 import { calcAge, guardianDisplayName } from '@/modules/students/students.types'
@@ -55,15 +56,15 @@ export function exportStudentsToExcel(students: StudentListItem[]) {
       "Date d'inscription":         formatDate(s.createdAt),
       'Niveau scolaire':            s.schoolGrade ?? '',
       'Nom du père':                father ? guardianDisplayName(father) : s.regFatherName ?? '',
-      'Tél. du père':               father?.phone ?? s.regPhone ?? '',
+      'Tél. du père':               formatPhone(father?.phone ?? s.regPhone),
       'Email du père':              father?.email ?? s.regEmail ?? '',
       'Nom de la mère':             mother ? guardianDisplayName(mother) : s.regMotherName ?? '',
-      'Tél. de la mère':            mother?.phone ?? '',
+      'Tél. de la mère':            formatPhone(mother?.phone),
       'Email de la mère':           mother?.email ?? '',
       'Autres tuteurs':             others
         .map(g => [
           `${guardianDisplayName(g)} (${RELATIONSHIP_LABELS[g.relationship] ?? g.relationship})`,
-          g.phone, g.email,
+          formatPhone(g.phone), g.email,
         ].filter(Boolean).join(' — '))
         .join(' ; '),
       'Paiement T1':                paymentStatus(s, s.paymentT1),

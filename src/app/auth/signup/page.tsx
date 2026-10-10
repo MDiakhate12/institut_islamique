@@ -1,4 +1,5 @@
 import { db } from '@/db'
+import { formatPhone } from '@/lib/phone'
 import { schools, schoolMembers } from '@/db/schema'
 import { asc, and, eq } from 'drizzle-orm'
 import { SignupForm } from './SignupForm'
@@ -33,7 +34,7 @@ export default async function SignupPage({ searchParams }: Props) {
       ))
       .limit(1)
     prefilledFullName = member?.fullName ?? ''
-    prefilledPhone = member?.phone ?? ''
+    prefilledPhone = formatPhone(member?.phone)
   }
 
   return (

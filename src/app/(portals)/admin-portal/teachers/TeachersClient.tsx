@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useTransition } from 'react'
+import { formatPhone, phoneMatches } from '@/lib/phone'
 import { useTeachers } from '@/modules/teachers/teachers.hooks'
 import { TeacherFormDialog } from './TeacherForm'
 import { Button } from '@/components/ui/button'
@@ -43,7 +44,7 @@ export function TeachersClient() {
         return (
           (t.fullName?.toLowerCase().includes(q) ?? false) ||
           t.email.toLowerCase().includes(q) ||
-          (t.phone?.toLowerCase().includes(q) ?? false)
+          phoneMatches(t.phone, q)
         )
       }
       return true
@@ -283,7 +284,7 @@ function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
         {teacher.phone && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Phone className="h-3.5 w-3.5 shrink-0" />
-            <span>{teacher.phone}</span>
+            <span>{formatPhone(teacher.phone)}</span>
           </div>
         )}
       </div>

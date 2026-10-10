@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { isValidPhone } from '@/lib/phone'
 import { studentsService } from './students.service'
 import { createStudentSchema, updateStudentSchema } from './students.schema'
 import { requireSession } from '@/lib/auth/session'
@@ -234,6 +235,10 @@ export async function importStudentsAction(
     // Le dialog convertit les dates en 'AAAA-MM-JJ' ; toute autre forme serait rejetée par Postgres
     if (row.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(row.birthDate)) {
       errors.push({ row: rowNum, message: `Date de naissance invalide: "${row.birthDate}". Format attendu : JJ/MM/AAAA` })
+      continue
+    }
+    if (!isValidPhone(row.parentPhone)) {
+      errors.push({ row: rowNum, message: `Téléphone invalide: "${row.parentPhone}"` })
       continue
     }
 

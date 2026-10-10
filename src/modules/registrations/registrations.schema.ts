@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { FormField, FormItem, SystemFieldKey, RegistrationGuardianInput, GuardianOptions } from './registrations.types'
+import { isValidPhone, PHONE_INVALID_MESSAGE } from '@/lib/phone'
 
 export const formTypeSchema = z.enum(['new_student', 'reenrollment'])
 
@@ -35,6 +36,25 @@ function isEmptyValue(value: unknown): boolean {
   if (typeof value === 'number') return value === 0 || Number.isNaN(value) // note 0 = pas de note
   if (Array.isArray(value)) return value.length === 0
   return false
+}
+
+/** Champs « Téléphone » remplis avec un numéro qui n'existe pas (trop court, deux numéros collés…). */
+export function getInvalidPhoneFields(
+  schema: FormItem[],
+  formData: Record<string, unknown>,
+  ctx: Pick<RequiredFieldsContext, 'skipFieldKeys'> = {},
+): FormField[] {
+  const invalid: FormField[] = []
+  for (const item of schema) {
+    if (item.kind !== 'section') continue
+    for (const field of item.fields) {
+      if (field.type !== 'tel') continue
+      if (field.kind === 'system_field' && ctx.skipFieldKeys?.includes(field.fieldKey)) continue
+      const value = formData[field.id]
+      if (typeof value === 'string' && !isValidPhone(value)) invalid.push(field)
+    }
+  }
+  return invalid
 }
 
 /** Champs marqués requis (*) mais non remplis, dans l'ordre du formulaire. */
@@ -105,6 +125,8 @@ export function getGuardianErrors(
     if (i === 0 && !g.phone.trim()) errors[`${i}.phone`] = 'Ce champ est requis'
     if (i === 0 && !opts.accountHolder && !g.email.trim()) errors[`${i}.email`] = 'Ce champ est requis'
     if (g.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email.trim())) errors[`${i}.email`] = 'E-mail invalide'
+    if (g.phone.trim() && !isValidPhone(g.phone)) errors[`${i}.phone`] = PHONE_INVALID_MESSAGE
+    if (g.emergencyPhone?.trim() && !isValidPhone(g.emergencyPhone)) errors[`${i}.emergencyPhone`] = PHONE_INVALID_MESSAGE
   })
   for (const rel of ['father', 'mother'] as const) {
     const idx = guardians.map((g, i) => (g.relationship === rel ? i : -1)).filter(i => i >= 0)

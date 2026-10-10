@@ -7,7 +7,7 @@ import { canAccess } from '@/lib/auth/permissions'
 import { ok, err, unauthorized } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { registrationsService, buildKeyToIdMap } from './registrations.service'
-import { getMissingRequiredFields, reviewRegistrationSchema, registrationGuardiansSchema, getGuardianErrors } from './registrations.schema'
+import { getMissingRequiredFields, getInvalidPhoneFields, reviewRegistrationSchema, registrationGuardiansSchema, getGuardianErrors } from './registrations.schema'
 import { studentsService } from '@/modules/students/students.service'
 import { scheduledClassesService } from '@/modules/classes/classes.service'
 import { parentsService } from '@/modules/parents/parents.service'
@@ -20,6 +20,7 @@ import type { SchoolSettings } from '@/db/schema/schools'
 import { sendEmail, getAppUrl, getSchoolName, getEmailsForMembers } from '@/lib/email'
 import { notifyAdmins } from '@/modules/notifications/notify-admins'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
+import { toStoredPhone } from '@/lib/phone'
 
 const PATH = '/admin-portal/registration-forms'
 
@@ -163,6 +164,12 @@ export async function submitRegistrationAction(
     if (missing.length > 0) {
       return err(`Champs obligatoires manquants : ${missing.map(f => f.label).join(', ')}`)
     }
+    const invalidPhones = getInvalidPhoneFields(form.formSchema, formData, {
+      skipFieldKeys: parentGuardians ? GUARDIAN_FIELD_KEYS : undefined,
+    })
+    if (invalidPhones.length > 0) {
+      return err(`Numéro de téléphone invalide : ${invalidPhones.map(f => f.label).join(', ')}`)
+    }
 
     const get = (key: SystemFieldKey): string | undefined => {
       const fieldId = keyToId[key]
@@ -214,8 +221,8 @@ export async function submitRegistrationAction(
               lastName:       '',
               isPrimary:      i === 0,
               email:          g.email.trim() || null,
-              phone:          g.phone.trim() || null,
-              emergencyPhone: g.emergencyPhone.trim() || null,
+              phone:          toStoredPhone(g.phone),
+              emergencyPhone: toStoredPhone(g.emergencyPhone),
               // Portail parent : tuteur 1 = le parent connecté, rattaché à son compte
               linkedMemberId: i === 0 && isAccountHolder ? submitterMemberId : null,
             })
@@ -231,8 +238,8 @@ export async function submitRegistrationAction(
               firstName:      fatherName,
               isPrimary:      true,
               email:          get('primaryEmail')   || null,
-              phone:          get('primaryPhone')   || null,
-              emergencyPhone: get('secondaryPhone') || null,
+              phone:          toStoredPhone(get('primaryPhone')),
+              emergencyPhone: toStoredPhone(get('secondaryPhone')),
             })
           }
           if (motherName) {
@@ -243,7 +250,7 @@ export async function submitRegistrationAction(
               firstName:    motherName,
               isPrimary:    !fatherName,
               email:        get('secondaryEmail') || (fatherName ? null : get('primaryEmail') || null),
-              phone:        fatherName ? null : get('primaryPhone') || null,
+              phone:        fatherName ? null : toStoredPhone(get('primaryPhone')),
             })
           }
         }

@@ -6,7 +6,8 @@ import { toast } from 'sonner'
 import { Info, AlertTriangle, CheckCircle, XCircle, Star, X, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { submitRegistrationAction } from '@/modules/registrations/registrations.actions'
-import { getMissingRequiredFields, getGuardianErrors } from '@/modules/registrations/registrations.schema'
+import { getMissingRequiredFields, getInvalidPhoneFields, getGuardianErrors } from '@/modules/registrations/registrations.schema'
+import { PHONE_INVALID_MESSAGE } from '@/lib/phone'
 import { GuardiansInput, emptyGuardian, complementRelation } from '@/components/shared/GuardiansInput/GuardiansInput'
 import type { FormItem, FormSection, InfoBlock, FormField, FormType, InfoBlockStyle, RegistrationClassItem, RegistrationGuardianInput } from '@/modules/registrations/registrations.types'
 import { GUARDIAN_FIELD_KEYS, getGuardianOptions } from '@/modules/registrations/registrations.types'
@@ -453,7 +454,7 @@ function SectionRenderer({
   formType: FormType
   formData: Record<string, unknown>
   onFieldChange: (key: string, value: unknown) => void
-  errors: Set<string>
+  errors: Map<string, string>
   gradeOptions?: string[]
   financialOptions?: string[]
   prefilledStudent?: { name: string; id: string }
@@ -532,7 +533,7 @@ function SectionRenderer({
                 gradeOptions={field.kind === 'system_field' && field.fieldKey === 'schoolGrade' ? gradeOptions : undefined}
                 financialOptions={field.kind === 'system_field' && field.fieldKey === 'financialAid' ? financialOptions : undefined}
               />
-              {hasError && <p className="text-xs text-red-600 mt-1">Ce champ est requis</p>}
+              {hasError && <p className="text-xs text-red-600 mt-1">{errors.get(field.id)}</p>}
             </div>
           )
         })}
@@ -590,7 +591,8 @@ export function PublicRegistrationForm({
     return seeded
   })
   const [isPending, startTransition] = useTransition()
-  const [errors, setErrors] = useState<Set<string>>(new Set())
+  // id du champ → message (« Ce champ est requis » ou numéro invalide)
+  const [errors, setErrors] = useState<Map<string, string>>(new Map())
   // Bloc « Tuteurs » à la place des champs père/mère/contact (si l'école les a dans son formulaire)
   const accountHolder = !!initialGuardians
   const withGuardians = formType === 'new_student' && schema.some(item =>
@@ -613,7 +615,7 @@ export function PublicRegistrationForm({
 
   function handleFieldChange(key: string, value: unknown) {
     setFormData(prev => ({ ...prev, [key]: value }))
-    if (errors.has(key)) setErrors(prev => { const next = new Set(prev); next.delete(key); return next })
+    if (errors.has(key)) setErrors(prev => { const next = new Map(prev); next.delete(key); return next })
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -626,15 +628,23 @@ export function PublicRegistrationForm({
       gradeOptions, financialOptions,
       skipFieldKeys: withGuardians ? GUARDIAN_FIELD_KEYS : undefined,
     })
+    const invalidPhones = getInvalidPhoneFields(schema, formData, {
+      skipFieldKeys: withGuardians ? GUARDIAN_FIELD_KEYS : undefined,
+    })
     const gErrors = withGuardians ? getGuardianErrors(guardians, { accountHolder, options: guardianOptions }) : {}
-    const errorCount = missing.length + Object.keys(gErrors).length
+    const errorCount = missing.length + invalidPhones.length + Object.keys(gErrors).length
     if (errorCount > 0) {
-      setErrors(new Set(missing.map(f => f.id)))
+      setErrors(new Map([
+        ...invalidPhones.map(f => [f.id, PHONE_INVALID_MESSAGE] as const),
+        ...missing.map(f => [f.id, 'Ce champ est requis'] as const),
+      ]))
       setGuardianErrors(gErrors)
-      toast.error(errorCount === 1
-        ? 'Veuillez compléter le champ obligatoire'
-        : `Veuillez compléter les ${errorCount} champs obligatoires`)
-      const firstId = Object.keys(gErrors).length > 0 ? 'field-guardians' : `field-${missing[0].id}`
+      const hasInvalid = invalidPhones.length > 0 || Object.values(gErrors).includes(PHONE_INVALID_MESSAGE)
+      toast.error(!hasInvalid
+        ? (errorCount === 1 ? 'Veuillez compléter le champ obligatoire' : `Veuillez compléter les ${errorCount} champs obligatoires`)
+        : (errorCount === 1 ? 'Veuillez corriger le champ indiqué' : `Veuillez corriger les ${errorCount} champs indiqués`))
+      const firstField = missing[0] ?? invalidPhones[0]
+      const firstId = Object.keys(gErrors).length > 0 || !firstField ? 'field-guardians' : `field-${firstField.id}`
       document.getElementById(firstId)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }

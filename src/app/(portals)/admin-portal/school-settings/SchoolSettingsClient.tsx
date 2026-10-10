@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useId } from 'react'
+import { formatPhone } from '@/lib/phone'
 import { toast } from 'sonner'
 import { useForm, FormProvider, useFormContext, Controller } from 'react-hook-form'
 import {
@@ -135,7 +136,7 @@ function buildDefaultValues(school: School): SchoolSettingsFormValues {
     defaultLanguage: school.defaultLanguage ?? 'fr',
     timezone:        school.timezone ?? 'UTC',
     contactEmail:    school.contactEmail ?? '',
-    phone:           school.phone ?? '',
+    phone:           formatPhone(school.phone),
     address:         school.address ?? '',
     website:         school.website ?? '',
     facebook:        school.facebook ?? '',

@@ -1,4 +1,5 @@
 import { localTodayISO } from '@/lib/dates'
+import { formatPhone } from '@/lib/phone'
 import * as XLSX from 'xlsx'
 import type { RegistrationWithDetails } from '@/modules/registrations/registrations.types'
 
@@ -11,7 +12,7 @@ export function exportRegistrationsToExcel(registrations: RegistrationWithDetail
     'Date de soumission': new Date(r.submittedAt).toLocaleDateString('fr-FR'),
     'Parents': r.parents.map(p => p.name).join(', '),
     'E-mail': r.parents.map(p => p.email).filter(Boolean).join(', '),
-    'Téléphone': r.parents.map(p => p.phone).filter(Boolean).join(', '),
+    'Téléphone': r.parents.map(p => formatPhone(p.phone)).filter(Boolean).join(', '),
     'Niveau': r.grade ?? '',
     'Classes': r.classes.map(c => c.fullCode).join(', '),
     'Fréquence de paiement': r.paymentFrequency ?? '',
