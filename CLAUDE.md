@@ -689,6 +689,7 @@ Règles (source unique : `examsService.getExamFlags`) :
 - **Année scolaire** : toutes les lectures et l'écriture des bulletins filtrent sur l'année en cours ; l'année d'un bulletin vient du serveur, jamais du client (§7.24).
 - Ne jamais se contenter de masquer un lien/bouton côté UI : toute Server Action d'examens revérifie rôle + lien + réglages.
 - Après une soumission, passer par les hooks de `exams.hooks.ts` (ils invalident le cache TanStack) plutôt que par l'action directe.
+- **Historique parent** : `getChildrenGrades` part des bulletins (pas des inscriptions en cours) — un bulletin reste visible après que l'enfant a quitté la classe (badge « Classe quittée ») ; filtre par année (`getParentExamYears` : années ayant des bulletins + année en cours). Une autre année que l'année en cours est toujours visible, en lecture seule (pas de signature). Décision produit : aucune information n'est perdue, on ajoute des filtres.
 - Libellés des critères en étoiles : `EXAM_CRITERIA` (`src/modules/exams/exams.labels.ts`), partagés formulaire enseignant / bulletin parent — ne pas les redéfinir localement.
 - Modifier le contenu d'un bulletin signé (étoiles, commentaires, note) remet `parentSignature` à `null` dans `submitExamResult` : le parent doit re-signer ; le formulaire enseignant l'avertit avant, et les parents liés reçoivent une notification in-app (type `exam_signature_reset`, cloche) + un e-mail (`notifyParentsSignatureReset`, `getParentEmailsForStudent`).
 

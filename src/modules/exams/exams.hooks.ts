@@ -11,7 +11,7 @@ import {
   getAdminExamStudentsAction,
 } from './exams.actions'
 import type { SubmitExamInput } from './exams.schema'
-import type { AdminExamClassProgress, AdminExamStudentProgress, TeacherExamClass } from './exams.types'
+import type { AdminExamClassProgress, AdminExamStudentProgress, ParentExamView, TeacherExamClass } from './exams.types'
 
 /** `initialData` : données serveur du trimestre affiché au chargement de la page. */
 export function useAdminExamClasses(trimester: number, initialData?: AdminExamClassProgress[]) {
@@ -71,13 +71,18 @@ export function useSubmitExamResult() {
   })
 }
 
-export function useParentChildrenGrades(trimester: number) {
+/** `initialData` : données serveur de l'année + du trimestre affichés au chargement de la page. */
+export function useParentChildrenGrades(trimester: number, academicYear: string, initialData?: ParentExamView) {
   return useQuery({
-    queryKey: ['parent-exam-grades', trimester],
+    queryKey: ['parent-exam-grades', trimester, academicYear],
     queryFn: async () => {
-      const r = await getParentChildrenGradesAction(trimester)
-      return r.success ? r.data : { periodOpen: false, published: false, children: [] }
+      const r = await getParentChildrenGradesAction(trimester, academicYear)
+      if (!r.success) throw new Error(r.error)
+      return r.data
     },
+    initialData,
+    // Changement d'année ou de trimestre : l'affichage précédent reste visible, atténué
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 }

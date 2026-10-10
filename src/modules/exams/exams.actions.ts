@@ -147,11 +147,12 @@ export async function getAdminExamStudentsAction(
 
 export async function getParentChildrenGradesAction(
   trimester: number,
+  academicYear?: string,
 ): Promise<ActionResult<ParentExamView>> {
   const session = await requireSession()
   if (!session.roles.includes('parent')) return err('Non autorisé')
   try {
-    const data = await examsService.getParentExamView(session.memberId, session.schoolId, trimester)
+    const data = await examsService.getParentExamView(session.memberId, session.schoolId, trimester, academicYear)
     return ok(data)
   } catch {
     return err('Erreur lors du chargement des bulletins')

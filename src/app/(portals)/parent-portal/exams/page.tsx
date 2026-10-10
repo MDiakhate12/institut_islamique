@@ -11,7 +11,6 @@ export default async function ParentExamsPage() {
     profileService.getProfile(session.userId, session.schoolId),
   ])
   const initialTrimester = school?.settings?.currentTrimester ?? 1
-  const academicYear = school?.settings?.academicYear ?? ''
   const parentName = profile?.fullName ?? session.email
 
   const view = await examsService.getParentExamView(session.memberId, session.schoolId, initialTrimester)
@@ -20,7 +19,6 @@ export default async function ParentExamsPage() {
     <ExamsClient
       initialView={view}
       initialTrimester={initialTrimester}
-      academicYear={academicYear}
       parentName={parentName}
     />
   )

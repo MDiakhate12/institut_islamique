@@ -83,6 +83,12 @@ export type ParentChildExamData = {
 /** Vue parent d'un trimestre : bulletins masqués (grades vides) tant qu'ils ne sont pas publiés ;
  *  signature possible seulement période ouverte */
 export type ParentExamView = {
+  /** Année affichée (par défaut l'année en cours de l'école) */
+  academicYear: string
+  /** Années ayant des bulletins pour les enfants (+ année en cours), récentes d'abord */
+  availableYears: string[]
+  /** Année passée = consultation seule (pas de signature) */
+  isCurrentYear: boolean
   periodOpen: boolean
   published: boolean
   children: ParentChildExamData[]
@@ -92,6 +98,8 @@ export type ParentExamGrade = {
   classId: string
   className: string
   teacherName: string | null
+  /** L'enfant n'est plus inscrit dans cette classe (bulletin conservé pour l'historique) */
+  classLeft: boolean
   examResultId: string
   attendance: number | null
   respectTeachers: number | null
