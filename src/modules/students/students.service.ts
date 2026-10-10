@@ -122,6 +122,7 @@ export const studentsService = {
           eq(payments.schoolId, schoolId),
           eq(payments.status, 'verified'),
           eq(payments.academicYear, academicYear),
+          isNull(payments.deletedAt),
         )),
 
       // 5. Attendance counts grouped by student + status
@@ -381,7 +382,7 @@ export const studentsService = {
     return student
   },
 
-  async update(schoolId: string, studentId: string, data: UpdateStudentInput): Promise<Student> {
+  async update(schoolId: string, studentId: string, data: UpdateStudentInput, memberId: string): Promise<Student> {
     const {
       enrollmentYear,
       classIdsToAdd, classIdsToRemove, paymentUpdates,
@@ -463,7 +464,7 @@ export const studentsService = {
     // Apply payment updates per class
     if (paymentUpdates?.length) {
       for (const { t1, t2, t3 } of paymentUpdates) {
-        await this._syncPayments(schoolId, studentId, { t1, t2, t3 })
+        await this._syncPayments(schoolId, studentId, { t1, t2, t3 }, memberId)
       }
     }
 
@@ -472,7 +473,8 @@ export const studentsService = {
 
   async _syncPayments(
     schoolId: string, studentId: string,
-    desired: { t1: boolean; t2: boolean; t3: boolean }
+    desired: { t1: boolean; t2: boolean; t3: boolean },
+    memberId: string,
   ): Promise<void> {
     // Les cases T1/T2/T3 du formulaire élève portent sur l'année en cours : avant, décocher T1
     // supprimait les paiements T1 vérifiés de TOUTES les années
@@ -485,6 +487,7 @@ export const studentsService = {
         eq(payments.studentId, studentId),
         eq(payments.status, 'verified'),
         eq(payments.academicYear, academicYear),
+        isNull(payments.deletedAt),
       ))
 
     const existingPeriods = new Set(existing.map(r => r.period))
@@ -503,13 +506,15 @@ export const studentsService = {
           amount: 0, currency: 'EUR', method: 'other', category: 'tuition',
         })
       } else if (!shouldBePaid && existingPeriods.has(period)) {
-        // We only delete trimester-specific records, not annual
-        await db.delete(payments).where(and(
+        // Seuls les paiements du trimestre (pas l'annuel) — annulés, jamais supprimés (audit) ;
+        // le formulaire a demandé confirmation avant de décocher
+        await db.update(payments).set({ deletedAt: new Date(), deletedBy: memberId, updatedAt: new Date() }).where(and(
           eq(payments.schoolId, schoolId),
           eq(payments.studentId, studentId),
           eq(payments.period, period),
           eq(payments.status, 'verified'),
           eq(payments.academicYear, academicYear),
+          isNull(payments.deletedAt),
         ))
       }
     }
@@ -538,6 +543,7 @@ export const studentsService = {
         status:     payments.status,
         notes:      payments.notes,
         academicYear: payments.academicYear,
+        deletedAt:  payments.deletedAt,
         guardianFn: guardians.firstName,
         guardianLn: guardians.lastName,
       })
@@ -554,6 +560,7 @@ export const studentsService = {
       studentId,
       date:       r.date,
       academicYear: r.academicYear || null,
+      cancelledAt: r.deletedAt ? r.deletedAt.toISOString() : null,
       amountCents: r.amount,
       currency:   r.currency,
       category:   r.category,

@@ -65,7 +65,7 @@ export async function deletePaymentAction(id: string): Promise<ActionResult<void
   const session = await requireSession()
   if (!canAccess(session, 'budget')) return err('Non autorisé')
   try {
-    await paymentsService.delete(session.schoolId, id)
+    await paymentsService.delete(session.schoolId, id, session.memberId)
     return ok(undefined)
   } catch {
     return err('Erreur lors de la suppression')

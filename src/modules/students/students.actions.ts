@@ -64,7 +64,7 @@ export async function updateStudentAction(
   if (!parsed.success) return err(parsed.error.issues[0].message)
 
   try {
-    const student = await studentsService.update(session.schoolId, studentId, parsed.data)
+    const student = await studentsService.update(session.schoolId, studentId, parsed.data, session.memberId)
     revalidatePath(ROUTES.admin.students)
     revalidatePath(`${ROUTES.admin.students}/${studentId}`)
     return ok(student)

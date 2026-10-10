@@ -2,7 +2,7 @@ import { db } from '@/db'
 import {
   payments, students, guardians, parentStudents, schoolMembers, profiles,
 } from '@/db/schema'
-import { and, eq, inArray, desc } from 'drizzle-orm'
+import { and, eq, inArray, desc, isNull } from 'drizzle-orm'
 import { authUsers } from '@/db/auth-users'
 import { schoolService } from '@/modules/school/school.service'
 import type { CreatePaymentInput } from './payments.schema'
@@ -36,7 +36,7 @@ export const paymentsService = {
       .leftJoin(students, eq(students.id, payments.studentId))
       .leftJoin(schoolMembers, eq(schoolMembers.id, payments.submittedBy))
       .leftJoin(profiles, eq(profiles.userId, schoolMembers.userId))
-      .where(eq(payments.schoolId, schoolId))
+      .where(and(eq(payments.schoolId, schoolId), isNull(payments.deletedAt)))
       .orderBy(desc(payments.createdAt))
 
     const parentMemberIds = Array.from(
@@ -79,7 +79,7 @@ export const paymentsService = {
     const rows = await db
       .select({ amount: payments.amount, status: payments.status, source: payments.source })
       .from(payments)
-      .where(eq(payments.schoolId, schoolId))
+      .where(and(eq(payments.schoolId, schoolId), isNull(payments.deletedAt)))
 
     const totalRevenue = rows
       .filter(r => r.status === 'verified')
@@ -141,8 +141,12 @@ export const paymentsService = {
       .where(and(eq(payments.id, id), eq(payments.schoolId, schoolId)))
   },
 
-  async delete(schoolId: string, id: string): Promise<void> {
-    await db.delete(payments).where(and(eq(payments.id, id), eq(payments.schoolId, schoolId)))
+  /** Annule le paiement (jamais de suppression physique : la ligne reste pour l'historique). */
+  async delete(schoolId: string, id: string, memberId: string): Promise<void> {
+    await db
+      .update(payments)
+      .set({ deletedAt: new Date(), deletedBy: memberId, updatedAt: new Date() })
+      .where(and(eq(payments.id, id), eq(payments.schoolId, schoolId), isNull(payments.deletedAt)))
   },
 
   async verify(schoolId: string, id: string): Promise<void> {
@@ -182,6 +186,7 @@ export const paymentsService = {
           inArray(payments.studentId, studentIds),
           eq(payments.schoolId, schoolId),
           eq(payments.academicYear, academicYear),
+          isNull(payments.deletedAt),
         )),
     ])
 
@@ -226,7 +231,7 @@ export const paymentsService = {
       db
         .select({ studentId: payments.studentId, period: payments.period, status: payments.status })
         .from(payments)
-        .where(and(eq(payments.schoolId, schoolId), eq(payments.academicYear, academicYear))),
+        .where(and(eq(payments.schoolId, schoolId), eq(payments.academicYear, academicYear), isNull(payments.deletedAt))),
 
       db
         .select({ studentId: guardians.studentId, email: guardians.email })

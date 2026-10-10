@@ -10,6 +10,8 @@ import type { EditablePayment } from '@/modules/payments/payments.types'
 import type { StudentPayment } from '@/modules/students/students.types'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Loader } from '@/components/shared/Loader/Loader'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog/ConfirmDialog'
+import { cn } from '@/lib/utils'
 
 const PERIOD_LABELS: Record<string, string> = {
   annually:    'Annuel',
@@ -71,6 +73,7 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
   const { data, isLoading } = useStudentPayments(studentId, open)
   const deletePayment = useDeletePayment()
   const [editing, setEditing] = useState<EditablePayment | null>(null)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const refreshStudentPayments = () => queryClient.invalidateQueries({ queryKey: studentsKeys.payments(studentId) })
 
@@ -99,12 +102,13 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
               </thead>
               <tbody>
                 {data.map(p => (
-                  <tr key={p.id} className="border-b hover:bg-gray-50">
+                  <tr key={p.id} className={cn('border-b hover:bg-gray-50', p.cancelledAt && 'opacity-60')}>
                     <td className="py-2 pr-4 text-gray-700">
                       {p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '—'}
                     </td>
                     <td className="py-2 pr-4 text-gray-700">
                       {PERIOD_LABELS[p.period] ?? p.period}
+                      {p.academicYear && <span className="block text-xs text-gray-400">{p.academicYear}</span>}
                     </td>
                     <td className="py-2 pr-4 text-gray-700">
                       {METHOD_LABELS[p.method] ?? p.method}
@@ -113,13 +117,19 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
                       {formatAmount(p.amountCents, p.currency)}
                     </td>
                     <td className="py-2 pr-4">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[p.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                        {STATUS_LABELS[p.status] ?? p.status}
-                      </span>
+                      {p.cancelledAt ? (
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 line-through decoration-gray-400">
+                          Annulé le {new Date(p.cancelledAt).toLocaleDateString('fr-FR')}
+                        </span>
+                      ) : (
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[p.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                          {STATUS_LABELS[p.status] ?? p.status}
+                        </span>
+                      )}
                     </td>
                     <td className="py-2 pr-4 text-gray-600">{p.parentName ?? '—'}</td>
                     <td className="py-2">
-                      <div className="flex items-center justify-end gap-1">
+                      {!p.cancelledAt && <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
                           onClick={() => setEditing(toEditablePayment(p))}
@@ -130,13 +140,13 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
                         </button>
                         <button
                           type="button"
-                          title="Supprimer"
-                          onClick={() => deletePayment.mutate(p.id, { onSuccess: refreshStudentPayments })}
+                          title="Annuler ce paiement"
+                          onClick={() => setCancellingId(p.id)}
                           className="p-1.5 rounded hover:bg-red-100 text-red-600"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                      </div>
+                      </div>}
                     </td>
                   </tr>
                 ))}
@@ -146,6 +156,17 @@ export function StudentPaymentsModal({ open, onOpenChange, studentId, studentNam
         )}
 
         <PaymentFormDialog editing={editing} onClose={() => { setEditing(null); refreshStudentPayments() }} />
+        <ConfirmDialog
+          open={!!cancellingId}
+          onOpenChange={o => { if (!o) setCancellingId(null) }}
+          title="Annuler ce paiement ?"
+          description="Il ne comptera plus dans les statuts ni dans le Budget, mais restera visible ici comme « Annulé » (historique)."
+          confirmLabel="Annuler le paiement"
+          onConfirm={() => {
+            if (cancellingId) deletePayment.mutate(cancellingId, { onSuccess: refreshStudentPayments })
+            setCancellingId(null)
+          }}
+        />
       </DialogContent>
     </Dialog>
   )
