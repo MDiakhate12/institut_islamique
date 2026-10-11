@@ -11,11 +11,11 @@ import postgres from 'postgres'
 import { eq } from 'drizzle-orm'
 import {
   schools, profiles, schoolMembers, students, guardians, parentStudents, classes, classEnrollments,
-  teacherAttendanceClasses, teacherHomeworkClasses, registrationForms, registrations,
+  teacherAttendanceClasses, teacherHomeworkClasses, registrationForms, registrations, examResults,
 } from '../src/db/schema'
 import { DEFAULT_NEW_STUDENT_SCHEMA, type FormItem } from '../src/modules/registrations/registrations.types'
 import { DEFAULT_SETTINGS } from '../src/db/schema/schools'
-import { E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_TWO_GUARDIANS_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, type E2ERole } from './support/users'
+import { E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_TWO_GUARDIANS_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, ARCHIVED_CLASS, type E2ERole } from './support/users'
 
 const env = loadE2EEnv() // lève une erreur si la base n'est pas locale
 
@@ -135,6 +135,29 @@ async function seed() {
     createdBy: memberIds.admin,
   }).returning()
   await db.insert(parentStudents).values({ schoolMemberId: memberIds.family, studentId: sami.id, schoolId: school.id })
+
+  // Historique de bulletins (parent-portal/exams) : Sami a un bulletin T1 d'une année passée dans une
+  // classe qu'il a quittée (aucune inscription, sans enseignant : elle n'apparaît dans aucune liste
+  // de l'enseignant). Voir e2e/parent/exam-history.spec.ts
+  const [archivedClass] = await db.insert(classes).values({
+    schoolId: school.id,
+    subject: 'QRN',
+    name: ARCHIVED_CLASS.name,
+    room: 'Salle 1',
+    academicYear: ARCHIVED_CLASS.year,
+  }).returning()
+  await db.insert(examResults).values({
+    schoolId: school.id,
+    classId: archivedClass.id,
+    studentId: sami.id,
+    trimester: 1,
+    academicYear: ARCHIVED_CLASS.year,
+    attendance: 5, respectTeachers: 4, respectOthers: 4, bringBooks: 3, participation: 4, eagerness: 5,
+    coveredContent: 'Sourate Al-Fatiha',
+    generalComments: "Bon trimestre d'archive.",
+    score: ARCHIVED_CLASS.score,
+    submittedBy: memberIds.teacher,
+  })
 
   // Classe déjà épinglée par l'enseignant (Présences + Devoirs) : l'épinglage via l'UI exclut
   // ensuite la classe des options, ce qui casserait le test au moindre retry

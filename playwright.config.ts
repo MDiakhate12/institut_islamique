@@ -36,6 +36,15 @@ export default defineConfig({
       name: 'desktop',
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
+      // Les tests de e2e/serial modifient des réglages d'école partagés : ils tournent à part
+      testIgnore: /serial\//,
+    },
+    {
+      // Après desktop, seuls : fermer les inscriptions ne peut pas casser les autres tests
+      name: 'serial',
+      testMatch: /serial\/.*\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['desktop'],
     },
     {
       name: 'mobile',
