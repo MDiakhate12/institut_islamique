@@ -56,6 +56,21 @@ export async function updateRegistrationFormAction(
   }
 }
 
+/** Nombre de réponses reçues par champ (id → nombre) — confirmation avant de supprimer un champ. */
+export async function getFieldAnswerCountsAction(
+  formType: FormType
+): Promise<ActionResult<Record<string, number>>> {
+  const session = await requireSession()
+  if (!canAccess(session, 'registration-forms')) return unauthorized()
+
+  try {
+    return ok(await registrationsService.getFieldAnswerCounts(session.schoolId, formType))
+  } catch (e) {
+    console.error('[getFieldAnswerCountsAction]', e)
+    return err('Impossible de compter les réponses du formulaire')
+  }
+}
+
 export async function resetRegistrationFormAction(
   formType: FormType
 ): Promise<ActionResult<RegistrationForm>> {

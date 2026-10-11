@@ -20,6 +20,7 @@ import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText, C
 import { cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog/ConfirmDialog'
 import type { StudentListItem, GuardianSummary } from '@/modules/students/students.types'
+import type { CustomFieldAnswer } from '@/modules/registrations/registrations.types'
 import { calcAge } from '@/modules/students/students.types'
 import { studentsKeys } from '@/modules/students/students.hooks'
 import { AddClassDialog } from './AddClassDialog'
@@ -223,7 +224,7 @@ interface Props {
 
 // ── Collapsible section for registration form data ────────────────────────────
 
-function RegistrationDataCollapsible({ fields }: { fields: { label: string; value: string }[] }) {
+function RegistrationDataCollapsible({ fields }: { fields: CustomFieldAnswer[] }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="rounded-lg border border-border overflow-hidden">
@@ -243,7 +244,10 @@ function RegistrationDataCollapsible({ fields }: { fields: { label: string; valu
         <div className="divide-y divide-border">
           {fields.map((f, i) => (
             <div key={i} className="px-3 py-2.5 space-y-0.5">
-              <p className="text-xs text-muted-foreground">{f.label}</p>
+              <p className="text-xs text-muted-foreground">
+                {f.label}
+                {f.removed && <span className="ml-1.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] text-amber-800">Supprimé du formulaire</span>}
+              </p>
               <p className="text-sm font-medium">{f.value}</p>
             </div>
           ))}

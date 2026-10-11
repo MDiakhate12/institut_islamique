@@ -6,6 +6,7 @@ import {
   getRegistrationFormAction,
   updateRegistrationFormAction,
   resetRegistrationFormAction,
+  getFieldAnswerCountsAction,
   getRegistrationsAction,
   reviewRegistrationAction,
   bulkApproveRegistrationsAction,
@@ -16,6 +17,7 @@ import type { ReviewRegistrationInput } from './registrations.schema'
 
 export const registrationKeys = {
   form: (formType: FormType) => ['registration-form', formType] as const,
+  answerCounts: (formType: FormType) => ['registration-form', formType, 'answer-counts'] as const,
   list: ['registrations'] as const,
 }
 
@@ -40,6 +42,19 @@ export function useRegistrationForm(formType: FormType) {
       return result.data
     },
     staleTime: 30_000,
+  })
+}
+
+/** Nombre de réponses reçues par champ du formulaire (id → nombre). */
+export function useFieldAnswerCounts(formType: FormType) {
+  return useQuery({
+    queryKey: registrationKeys.answerCounts(formType),
+    queryFn: async () => {
+      const result = await getFieldAnswerCountsAction(formType)
+      if (!result.success) throw new Error(result.error)
+      return result.data
+    },
+    staleTime: 60_000,
   })
 }
 

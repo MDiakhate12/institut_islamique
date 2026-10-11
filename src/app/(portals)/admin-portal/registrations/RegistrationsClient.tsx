@@ -136,7 +136,8 @@ export function RegistrationsClient() {
   const customFieldLabels = useMemo(() => {
     if (!registrations?.length) return []
     const labels = new Set<string>()
-    registrations.forEach(r => r.customFields?.forEach(cf => labels.add(cf.label)))
+    // Champs supprimés du formulaire : pas de colonne (réponse visible dans le panneau de l'inscription)
+    registrations.forEach(r => r.customFields?.forEach(cf => { if (!cf.removed) labels.add(cf.label) }))
     return Array.from(labels)
   }, [registrations])
 
@@ -697,7 +698,10 @@ function RegistrationDetailPanel({
             <div className="space-y-2">
               {r.customFields.map((cf, i) => (
                 <div key={i} className="text-xs">
-                  <p className="text-muted-foreground">{cf.label}</p>
+                  <p className="text-muted-foreground">
+                    {cf.label}
+                    {cf.removed && <span className="ml-1.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] text-amber-800">Supprimé du formulaire</span>}
+                  </p>
                   <p className="font-medium mt-0.5 p-2 bg-muted/20 rounded border border-border/50">{cf.value}</p>
                 </div>
               ))}

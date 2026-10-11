@@ -11,7 +11,7 @@ import postgres from 'postgres'
 import { eq } from 'drizzle-orm'
 import {
   schools, profiles, schoolMembers, students, guardians, parentStudents, classes, classEnrollments,
-  teacherAttendanceClasses, teacherHomeworkClasses, registrationForms, examResults,
+  teacherAttendanceClasses, teacherHomeworkClasses, registrationForms, registrations, examResults,
 } from '../src/db/schema'
 import { DEFAULT_NEW_STUDENT_SCHEMA, type FormItem } from '../src/modules/registrations/registrations.types'
 import { DEFAULT_SETTINGS } from '../src/db/schema/schools'
@@ -65,6 +65,8 @@ async function seed() {
       schoolDays: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
       rooms: ['Salle 1'],
       gradeLevels: ['CE2', 'CM1', 'CM2'],
+      // Libellé d'un champ supprimé du formulaire (archivé à l'enregistrement du constructeur, §7.4)
+      removedRegistrationFieldLabels: { 'cf-e2e-removed': 'Téléphone de la mère' },
     },
   }).returning()
 
@@ -169,10 +171,34 @@ async function seed() {
     kind: 'section', id: 'section-classes', title: 'Choix des classes',
     isSystem: true, systemKey: 'class_selection', fields: [],
   }
-  await db.insert(registrationForms).values({
+  const [newStudentForm] = await db.insert(registrationForms).values({
     schoolId: school.id,
     formType: 'new_student',
     formSchema: [DEFAULT_NEW_STUDENT_SCHEMA[0], classSection, ...DEFAULT_NEW_STUDENT_SCHEMA.slice(1)],
+  }).returning({ id: registrationForms.id })
+
+  // Élève inscrit (approuvé) qui a répondu à deux champs supprimés du formulaire depuis : l'un avec
+  // son libellé archivé, l'autre sans (suppression antérieure à l'archivage) — réponses toujours affichées
+  const [nora] = await db.insert(students).values({
+    schoolId: school.id,
+    firstName: 'Nora',
+    lastName: 'ARCHIVE',
+    gender: 'female',
+    birthDate: '2016-02-02',
+    createdBy: memberIds.admin,
+  }).returning()
+  await db.insert(registrations).values({
+    schoolId: school.id,
+    formId: newStudentForm.id,
+    studentId: nora.id,
+    academicYear: DEFAULT_SETTINGS.academicYear,
+    status: 'approved',
+    formData: {
+      'sf-first-name': 'Nora', 'sf-last-name': 'ARCHIVE', 'sf-birth-date': '2016-02-02', 'sf-gender': 'Féminin',
+      'cf-acknowledge': true, // champ du formulaire actuel : sa suppression demande confirmation
+      'cf-e2e-removed': '0611223344',
+      'cf-e2e-unlabelled': 'Réponse sans libellé',
+    },
   })
 
   // Seconde école, sans compte, inscriptions fermées (réglage « Autoriser les nouvelles inscriptions »)

@@ -1,5 +1,6 @@
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm'
 import { students } from '@/db/schema'
+import type { CustomFieldAnswer } from '@/modules/registrations/registrations.types'
 
 export type Student    = InferSelectModel<typeof students>
 export type NewStudent = InferInsertModel<typeof students>
@@ -81,8 +82,8 @@ export type StudentListItem = Pick<
   regPhone:             string | null
   regSponsorship:       string | null
   previousTeacher:      string | null
-  // Tous les champs custom (non-système) du formulaire avec leur libellé
-  regCustomFields:      { label: string; value: string }[]
+  // Réponses aux champs custom de la dernière inscription, y compris ceux supprimés du formulaire depuis
+  regCustomFields:      CustomFieldAnswer[]
 }
 
 export type StudentPayment = {

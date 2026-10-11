@@ -3,6 +3,8 @@ import { registrationForms, registrations, students, guardians, parentStudents, 
 import { and, eq, desc, inArray, isNull, ne } from 'drizzle-orm'
 import type { FormType, FormItem, RegistrationForm, Registration, SystemFieldKey, RegistrationWithDetails } from './registrations.types'
 import { DEFAULT_NEW_STUDENT_SCHEMA, DEFAULT_REENROLLMENT_SCHEMA } from './registrations.types'
+import { getCustomFieldAnswers, getRemovedCustomFields } from './registrations.schema'
+import { schoolService } from '@/modules/school/school.service'
 
 /** Build a map from system field keys to their form field IDs using the stored schema. */
 export function buildKeyToIdMap(schema: FormItem[]): Partial<Record<SystemFieldKey, string>> {
@@ -70,7 +72,7 @@ export const registrationsService = {
   /** Save updated form schema. */
   async updateFormSchema(schoolId: string, formType: FormType, schema: FormItem[]): Promise<RegistrationForm> {
     const [existing] = await db
-      .select({ id: registrationForms.id })
+      .select({ id: registrationForms.id, formSchema: registrationForms.formSchema })
       .from(registrationForms)
       .where(and(eq(registrationForms.schoolId, schoolId), eq(registrationForms.formType, formType)))
       .limit(1)
@@ -89,7 +91,27 @@ export const registrationsService = {
       .where(eq(registrationForms.id, existing.id))
       .returning()
 
+    // Les réponses déjà reçues à un champ supprimé restent affichées sous son libellé (§7.4)
+    await schoolService.archiveRemovedRegistrationFields(
+      schoolId, getRemovedCustomFields((existing.formSchema as FormItem[] | null) ?? [], schema))
+
     return { ...row, formType: row.formType as FormType, formSchema: schema }
+  },
+
+  /** Nombre d'inscriptions ayant répondu à chaque champ du formulaire (id → nombre). */
+  async getFieldAnswerCounts(schoolId: string, formType: FormType): Promise<Record<string, number>> {
+    const rows = await db
+      .select({ formData: registrations.formData })
+      .from(registrations)
+      .innerJoin(registrationForms, eq(registrationForms.id, registrations.formId))
+      .where(and(eq(registrations.schoolId, schoolId), eq(registrationForms.formType, formType)))
+    const counts: Record<string, number> = {}
+    for (const { formData } of rows) {
+      for (const [id, value] of Object.entries((formData as Record<string, unknown>) ?? {})) {
+        if (value !== undefined && value !== null && value !== '') counts[id] = (counts[id] ?? 0) + 1
+      }
+    }
+    return counts
   },
 
   /** Reset form to default schema. */
@@ -186,6 +208,7 @@ export const registrationsService = {
 
     if (rows.length === 0) return []
 
+    const removedLabels = (await schoolService.getById(schoolId))?.settings?.removedRegistrationFieldLabels ?? {}
     const studentIds = rows.map(r => r.studentId).filter((id): id is string => !!id)
 
     type GuardianRow = { studentId: string; firstName: string | null; lastName: string; email: string | null; phone: string | null }
@@ -231,19 +254,9 @@ export const registrationsService = {
                           : (formData['cf-acknowledge'] === false || formData['cf-acknowledge'] === 'false') ? false
                           : null
 
-      // Custom fields: any field not system/class/consent
-      const customFields: { label: string; value: string }[] = []
-      for (const item of schema) {
-        if (item.kind !== 'section') continue
-        for (const field of item.fields) {
-          if (field.kind !== 'custom_field') continue
-          if (field.id === 'cf-photo-consent' || field.id === 'cf-acknowledge' || field.id === 'cf-comments') continue
-          const val = formData[field.id]
-          if (val !== undefined && val !== null && val !== '') {
-            customFields.push({ label: field.label, value: String(val) })
-          }
-        }
-      }
+      // Custom fields: any field not system/class/consent — y compris ceux supprimés du formulaire depuis
+      const customFields = getCustomFieldAnswers(schema, formData, removedLabels,
+        ['cf-photo-consent', 'cf-acknowledge', 'cf-comments'])
 
       const parents = (r.studentId ? guardiansByStudent[r.studentId] : undefined) ?? []
 
