@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { ClipboardList, Pencil, Download, X, Trash2, ArrowUpDown, Check, Ban } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Pagination } from '@/components/shared/Pagination/Pagination'
+import { usePagination } from '@/components/shared/Pagination/usePagination'
 import { exportRegistrationsToExcel } from './registrations.excel'
 import type { RegistrationWithDetails, RegistrationStatus } from '@/modules/registrations/registrations.types'
 
@@ -120,6 +122,10 @@ export function RegistrationsClient() {
       return true
     })
   }, [registrations, search, gradeFilter, typeFilter, statusFilter])
+
+  // Pagination : un nouveau filtre ou une recherche ramène à la page 1. « Tout cocher » et l'export Excel
+  // portent sur toute la liste filtrée, pas seulement sur la page affichée.
+  const pager = usePagination(filtered, { resetKey: [search, gradeFilter, typeFilter, statusFilter].join('|') })
 
   // Cochables visibles = non approuvées du filtre courant ; les cases d'une ligne masquée ou
   // approuvée entre-temps ne comptent pas
@@ -256,6 +262,7 @@ export function RegistrationsClient() {
               description={search ? 'Essayez un autre terme.' : 'Les inscriptions soumises par les parents apparaîtront ici.'}
             />
           ) : (
+            <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm whitespace-nowrap">
                 <thead>
@@ -268,12 +275,16 @@ export function RegistrationsClient() {
                         onToggle={() => setCheckedIds(allChecked ? new Set() : new Set(checkable.map(r => r.id)))}
                       />
                     </th>
-                    <SortableTh label="ID" />
                     <SortableTh label="Élève" />
                     <th className="px-3 py-3 text-left">Statut</th>
                     <SortableTh label="Inscrit le" />
-                    <th className="px-3 py-3 text-left">Parents</th>
-                    <th className="px-3 py-3 text-left">Contact</th>
+                    {/* Mêmes colonnes tuteurs que le tableau Élèves */}
+                    <th className="px-3 py-3 text-left min-w-[140px]">Père</th>
+                    <th className="px-3 py-3 text-left min-w-[140px]">Mère</th>
+                    <th className="px-3 py-3 text-left min-w-[140px]">Tél. père</th>
+                    <th className="px-3 py-3 text-left min-w-[140px]">Tél. mère</th>
+                    <th className="px-3 py-3 text-left min-w-[180px]">Email père</th>
+                    <th className="px-3 py-3 text-left min-w-[180px]">Email mère</th>
                     <SortableTh label="Naissance" />
                     <SortableTh label="Niveau" />
                     <th className="px-3 py-3 text-left">Anciennes classes</th>
@@ -288,7 +299,7 @@ export function RegistrationsClient() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(r => (
+                  {pager.pageItems.map(r => (
                     <RegistrationRow
                       key={r.id}
                       registration={r}
@@ -302,6 +313,8 @@ export function RegistrationsClient() {
                 </tbody>
               </table>
             </div>
+            <Pagination state={pager} noun="inscription" />
+            </>
           )}
         </div>
 
@@ -420,8 +433,8 @@ function RegistrationRow({
   onToggleChecked: () => void
   onClick: () => void
 }) {
-  const father = r.parents[0]
-  const mother = r.parents[1]
+  const father = r.parents.find(p => p.relationship === 'father')
+  const mother = r.parents.find(p => p.relationship === 'mother')
 
   return (
     <tr
@@ -442,11 +455,6 @@ function RegistrationRow({
         )}
       </td>
 
-      {/* ID */}
-      <td className="px-3 py-2.5 text-xs text-muted-foreground font-mono">
-        {r.studentCustomId ?? '—'}
-      </td>
-
       {/* Student */}
       <td className="px-3 py-2.5">
         <div className="flex items-center gap-1.5">
@@ -456,6 +464,10 @@ function RegistrationRow({
             <span className="inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-700 border border-blue-200 uppercase">NEW</span>
           )}
         </div>
+        {/* ID sous le nom (même présentation que le tableau Élèves), aligné sur le nom */}
+        {r.studentCustomId && (
+          <p className="pl-5 text-xs text-muted-foreground">ID : {r.studentCustomId}</p>
+        )}
       </td>
 
       {/* Statut */}
@@ -466,41 +478,19 @@ function RegistrationRow({
         {new Date(r.submittedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
       </td>
 
-      {/* Parents */}
-      <td className="px-3 py-2.5">
-        <div className="space-y-0.5">
-          {father && (
-            <div className="flex items-center gap-1 text-xs">
-              <svg className="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              <span>{father.name}</span>
-            </div>
-          )}
-          {mother && (
-            <div className="flex items-center gap-1 text-xs">
-              <svg className="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              <span>{mother.name}</span>
-            </div>
-          )}
-        </div>
-      </td>
-
-      {/* Contact */}
-      <td className="px-3 py-2.5">
-        <div className="space-y-0.5 text-xs text-muted-foreground">
-          {r.parents[0]?.email && (
-            <div className="flex items-center gap-1">
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-              <span>{r.parents[0].email}</span>
-            </div>
-          )}
-          {r.parents[0]?.phone && (
-            <div className="flex items-center gap-1">
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-              <span>{formatPhone(r.parents[0].phone)}</span>
-            </div>
-          )}
-        </div>
-      </td>
+      {/* Tuteurs — mêmes colonnes et même présentation que le tableau Élèves */}
+      {[
+        father?.name,
+        mother?.name,
+        formatPhone(father?.phone),
+        formatPhone(mother?.phone),
+        father?.email,
+        mother?.email,
+      ].map((value, i) => (
+        <td key={i} className="px-3 py-2.5 text-sm text-muted-foreground">
+          {value || <span className="italic">—</span>}
+        </td>
+      ))}
 
       {/* DOB */}
       <td className="px-3 py-2.5 text-xs text-muted-foreground">
@@ -587,8 +577,8 @@ function RegistrationDetailPanel({
   registration: RegistrationWithDetails
   onClose: () => void
 }) {
-  const father = r.parents[0]
-  const mother = r.parents[1]
+  const father = r.parents.find(p => p.relationship === 'father')
+  const mother = r.parents.find(p => p.relationship === 'mother')
   const { data: school } = useSchool()
   const schoolName = school?.name ?? '—' // était « Attawba » en dur, quelle que soit l'école
 

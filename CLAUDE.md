@@ -786,7 +786,7 @@ Incohérences : le rôle père/mère ne bloque pas la fusion — rôle affiché 
 | **Class Catalog** | Intégré à `/admin-portal/classes` (DnD, classe précédente/suivante) — `/admin-portal/class-catalog`, `/teacher-portal/catalog` et `/parent-portal/catalog` redirigent respectivement vers `/admin-portal/classes`, `/teacher-portal/classes` et `/parent-portal/children` |
 | **Calendar** | `/admin-portal/academic-calendar` (vues Année/Mois/Semaine/Jour) + `/teacher-portal/calendar` + `/parent-portal/calendar` (readonly partagé) |
 | **Registration Forms** | `/admin-portal/registration-forms` (form builder DnD complet) |
-| **Registrations** | `/admin-portal/registrations` (liste + filtres par statut + export Excel + Approuver/Rejeter avec motif, famille notifiée — §7.4) |
+| **Registrations** | `/admin-portal/registrations` (liste paginée 15/30/45 + filtres par statut + export Excel + Approuver/Rejeter avec motif, famille notifiée — §7.4) — l'ID de l'élève est sous son nom ; colonnes tuteurs **identiques à Élèves** (Père, Mère, Tél. père, Tél. mère, Email père, Email mère — tuteur trouvé par `relationship`, pas par position ; un tuteur légal/autre n'apparaît que dans l'export Excel, colonne « Autres tuteurs », comme pour Élèves) |
 | **Public Portal** | `/portal/register/[schoolSlug]` (nouvel élève + réinscription + succès) |
 | **Enrollment Parent** | `/parent-portal/enrollment` (sélection élève, réinscription, nouvel élève, succès) |
 | **Homework** | `/admin-portal/homework` (HomeworkTrackingClient) + `/teacher-portal/homework` (CRUD + Jitsi) + `/parent-portal/homework` (lecteur Coran, audio MediaRecorder) |

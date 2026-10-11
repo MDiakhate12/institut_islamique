@@ -165,7 +165,7 @@ export type RegistrationWithDetails = {
   photoConsent: boolean | null
   policyConsent: boolean | null
   classes: { fullCode: string; name: string }[]
-  parents: { name: string; email: string | null; phone: string | null }[]
+  parents: { name: string; relationship: 'father' | 'mother' | 'guardian' | 'other'; email: string | null; phone: string | null }[]
   customFields: CustomFieldAnswer[]
 }
 
