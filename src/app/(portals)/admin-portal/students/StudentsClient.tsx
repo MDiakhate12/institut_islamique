@@ -8,6 +8,9 @@ import { EmptyState } from '@/components/shared/EmptyState/EmptyState'
 import { Button } from '@/components/ui/button'
 import { Users, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Columns2, Check, BookOpen, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Pagination } from '@/components/shared/Pagination/Pagination'
+import { usePagination } from '@/components/shared/Pagination/usePagination'
+import { revealFocusRow, FOCUS_ROW_CLASS, FOCUS_ROW_FLASH_CLASS } from '@/components/shared/Pagination/focus-row'
 import { exportStudentsToExcel } from './students.excel'
 import { StudentFormDialog } from './StudentForm'
 import { AssignClassDialog } from './AssignClassDialog'
@@ -152,7 +155,8 @@ function buildFilterOptions(students: StudentListItem[], key: SortKey): string[]
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function StudentsClient() {
+/** `initialStudentId` : élève à ouvrir d'office (lien depuis la page Parents). */
+export function StudentsClient({ initialStudentId }: { initialStudentId?: string }) {
   const { data: allStudents, isLoading } = useStudents()
   // Un enfant n'apparaît dans le tableau qu'une fois son inscription approuvée (§7.4) —
   // tant qu'elle est en attente ou rejetée, il n'est visible que dans « Inscriptions »
@@ -169,7 +173,13 @@ export function StudentsClient() {
   const [sortKey, setSortKey]           = useState<SortKey | null>(null)
   const [sortAsc, setSortAsc]           = useState(true)
   const [colFilters, setColFilters]     = useState<ColFilters>({})
-  const [editingStudent, setEditingStudent] = useState<StudentListItem | null>(null)
+  const [pickedStudent, setPickedStudent] = useState<StudentListItem | null>(null)
+  const [initialDismissed, setInitialDismissed] = useState(false)
+  // Élève sélectionné (mis en évidence et centré) : celui du lien (?student=), puis celui sur lequel on clique
+  const [selectedId, setSelectedId] = useState(initialStudentId)
+  // Élève ouvert à la main, sinon celui du lien (?student=) tant qu'on ne l'a pas fermé
+  const initialStudent = !initialDismissed && initialStudentId ? students?.find(s => s.id === initialStudentId) : undefined
+  const editingStudent = pickedStudent ?? initialStudent ?? null
   const [selectedIds, setSelectedIds]    = useState<Set<string>>(new Set())
   const [assignOpen, setAssignOpen]      = useState(false)
   const [visibleCols, setVisibleCols]   = useState<VisibleCols>(() => {
@@ -246,6 +256,13 @@ export function StudentsClient() {
     return sortKey ? list.sort((a, b) => compareStudents(a, b, sortKey, sortAsc)) : list
   }, [students, search, genderFilter, activeFilter, yearFilter, classFilter, t1Filter, t2Filter, t3Filter, colFilters, sortKey, sortAsc])
 
+  // Clic sur une ligne : l'élève est sélectionné (URL ?student=), centré, et sa fiche s'ouvre
+  function selectStudent(s: StudentListItem) {
+    setSelectedId(s.id)
+    setPickedStudent(s)
+    window.history.replaceState(null, '', `${window.location.pathname}?student=${s.id}`)
+  }
+
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortAsc(p => !p)
     else { setSortKey(key); setSortAsc(true) }
@@ -273,6 +290,16 @@ export function StudentsClient() {
     filters: colFilters, onFilter: setColFilter,
     filterOptions: (key: SortKey) => buildFilterOptions(students ?? [], key),
   }
+
+  const filterSig = [search, genderFilter, activeFilter, yearFilter, classFilter, t1Filter, t2Filter, t3Filter, sortKey, sortAsc, JSON.stringify(colFilters)].join('|')
+  const focusIndex = selectedId ? filtered.findIndex(s => s.id === selectedId) : -1
+  const pager = usePagination(filtered, { resetKey: filterSig, focusIndex })
+
+  // Arrivée par le lien (?student=) : la ligne apparaît dans la page (la bonne page est déjà affichée) ; pas de défilement au clic
+  useEffect(() => {
+    if (isLoading || !initialStudentId) return
+    return revealFocusRow()
+  }, [isLoading, initialStudentId])
 
   const total = filtered.length
   const allSelected = filtered.length > 0 && filtered.every(s => selectedIds.has(s.id))
@@ -461,13 +488,15 @@ export function StudentsClient() {
                     </td>
                   </tr>
                 )}
-                {filtered.map((s, i) => (
+                {pager.pageItems.map((s, i) => (
                   <StudentRow
                     key={s.id}
                     student={s}
-                    index={i}
+                    index={pager.start + i}
+                    highlighted={s.id === selectedId}
+                    flash={s.id === selectedId && s.id === initialStudentId}
                     visibleCols={visibleCols}
-                    onEdit={setEditingStudent}
+                    onEdit={selectStudent}
                     selected={selectedIds.has(s.id)}
                     onToggleSelect={toggleSelectStudent}
                   />
@@ -475,6 +504,7 @@ export function StudentsClient() {
               </tbody>
             </table>
           </div>
+          <Pagination state={pager} noun="élève" />
         </div>
       )}
 
@@ -510,7 +540,7 @@ export function StudentsClient() {
           key={editingStudent.id}
           student={editingStudent}
           open={true}
-          onOpenChange={v => { if (!v) setEditingStudent(null) }}
+          onOpenChange={v => { if (!v) { setPickedStudent(null); setInitialDismissed(true) } }}
         />
       )}
 
@@ -634,9 +664,11 @@ function SortTh({ label, sortKey, current, asc, onSort, filters, onFilter, filte
   )
 }
 
-function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggleSelect }: {
+function StudentRow({ student: s, index, highlighted, flash, visibleCols, onEdit, selected, onToggleSelect }: {
   student: StudentListItem
   index: number
+  highlighted: boolean
+  flash: boolean
   visibleCols: VisibleCols
   onEdit: (s: StudentListItem) => void
   selected: boolean
@@ -647,9 +679,12 @@ function StudentRow({ student: s, index, visibleCols, onEdit, selected, onToggle
   return (
     <tr
       onClick={() => onEdit(s)}
+      data-focus-row={highlighted ? '' : undefined}
       className={cn(
         'group border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors align-middle cursor-pointer',
-        selected && 'bg-[#2d6a4f]/5'
+        selected && 'bg-[#2d6a4f]/5',
+        highlighted && FOCUS_ROW_CLASS,
+        flash && FOCUS_ROW_FLASH_CLASS
       )}
     >
       {/* Checkbox sélection */}

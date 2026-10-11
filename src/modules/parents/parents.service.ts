@@ -3,13 +3,214 @@ import {
   students, parentStudents, guardians, schoolMembers, profiles,
   classEnrollments, classes, otpCodes,
 } from '@/db/schema'
-import { and, eq, asc, isNull, inArray, gt, desc } from 'drizzle-orm'
+import { authUsers } from '@/db/auth-users'
+import { and, eq, asc, isNull, inArray, gt, desc, sql } from 'drizzle-orm'
+import { toStoredPhone } from '@/lib/phone'
+import { MAX_GUARDIANS_PER_STUDENT } from '@/lib/constants'
+import { buildParentDirectory } from './parents.grouping'
+import type { SaveParentInput, SetStudentGuardianInput } from './parents.schema'
+import type { GuardianSummary } from '@/modules/students/students.types'
 import type {
   StudentParentInfo, Guardian, ConnectedParent,
   ChildWithClasses, EnrolledClass,
+  GuardianRow, ConnectedAccount, DirectoryParent,
 } from './parents.types'
 
+/** Erreur de règle métier, dont le message peut être montré à l'admin. */
+export class ParentEditError extends Error {}
+
 export const parentsService = {
+  /**
+   * Change le parent d'UN élève : remplace les coordonnées de sa fiche tuteur (`guardianId`) ou en ajoute une.
+   * Ne modifie que la fiche de cet élève — les autres enfants du parent précédent ne sont pas touchés. Choisir un
+   * parent existant revient à copier ses coordonnées : le regroupement (parents.grouping) le reconnaît ensuite.
+   * Une fiche liée à un compte parent n'est jamais remplacée.
+   */
+  async setStudentGuardian(schoolId: string, studentId: string, input: SetStudentGuardianInput): Promise<GuardianSummary> {
+    const fields = {
+      firstName:      input.name?.trim() || null,
+      lastName:       '', // convention : nom complet dans first_name (§7.4)
+      phone:          toStoredPhone(input.phone),
+      email:          input.email?.trim() || null,
+      emergencyPhone: toStoredPhone(input.emergencyPhone),
+    }
+
+    const [student] = await db.select({ id: students.id }).from(students)
+      .where(and(eq(students.id, studentId), eq(students.schoolId, schoolId))).limit(1)
+    if (!student) throw new ParentEditError('Élève introuvable')
+
+    const toSummary = (g: typeof guardians.$inferSelect): GuardianSummary => ({
+      id: g.id, relationship: g.relationship, firstName: g.firstName, lastName: g.lastName,
+      email: g.email, phone: g.phone, emergencyPhone: g.emergencyPhone, isPrimary: g.isPrimary,
+      linkedMemberId: g.linkedMemberId, linkedMemberName: null,
+    })
+
+    if (input.guardianId) {
+      const [row] = await db.select().from(guardians)
+        .where(and(eq(guardians.id, input.guardianId), eq(guardians.studentId, studentId), eq(guardians.schoolId, schoolId))).limit(1)
+      if (!row) throw new ParentEditError('Tuteur introuvable')
+      if (row.linkedMemberId) throw new ParentEditError('Ce tuteur est lié à un compte parent : il ne peut pas être remplacé')
+      const [updated] = await db.update(guardians).set({ ...fields, updatedAt: new Date() })
+        .where(eq(guardians.id, row.id)).returning()
+      return toSummary(updated)
+    }
+
+    const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(guardians).where(eq(guardians.studentId, studentId))
+    if (n >= MAX_GUARDIANS_PER_STUDENT) throw new ParentEditError(`Un élève a au maximum ${MAX_GUARDIANS_PER_STUDENT} tuteurs — utilisez « Changer » ou « Retirer »`)
+    if (input.relationship === 'father' || input.relationship === 'mother') {
+      const [clash] = await db.select({ id: guardians.id }).from(guardians)
+        .where(and(eq(guardians.studentId, studentId), eq(guardians.relationship, input.relationship))).limit(1)
+      if (clash) throw new ParentEditError(`Cet élève a déjà ${input.relationship === 'father' ? 'un père' : 'une mère'} — utilisez « Changer »`)
+    }
+    const [created] = await db.insert(guardians)
+      .values({ schoolId, studentId, relationship: input.relationship, ...fields, isPrimary: n === 0 }).returning()
+    return toSummary(created)
+  },
+
+  /**
+   * Crée ou modifie un parent : une fiche `guardians` par enfant, toutes mises à jour ensemble.
+   * Les fiches liées à un compte (`linked_member_id`) ne sont jamais modifiées ni supprimées (leurs
+   * coordonnées viennent du profil du parent) — voir `students.service.update`.
+   */
+  /** Retire un tuteur d'UN élève (supprime sa fiche pour cet élève ; les autres enfants du parent ne sont pas touchés). */
+  async removeStudentGuardian(schoolId: string, studentId: string, guardianId: string): Promise<void> {
+    const [row] = await db.select().from(guardians)
+      .where(and(eq(guardians.id, guardianId), eq(guardians.studentId, studentId), eq(guardians.schoolId, schoolId))).limit(1)
+    if (!row) throw new ParentEditError('Tuteur introuvable')
+    if (row.linkedMemberId) throw new ParentEditError('Ce tuteur est lié à un compte parent : le parent doit délier l\'enfant depuis son portail')
+    await db.transaction(async tx => {
+      await tx.delete(guardians).where(eq(guardians.id, row.id))
+      if (row.isPrimary) { // un tuteur principal reste désigné s'il en reste un
+        const [next] = await tx.select({ id: guardians.id }).from(guardians)
+          .where(eq(guardians.studentId, studentId)).orderBy(asc(guardians.createdAt)).limit(1)
+        if (next) await tx.update(guardians).set({ isPrimary: true }).where(eq(guardians.id, next.id))
+      }
+    })
+  },
+
+  async saveParent(schoolId: string, input: SaveParentInput): Promise<void> {
+    const phone = toStoredPhone(input.phone)
+    const emergencyPhone = toStoredPhone(input.emergencyPhone)
+    const email = input.email?.trim() || null
+    const fields = {
+      relationship: input.relationship,
+      firstName:    input.name.trim(),
+      lastName:     '', // convention : nom complet dans first_name (§7.4)
+      phone, email, emergencyPhone,
+    }
+
+    await db.transaction(async tx => {
+      const existing = input.guardianIds.length
+        ? await tx.select({ id: guardians.id, studentId: guardians.studentId, linkedMemberId: guardians.linkedMemberId })
+            .from(guardians)
+            .where(and(eq(guardians.schoolId, schoolId), inArray(guardians.id, input.guardianIds)))
+        : []
+      if (existing.length !== input.guardianIds.length) throw new ParentEditError('Parent introuvable')
+
+      const kept = new Set(input.studentIds)
+      const current = new Set(existing.map(g => g.studentId))
+
+      // Enfants retirés
+      for (const g of existing.filter(g => !kept.has(g.studentId))) {
+        if (g.linkedMemberId) throw new ParentEditError("Un enfant lié à un compte parent ne peut pas être retiré ici — le parent doit le délier depuis son portail")
+        await tx.delete(guardians).where(and(eq(guardians.id, g.id), eq(guardians.schoolId, schoolId)))
+      }
+
+      // Enfants conservés : mise à jour des fiches non liées
+      for (const g of existing.filter(g => kept.has(g.studentId) && !g.linkedMemberId)) {
+        await tx.update(guardians).set({ ...fields, updatedAt: new Date() })
+          .where(and(eq(guardians.id, g.id), eq(guardians.schoolId, schoolId)))
+      }
+
+      // Enfants ajoutés
+      const toAdd = input.studentIds.filter(id => !current.has(id))
+      if (toAdd.length > 0) {
+        const valid = await tx.select({ id: students.id, firstName: students.firstName, lastName: students.lastName })
+          .from(students).where(and(eq(students.schoolId, schoolId), inArray(students.id, toAdd)))
+        if (valid.length !== toAdd.length) throw new ParentEditError('Élève introuvable')
+        for (const st of valid) {
+          if (input.relationship === 'father' || input.relationship === 'mother') {
+            const [clash] = await tx.select({ id: guardians.id }).from(guardians)
+              .where(and(eq(guardians.studentId, st.id), eq(guardians.relationship, input.relationship)))
+              .limit(1)
+            if (clash) throw new ParentEditError(`${st.firstName} ${st.lastName} a déjà ${input.relationship === 'father' ? 'un père' : 'une mère'}`)
+          }
+          const [{ n }] = await tx.select({ n: sql<number>`count(*)::int` }).from(guardians).where(eq(guardians.studentId, st.id))
+          if (n >= MAX_GUARDIANS_PER_STUDENT) throw new ParentEditError(`${st.firstName} ${st.lastName} a déjà ${MAX_GUARDIANS_PER_STUDENT} tuteurs`)
+          await tx.insert(guardians).values({ schoolId, studentId: st.id, ...fields, isPrimary: n === 0 })
+        }
+      }
+    })
+  },
+
+  /** Annuaire « une ligne par parent » : fiches tuteurs regroupées (voir parents.grouping.ts) + comptes connectés. */
+  async getDirectory(schoolId: string): Promise<DirectoryParent[]> {
+    const [guardianRows, linkRows] = await Promise.all([
+      db
+        .select({
+          id:             guardians.id,
+          studentId:      guardians.studentId,
+          studentFirst:   students.firstName,
+          studentLast:    students.lastName,
+          relationship:   guardians.relationship,
+          firstName:      guardians.firstName,
+          lastName:       guardians.lastName,
+          email:          guardians.email,
+          phone:          guardians.phone,
+          emergencyPhone: guardians.emergencyPhone,
+          linkedMemberId: guardians.linkedMemberId,
+          createdAt:      guardians.createdAt,
+        })
+        .from(guardians)
+        .innerJoin(students, eq(guardians.studentId, students.id))
+        .where(and(eq(guardians.schoolId, schoolId), eq(students.isActive, true))),
+
+      db
+        .select({
+          schoolMemberId: parentStudents.schoolMemberId,
+          studentId:      parentStudents.studentId,
+          fullName:       profiles.fullName,
+          phone:          profiles.phone,
+          email:          authUsers.email,
+        })
+        .from(parentStudents)
+        .innerJoin(students, eq(parentStudents.studentId, students.id))
+        .leftJoin(schoolMembers, eq(parentStudents.schoolMemberId, schoolMembers.id))
+        .leftJoin(profiles, eq(schoolMembers.userId, profiles.userId))
+        .leftJoin(authUsers, eq(schoolMembers.userId, authUsers.id))
+        .where(and(eq(parentStudents.schoolId, schoolId), eq(students.isActive, true))),
+    ])
+
+    const rows: GuardianRow[] = guardianRows.map(g => ({
+      id: g.id,
+      studentId: g.studentId,
+      studentName: `${g.studentFirst} ${g.studentLast}`.trim(),
+      relationship: g.relationship,
+      firstName: g.firstName,
+      lastName: g.lastName,
+      email: g.email,
+      phone: g.phone,
+      emergencyPhone: g.emergencyPhone,
+      linkedMemberId: g.linkedMemberId,
+      createdAt: g.createdAt,
+    }))
+
+    const accounts = new Map<string, ConnectedAccount>()
+    for (const l of linkRows) {
+      const acc = accounts.get(l.schoolMemberId)
+      if (acc) acc.studentIds.push(l.studentId)
+      else accounts.set(l.schoolMemberId, {
+        schoolMemberId: l.schoolMemberId,
+        fullName: l.fullName,
+        email: l.email,
+        phone: l.phone,
+        studentIds: [l.studentId],
+      })
+    }
+
+    return buildParentDirectory(rows, [...accounts.values()])
+  },
+
   async getAll(schoolId: string): Promise<StudentParentInfo[]> {
     const [studentRows, guardianRows, connectedRows] = await Promise.all([
       db

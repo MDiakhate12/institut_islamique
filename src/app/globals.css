@@ -175,3 +175,19 @@
 @utility animate-progress-trickle {
   animation: progress-trickle 12s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
 }
+
+/* Contour vert qui s'estompe : repère la ligne sélectionnée à l'arrivée par un lien */
+@keyframes row-flash {
+  0% {
+    outline: 3px solid rgb(45 106 79 / 0.6);
+    outline-offset: -3px;
+  }
+  100% {
+    outline: 3px solid rgb(45 106 79 / 0);
+    outline-offset: -3px;
+  }
+}
+
+@utility animate-row-flash {
+  animation: row-flash 1.6s ease-out 2;
+}
