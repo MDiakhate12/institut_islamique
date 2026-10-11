@@ -5,8 +5,12 @@ import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
 import { sendEmail, getSchoolName } from '@/lib/email'
-import { parentsService } from './parents.service'
-import type { StudentParentInfo, ChildWithClasses } from './parents.types'
+import { revalidatePath } from 'next/cache'
+import { ROUTES } from '@/lib/constants'
+import { parentsService, ParentEditError } from './parents.service'
+import { saveParentSchema, setStudentGuardianSchema } from './parents.schema'
+import type { GuardianSummary } from '@/modules/students/students.types'
+import type { StudentParentInfo, ChildWithClasses, DirectoryParent } from './parents.types'
 
 export async function getParentsAction(): Promise<ActionResult<StudentParentInfo[]>> {
   const session = await requireSession()
@@ -16,6 +20,17 @@ export async function getParentsAction(): Promise<ActionResult<StudentParentInfo
     return ok(data)
   } catch (e) {
     console.error('[getParentsAction]', e)
+    return err('Impossible de charger les parents')
+  }
+}
+
+export async function getParentDirectoryAction(): Promise<ActionResult<DirectoryParent[]>> {
+  const session = await requireSession()
+  if (!canAccess(session, 'parents')) return err('Non autorisé')
+  try {
+    return ok(await parentsService.getDirectory(session.schoolId))
+  } catch (e) {
+    console.error('[getParentDirectoryAction]', e)
     return err('Impossible de charger les parents')
   }
 }
@@ -168,5 +183,61 @@ export async function unlinkChildAction(studentId: string): Promise<ActionResult
   } catch (e) {
     console.error('[unlinkChildAction]', e)
     return err('Impossible de délier cet enfant')
+  }
+}
+
+export async function saveParentAction(input: unknown): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!canAccess(session, 'parents')) return err('Non autorisé')
+
+  const parsed = saveParentSchema.safeParse(input)
+  if (!parsed.success) return err(parsed.error.issues[0].message)
+
+  try {
+    await parentsService.saveParent(session.schoolId, parsed.data)
+    revalidatePath(ROUTES.admin.parents)
+    revalidatePath(ROUTES.admin.students)
+    return ok(undefined)
+  } catch (e) {
+    if (e instanceof ParentEditError) return err(e.message)
+    console.error('[saveParentAction]', e)
+    return err("Impossible d'enregistrer le parent")
+  }
+}
+
+/** Change (ou ajoute) le parent d'un élève depuis sa fiche — garde `students` (le trésorier y a accès). */
+export async function setStudentGuardianAction(studentId: string, input: unknown): Promise<ActionResult<GuardianSummary>> {
+  const session = await requireSession()
+  if (!canAccess(session, 'students')) return err('Non autorisé')
+
+  const parsed = setStudentGuardianSchema.safeParse(input)
+  if (!parsed.success) return err(parsed.error.issues[0].message)
+
+  try {
+    const guardian = await parentsService.setStudentGuardian(session.schoolId, studentId, parsed.data)
+    revalidatePath(ROUTES.admin.parents)
+    revalidatePath(ROUTES.admin.students)
+    return ok(guardian)
+  } catch (e) {
+    if (e instanceof ParentEditError) return err(e.message)
+    console.error('[setStudentGuardianAction]', e)
+    return err('Impossible de changer le parent')
+  }
+}
+
+/** Retire un tuteur d'un élève depuis sa fiche — garde `students`. */
+export async function removeStudentGuardianAction(studentId: string, guardianId: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!canAccess(session, 'students')) return err('Non autorisé')
+
+  try {
+    await parentsService.removeStudentGuardian(session.schoolId, studentId, guardianId)
+    revalidatePath(ROUTES.admin.parents)
+    revalidatePath(ROUTES.admin.students)
+    return ok(undefined)
+  } catch (e) {
+    if (e instanceof ParentEditError) return err(e.message)
+    console.error('[removeStudentGuardianAction]', e)
+    return err('Impossible de retirer le parent')
   }
 }

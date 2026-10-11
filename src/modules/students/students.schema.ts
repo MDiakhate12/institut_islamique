@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { optionalPhoneField } from '@/lib/phone'
+import { MAX_GUARDIANS_PER_STUDENT } from '@/lib/constants'
 
 const guardianInputSchema = z.object({
   id:             z.string().optional(),
@@ -12,6 +13,12 @@ const guardianInputSchema = z.object({
 })
 
 export type GuardianInput = z.infer<typeof guardianInputSchema>
+
+// 2 tuteurs au maximum par élève (les retraits `_delete` ne comptent pas)
+const guardiansField = z.array(guardianInputSchema).refine(
+  list => list.filter(g => !g._delete).length <= MAX_GUARDIANS_PER_STUDENT,
+  { message: `Un élève a au maximum ${MAX_GUARDIANS_PER_STUDENT} tuteurs` },
+).optional()
 
 const birthDateField = z.string().optional().refine(
   val => !val || (!isNaN(new Date(val).getTime()) && new Date(val) <= new Date()),
@@ -26,7 +33,7 @@ export const createStudentSchema = z.object({
   birthDate:      birthDateField,
   notes:          z.string().optional(),
   enrollmentYear: z.string().optional(),
-  guardians:      z.array(guardianInputSchema).optional(),
+  guardians:      guardiansField,
   // Class enrollment (create flow)
   classIdsToAdd:  z.array(z.string()).optional(),
   paymentT1:      z.boolean().optional(),
@@ -42,7 +49,7 @@ export const updateStudentSchema = z.object({
   birthDate:      birthDateField,
   notes:          z.string().optional(),
   enrollmentYear: z.string().optional(),
-  guardians:      z.array(guardianInputSchema).optional(),
+  guardians:      guardiansField,
   // Class enrollment changes
   classIdsToAdd:    z.array(z.string()).optional(),
   classIdsToRemove: z.array(z.string()).optional(),

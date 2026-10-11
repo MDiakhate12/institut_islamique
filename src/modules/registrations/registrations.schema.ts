@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { FormField, FormItem, SystemFieldKey, RegistrationGuardianInput, GuardianOptions, CustomFieldAnswer } from './registrations.types'
 import { isValidPhone, PHONE_INVALID_MESSAGE } from '@/lib/phone'
+import { MAX_GUARDIANS_PER_STUDENT } from '@/lib/constants'
 
 export const formTypeSchema = z.enum(['new_student', 'reenrollment'])
 
@@ -157,6 +158,7 @@ export function getGuardianErrors(
   const errors: Record<string, string> = {}
   const o = opts.options
   if (guardians.length === 0) errors['0.name'] = 'Renseignez au moins un tuteur'
+  if (guardians.length > MAX_GUARDIANS_PER_STUDENT) errors['2.name'] = `Un élève a au maximum ${MAX_GUARDIANS_PER_STUDENT} tuteurs`
   // Réglage de l'école « Second tuteur obligatoire »
   if (o?.secondRequired && guardians.length < 2) errors['1.name'] = 'Le second tuteur est obligatoire'
   if (o?.secondRequired && guardians[1]) {

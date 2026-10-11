@@ -1,7 +1,9 @@
 'use client'
 
 import { useTransition, useState } from 'react'
+import Link from 'next/link'
 import { formatPhone } from '@/lib/phone'
+import { ROUTES, MAX_GUARDIANS_PER_STUDENT } from '@/lib/constants'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -16,7 +18,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText, CalendarDays, ClipboardList, BookOpen, ChevronDown, ChevronUp, ClipboardCheck } from 'lucide-react'
+import { ExternalLink, Plus, X, Pencil, CheckCircle, UserRound, ArrowLeftRight, ReceiptText, CalendarDays, ClipboardList, BookOpen, ChevronDown, ChevronUp, ClipboardCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog/ConfirmDialog'
 import type { StudentListItem, GuardianSummary } from '@/modules/students/students.types'
@@ -24,6 +26,8 @@ import type { CustomFieldAnswer } from '@/modules/registrations/registrations.ty
 import { calcAge } from '@/modules/students/students.types'
 import { studentsKeys } from '@/modules/students/students.hooks'
 import { AddClassDialog } from './AddClassDialog'
+import { StudentGuardianPicker } from './StudentGuardianPicker'
+import { useParentDirectory, useRemoveStudentGuardian } from '@/modules/parents/parents.hooks'
 import { StudentPaymentsModal } from './StudentPaymentsModal'
 import { StudentAttendanceModal } from './StudentAttendanceModal'
 import { StudentHomeworkModal } from './StudentHomeworkModal'
@@ -68,6 +72,8 @@ const RELATIONSHIP_COLORS: Record<string, string> = {
   guardian: 'bg-[#2d6a4f]',
   other:    'bg-gray-500',
 }
+
+const LINKED_HINT = 'Compte parent lié : le parent doit délier l\'enfant depuis son portail'
 
 const SELECT_CLASS = 'h-10 w-full border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#2d6a4f]/30'
 // Même gabarit que SELECT_CLASS pour aligner les <Input> (h-8 par défaut) sur
@@ -297,6 +303,29 @@ export function StudentFormDialog({
 
   const yearOptions = buildYearOptions(student?.enrollmentYear)
 
+  // Parents de l'école (pour afficher « + N autres enfants » sur chaque carte) — fiche d'un élève existant seulement
+  const { data: parentDirectory } = useParentDirectory(isEditing)
+  const removeStudentGuardian = useRemoveStudentGuardian()
+
+  function siblingCount(g: LocalGuardian): number {
+    const parent = g.id ? parentDirectory?.find(p => p.guardianIds.includes(g.id!)) : undefined
+    return parent ? Math.max(0, parent.children.length - 1) : 0
+  }
+
+  async function confirmRemoveGuardian() {
+    const g = removeGuardianConfirm
+    if (!g) return
+    if (isEditing && student && g.id) {
+      const result = await removeStudentGuardian.mutateAsync({ studentId: student.id, guardianId: g.id })
+      if (!result.success) { toast.error(result.error); return }
+      setLocalGuardians(prev => prev.filter(x => x._tempId !== g._tempId))
+      toast.success('Parent retiré')
+    } else {
+      removeGuardian(g)
+    }
+    setRemoveGuardianConfirm(null)
+  }
+
   const form = useForm<CreateStudentInput>({
     resolver: zodResolver(createStudentSchema),
     defaultValues: {
@@ -398,7 +427,7 @@ export function StudentFormDialog({
       if (isEditing) {
         result = await updateStudentAction(student.id, {
           ...data,
-          guardians:        guardiansPayload,
+          // Les tuteurs d'un élève existant se modifient uniquement dans la page Parents
           classIdsToAdd,
           classIdsToRemove: removedClassIds,
           paymentUpdates,
@@ -645,7 +674,7 @@ export function StudentFormDialog({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold">Tuteurs</label>
-                {guardianFormMode === 'closed' && (
+                {guardianFormMode === 'closed' && localGuardians.length < MAX_GUARDIANS_PER_STUDENT && (
                   <button
                     type="button"
                     onClick={() => setGuardianFormMode('add')}
@@ -660,7 +689,15 @@ export function StudentFormDialog({
               <div className="grid grid-cols-2 gap-2">
               {localGuardians.map(g => (
                 <div key={g._tempId} className={guardianFormMode === g._tempId ? 'col-span-2' : ''}>
-                  {guardianFormMode === g._tempId ? (
+                  {guardianFormMode === g._tempId && isEditing && student ? (
+                    <StudentGuardianPicker
+                      studentId={student.id}
+                      guardian={{ id: g.id, relationship: g.relationship }}
+                      existingRelationships={localGuardians.filter(x => x._tempId !== g._tempId).map(x => x.relationship)}
+                      onSaved={saved => { setLocalGuardians(prev => prev.map(x => x._tempId === g._tempId ? guardianToLocal(saved) : x)); setGuardianFormMode('closed') }}
+                      onCancel={() => setGuardianFormMode('closed')}
+                    />
+                  ) : guardianFormMode === g._tempId ? (
                     <GuardianForm
                       initial={g}
                       existingRelationships={localGuardians.filter(x => x._tempId !== g._tempId).map(x => x.relationship)}
@@ -669,12 +706,14 @@ export function StudentFormDialog({
                     />
                   ) : (
                     <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setViewingGuardian(g)}
-                      onKeyDown={e => e.key === 'Enter' && setViewingGuardian(g)}
+                      role={isEditing ? undefined : 'button'}
+                      tabIndex={isEditing ? undefined : 0}
+                      onClick={isEditing ? undefined : () => setViewingGuardian(g)}
+                      onKeyDown={isEditing ? undefined : e => e.key === 'Enter' && setViewingGuardian(g)}
                       className={cn(
-                        'h-full border rounded-lg p-3 space-y-1 cursor-pointer transition-colors',
+                        'h-full border rounded-lg p-3 space-y-1 transition-colors',
+                        isEditing && 'flex flex-col',
+                        !isEditing && 'cursor-pointer',
                         g.linkedMemberId
                           ? 'border-green-200 bg-green-50/30 hover:bg-green-50/60'
                           : 'border-border hover:bg-muted/20'
@@ -698,7 +737,7 @@ export function StudentFormDialog({
                             </span>
                           )}
                         </div>
-                        {!g.linkedMemberId && (
+                        {!isEditing && !g.linkedMemberId && (
                           <div className="flex gap-1 shrink-0">
                             <button
                               type="button"
@@ -718,12 +757,18 @@ export function StudentFormDialog({
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                      <div className={cn('flex flex-wrap gap-x-4 gap-y-0.5', isEditing && 'min-h-5')}>
+                        {isEditing && !g.phone && !g.email && !g.emergencyPhone && (
+                          <span className="text-xs italic text-muted-foreground/70">Aucune coordonnée</span>
+                        )}
                         {g.phone && (
                           <span className="text-xs text-muted-foreground">📞 {formatPhone(g.phone)}</span>
                         )}
                         {g.email && (
                           <span className="text-xs text-muted-foreground">✉ {g.email}</span>
+                        )}
+                        {isEditing && g.emergencyPhone && (
+                          <span className="text-xs text-muted-foreground">🚨 {formatPhone(g.emergencyPhone)}</span>
                         )}
                         {g.linkedMemberId && !g.name && !g.linkedMemberName && (
                           <span className="text-xs text-muted-foreground italic">
@@ -731,6 +776,44 @@ export function StudentFormDialog({
                           </span>
                         )}
                       </div>
+                      {isEditing && (
+                        <p className="min-h-4 text-[11px] text-muted-foreground">
+                          {siblingCount(g) > 0
+                            ? `+ ${siblingCount(g)} autre${siblingCount(g) > 1 ? 's' : ''} enfant${siblingCount(g) > 1 ? 's' : ''}`
+                            : 'Aucun autre enfant'}
+                        </p>
+                      )}
+                      {isEditing && (
+                        <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-2">
+                          {g.id && (
+                            <Link
+                              href={`${ROUTES.admin.parents}?guardian=${g.id}`}
+                              title="Ouvrir ce parent dans la page Parents (modifie aussi ses autres enfants)"
+                              className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-xs font-medium hover:bg-muted"
+                            >
+                              <ExternalLink className="h-3 w-3" /> Voir le parent
+                            </Link>
+                          )}
+                          <button
+                            type="button"
+                            disabled={!!g.linkedMemberId}
+                            title={g.linkedMemberId ? LINKED_HINT : 'Remplacer le parent de cet élève seulement'}
+                            onClick={() => setGuardianFormMode(g._tempId)}
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-xs font-medium hover:bg-muted disabled:opacity-40 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                          >
+                            <Pencil className="h-3 w-3" /> Changer
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!!g.linkedMemberId}
+                            title={g.linkedMemberId ? LINKED_HINT : 'Retirer ce parent de cet élève seulement'}
+                            onClick={() => setRemoveGuardianConfirm(g)}
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-red-200 px-2 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                          >
+                            <X className="h-3 w-3" /> Retirer
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -738,7 +821,15 @@ export function StudentFormDialog({
               </div>
 
               {/* Formulaire d'ajout */}
-              {guardianFormMode === 'add' && (
+              {guardianFormMode === 'add' && isEditing && student && (
+                <StudentGuardianPicker
+                  studentId={student.id}
+                  existingRelationships={localGuardians.map(x => x.relationship)}
+                  onSaved={saved => { setLocalGuardians(prev => [...prev, guardianToLocal(saved)]); setGuardianFormMode('closed') }}
+                  onCancel={() => setGuardianFormMode('closed')}
+                />
+              )}
+              {guardianFormMode === 'add' && !isEditing && (
                 <GuardianForm
                   existingRelationships={localGuardians.map(x => x.relationship)}
                   onSave={addGuardian}
@@ -996,16 +1087,24 @@ export function StudentFormDialog({
                       <p className="col-span-2 text-muted-foreground text-xs italic">Aucune coordonnée enregistrée.</p>
                     )}
                   </div>
-                  {!viewingGuardian.linkedMemberId && (
-                    <div className="flex justify-end gap-2 pt-1 border-t border-border">
+                  {!isEditing && <div className="flex justify-end gap-2 pt-1 border-t border-border">
+                    {viewingGuardian.id && (
+                      <Link
+                        href={`${ROUTES.admin.parents}?guardian=${viewingGuardian.id}`}
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-border px-2.5 text-sm font-medium hover:bg-muted"
+                      >
+                        <UserRound className="w-3.5 h-3.5" /> Voir dans Parents
+                      </Link>
+                    )}
+                    {!viewingGuardian.linkedMemberId && (
                       <Button
                         type="button" variant="outline" size="sm"
                         onClick={() => { setViewingGuardian(null); setGuardianFormMode(viewingGuardian._tempId) }}
                       >
                         <Pencil className="w-3.5 h-3.5 mr-1" /> Modifier
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>}
                 </div>
               )}
             </DialogContent>
@@ -1019,7 +1118,9 @@ export function StudentFormDialog({
               </DialogHeader>
               <p className="text-sm text-muted-foreground">
                 {removeGuardianConfirm
-                  ? <>Retirer <strong>{removeGuardianConfirm.name || 'ce tuteur'}</strong> de la liste des tuteurs ?</>
+                  ? isEditing
+                    ? <>Retirer <strong>{removeGuardianConfirm.name || 'ce tuteur'}</strong> de cet élève ? Ses autres enfants ne sont pas modifiés.</>
+                    : <>Retirer <strong>{removeGuardianConfirm.name || 'ce tuteur'}</strong> de la liste des tuteurs ?</>
                   : 'Cette action retirera le tuteur de la liste.'
                 }
               </p>
@@ -1029,12 +1130,8 @@ export function StudentFormDialog({
                   type="button"
                   variant="destructive"
                   size="sm"
-                  onClick={() => {
-                    if (removeGuardianConfirm) {
-                      removeGuardian(removeGuardianConfirm)
-                      setRemoveGuardianConfirm(null)
-                    }
-                  }}
+                  disabled={removeStudentGuardian.isPending}
+                  onClick={confirmRemoveGuardian}
                 >
                   Retirer
                 </Button>

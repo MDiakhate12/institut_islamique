@@ -211,12 +211,13 @@ export const registrationsService = {
     const removedLabels = (await schoolService.getById(schoolId))?.settings?.removedRegistrationFieldLabels ?? {}
     const studentIds = rows.map(r => r.studentId).filter((id): id is string => !!id)
 
-    type GuardianRow = { studentId: string; firstName: string | null; lastName: string; email: string | null; phone: string | null }
+    type GuardianRow = { studentId: string; relationship: 'father' | 'mother' | 'guardian' | 'other'; firstName: string | null; lastName: string; email: string | null; phone: string | null }
 
     const guardianRows = studentIds.length > 0
       ? await db
           .select({
             studentId: guardians.studentId,
+            relationship: guardians.relationship,
             firstName: guardians.firstName,
             lastName:  guardians.lastName,
             email:     guardians.email,
@@ -281,7 +282,7 @@ export const registrationsService = {
         photoConsent,
         policyConsent,
         classes:          selectedClasses,
-        parents:          parents.map(p => ({ name: `${p.firstName} ${p.lastName}`.trim(), email: p.email, phone: p.phone })),
+        parents:          parents.map(p => ({ name: `${p.firstName} ${p.lastName}`.trim(), relationship: p.relationship, email: p.email, phone: p.phone })),
         customFields,
       }
     })

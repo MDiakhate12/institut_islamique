@@ -9,6 +9,7 @@ import { eq, and, isNull, desc, inArray, count, max, or, sum, ne, exists, notExi
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
 import { schoolService } from '@/modules/school/school.service'
 import { toStoredPhone } from '@/lib/phone'
+import { MAX_GUARDIANS_PER_STUDENT } from '@/lib/constants'
 import { getCustomFieldAnswers } from '@/modules/registrations/registrations.schema'
 import type { FormItem } from '@/modules/registrations/registrations.types'
 import type {
@@ -420,6 +421,8 @@ export const studentsService = {
             })
             .where(and(eq(guardians.id, g.id), eq(guardians.studentId, studentId), isNull(guardians.linkedMemberId)))
         } else {
+          const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(guardians).where(eq(guardians.studentId, studentId))
+          if (n >= MAX_GUARDIANS_PER_STUDENT) throw new Error(`Un élève a au maximum ${MAX_GUARDIANS_PER_STUDENT} tuteurs`)
           await db.insert(guardians).values({
             schoolId, studentId,
             relationship:   g.relationship,

@@ -4,6 +4,9 @@ export type PortalRole = (typeof PORTAL_ROLES)[number]
 export const ADMIN_SUB_ROLES = ['admin', 'treasurer', 'manager'] as const
 export type AdminSubRole = (typeof ADMIN_SUB_ROLES)[number]
 
+/** Un élève a au maximum 2 tuteurs. */
+export const MAX_GUARDIANS_PER_STUDENT = 2
+
 export const GENDERS = ['male', 'female'] as const
 export type Gender = (typeof GENDERS)[number]
 
