@@ -8,6 +8,9 @@ export const E2E_CLOSED_SCHOOL = { name: 'École E2E Fermée', slug: 'e2e-closed
 /** École sans compte dont le formulaire exige le second tuteur (avec son e-mail). */
 export const E2E_TWO_GUARDIANS_SCHOOL = { name: 'École E2E Deux Tuteurs', slug: 'e2e-two-guardians' } as const
 
+/** Classe quittée de Sami + son bulletin T1 d'une année passée (seed, parent/exam-history.spec.ts). */
+export const ARCHIVED_CLASS = { name: 'Classe Archive E2E', year: '2024-2025', score: 77 } as const
+
 export const E2E_EMAIL_DOMAIN = 'e2e.qaf.test'
 
 export const E2E_USERS = {
