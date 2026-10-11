@@ -76,6 +76,22 @@ export const schoolService = {
     return { ...updated, settings: merged }
   },
 
+  // Archive les libellés des champs supprimés d'un formulaire d'inscription (§7.4) — hors du
+  // formulaire des Paramètres : seul l'enregistrement du constructeur de formulaire l'alimente
+  async archiveRemovedRegistrationFields(schoolId: string, labels: Record<string, string>): Promise<void> {
+    if (Object.keys(labels).length === 0) return
+    const current = await schoolService.getById(schoolId)
+    const currentSettings: SchoolSettings = current?.settings ?? { ...DEFAULT_SETTINGS }
+    const merged: SchoolSettings = {
+      ...currentSettings,
+      removedRegistrationFieldLabels: { ...currentSettings.removedRegistrationFieldLabels, ...labels },
+    }
+    await db
+      .update(schools)
+      .set({ settings: merged, updatedAt: new Date() })
+      .where(eq(schools.id, schoolId))
+  },
+
   // UPDATE logo URL
   async updateLogoUrl(schoolId: string, logoUrl: string): Promise<void> {
     await db

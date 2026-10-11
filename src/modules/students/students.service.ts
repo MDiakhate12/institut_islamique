@@ -9,6 +9,8 @@ import { eq, and, isNull, desc, inArray, count, max, or, sum, ne, exists, notExi
 import type { CreateStudentInput, UpdateStudentInput } from './students.schema'
 import { schoolService } from '@/modules/school/school.service'
 import { toStoredPhone } from '@/lib/phone'
+import { getCustomFieldAnswers } from '@/modules/registrations/registrations.schema'
+import type { FormItem } from '@/modules/registrations/registrations.types'
 import type {
   Student, StudentListItem, GuardianSummary, StudentEnrollment,
   StudentPayment, StudentAttendanceDay, StudentHomeworkItem,
@@ -64,6 +66,7 @@ export const studentsService = {
       lastAttendanceRows,
       registrationRows,
       formSchemaRows,
+      school,
     ] = await Promise.all([
       // 1. Base students
       db
@@ -172,7 +175,11 @@ export const studentsService = {
         .from(registrationForms)
         .where(and(eq(registrationForms.schoolId, schoolId), eq(registrationForms.formType, 'new_student')))
         .limit(1),
+
+      // 9. Libellés des champs supprimés du formulaire (réponses toujours affichées)
+      schoolService.getById(schoolId),
     ])
+    const removedFieldLabels = school?.settings?.removedRegistrationFieldLabels ?? {}
 
     // Build lookup maps
     // Registration: keep only the most recent per student
@@ -182,21 +189,14 @@ export const studentsService = {
       return acc
     }, {})
 
-    // Build custom field map from form schema: id → label
-    type FieldShape = { kind: string; id: string; label?: string }
-    type ItemShape  = { kind: string; fields?: FieldShape[] }
-    const rawSchema = (formSchemaRows[0]?.formSchema as ItemShape[] | undefined) ?? []
-    const customFieldMap = new Map<string, string>() // id → label
+    // Champ « enseignant précédent » : premier champ custom dont le libellé contient « enseignant »
+    const formSchema = (formSchemaRows[0]?.formSchema as FormItem[] | undefined) ?? []
     let previousTeacherFieldId: string | null = null
-    for (const item of rawSchema) {
-      if (item.kind === 'section' && item.fields) {
-        for (const field of item.fields) {
-          if (field.kind === 'custom_field' && field.label) {
-            customFieldMap.set(field.id, field.label)
-            if (!previousTeacherFieldId && field.label.toLowerCase().includes('enseignant')) {
-              previousTeacherFieldId = field.id
-            }
-          }
+    for (const item of formSchema) {
+      if (item.kind !== 'section') continue
+      for (const field of item.fields) {
+        if (!previousTeacherFieldId && field.kind === 'custom_field' && field.label.toLowerCase().includes('enseignant')) {
+          previousTeacherFieldId = field.id
         }
       }
     }
@@ -294,12 +294,8 @@ export const studentsService = {
         previousTeacher:    previousTeacherFieldId
           ? (registrationByStudent[s.id]?.[previousTeacherFieldId] as string | undefined) ?? null
           : null,
-        regCustomFields:    Array.from(customFieldMap.entries())
-          .filter(([id]) => {
-            const v = registrationByStudent[s.id]?.[id]
-            return v != null && v !== ''
-          })
-          .map(([id, label]) => ({ label, value: String(registrationByStudent[s.id]?.[id]) })),
+        // Y compris les réponses à des champs supprimés du formulaire depuis (§7.4)
+        regCustomFields:    getCustomFieldAnswers(formSchema, registrationByStudent[s.id] ?? {}, removedFieldLabels),
       }
     })
   },

@@ -27,6 +27,8 @@ import { Label } from '@/components/ui/label'
 import { AddInfoBlockDialog } from './AddInfoBlockDialog'
 import { AddSectionDialog } from './AddSectionDialog'
 import { AddFieldDialog } from './AddFieldDialog'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog/ConfirmDialog'
+import { useFieldAnswerCounts } from '@/modules/registrations/registrations.hooks'
 import { GuardiansInput, emptyGuardian } from '@/components/shared/GuardiansInput/GuardiansInput'
 import { GUARDIAN_FIELD_KEYS, DEFAULT_GUARDIAN_OPTIONS, type GuardianOptions } from '@/modules/registrations/registrations.types'
 import type {
@@ -242,7 +244,8 @@ function FieldRow({
             </button>
           )}
           {onDelete && (
-            <button type="button" onClick={onDelete} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors">
+            <button type="button" onClick={onDelete} aria-label={`Supprimer le champ « ${field.label} »`}
+              className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           )}
@@ -684,13 +687,15 @@ function ClassSelectionPreview({ formType, classes = [] }: { formType: FormType;
 // ── Section block ──────────────────────────────────────────────────────────────
 
 function SectionBlock({
-  section, formType, classes, onUpdateFields, onUpdateMeta, onEdit, onDelete,
+  section, formType, classes, onUpdateFields, onUpdateMeta, onEdit, onDelete, onDeleteField,
   listeners, attributes, style: dragStyle,
 }: {
   section: FormSection
   formType: FormType
   classes?: RegistrationClassItem[]
   onUpdateFields: (fields: FormField[]) => void
+  /** Suppression d'un champ : `remove` à appeler une fois confirmée (champ qui a déjà des réponses) */
+  onDeleteField: (field: FormField, remove: () => void) => void
   onUpdateMeta: (patch: Partial<FormSection>) => void
   onEdit: () => void
   onDelete?: () => void
@@ -732,8 +737,8 @@ function SectionBlock({
     }
   }
 
-  function deleteField(fieldId: string) {
-    onUpdateFields(section.fields.filter(f => f.id !== fieldId))
+  function deleteField(field: FormField) {
+    onDeleteField(field, () => onUpdateFields(section.fields.filter(f => f.id !== field.id)))
   }
 
   function addField(field: CustomField) {
@@ -853,7 +858,7 @@ function SectionBlock({
                   <SortableFieldRow
                     key={field.id}
                     field={field}
-                    onDelete={() => deleteField(field.id)}
+                    onDelete={() => deleteField(field)}
                     onEdit={
                       field.kind === 'custom_field'
                         ? () => setEditingField(field)
@@ -1007,6 +1012,28 @@ export function FormBuilder({ items, formType, onChange, classes = [] }: FormBui
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   const [editingInfoBlock, setEditingInfoBlock] = useState<InfoBlock | null>(null)
   const [editingSection,   setEditingSection]   = useState<FormSection | null>(null)
+  const { data: answerCounts } = useFieldAnswerCounts(formType)
+  const [pendingDelete, setPendingDelete] = useState<{ title: string; description: string; run: () => void } | null>(null)
+
+  // Supprimer un champ qui a déjà des réponses : confirmation. Les réponses restent en base et
+  // affichées (fiche élève, Inscriptions) sous le libellé du champ, archivé à l'enregistrement.
+  // Compteurs pas encore chargés : on confirme toujours (le formulaire s'enregistre tout seul
+  // juste après la suppression, un clic trop rapide ne doit pas passer outre)
+  function confirmDelete(fields: FormField[], what: string, run: () => void) {
+    const answered = answerCounts ? Math.max(0, ...fields.map(f => answerCounts[f.id] ?? 0)) : null
+    if (answered === 0) { run(); return }
+    const custom = fields.some(f => f.kind === 'custom_field')
+    setPendingDelete({
+      title: `Supprimer ${what} ?`,
+      description: (answered === null
+        ? 'Des familles ont peut-être déjà répondu.'
+        : `${answered} inscription${answered > 1 ? 's ont' : ' a'} déjà répondu.`)
+        + ' Les réponses restent enregistrées'
+        + (custom ? ' et visibles dans la fiche élève et la liste des inscriptions (mention « Supprimé du formulaire »).' : '.')
+        + " Les prochaines familles n'auront plus cette question.",
+      run,
+    })
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -1058,8 +1085,9 @@ export function FormBuilder({ items, formType, onChange, classes = [] }: FormBui
                     classes={classes}
                     onUpdateFields={(fields) => updateSection(item.id, fields)}
                     onUpdateMeta={(patch) => updateSectionMeta(item.id, patch)}
+                    onDeleteField={(field, remove) => confirmDelete([field], `le champ « ${field.label} »`, remove)}
                     onEdit={() => setEditingSection(item)}
-                    onDelete={() => deleteItem(item.id)}
+                    onDelete={() => confirmDelete(item.fields, `la section « ${item.title} »`, () => deleteItem(item.id))}
                   />
                 )
               }
@@ -1075,6 +1103,15 @@ export function FormBuilder({ items, formType, onChange, classes = [] }: FormBui
           </div>
         </SortableContext>
       </DndContext>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={v => { if (!v) setPendingDelete(null) }}
+        title={pendingDelete?.title ?? ''}
+        description={pendingDelete?.description ?? ''}
+        confirmLabel="Supprimer"
+        onConfirm={() => { pendingDelete?.run(); setPendingDelete(null) }}
+      />
 
       {/* Edit info block */}
       {editingInfoBlock && (

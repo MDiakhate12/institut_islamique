@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { FormField, FormItem, SystemFieldKey, RegistrationGuardianInput, GuardianOptions } from './registrations.types'
+import type { FormField, FormItem, SystemFieldKey, RegistrationGuardianInput, GuardianOptions, CustomFieldAnswer } from './registrations.types'
 import { isValidPhone, PHONE_INVALID_MESSAGE } from '@/lib/phone'
 
 export const formTypeSchema = z.enum(['new_student', 'reenrollment'])
@@ -79,6 +79,50 @@ export function getMissingRequiredFields(
     }
   }
   return missing
+}
+
+// ── Réponses aux champs personnalisés ─────────────────────────────────────────
+
+/** Libellé d'un champ supprimé dont le libellé n'a pas été conservé (suppression antérieure à l'archivage). */
+export const removedFieldFallbackLabel = (fieldId: string) => `Champ supprimé du formulaire (${fieldId})`
+
+/**
+ * Réponses aux champs personnalisés d'une inscription : d'abord les champs du formulaire actuel
+ * (dans l'ordre), puis toute réponse à un champ supprimé depuis (`cf-*` absent du schéma).
+ * Supprimer un champ du formulaire ne doit jamais masquer des réponses déjà reçues
+ * (constat 2026-10 : le téléphone de la mère de 163 élèves de Noune avait disparu de la fiche élève).
+ */
+export function getCustomFieldAnswers(
+  schema: FormItem[],
+  formData: Record<string, unknown>,
+  removedLabels: Record<string, string> = {},
+  excludeIds: string[] = [],
+): CustomFieldAnswer[] {
+  const hasValue = (v: unknown) => v !== undefined && v !== null && v !== ''
+  const answers: CustomFieldAnswer[] = []
+  const schemaIds = new Set<string>()
+  for (const item of schema) {
+    if (item.kind !== 'section') continue
+    for (const field of item.fields) {
+      schemaIds.add(field.id)
+      if (field.kind !== 'custom_field' || excludeIds.includes(field.id)) continue
+      if (hasValue(formData[field.id])) answers.push({ label: field.label, value: String(formData[field.id]), removed: false })
+    }
+  }
+  for (const [id, value] of Object.entries(formData)) {
+    if (!id.startsWith('cf-') || schemaIds.has(id) || excludeIds.includes(id) || !hasValue(value)) continue
+    answers.push({ label: removedLabels[id] ?? removedFieldFallbackLabel(id), value: String(value), removed: true })
+  }
+  return answers
+}
+
+/** Champs personnalisés présents dans `before` et absents de `after` : id → libellé. */
+export function getRemovedCustomFields(before: FormItem[], after: FormItem[]): Record<string, string> {
+  const ids = (schema: FormItem[]) => schema.flatMap(item => (item.kind === 'section' ? item.fields : []))
+  const kept = new Set(ids(after).map(f => f.id))
+  return Object.fromEntries(
+    ids(before).filter(f => f.kind === 'custom_field' && !kept.has(f.id)).map(f => [f.id, f.label]),
+  )
 }
 
 export const reviewRegistrationSchema = z.object({

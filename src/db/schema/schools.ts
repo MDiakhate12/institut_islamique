@@ -45,6 +45,9 @@ export type SchoolSettings = {
   examResultsPublishedT1?: boolean
   examResultsPublishedT2?: boolean
   examResultsPublishedT3?: boolean
+  // Libellés des champs personnalisés supprimés des formulaires d'inscription (id → libellé),
+  // archivés à l'enregistrement du formulaire : leurs réponses restent lisibles (§7.4)
+  removedRegistrationFieldLabels?: Record<string, string>
 
   // ── Calendrier
   yearStartDate: string | null

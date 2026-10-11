@@ -166,7 +166,15 @@ export type RegistrationWithDetails = {
   policyConsent: boolean | null
   classes: { fullCode: string; name: string }[]
   parents: { name: string; email: string | null; phone: string | null }[]
-  customFields: { label: string; value: string }[]
+  customFields: CustomFieldAnswer[]
+}
+
+/** Réponse d'une inscription à un champ personnalisé, telle qu'affichée (fiche élève, Inscriptions, export). */
+export type CustomFieldAnswer = {
+  label: string
+  value: string
+  /** Champ retiré du formulaire depuis la soumission : la réponse reste affichée */
+  removed: boolean
 }
 
 // ── Default form schemas ───────────────────────────────────────────────────────
