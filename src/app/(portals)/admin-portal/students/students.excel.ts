@@ -33,7 +33,8 @@ function paymentStatus(s: StudentListItem, paid: boolean): string {
  */
 export function exportStudentsToExcel(students: StudentListItem[]) {
   // Une colonne par question personnalisée du formulaire d'inscription, dans l'ordre de première apparition
-  const customLabels = Array.from(new Set(students.flatMap(s => s.regCustomFields.map(f => f.label))))
+  // — sans les champs supprimés du formulaire depuis (visibles seulement dans la fiche élève)
+  const customLabels = Array.from(new Set(students.flatMap(s => s.regCustomFields.filter(f => !f.removed).map(f => f.label))))
 
   const rows = students.map(s => {
     const father = findGuardian(s, 'father')

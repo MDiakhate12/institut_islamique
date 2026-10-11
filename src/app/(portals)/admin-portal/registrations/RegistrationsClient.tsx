@@ -136,7 +136,8 @@ export function RegistrationsClient() {
   const customFieldLabels = useMemo(() => {
     if (!registrations?.length) return []
     const labels = new Set<string>()
-    registrations.forEach(r => r.customFields?.forEach(cf => labels.add(cf.label)))
+    // Champs supprimés du formulaire : pas de colonne (réponse visible dans le panneau de l'inscription)
+    registrations.forEach(r => r.customFields?.forEach(cf => { if (!cf.removed) labels.add(cf.label) }))
     return Array.from(labels)
   }, [registrations])
 
