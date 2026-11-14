@@ -7,10 +7,10 @@ import { signOutAction } from '@/app/auth/actions'
 import { hardNavigate } from '@/lib/auth/hard-navigate'
 import { cn } from '@/lib/utils'
 import { User, PenSquare, LogOut } from 'lucide-react'
-import type { Session } from '@/lib/auth/session'
+import type { ClientSession } from '@/lib/auth/session'
 
 interface Props {
-  session: Session
+  session: ClientSession
   userFullName?: string | null
   schoolName?: string | null
   profileHref?: string

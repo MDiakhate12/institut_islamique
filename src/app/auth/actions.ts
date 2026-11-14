@@ -5,8 +5,10 @@ import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { profiles, schoolMembers } from '@/db/schema'
 import { and, eq, isNotNull, isNull, or } from 'drizzle-orm'
-import { getAppUrl } from '@/lib/email'
+import { getAppUrl, getSchoolName } from '@/lib/email'
+import { notifyAdmins } from '@/modules/notifications/notify-admins'
 import { isValidPhone, toStoredPhone, PHONE_INVALID_MESSAGE } from '@/lib/phone'
+import { verifyInviteToken } from '@/lib/auth/invite-token'
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
@@ -106,7 +108,10 @@ export async function resetPasswordAction(password: string): Promise<{ error?: s
   return {}
 }
 
-export async function signUpAction(input: {
+const INVITE_INVALID_MESSAGE =
+  "Ce lien d'invitation est invalide ou expiré. Demandez à l'école de vous le renvoyer."
+
+export async function signUpAction(rawInput: {
   fullName: string
   email: string
   schoolId: string
@@ -115,9 +120,48 @@ export async function signUpAction(input: {
   isTeacher: boolean
   isAdmin: boolean
   password: string
+  inviteToken?: string
 }): Promise<{ error?: string; needsConfirmation?: boolean; redirectTo?: string }> {
   // Action publique : le client valide déjà, mais on ne crée jamais de compte avec un numéro invalide
-  if (!input.phone.trim() || !isValidPhone(input.phone)) return { error: PHONE_INVALID_MESSAGE }
+  if (!rawInput.phone.trim() || !isValidPhone(rawInput.phone)) return { error: PHONE_INVALID_MESSAGE }
+
+  // Invitation (admin / enseignant) : le jeton signé fait foi, jamais les champs envoyés par le
+  // client — sinon n'importe qui pouvait revendiquer l'invitation d'un autre en connaissant son
+  // e-mail. Le jeton prouve que le lien a été envoyé à cette adresse : pas de second code à saisir.
+  const invite = rawInput.inviteToken ? verifyInviteToken(rawInput.inviteToken) : null
+  if (rawInput.inviteToken && !invite) return { error: INVITE_INVALID_MESSAGE }
+  // Le rôle admin ne s'obtient QUE par une invitation signée
+  if (rawInput.isAdmin && invite?.kind !== 'admin') return { error: INVITE_INVALID_MESSAGE }
+
+  const input = invite
+    ? {
+        ...rawInput,
+        email: invite.email,
+        schoolId: invite.schoolId,
+        isAdmin: invite.kind === 'admin',
+        isTeacher: invite.kind === 'teacher',
+        isParent: false,
+      }
+    : { ...rawInput, isAdmin: false }
+
+  // Invitation déjà consommée (enregistrement relié à un compte) ou supprimée : on s'arrête avant
+  // de créer un compte Supabase orphelin.
+  if (invite) {
+    const [pending] = await db
+      .select({ id: schoolMembers.id })
+      .from(schoolMembers)
+      .where(
+        and(
+          eq(schoolMembers.schoolId, invite.schoolId),
+          eq(schoolMembers.userId, NIL_UUID),
+          eq(schoolMembers.pendingEmail, invite.email.toLowerCase()),
+          invite.kind === 'admin' ? isNotNull(schoolMembers.adminSubRole) : isNull(schoolMembers.adminSubRole),
+        )
+      )
+      .limit(1)
+    if (!pending) return { error: INVITE_INVALID_MESSAGE }
+  }
+
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.signUp({
@@ -143,7 +187,7 @@ export async function signUpAction(input: {
     })
 
   // ── Flow admin invité ────────────────────────────────────────────
-  if (input.isAdmin) {
+  if (invite?.kind === 'admin') {
     const [pendingRecord] = await db
       .select({ id: schoolMembers.id, isPending: schoolMembers.isPending })
       .from(schoolMembers)
@@ -222,7 +266,9 @@ export async function signUpAction(input: {
       // Link the real user to the admin-created teacher record (keep isPending=true for activation)
       await db
         .update(schoolMembers)
-        .set({ userId, pendingEmail: null })
+        // Invitation signée = adresse prouvée : activation directe, sans la gate du code (§7.8).
+        // Sans jeton (ancien lien, auto-inscription) la gate reste obligatoire.
+        .set(invite ? { userId, pendingEmail: null, isPending: false } : { userId, pendingEmail: null })
         .where(eq(schoolMembers.id, adminRecord.id))
     } else {
       // No admin record — create a pending member (awaiting admin activation code)
@@ -232,6 +278,33 @@ export async function signUpAction(input: {
         portalRoles: ['teacher'],
         isPending: true,
       })
+
+      // Auto-inscription : le compte reste désactivé tant qu'un admin ne l'a pas activé (page
+      // Enseignants, bouton « Activer ») — on prévient les admins pour qu'il n'attende pas dans le vide
+      const schoolName = await getSchoolName(input.schoolId)
+      const appUrl = await getAppUrl()
+      void notifyAdmins(input.schoolId, {
+        type: 'teacher_pending_activation',
+        title: `Nouvel enseignant à activer — ${input.fullName}`,
+        body: `${input.fullName} (${input.email}) s'est inscrit comme enseignant. Son compte est désactivé jusqu'à votre validation.`,
+        link: '/admin-portal/teachers',
+      }, {
+        fromName: schoolName,
+        subject: `Enseignant à activer — ${input.fullName}`,
+        html: `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f9f3;font-family:Arial,sans-serif;">
+  <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:16px;padding:40px;">
+    <h1 style="color:#1e4535;font-size:20px;margin:0 0 16px;">${schoolName}</h1>
+    <p style="color:#374151;font-size:15px;line-height:1.6;">
+      <strong>${input.fullName}</strong> (${input.email}) s'est inscrit comme enseignant.
+      Son compte est <strong>désactivé</strong> tant que vous ne l'avez pas activé.
+    </p>
+    <p style="text-align:center;margin-top:24px;">
+      <a href="${appUrl}/admin-portal/teachers" style="display:inline-block;background:#2d6a4f;color:#ffffff;font-size:14px;font-weight:bold;padding:12px 28px;border-radius:10px;text-decoration:none;">Voir les enseignants →</a>
+    </p>
+  </div>
+</body></html>`,
+      }, 'teacherSelfSignup')
     }
 
     // Also link any remaining NIL_UUID records for this email (e.g. admin/gestionnaire role)

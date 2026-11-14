@@ -12,6 +12,24 @@ export interface Session {
   isPending: boolean
 }
 
+/**
+ * Session transmise aux composants client. `memberId` en est retiré : c'est le code d'activation
+ * enseignant (§7.8), le sérialiser vers le navigateur reviendrait à l'afficher dans la page même
+ * que la gate d'activation protège.
+ */
+export type ClientSession = Omit<Session, 'memberId'>
+
+export function toClientSession(session: Session): ClientSession {
+  return {
+    userId: session.userId,
+    schoolId: session.schoolId,
+    roles: session.roles,
+    adminSubRole: session.adminSubRole,
+    email: session.email,
+    isPending: session.isPending,
+  }
+}
+
 export async function getSession(): Promise<Session | null> {
   const supabase = await createClient()
   const { data: { user }, error } = await supabase.auth.getUser()

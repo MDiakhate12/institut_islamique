@@ -651,7 +651,9 @@ export function PublicRegistrationForm({
     startTransition(async () => {
       const result = await submitRegistrationAction(schoolSlug, formType, formData, studentId, withGuardians ? guardians : undefined)
       if (!result.success) { toast.error(result.error); return }
-      router.push(successHref ?? `/portal/register/${schoolSlug}/success`)
+      // Portail public : l'e-mail du tuteur principal pré-remplit la création du compte de suivi
+      const primaryEmail = withGuardians ? guardians[0]?.email?.trim() : ''
+      router.push(successHref ?? `/portal/register/${schoolSlug}/success${primaryEmail ? `?email=${encodeURIComponent(primaryEmail)}` : ''}`)
     })
   }
 

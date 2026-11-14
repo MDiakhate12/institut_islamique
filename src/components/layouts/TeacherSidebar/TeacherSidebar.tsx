@@ -10,7 +10,7 @@ import {
   ChevronLeft, ChevronRight, User, Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Session } from '@/lib/auth/session'
+import type { ClientSession } from '@/lib/auth/session'
 import { UserProfileDialog } from '../Sidebar/UserProfileDialog'
 import { NotificationBell } from '@/components/shared/NotificationBell'
 
@@ -41,7 +41,7 @@ function getInitials(name: string): string {
 }
 
 interface TeacherSidebarProps {
-  session: Session
+  session: ClientSession
   userFullName?: string | null
   schoolName?: string | null
 }

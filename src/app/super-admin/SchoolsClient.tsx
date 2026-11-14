@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { resendInviteAction, deleteSchoolAction, updateSchoolAction } from '@/modules/super-admin/super-admin.actions'
+import { resendInviteAction, getInviteUrlAction, deleteSchoolAction, updateSchoolAction } from '@/modules/super-admin/super-admin.actions'
 
 type SchoolRow = {
   id: string
@@ -28,11 +28,6 @@ type SchoolRow = {
 
 interface Props {
   initialSchools: SchoolRow[]
-}
-
-function buildInviteUrl(schoolId: string, pendingEmail: string) {
-  const base = typeof window !== 'undefined' ? window.location.origin : ''
-  return `${base}/auth/signup?invite=admin&schoolId=${schoolId}&email=${encodeURIComponent(pendingEmail)}`
 }
 
 function autoSlug(name: string) {
@@ -65,8 +60,15 @@ export function SchoolsClient({ initialSchools }: Props) {
 
   function handleCopyInvite(school: SchoolRow) {
     if (!school.pendingAdminEmail) return
-    const url = buildInviteUrl(school.id, school.pendingAdminEmail)
-    navigator.clipboard.writeText(url).then(() => toast.success('Lien d\'invitation copié !'))
+    startTransition(async () => {
+      const result = await getInviteUrlAction(school.id)
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      await navigator.clipboard.writeText(result.data)
+      toast.success('Lien d\'invitation copié !')
+    })
   }
 
   function handleResend(school: SchoolRow) {
@@ -328,7 +330,7 @@ export function SchoolsClient({ initialSchools }: Props) {
                   <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
                     <ExternalLink className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                     <span className="text-xs font-mono text-gray-600 flex-1 break-all line-clamp-2">
-                      {buildInviteUrl(detailsTarget.id, detailsTarget.pendingAdminEmail)}
+                      Le lien est généré à la copie (signé, valable 14 jours, usage unique).
                     </span>
                     <button
                       onClick={() => handleCopyInvite(detailsTarget)}

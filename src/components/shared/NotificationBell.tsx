@@ -20,6 +20,7 @@ const TYPE_ICON: Record<string, string> = {
   exam_signature_reset:   '✍️',
   registration_submitted: '📝',
   exam_grades_submitted:  '📊',
+  teacher_pending_activation: '🧑‍🏫',
 }
 
 export function NotificationBell() {

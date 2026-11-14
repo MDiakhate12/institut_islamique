@@ -2,11 +2,11 @@ import { Sidebar } from '@/components/layouts/Sidebar/Sidebar'
 import { TopBar } from '@/components/layouts/TopBar/TopBar'
 import { MobileNavShell } from '@/components/layouts/MobileNavShell/MobileNavShell'
 import { PortalContent } from '@/components/layouts/PortalContent/PortalContent'
-import type { Session } from '@/lib/auth/session'
+import type { ClientSession } from '@/lib/auth/session'
 
 interface PortalLayoutProps {
   children: React.ReactNode
-  session: Session
+  session: ClientSession
   schoolName?: string
   userFullName?: string | null
   isSuperAdmin?: boolean

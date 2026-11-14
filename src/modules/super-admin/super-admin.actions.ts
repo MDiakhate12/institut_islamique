@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 import { sendEmail } from '@/lib/email'
+import { buildInviteUrl } from '@/lib/auth/invite-token'
 import { superAdminService } from './super-admin.service'
 import { createSchoolSchema, updateSchoolBasicSchema } from './super-admin.schema'
 import { ok, err } from '@/lib/result'
@@ -76,7 +77,7 @@ export async function createSchoolAction(raw: unknown): Promise<ActionResult<{
     const { school } = await superAdminService.createSchoolWithAdmin(data)
 
     const appUrl = await getAppUrl()
-    const inviteUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${school.id}&email=${encodeURIComponent(data.adminEmail)}`
+    const inviteUrl = buildInviteUrl(appUrl, { kind: 'admin', schoolId: school.id, email: data.adminEmail })
 
     const emailSent = await sendInviteEmail(data.adminEmail, data.schoolName, inviteUrl)
 
@@ -104,6 +105,18 @@ export async function getAllSchoolsAction(): Promise<ActionResult<Awaited<Return
   }
 }
 
+/** Génère à la demande un lien d'invitation signé (rien n'est stocké ni envoyé). */
+export async function getInviteUrlAction(schoolId: string): Promise<ActionResult<string>> {
+  try {
+    const pendingEmail = await superAdminService.getPendingAdminEmail(schoolId)
+    if (!pendingEmail) return err('Aucun administrateur en attente pour cette école.')
+    const appUrl = await getAppUrl()
+    return ok(buildInviteUrl(appUrl, { kind: 'admin', schoolId, email: pendingEmail }))
+  } catch (e) {
+    return err(e instanceof Error ? e.message : 'Erreur inconnue')
+  }
+}
+
 export async function resendInviteAction(schoolId: string): Promise<ActionResult<{ emailSent: boolean; inviteUrl: string }>> {
   try {
     const [pendingEmail, schoolName] = await Promise.all([
@@ -114,7 +127,7 @@ export async function resendInviteAction(schoolId: string): Promise<ActionResult
     if (!pendingEmail) return err('Aucun administrateur en attente pour cette école.')
 
     const appUrl = await getAppUrl()
-    const inviteUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${schoolId}&email=${encodeURIComponent(pendingEmail)}`
+    const inviteUrl = buildInviteUrl(appUrl, { kind: 'admin', schoolId, email: pendingEmail })
 
     const emailSent = await sendInviteEmail(pendingEmail, schoolName ?? '', inviteUrl)
 

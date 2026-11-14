@@ -327,6 +327,27 @@ export const parentsService = {
     return matched.map(s => ({ studentId: s.id, firstName: s.firstName, lastName: s.lastName }))
   },
 
+  /**
+   * Enfants dont une fiche tuteur porte cet e-mail et qui ne sont pas encore liés à ce compte.
+   * Sert la proposition « C'est votre enfant ? » : rien n'est lié sans le clic du parent.
+   */
+  async findLinkSuggestions(
+    email: string,
+    schoolMemberId: string,
+    schoolId: string,
+  ): Promise<{ studentId: string; firstName: string; lastName: string }[]> {
+    const matched = await parentsService.findStudentsByGuardianEmail(email, schoolId)
+    if (matched.length === 0) return []
+
+    const linked = await db
+      .select({ studentId: parentStudents.studentId })
+      .from(parentStudents)
+      .where(and(eq(parentStudents.schoolMemberId, schoolMemberId), eq(parentStudents.schoolId, schoolId)))
+    const linkedIds = new Set(linked.map(l => l.studentId))
+
+    return matched.filter(s => !linkedIds.has(s.studentId))
+  },
+
   async linkStudentsToParent(
     schoolMemberId: string,
     studentIds: string[],

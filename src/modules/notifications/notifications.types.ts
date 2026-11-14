@@ -8,6 +8,7 @@ export type NotificationType =
   | 'exam_signature_reset'
   | 'registration_submitted'
   | 'exam_grades_submitted'
+  | 'teacher_pending_activation'
 
 export type Notification = {
   id: string

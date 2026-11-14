@@ -8,6 +8,7 @@ import {
   inviteTeacherAction,
   updateTeacherAction,
   removeTeacherAction,
+  activateTeacherByAdminAction,
 } from './teachers.actions'
 import type { InviteTeacherInput, UpdateTeacherInput } from './teachers.schema'
 
@@ -69,6 +70,23 @@ export function useUpdateTeacher(memberId: string) {
       }
       toast.success('Enseignant modifié avec succès')
       queryClient.invalidateQueries({ queryKey: teachersKeys.all })
+    },
+    onError: () => toast.error('Une erreur est survenue'),
+  })
+}
+
+export function useActivateTeacher() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (memberId: string) => activateTeacherByAdminAction(memberId),
+    onSuccess: (result) => {
+      if (!result.success) {
+        toast.error(result.error)
+        return
+      }
+      toast.success('Enseignant activé : il a été prévenu par e-mail')
+      queryClient.invalidateQueries({ queryKey: teachersKeys.lists() })
     },
     onError: () => toast.error('Une erreur est survenue'),
   })

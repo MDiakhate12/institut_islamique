@@ -1,6 +1,7 @@
 'use server'
 
 import { requireSession } from '@/lib/auth/session'
+import { createClient } from '@/lib/supabase/server'
 import { canAccess } from '@/lib/auth/permissions'
 import { ok, err } from '@/lib/result'
 import type { ActionResult } from '@/lib/result'
@@ -154,6 +155,56 @@ export async function verifyOtpAndLinkAction(
     return ok({ count: matched.length })
   } catch (e) {
     console.error('[verifyOtpAndLinkAction]', e)
+    return err('Erreur lors de la liaison. Veuillez réessayer.')
+  }
+}
+
+/**
+ * Enfants proposés au parent connecté d'après l'e-mail de son compte. Uniquement si cet e-mail est
+ * CONFIRMÉ côté Supabase : sinon n'importe qui pourrait créer un compte avec l'adresse d'un tuteur
+ * et se voir proposer ses enfants — le code envoyé par e-mail reste alors la seule voie.
+ */
+async function getConfirmedLinkSuggestions(
+  session: Awaited<ReturnType<typeof requireSession>>,
+): Promise<{ memberId: string; students: { studentId: string; firstName: string; lastName: string }[] } | null> {
+  if (!session.roles.includes('parent')) return null
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email || !user.email_confirmed_at) return null
+
+  const memberId = await parentsService.getMemberId(session.userId, session.schoolId)
+  if (!memberId) return null
+
+  const students = await parentsService.findLinkSuggestions(user.email, memberId, session.schoolId)
+  return { memberId, students }
+}
+
+export async function getLinkSuggestionsAction(): Promise<ActionResult<{ studentId: string; firstName: string; lastName: string }[]>> {
+  const session = await requireSession()
+  try {
+    const found = await getConfirmedLinkSuggestions(session)
+    return ok(found?.students ?? [])
+  } catch (e) {
+    console.error('[getLinkSuggestionsAction]', e)
+    return ok([])
+  }
+}
+
+export async function confirmLinkSuggestionsAction(studentIds: string[]): Promise<ActionResult<{ count: number }>> {
+  const session = await requireSession()
+  try {
+    // Recalculé côté serveur : on ne lie que l'intersection avec ce que l'e-mail confirmé autorise
+    const found = await getConfirmedLinkSuggestions(session)
+    if (!found) return err('Impossible de vérifier votre adresse e-mail.')
+    const allowed = new Set(found.students.map(s => s.studentId))
+    const toLink = studentIds.filter(id => allowed.has(id))
+    if (toLink.length === 0) return err('Aucun enfant à lier.')
+
+    await parentsService.linkStudentsToParent(found.memberId, toLink, session.schoolId)
+    revalidatePath('/parent-portal', 'layout')
+    return ok({ count: toLink.length })
+  } catch (e) {
+    console.error('[confirmLinkSuggestionsAction]', e)
     return err('Erreur lors de la liaison. Veuillez réessayer.')
   }
 }
