@@ -1,4 +1,4 @@
-import { requireSession } from '@/lib/auth/session'
+import { requireSession, toClientSession } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import { MobileNavShell } from '@/components/layouts/MobileNavShell/MobileNavShell'
 import { PortalContent } from '@/components/layouts/PortalContent/PortalContent'
@@ -52,7 +52,7 @@ export default async function TeacherPortalLayout({ children }: { children: Reac
     <MobileNavShell
       title="Portail enseignants"
       subtitle={schoolName}
-      sidebar={<TeacherSidebar session={session} userFullName={userFullName} schoolName={schoolName} />}
+      sidebar={<TeacherSidebar session={toClientSession(session)} userFullName={userFullName} schoolName={schoolName} />}
     >
       <PortalContent>
         {session.isPending ? (

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
-import type { Session } from '@/lib/auth/session'
+import type { ClientSession } from '@/lib/auth/session'
 import { canAccessAdminPath } from '@/lib/auth/permissions'
 import { UserProfileDialog } from './UserProfileDialog'
 import { NotificationBell } from '@/components/shared/NotificationBell'
@@ -101,7 +101,7 @@ function getInitials(name: string): string {
 }
 
 interface SidebarProps {
-  session: Session
+  session: ClientSession
   userFullName?: string | null
   schoolName?: string | null
   isSuperAdmin?: boolean

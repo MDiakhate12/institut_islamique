@@ -29,3 +29,6 @@ export type E2ERole = keyof typeof E2E_USERS
 export const E2E_ROLES = Object.keys(E2E_USERS) as E2ERole[]
 
 export const storageStatePath = (role: E2ERole) => `e2e/.auth/${role}.json`
+
+/** E-mail du tuteur de Lina PROPOSITION (seed) : aucun compte, le test d'inscription parent le crée. */
+export const SUGGESTION_PARENT_EMAIL = `proposition@${E2E_EMAIL_DOMAIN}`

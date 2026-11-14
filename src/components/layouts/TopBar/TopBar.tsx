@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { signOutAction } from '@/app/auth/actions'
 import { hardNavigate } from '@/lib/auth/hard-navigate'
-import type { Session } from '@/lib/auth/session'
+import type { ClientSession } from '@/lib/auth/session'
 import { ROUTES } from '@/lib/constants'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -30,7 +30,7 @@ const ROLE_BADGE_CLASSES: Record<string, string> = {
 }
 
 interface TopBarProps {
-  session: Session
+  session: ClientSession
   schoolName?: string
   userFullName?: string | null
 }

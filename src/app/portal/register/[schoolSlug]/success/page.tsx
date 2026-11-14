@@ -3,10 +3,14 @@ import { CheckCircle } from 'lucide-react'
 
 interface Props {
   params: Promise<{ schoolSlug: string }>
+  searchParams: Promise<{ email?: string }>
 }
 
-export default async function RegistrationSuccessPage({ params }: Props) {
+export default async function RegistrationSuccessPage({ params, searchParams }: Props) {
   const { schoolSlug } = await params
+  const { email } = await searchParams
+  const signupParams = new URLSearchParams({ school: schoolSlug })
+  if (email) signupParams.set('email', email)
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -39,6 +43,20 @@ export default async function RegistrationSuccessPage({ params }: Props) {
               <li className="flex items-start gap-2"><span className="text-[#2d6a4f] mt-0.5">•</span>L&apos;école examinera votre demande sous 5-7 jours ouvrables</li>
               <li className="flex items-start gap-2"><span className="text-[#2d6a4f] mt-0.5">•</span>Vous serez contacté pour finaliser l&apos;inscription</li>
             </ul>
+          </div>
+
+          <div className="bg-white border border-border rounded-xl p-4 text-left space-y-3">
+            <p className="text-sm font-medium text-foreground">Suivre ma demande</p>
+            <p className="text-sm text-muted-foreground">
+              Créez votre compte parent : votre enfant y sera rattaché automatiquement, avec ses devoirs,
+              ses présences et ses bulletins.
+            </p>
+            <Link
+              href={`/auth/signup?${signupParams.toString()}`}
+              className="inline-block px-4 py-2 border border-[#2d6a4f] text-[#2d6a4f] hover:bg-[#2d6a4f] hover:text-white font-medium rounded-lg transition-colors text-sm"
+            >
+              Créer mon compte parent
+            </Link>
           </div>
 
           <Link

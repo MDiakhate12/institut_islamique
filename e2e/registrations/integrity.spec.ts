@@ -158,7 +158,7 @@ test('réglage « Second tuteur obligatoire » : le formulaire exige le second t
   await page.locator('#guardian-1-name').fill('Père DEUXTUTEURS')
   await page.locator('#guardian-1-email').fill('pere@example.com')
   await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
-  await expect(page).toHaveURL(`/portal/register/${E2E_TWO_GUARDIANS_SCHOOL.slug}/success`)
+  await expect(page).toHaveURL(new RegExp(`/portal/register/${E2E_TWO_GUARDIANS_SCHOOL.slug}/success`))
 })
 
 test('constructeur : la case « Second tuteur obligatoire » met à jour l\'aperçu', async ({ browser }) => {

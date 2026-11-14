@@ -47,12 +47,16 @@ interface Props {
   prefilledSchoolId?: string
   prefilledFullName?: string
   prefilledPhone?:    string
+  inviteToken?:       string
+  /** École imposée (parent arrivé depuis le formulaire d'une école) */
+  lockedSchoolId?:    string
 }
 
 export function SignupForm({
   schools, isAdminInvite = false, isTeacherInvite = false,
   prefilledEmail = '', prefilledSchoolId = '',
   prefilledFullName = '', prefilledPhone = '',
+  inviteToken, lockedSchoolId,
 }: Props) {
   const [isPending, startTransition] = useTransition()
   const [confirmed, setConfirmed] = useState(false)
@@ -87,6 +91,7 @@ export function SignupForm({
         isTeacher: data.isTeacher,
         isAdmin:   data.isAdmin,
         password:  data.password,
+        inviteToken,
       })
       if (result?.error) {
         toast.error(result.error)
@@ -190,7 +195,7 @@ export function SignupForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>École *</FormLabel>
-              {hideRoleChoice ? (
+              {hideRoleChoice || lockedSchoolId ? (
                 <FormControl>
                   <Input
                     readOnly

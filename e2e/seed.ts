@@ -15,7 +15,7 @@ import {
 } from '../src/db/schema'
 import { DEFAULT_NEW_STUDENT_SCHEMA, type FormItem } from '../src/modules/registrations/registrations.types'
 import { DEFAULT_SETTINGS } from '../src/db/schema/schools'
-import { E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_TWO_GUARDIANS_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, ARCHIVED_CLASS, type E2ERole } from './support/users'
+import { E2E_SCHOOL, E2E_CLOSED_SCHOOL, E2E_TWO_GUARDIANS_SCHOOL, E2E_USERS, E2E_EMAIL_DOMAIN, ARCHIVED_CLASS, SUGGESTION_PARENT_EMAIL, type E2ERole } from './support/users'
 
 const env = loadE2EEnv() // lève une erreur si la base n'est pas locale
 
@@ -199,6 +199,26 @@ async function seed() {
       'cf-e2e-removed': '0611223344',
       'cf-e2e-unlabelled': 'Réponse sans libellé',
     },
+  })
+
+  // Élève dont le tuteur n'a pas encore de compte : à sa première connexion, le parent qui s'inscrit avec
+  // cet e-mail se voit proposer l'enfant (e2e/parent/link-suggestion.spec.ts)
+  const [lina] = await db.insert(students).values({
+    schoolId: school.id,
+    firstName: 'Lina',
+    lastName: 'PROPOSITION',
+    gender: 'female',
+    birthDate: '2017-06-01',
+    createdBy: memberIds.admin,
+  }).returning()
+  await db.insert(guardians).values({
+    schoolId: school.id,
+    studentId: lina.id,
+    relationship: 'mother',
+    firstName: 'Mère Proposition',
+    lastName: '',
+    email: SUGGESTION_PARENT_EMAIL,
+    isPrimary: true,
   })
 
   // Seconde école, sans compte, inscriptions fermées (réglage « Autoriser les nouvelles inscriptions »)

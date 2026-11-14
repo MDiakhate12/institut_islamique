@@ -2,11 +2,11 @@
 
 import { useState, useMemo, useTransition } from 'react'
 import { formatPhone, phoneMatches } from '@/lib/phone'
-import { useTeachers } from '@/modules/teachers/teachers.hooks'
+import { useTeachers, useActivateTeacher } from '@/modules/teachers/teachers.hooks'
 import { TeacherFormDialog } from './TeacherForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Download, Search, Mail, Phone, Pencil, Copy, BookOpen, Send } from 'lucide-react'
+import { Download, Search, Mail, Phone, Pencil, Copy, BookOpen, Send, UserCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { exportTeachersToExcel } from './teachers.excel'
 import { resendTeacherInvitationAction } from '@/modules/teachers/teachers.actions'
@@ -185,6 +185,23 @@ function CircleChip({ color, active, onClick, title }: {
   )
 }
 
+// ── ActivateButton ───────────────────────────────────────────────────────────
+// Enseignant inscrit lui-même (compte créé, en attente) : l'admin l'active en un clic, sans code
+function ActivateButton({ memberId }: { memberId: string }) {
+  const activate = useActivateTeacher()
+  return (
+    <button
+      type="button"
+      onClick={() => activate.mutate(memberId)}
+      disabled={activate.isPending}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-[#2d6a4f] hover:bg-[#1e4535] text-white text-xs font-medium transition-colors disabled:opacity-50"
+    >
+      <UserCheck className="h-3.5 w-3.5" />
+      {activate.isPending ? 'Activation…' : 'Activer'}
+    </button>
+  )
+}
+
 // ── ResendInviteButton ───────────────────────────────────────────────────────
 function ResendInviteButton({ memberId, email }: { memberId: string; email: string }) {
   const [isPending, startTransition] = useTransition()
@@ -218,6 +235,8 @@ function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
   const isActive   = !teacher.isPending
   const isVolunteer = teacher.teacherType === 'volunteer'
   const id          = shortId(teacher.id)
+  // Compte déjà créé (sinon l'enseignant n'a pas encore suivi son invitation : rien à activer)
+  const hasAccount  = teacher.userId !== '00000000-0000-0000-0000-000000000000'
 
   return (
     <div className="bg-white rounded-xl border border-border p-4 flex flex-col gap-3 hover:shadow-sm transition-shadow">
@@ -291,7 +310,12 @@ function TeacherCard({ teacher }: { teacher: TeacherListItem }) {
 
       {/* Row 5: Actions */}
       <div className="flex items-center justify-between pt-1 border-t border-border/50">
-        {!isActive && <ResendInviteButton memberId={teacher.id} email={teacher.email} />}
+        {!isActive && (
+          <div className="flex items-center gap-1">
+            {hasAccount && <ActivateButton memberId={teacher.id} />}
+            <ResendInviteButton memberId={teacher.id} email={teacher.email} />
+          </div>
+        )}
         <div className={cn('flex justify-end', isActive && 'flex-1')}>
           <TeacherFormDialog
             teacher={teacher as unknown as Teacher}

@@ -28,7 +28,10 @@ test('inscription publique d\'un nouvel élève, visible côté admin', async ({
   await page.getByRole('checkbox', { name: /J'ai lu et j'accepte le règlement intérieur/ }).check()
 
   await page.getByRole('button', { name: "Soumettre l'inscription" }).click()
-  await expect(page).toHaveURL(`/portal/register/${E2E_SCHOOL.slug}/success`)
+  await expect(page).toHaveURL(new RegExp(`/portal/register/${E2E_SCHOOL.slug}/success`))
+  // Le tuteur principal peut créer son compte de suivi : e-mail et école pré-remplis
+  await expect(page.getByRole('link', { name: 'Créer mon compte parent' }))
+    .toHaveAttribute('href', /\/auth\/signup\?school=e2e-school&email=/)
 
   const admin = await browser.newPage({ storageState: storageStatePath('admin') })
   const adminErrors: Error[] = []

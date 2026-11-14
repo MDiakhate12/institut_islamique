@@ -1,4 +1,4 @@
-import { requireSession } from '@/lib/auth/session'
+import { requireSession, toClientSession } from '@/lib/auth/session'
 import { PortalLayout } from '@/components/layouts/PortalLayout/PortalLayout'
 import { db } from '@/db'
 import { schools, profiles } from '@/db/schema'
@@ -23,7 +23,7 @@ export default async function AdminPortalLayout({ children }: { children: React.
 
   return (
     <PortalLayout
-      session={session}
+      session={toClientSession(session)}
       schoolName={schoolResult[0]?.name}
       userFullName={profileResult[0]?.fullName ?? null}
       isSuperAdmin={isSuperAdmin}

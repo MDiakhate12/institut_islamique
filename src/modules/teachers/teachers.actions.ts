@@ -13,11 +13,14 @@ import type { Teacher, TeacherListItem } from './teachers.types'
 import { ROUTES } from '@/lib/constants'
 import { db } from '@/db'
 import { schoolMembers } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { sendEmail, getAppUrl, getSchoolName } from '@/lib/email'
 import { getAuthEmailByUserId } from '@/db/auth-users'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 import { createClient } from '@/lib/supabase/server'
+import { buildInviteUrl } from '@/lib/auth/invite-token'
+
+const NIL_UUID = '00000000-0000-0000-0000-000000000000'
 
 async function sendTeacherInviteEmail(
   email: string,
@@ -26,7 +29,7 @@ async function sendTeacherInviteEmail(
   hasAccount = false,
 ): Promise<void> {
   const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(schoolId)])
-  const signupUrl = `${appUrl}/auth/signup?invite=teacher&schoolId=${schoolId}&email=${encodeURIComponent(email)}`
+  const signupUrl = buildInviteUrl(appUrl, { kind: 'teacher', schoolId, email })
   const portalUrl = `${appUrl}/teacher-portal`
 
   const stepOneBlock = hasAccount
@@ -152,7 +155,6 @@ export async function resendTeacherInvitationAction(memberId: string): Promise<A
   const session = await requireSession()
   if (!canAccess(session, 'teachers')) return unauthorized()
 
-  const NIL_UUID = '00000000-0000-0000-0000-000000000000'
   const [member] = await db
     .select({ id: schoolMembers.id, userId: schoolMembers.userId, pendingEmail: schoolMembers.pendingEmail, isPending: schoolMembers.isPending, schoolId: schoolMembers.schoolId })
     .from(schoolMembers)
@@ -292,26 +294,10 @@ export async function requestActivationCodeAction(): Promise<ActionResult<void>>
   }
 }
 
-export async function activateTeacherAction(code: string): Promise<ActionResult<void>> {
-  const session = await requireSession()
-
-  if (!session.roles.includes('teacher')) return err('Non autorisé')
-  if (!session.isPending) {
-    redirect('/teacher-portal/homework')
-  }
-
-  if (code.trim().toLowerCase() !== session.memberId.toLowerCase()) {
-    return err('Code invalide. Entrez le code complet (format : xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).')
-  }
-
-  await db
-    .update(schoolMembers)
-    .set({ isPending: false, pendingEmail: null })
-    .where(eq(schoolMembers.id, session.memberId))
-
-  const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
+async function sendTeacherActivatedEmail(email: string, schoolId: string): Promise<void> {
+  const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(schoolId)])
   void sendEmail({
-    to: session.email,
+    to: email,
     fromName: schoolName,
     subject: `Votre compte ${schoolName} est activé`,
     html: `<!DOCTYPE html>
@@ -339,6 +325,26 @@ export async function activateTeacherAction(code: string): Promise<ActionResult<
   </div>
 </body></html>`,
   }).catch(() => {})
+}
+
+export async function activateTeacherAction(code: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
+
+  if (!session.roles.includes('teacher')) return err('Non autorisé')
+  if (!session.isPending) {
+    redirect('/teacher-portal/homework')
+  }
+
+  if (code.trim().toLowerCase() !== session.memberId.toLowerCase()) {
+    return err('Code invalide. Entrez le code complet (format : xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).')
+  }
+
+  await db
+    .update(schoolMembers)
+    .set({ isPending: false, pendingEmail: null })
+    .where(eq(schoolMembers.id, session.memberId))
+
+  void sendTeacherActivatedEmail(session.email, session.schoolId)
 
   void createNotificationInternal({
     schoolId: session.schoolId,
@@ -351,6 +357,55 @@ export async function activateTeacherAction(code: string): Promise<ActionResult<
 
   revalidatePath('/teacher-portal', 'layout')
   redirect('/teacher-portal/homework')
+}
+
+/**
+ * Activation par l'admin d'un enseignant (auto-inscrit ou invité) : remplace la saisie du code.
+ * L'enseignant est prévenu par notification et par e-mail.
+ */
+export async function activateTeacherByAdminAction(memberId: string): Promise<ActionResult<void>> {
+  const session = await requireSession()
+  if (!canAccess(session, 'teachers')) return unauthorized()
+
+  const [member] = await db
+    .select({
+      id: schoolMembers.id,
+      userId: schoolMembers.userId,
+      isPending: schoolMembers.isPending,
+      portalRoles: schoolMembers.portalRoles,
+    })
+    .from(schoolMembers)
+    .where(and(eq(schoolMembers.id, memberId), eq(schoolMembers.schoolId, session.schoolId)))
+    .limit(1)
+
+  if (!member || !member.portalRoles.includes('teacher')) return err('Enseignant introuvable')
+  if (!member.isPending) return err('Ce compte est déjà activé')
+  // Pas de compte encore créé : rien à activer, l'invitation suit son cours
+  if (member.userId === NIL_UUID) return err("Cet enseignant n'a pas encore créé son compte")
+
+  try {
+    await db
+      .update(schoolMembers)
+      .set({ isPending: false, pendingEmail: null })
+      .where(eq(schoolMembers.id, member.id))
+
+    const email = await getAuthEmailByUserId(member.userId)
+    if (email) void sendTeacherActivatedEmail(email, session.schoolId)
+    void createNotificationInternal({
+      schoolId: session.schoolId,
+      recipientMemberId: member.id,
+      type: 'account_activated',
+      title: 'Compte enseignant activé',
+      body: "L'école a activé votre compte. Bienvenue sur le portail enseignant !",
+      link: '/teacher-portal',
+    })
+
+    revalidatePath(ROUTES.admin.teachers)
+    return ok(undefined)
+  } catch (e) {
+    console.error('[activateTeacherByAdminAction]', e)
+    return err("Impossible d'activer cet enseignant")
+  }
 }
 
 // ── Bulk import from Excel ────────────────────────────────────────────────────

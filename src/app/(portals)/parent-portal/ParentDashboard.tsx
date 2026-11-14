@@ -2,6 +2,7 @@
 
 import { useCurrentMinute } from '@/lib/use-current-minute'
 import Link from 'next/link'
+import { ChildrenOnboarding } from './ChildrenOnboarding'
 import {
   Users, BookMarked, Music2, UserCheck, CalendarOff, Star,
   Megaphone, Library, CalendarDays, FileText, Clock, CalendarCheck, ExternalLink, Download,
@@ -57,6 +58,8 @@ export function ParentDashboard({ userFullName }: Props) {
           <p className="text-lg font-semibold text-gray-900 tabular-nums">{timeStr}</p>
         </div>
       </div>
+
+      <ChildrenOnboarding />
 
       {/* Bannière inscriptions */}
       <div className="relative overflow-hidden rounded-xl bg-[#2d6a4f] text-white p-6">

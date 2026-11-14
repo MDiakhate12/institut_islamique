@@ -55,6 +55,14 @@ export function TeacherActivationGate({ adminEmails }: Props) {
 
           {/* Body */}
           <div className="bg-white p-8 space-y-6">
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-center space-y-1">
+              <p className="text-sm font-semibold text-amber-800">Compte en attente d&apos;activation</p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                L&apos;administrateur de votre école doit activer votre compte. Vous recevrez un e-mail dès
+                que ce sera fait : rien d&apos;autre à faire. Si l&apos;école vous a donné un code, saisissez-le ci-dessous.
+              </p>
+            </div>
+
             <p className="text-sm text-gray-600 text-center leading-relaxed">
               Pour accéder aux ressources des enseignants, veuillez vérifier votre identité en
               entrant votre identifiant unique d&apos;enseignant.

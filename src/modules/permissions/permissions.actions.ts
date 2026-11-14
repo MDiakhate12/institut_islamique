@@ -10,6 +10,7 @@ import { permissionsService } from './permissions.service'
 import type { PermissionMember, SearchResult } from './permissions.types'
 import { z } from 'zod'
 import { sendEmail, getAppUrl, getSchoolName } from '@/lib/email'
+import { buildInviteUrl } from '@/lib/auth/invite-token'
 import { createNotificationInternal } from '@/modules/notifications/notifications.actions'
 import { getAuthUserIdByEmail } from '@/db/auth-users'
 import { db } from '@/db'
@@ -79,7 +80,7 @@ export async function grantRoleAction(
     const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
     const ctaUrl = userExists
       ? `${appUrl}/admin-portal`
-      : `${appUrl}/auth/signup?invite=admin&schoolId=${session.schoolId}&email=${encodeURIComponent(email)}`
+      : buildInviteUrl(appUrl, { kind: 'admin', schoolId: session.schoolId, email })
     const ctaLabel = userExists ? 'Accéder au portail →' : 'Créer mon compte →'
     const bodyText = userExists
       ? `Le rôle <strong>${ROLE_LABELS[role] ?? role}</strong> vous a été accordé sur <strong>${schoolName}</strong>. Vous pouvez maintenant accéder au portail d'administration avec ce niveau d'accès.`
@@ -173,7 +174,7 @@ export async function resendInvitationAction(
 
   try {
     const [appUrl, schoolName] = await Promise.all([getAppUrl(), getSchoolName(session.schoolId)])
-    const ctaUrl = `${appUrl}/auth/signup?invite=admin&schoolId=${session.schoolId}&email=${encodeURIComponent(email)}`
+    const ctaUrl = buildInviteUrl(appUrl, { kind: 'admin', schoolId: session.schoolId, email })
     void sendEmail({
       to: email,
       fromName: schoolName,

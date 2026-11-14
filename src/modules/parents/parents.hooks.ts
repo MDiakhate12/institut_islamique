@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { studentsKeys } from '@/modules/students/students.hooks'
-import { saveParentAction, setStudentGuardianAction, removeStudentGuardianAction, getParentDirectoryAction, getParentsAction, sendOtpAction, verifyOtpAndLinkAction, getChildrenAction, unlinkChildAction } from './parents.actions'
+import { saveParentAction, setStudentGuardianAction, removeStudentGuardianAction, getParentDirectoryAction, getParentsAction, sendOtpAction, verifyOtpAndLinkAction, getChildrenAction, unlinkChildAction, getLinkSuggestionsAction, confirmLinkSuggestionsAction } from './parents.actions'
 
 export function useParents() {
   return useQuery({
@@ -42,6 +42,27 @@ export function useVerifyOtpAndLink() {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ['children'] })
       }
+    },
+  })
+}
+
+export function useLinkSuggestions() {
+  return useQuery({
+    queryKey: ['children', 'link-suggestions'],
+    queryFn: async () => {
+      const result = await getLinkSuggestionsAction()
+      if (!result.success) throw new Error(result.error)
+      return result.data
+    },
+  })
+}
+
+export function useConfirmLinkSuggestions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (studentIds: string[]) => confirmLinkSuggestionsAction(studentIds),
+    onSuccess: (result) => {
+      if (result.success) queryClient.invalidateQueries({ queryKey: ['children'] })
     },
   })
 }
